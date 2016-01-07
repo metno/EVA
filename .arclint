@@ -1,0 +1,17 @@
+{
+    "linters": {
+        "python": {
+            "type": "flake8",
+            "include": "(\\.py$)",
+            "severity": {
+                "E501": "disabled"
+            },
+            "exclude": [
+                "(^build/)",
+                "(^legacy/)",
+                "(^tmp/)",
+                "(^virtualenv/)"
+            ]
+        }
+    }
+}
