@@ -1,2 +1,3 @@
-# geps
-This daemon listens for messages coming from productstatus and submit jobs to gridengine based on these incoming messages.
+# EVA
+This daemon listens for messages coming from productstatus and
+submits jobs to, e.g., gridengine based on these incoming messages.
