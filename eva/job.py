@@ -14,5 +14,6 @@ class Job(object):
         self.status = None  # some object, set by the executor
         self.exit_code = None  # process exit code
         self.pid = None  # process id
+        self.adapter = None  # Adapter that generated the Job
         self.stdout = []  # multi-line standard output
         self.stderr = []  # multi-line standard error
