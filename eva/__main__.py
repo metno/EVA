@@ -1,14 +1,22 @@
-
+import traceback
 import argparse
 import ConfigParser
 import logging
 import logging.config
-import sys
 
 import productstatus
+
 import eva.eventloop
 import eva.adapter
 import eva.executor
+
+
+def import_module_class(name):
+    components = name.split('.')
+    mod = __import__(components[0])
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
 
 
 def add_commandline_arguments(argument_parser):
@@ -29,9 +37,10 @@ def add_commandline_arguments(argument_parser):
 
     # Configuration options for EVA about how to run and what jobs to run.
     argument_parser.add_argument('--adapter', action='append', required=True,
-                                 help='Name of adapter that should be run. Repeat argument for each adapter.')
-    argument_parser.add_argument('--executor', action='store', required=False, default='DummyExecutor',
-                                 help='Executor class for EVA')
+                                 help='Full Python name of adapters that should be run. Repeat argument for each adapter.')
+    argument_parser.add_argument('--executor', action='store', required=False, default='eva.executor.NullExecutor',
+                                 help='Full Python name of executor that should be used.')
+
 
 if __name__ == "__main__":
     argument_parser = argparse.ArgumentParser()
@@ -55,15 +64,25 @@ if __name__ == "__main__":
 
     adapters = []
     for adapter_name in args.adapter:
-        adapter_class = getattr(eva.adapter, adapter_name)
-        adapters.append(adapter_class(productstatus_api))
+        adapter_class = import_module_class(adapter_name)
+        adapter_instance = adapter_class(productstatus_api)
+        logging.info('Adding adapter: %s' % adapter_instance.__class__)
+        adapters.append(adapter_instance)
 
-    executor = getattr(eva.executor, args.executor)()
+    executor = import_module_class(args.executor)()
+    logging.info('Using executor: %s' % executor.__class__)
 
     try:
         evaloop = eva.eventloop.Eventloop(productstatus_api, event_listener, adapters, executor)
         evaloop()
+    except KeyboardInterrupt:
+        pass
     except Exception, e:
         logging.critical("Fatal error: %s" % e)
-        logging.debug("Fatal exception is:", exc_info=True)
-        sys.exit(255)
+        exception = traceback.format_exc().split("\n")
+        logging.debug("***********************************************************")
+        logging.debug("Uncaught exception during program execution. THIS IS A BUG!")
+        logging.debug("***********************************************************")
+        for line in exception:
+            logging.debug(line)
+        exit_code = 255

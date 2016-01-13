@@ -23,18 +23,13 @@ class BaseExecutor(object):
         raise NotImplementedError()
 
 
-class DummyExecutor(BaseExecutor):
-
-    def __init__(self):
-        self.job = eva.job.Job()
-        self.job.status = eva.job.Job.PREPARED
+class NullExecutor(BaseExecutor):
+    """
+    Pretend to execute tasks, but don't actually do it.
+    """
 
     def execute_async(self, job):
-        self.job.status = eva.job.Job.STARTED
-
-        return
+        job.status = eva.job.STARTED
 
     def update_status(self, job):
-        self.job.status = eva.job.Job.COMPLETE
-
-        return
+        job.status = eva.job.COMPLETE

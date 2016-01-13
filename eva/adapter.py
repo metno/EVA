@@ -1,3 +1,6 @@
+import eva.job
+
+
 class BaseAdapter(object):
     """
     Adapters contain all the information and configuration needed to translate
@@ -8,7 +11,7 @@ class BaseAdapter(object):
         """
         @param api Productstatus API object
         """
-        pass
+        self.api = api
 
     def match(self, event, resource):
         """
@@ -27,7 +30,31 @@ class BaseAdapter(object):
         pass
 
 
-class DummyAdapter(BaseAdapter):
-
+class NullAdapter(BaseAdapter):
+    """
+    An adapter that matches nothing.
+    """
     def match(self, event, resource):
         return
+
+
+class TestDownloadAdapter(BaseAdapter):
+    """
+    An adapter that downloads any posted DataInstance using wget.
+    """
+    def match(self, event, resource):
+        if event.resource != 'datainstance':
+            return
+        job = eva.job.Job(self)
+        job.set_status(eva.job.PREPARED)
+        job.command = """#!/bin/bash -x
+        echo "Running on host: `hostname`"
+        echo "Working directory: `pwd`"
+        echo "Productstatus DataInstance points to %(url)s"
+        echo "Now downloading file..."
+        wget %(url)s
+        echo "Finished."
+        """ % {
+            'url': resource.url
+        }
+        return job
