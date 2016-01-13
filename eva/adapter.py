@@ -25,3 +25,9 @@ class BaseAdapter(object):
         @param job A Job object.
         """
         pass
+
+
+class DummyAdapter(BaseAdapter):
+
+    def match(self, event, resource):
+        return

@@ -11,22 +11,12 @@ class Eventloop(object):
     The main loop.
     """
 
-    def __init__(self):
-        # FIXME: read from config file and command line arguments. The username
-        # and API key should definitely be read from the command line.
-        # FIXME: instantiation of these objects should be moved out of the constructor.
+    def __init__(self, productstatus_api, event_listener, adapters, executor):
         self.jobs = []
-        self.loop_interval = 10000
-        self.event_listener = productstatus.event.Listener('tcp://productstatus.met.no:9797',
-                                                           timeout=self.loop_interval)
-        self.productstatus_api = productstatus.api.Api('https://productstatus.met.no',
-                                                       username='foo',
-                                                       api_key='bar')
-        self.adapters = [
-            eva.adapter.FooAdapter(),
-            eva.adapter.BarAdapter(),
-        ]
-        self.executor = eva.executor.BazExecutor()
+        self.event_listener = event_listener
+        self.productstatus_api = productstatus_api
+        self.adapters = adapters
+        self.executor = executor
 
     def add_jobs_from_event(self, event):
         """
