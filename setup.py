@@ -4,8 +4,8 @@ except ImportError:
     from distutils.core import setup
 
 config = {
-    'description': 'productstatus event adapter',
-    'author': 'IT-GEO-TF + IT-UT',
+    'description': 'Event Adapter',
+    'author': 'MET Norway',
     'url': 'https://github.com/metno/productstatus-eva',
     'download_url': 'https://github.com/metno/productstatus-eva',
     'author_email': 'it-geo-tf@met.no',
@@ -13,11 +13,11 @@ config = {
     'install_requires': [
         'nose==1.3.7',
         'python-dateutil==2.4.2',
-        'productstatus-client==3.0.0',
+        'productstatus-client==3.1.0',
     ],
     'packages': [],
     'scripts': [],
-    'name': 'productstatus-eva'
+    'name': 'eva'
 }
 
 setup(**config)

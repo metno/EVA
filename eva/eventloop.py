@@ -3,6 +3,7 @@ import eva.executor
 import eva.adapter
 
 import productstatus.event
+import productstatus.exceptions
 
 
 class Eventloop(object):
@@ -15,13 +16,15 @@ class Eventloop(object):
         # and API key should definitely be read from the command line.
         # FIXME: instantiation of these objects should be moved out of the constructor.
         self.jobs = []
-        self.event_listener = productstatus.event.Listener('tcp://productstatus.met.no:9797')
+        self.loop_interval = 10000
+        self.event_listener = productstatus.event.Listener('tcp://productstatus.met.no:9797',
+                                                           timeout=self.loop_interval)
         self.productstatus_api = productstatus.api.Api('https://productstatus.met.no',
                                                        username='foo',
                                                        api_key='bar')
         self.adapters = [
-            eva.adapter.FooAdapter(...),
-            eva.adapter.BarAdapter(...),
+            eva.adapter.FooAdapter(),
+            eva.adapter.BarAdapter(),
         ]
         self.executor = eva.executor.BazExecutor()
 
@@ -31,7 +34,8 @@ class Eventloop(object):
         @param event Productstatus event
         """
         for adapter in self.adapters:
-            job = adapter.match(event)
+            resource = self.productstatus_api[event.uri]
+            job = adapter.match(event, resource)
             if not job:
                 self.jobs += [job]
 
@@ -39,13 +43,11 @@ class Eventloop(object):
         """
         @brief Check for Productstatus events, and generate Jobs from them.
         """
-        # FIXME: need a timeout in get_next_event(), but still be able to queue
-        # up messages. Work will need to be done in the productstatus-client package.
-        # In addition to this, the event should contain a Resource object that
-        # links directly to the resource, so a lookup here is unneccessary.
-        event = self.event_listener.get_next_event()
-        if event:
+        try:
+            event = self.event_listener.get_next_event()
             self.add_jobs_from_event(event)
+        except productstatus.exceptions.EventTimeoutException:
+            pass
 
     def iterate_job_execution(self):
         """

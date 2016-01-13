@@ -10,10 +10,11 @@ class BaseAdapter(object):
         """
         pass
 
-    def match(self, event):
+    def match(self, event, resource):
         """
         @brief Check if the event and resource fits this adapter.
         @param event The message sent by the Productstatus server.
+        @param resource The Productstatus resource referred to by the event.
         @returns A Job object if the message fits this adapter, else None.
         """
         raise NotImplementedError()
