@@ -1,3 +1,4 @@
+import sys
 import traceback
 import argparse
 import ConfigParser
@@ -36,7 +37,7 @@ def add_commandline_arguments(argument_parser):
                                  help='Set this option to skip Productstatus SSL certificate verification')
 
     # Configuration options for EVA about how to run and what jobs to run.
-    argument_parser.add_argument('--adapter', action='append', required=False,
+    argument_parser.add_argument('--adapter', action='append', required=False, default=[],
                                  help='Python class name of adapters that should be run; repeat argument for each adapter')
     argument_parser.add_argument('--executor', action='store', required=False, default='eva.executor.NullExecutor',
                                  help='Python class name of executor that should be used')
@@ -52,6 +53,8 @@ if __name__ == "__main__":
 
     args = argument_parser.parse_args()
     logging.config.fileConfig(args.log_config)
+
+    logging.info('Starting EVA: the EVent Adapter.')
 
     config_parser = ConfigParser.SafeConfigParser()
     config_parser.read(args.log_config)
@@ -76,7 +79,7 @@ if __name__ == "__main__":
     logging.info('Using executor: %s' % executor.__class__)
 
     checkpoint = eva.checkpoint.Checkpoint(args.checkpoint_file)
-    logging.info('Checkpointing to file: %s' % args.checkpoint_file)
+    logging.info('Checkpoint database: %s' % args.checkpoint_file)
 
     try:
         evaloop = eva.eventloop.Eventloop(productstatus_api, event_listener, adapters,
@@ -93,4 +96,6 @@ if __name__ == "__main__":
         logging.debug("***********************************************************")
         for line in exception:
             logging.debug(line)
-        exit_code = 255
+        sys.exit(255)
+
+    logging.info('Shutting down EVA.')

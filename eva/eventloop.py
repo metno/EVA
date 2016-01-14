@@ -33,10 +33,10 @@ class Eventloop(object):
 
         for object_ in objects:
             if isinstance(object_, eva.job.Job):
-                logging.info("Loaded eva.job.Job object %s from checkpoint." % unicode(object_))
+                logging.info('[%s] loading job from checkpoint.' % object.id)
                 self.jobs += object_
             if isinstance(object, productstatus.event.Message):
-                logging.info("Loaded productstatus.event.Message object %s from checkpoint." % unicode(object_))
+                logging.info('Loading event from checkpoint: %s' % object.uri)
                 self.add_jobs_from_event(object_)
 
     def add_jobs_from_event(self, event):
@@ -108,6 +108,7 @@ class Eventloop(object):
         """
         @brief Main loop. Iterates through event handling and job queue handling.
         """
+        logging.info('Starting main loop.')
         while True:
             self.iterate_get_event_add_jobs()
             self.iterate_job_execution()

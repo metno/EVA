@@ -25,6 +25,7 @@ class Checkpoint(object):
         """
         Serialize any python object.
         """
+        logging.info('Saving checkpoint for %s' % unicode(object_))
         self._open()
         key = self.key(object_)
         self.checkpoint[key] = object_
@@ -40,6 +41,7 @@ class Checkpoint(object):
         """
         Remove serialized python object.
         """
+        logging.info('Deleting checkpoint for %s' % unicode(object_))
         self._open()
         key = self.key(object_)
 
