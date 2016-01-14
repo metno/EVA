@@ -25,21 +25,21 @@ def add_commandline_arguments(argument_parser):
 
     # Configuration of Productstatus client.
     argument_parser.add_argument('--productstatus-url', action='store', required=True,
-                                 help='URL to Productstatus service.')
-    argument_parser.add_argument('--productstatus-username', action='store', required=True,
+                                 help='URL to Productstatus service')
+    argument_parser.add_argument('--productstatus-username', action='store', required=False,
                                  help='Productstatus username for authentication')
-    argument_parser.add_argument('--productstatus-api-key', action='store', required=True,
-                                 help='Productstatus api key issued for a specific user')
-    argument_parser.add_argument('--productstatus-zeromq-subscribe-socket', action='store', required=True,
-                                 help='ZeroMQ socket for receiving productstatus events')
-    argument_parser.add_argument('--productstatus-verify-ssl', action='store_true', default=False,
-                                 help='Verify SSL. Set to False if omitted.')
+    argument_parser.add_argument('--productstatus-api-key', action='store', required=False,
+                                 help='Productstatus API key matching the username')
+    argument_parser.add_argument('--productstatus-event-socket', action='store', required=True,
+                                 help='Socket for receiving Productstatus events')
+    argument_parser.add_argument('--productstatus-no-verify-ssl', action='store_true', default=False,
+                                 help='Set this option to skip Productstatus SSL certificate verification')
 
     # Configuration options for EVA about how to run and what jobs to run.
-    argument_parser.add_argument('--adapter', action='append', required=True,
-                                 help='Full Python name of adapters that should be run. Repeat argument for each adapter.')
+    argument_parser.add_argument('--adapter', action='append', required=False,
+                                 help='Python class name of adapters that should be run; repeat argument for each adapter')
     argument_parser.add_argument('--executor', action='store', required=False, default='eva.executor.NullExecutor',
-                                 help='Full Python name of executor that should be used.')
+                                 help='Python class name of executor that should be used')
 
 
 if __name__ == "__main__":
@@ -56,10 +56,10 @@ if __name__ == "__main__":
     productstatus_api = productstatus.api.Api(args.productstatus_url,
                                               username=args.productstatus_username,
                                               api_key=args.productstatus_api_key,
-                                              verify_ssl=args.productstatus_verify_ssl)
+                                              verify_ssl=not args.productstatus_no_verify_ssl)
 
     loop_interval = 10000
-    event_listener = productstatus.event.Listener(args.productstatus_zeromq_subscribe_socket,
+    event_listener = productstatus.event.Listener(args.productstatus_event_socket,
                                                   timeout=loop_interval)
 
     adapters = []

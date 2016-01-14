@@ -8,10 +8,21 @@
 #              metno/eva
 
 FROM ubuntu:14.04
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install python-dev libzmq3-dev build-essential python-pip git gridengine-client
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive \
+    apt-get -y --no-install-recommends install \
+    python-dev \
+    libzmq3-dev \
+    build-essential \
+    python-pip \
+    git \
+    gridengine-client
 RUN git clone https://github.com/metno/eva.git /opt/eva
 RUN pip install -e /opt/eva/
 RUN mkdir -p /var/lib/eva
 COPY start-eva /usr/bin/start-eva
 ENTRYPOINT ["/usr/bin/start-eva"]
-CMD python -m eva --config /opt/eva/eva-sample.ini
+CMD python -m eva \
+    --log-config /opt/eva/etc/logging.ini \
+    --productstatus-url https://productstatus.met.no \
+    --productstatus-event-socket tcp://productstatus.met.no:9797

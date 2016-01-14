@@ -41,12 +41,11 @@ class Eventloop(object):
         @brief Check for Productstatus events, and generate Jobs from them.
         """
         try:
-            logging.debug('Waiting for next Productstatus event...')
             event = self.event_listener.get_next_event()
             logging.info('Received Productstatus event for resource URI %s' % event.uri)
             self.add_jobs_from_event(event)
         except productstatus.exceptions.EventTimeoutException:
-            logging.debug('No event received, continuing.')
+            pass
 
     def iterate_job_execution(self):
         """
