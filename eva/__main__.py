@@ -40,6 +40,9 @@ def add_commandline_arguments(argument_parser):
                                  help='Python class name of adapters that should be run; repeat argument for each adapter')
     argument_parser.add_argument('--executor', action='store', required=False, default='eva.executor.NullExecutor',
                                  help='Python class name of executor that should be used')
+    argument_parser.add_argument('--checkpoint-file', action='store', required=False,
+                                 default='/var/lib/eva/checkpoint.db',
+                                 help='Absolute path to EVA checkpoint file.')
 
 
 if __name__ == "__main__":
@@ -72,8 +75,13 @@ if __name__ == "__main__":
     executor = import_module_class(args.executor)()
     logging.info('Using executor: %s' % executor.__class__)
 
+    checkpoint = eva.checkpoint.Checkpoint(args.checkpoint_file)
+    logging.info('Checkpointing to file: %s' % args.checkpoint_file)
+
     try:
-        evaloop = eva.eventloop.Eventloop(productstatus_api, event_listener, adapters, executor)
+        evaloop = eva.eventloop.Eventloop(productstatus_api, event_listener, adapters,
+                                          executor, checkpoint)
+        evaloop.load_state()
         evaloop()
     except KeyboardInterrupt:
         pass

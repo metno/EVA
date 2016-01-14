@@ -4,6 +4,7 @@ import eva.job
 import eva.executor
 import eva.executor.gridengine
 import eva.adapter
+import eva.checkpoint
 
 import productstatus.event
 import productstatus.exceptions
@@ -14,12 +15,29 @@ class Eventloop(object):
     The main loop.
     """
 
-    def __init__(self, productstatus_api, event_listener, adapters, executor):
+    def __init__(self, productstatus_api, event_listener, adapters, executor, checkpoint):
         self.jobs = []
         self.event_listener = event_listener
         self.productstatus_api = productstatus_api
         self.adapters = adapters
         self.executor = executor
+        self.checkpoint = checkpoint
+
+    def load_state(self):
+        """
+        Load state from previous run before starting eventloop().
+        Gets eva.job.Job and productstatus.event.Message objects from Checkpoint.
+        """
+        logging.info("Load persistent checkpoint state.")
+        objects = self.checkpoint.load()
+
+        for object_ in objects:
+            if isinstance(object_, eva.job.Job):
+                logging.info("Loaded eva.job.Job object %s from checkpoint." % unicode(object_))
+                self.jobs += object_
+            if isinstance(object, productstatus.event.Message):
+                logging.info("Loaded productstatus.event.Message object %s from checkpoint." % unicode(object_))
+                self.add_jobs_from_event(object_)
 
     def add_jobs_from_event(self, event):
         """
@@ -33,8 +51,11 @@ class Eventloop(object):
             if not job:
                 continue
             logging.info('Adapter %s matches event, adding new job [%s] to queue.' % (job.adapter.__class__, job.id))
+            self.checkpoint.set(job)
             self.jobs += [job]
+
         logging.info('Finished checking for event adapters.')
+        self.checkpoint.delete(event)
 
     def iterate_get_event_add_jobs(self):
         """
@@ -42,6 +63,7 @@ class Eventloop(object):
         """
         try:
             event = self.event_listener.get_next_event()
+            self.checkpoint.set(event)
             logging.info('Received Productstatus event for resource URI %s' % event.uri)
             self.add_jobs_from_event(event)
         except productstatus.exceptions.EventTimeoutException:
@@ -61,6 +83,7 @@ class Eventloop(object):
                 self.executor.execute_async(job)
             elif job.status == eva.job.STARTED:
                 self.executor.update_status(job)
+
         logging.info('Finished executing and checking jobs.')
 
     def iterate_job_finish(self):
@@ -76,7 +99,9 @@ class Eventloop(object):
             if job.status in [eva.job.COMPLETE, eva.job.FAILED]:
                 job.adapter.finish(job)
                 logging.info('[%s] Removing job from queue.', job.id)
+                self.checkpoint.delete(job)
                 self.jobs.remove(job)
+
         logging.info('Finished checking jobs.')
 
     def __call__(self):
