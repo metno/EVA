@@ -8,8 +8,6 @@ import eva.executor
 import eva.job
 
 
-STATE_DIRECTORY = '/var/lib/eva'
-
 EXIT_OK = 0
 QSUB_EXIT_NO_FREE_RESOURCES = 25
 
@@ -57,14 +55,13 @@ def generate_job_script(job):
     return job.command
 
 
-def get_output_path(*args):
-    return os.path.join(STATE_DIRECTORY, *args)
-
-
 class GridEngineExecutor(eva.executor.BaseExecutor):
     """
     Execute programs on Grid Engine.
     """
+
+    def get_log_output_path(self, *args):
+        return os.path.join(self.env['EVA_SGE_LOG_PATH'], *args)
 
     def execute_async(self, job):
 
@@ -72,8 +69,8 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
         with tempfile.NamedTemporaryFile(mode='rw+b') as submit_script:
             script_content = generate_job_script(job)
             submit_script.write(script_content)
-            job.stdout_path = get_output_path('$JOB_ID.stdout')
-            job.stderr_path = get_output_path('$JOB_ID.stderr')
+            job.stdout_path = self.get_log_output_path('$JOB_ID.stdout')
+            job.stderr_path = self.get_log_output_path('$JOB_ID.stderr')
 
             # Submit the job using qsub
             command = ['qsub', '-b', 'n',
