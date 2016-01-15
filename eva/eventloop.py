@@ -15,13 +15,21 @@ class Eventloop(object):
     The main loop.
     """
 
-    def __init__(self, productstatus_api, event_listener, adapters, executor, checkpoint):
+    def __init__(self,
+                 productstatus_api,
+                 event_listener,
+                 adapters,
+                 executor,
+                 checkpoint,
+                 environment_variables,
+                 ):
         self.jobs = []
         self.event_listener = event_listener
         self.productstatus_api = productstatus_api
         self.adapters = adapters
         self.executor = executor
         self.checkpoint = checkpoint
+        self.env = environment_variables
 
     def load_state(self):
         """

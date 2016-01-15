@@ -6,8 +6,8 @@ class BaseExecutor(object):
     Abstract base class for execution engines.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, environment_variables):
+        self.env = environment_variables
 
     def execute_async(self, job):
         """

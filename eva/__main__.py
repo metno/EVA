@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 import argparse
@@ -68,14 +69,18 @@ if __name__ == "__main__":
     event_listener = productstatus.event.Listener(args.productstatus_event_socket,
                                                   timeout=loop_interval)
 
+    environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith('EVA_')}
+    for key, var in environment_variables.iteritems():
+        logging.info('Environment: %s=%s' % (key, var))
+
     adapters = []
     for adapter_name in args.adapter:
         adapter_class = import_module_class(adapter_name)
-        adapter_instance = adapter_class(productstatus_api)
+        adapter_instance = adapter_class(productstatus_api, environment_variables)
         logging.info('Adding adapter: %s' % adapter_instance.__class__)
         adapters.append(adapter_instance)
 
-    executor = import_module_class(args.executor)()
+    executor = import_module_class(args.executor)(environment_variables)
     logging.info('Using executor: %s' % executor.__class__)
 
     checkpoint = eva.checkpoint.Checkpoint(args.checkpoint_file)
@@ -83,7 +88,7 @@ if __name__ == "__main__":
 
     try:
         evaloop = eva.eventloop.Eventloop(productstatus_api, event_listener, adapters,
-                                          executor, checkpoint)
+                                          executor, checkpoint, environment_variables)
         evaloop.load_state()
         evaloop()
     except KeyboardInterrupt:

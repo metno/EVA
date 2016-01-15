@@ -7,11 +7,13 @@ class BaseAdapter(object):
     a Productstatus event into job execution.
     """
 
-    def __init__(self, api):
+    def __init__(self, api, environment_variables):
         """
         @param api Productstatus API object
+        @param environment_variables Dictionary of EVA_* environment variables
         """
         self.api = api
+        self.env = environment_variables
 
     def match(self, event, resource):
         """
