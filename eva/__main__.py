@@ -15,10 +15,11 @@ import eva.executor
 
 def import_module_class(name):
     components = name.split('.')
-    mod = __import__(components[0])
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod
+    modname = ('.').join(components[0:-1])
+    mod = __import__(modname)
+    for c in components[1:-1]:
+        mod = getattr(mod, c)
+    return getattr(mod, components[-1])
 
 
 def add_commandline_arguments(argument_parser):
