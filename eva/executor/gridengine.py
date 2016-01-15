@@ -66,49 +66,54 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
     def execute_async(self, job):
 
         # Create a temporary submit script
-        with tempfile.NamedTemporaryFile(mode='rw+b') as submit_script:
+        fd, submit_script_path = tempfile.mkstemp()
+        os.close(fd)
+        with open(submit_script_path) as submit_script:
             script_content = generate_job_script(job)
             submit_script.write(script_content)
-            job.stdout_path = self.get_log_output_path('$JOB_ID.stdout')
-            job.stderr_path = self.get_log_output_path('$JOB_ID.stderr')
 
-            # Submit the job using qsub
-            command = ['qsub', '-b', 'n',
-                       '-o', job.stdout_path,
-                       '-e', job.stderr_path,
-                       submit_script.name,
-                       ]
-            logging.info('[%s] Executing: %s' % (job.id, ' '.join(command)))
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = process.communicate()
-            exit_code = process.returncode
-            logging.info('[%s] Exit status: %d' % (job.id, exit_code))
+        job.stdout_path = self.get_log_output_path('$JOB_ID.stdout')
+        job.stderr_path = self.get_log_output_path('$JOB_ID.stderr')
 
-            # Job was submitted. Set paths, job id, status, and return
-            if exit_code == EXIT_OK:
-                job.set_status(eva.job.STARTED)
-                job.pid = get_job_id_from_qsub_output(get_std_lines(stdout)[0])
-                job.stdout_path = job.stdout_path.replace('$JOB_ID', unicode(job.pid))
-                job.stderr_path = job.stderr_path.replace('$JOB_ID', unicode(job.pid))
-                logging.info('[%s] Grid Engine JOB_ID: %d' % (job.id, job.pid))
-                return
+        # Submit the job using qsub
+        command = ['qsub', '-b', 'n',
+                   '-o', job.stdout_path,
+                   '-e', job.stderr_path,
+                   submit_script.name,
+                   ]
+        logging.info('[%s] Executing: %s' % (job.id, ' '.join(command)))
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        exit_code = process.returncode
+        logging.info('[%s] Exit status: %d' % (job.id, exit_code))
 
-            # Submitting the job failed. Do some verbose logging.
-            job.set_status(eva.job.FAILED)
-            if exit_code == QSUB_EXIT_NO_FREE_RESOURCES:
-                logging.error('[%s] Job failed to start because there are no free Grid Engine resources at the moment. Please try again later.', (job.id))
-            else:
-                logging.error('[%s] Job failed to start because an unspecified error occured. Refer to Grid Engine documentation.', (job.id))
-            logging.debug('[%s] --- Standard output ---', (job.id))
-            [logging.debug(line) for line in get_std_lines(stdout)]
-            logging.debug('[%s] --- End of standard output ---', (job.id))
-            logging.debug('[%s] --- Standard error ---', (job.id))
-            [logging.debug(line) for line in get_std_lines(stderr)]
-            logging.debug('[%s] --- End of standard error ---', (job.id))
-            logging.debug('[%s] --- Script file contents ---', (job.id))
-            submit_script.seek(0)
+        # Job was submitted. Set paths, job id, status, and return
+        if exit_code == EXIT_OK:
+            job.set_status(eva.job.STARTED)
+            job.pid = get_job_id_from_qsub_output(get_std_lines(stdout)[0])
+            job.stdout_path = job.stdout_path.replace('$JOB_ID', unicode(job.pid))
+            job.stderr_path = job.stderr_path.replace('$JOB_ID', unicode(job.pid))
+            logging.info('[%s] Grid Engine JOB_ID: %d' % (job.id, job.pid))
+            os.unlink(submit_script_path)
+            return
+
+        # Submitting the job failed. Do some verbose logging.
+        job.set_status(eva.job.FAILED)
+        if exit_code == QSUB_EXIT_NO_FREE_RESOURCES:
+            logging.error('[%s] Job failed to start because there are no free Grid Engine resources at the moment. Please try again later.', (job.id))
+        else:
+            logging.error('[%s] Job failed to start because an unspecified error occured. Refer to Grid Engine documentation.', (job.id))
+        logging.debug('[%s] --- Standard output ---', (job.id))
+        [logging.debug(line) for line in get_std_lines(stdout)]
+        logging.debug('[%s] --- End of standard output ---', (job.id))
+        logging.debug('[%s] --- Standard error ---', (job.id))
+        [logging.debug(line) for line in get_std_lines(stderr)]
+        logging.debug('[%s] --- End of standard error ---', (job.id))
+        logging.debug('[%s] --- Script file contents ---', (job.id))
+        with open(submit_script_path, 'r') as submit_script:
             [logging.debug(line) for line in submit_script.readlines()]
-            logging.debug('[%s] --- End of script file contents ---', (job.id))
+        logging.debug('[%s] --- End of script file contents ---', (job.id))
+        os.unlink(submit_script_path)
 
     def update_status(self, job):
 
