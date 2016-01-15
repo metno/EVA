@@ -20,9 +20,8 @@ RUN apt-get update && \
     && apt-get clean
 RUN git clone https://github.com/metno/eva.git /opt/eva
 RUN pip install -e /opt/eva/
-RUN mkdir -p /var/lib/eva
-COPY start-eva /usr/bin/start-eva
-ENTRYPOINT ["/usr/bin/start-eva"]
+RUN useradd -M --system --uid 12325 eventadapter
+RUN mkdir -p /var/lib/eva && chown eventadapter /var/lib/eva
 CMD python -m eva \
     --log-config /opt/eva/etc/logging.ini \
     --productstatus-url https://productstatus.met.no \
