@@ -16,7 +16,8 @@ RUN apt-get update && \
     build-essential \
     python-pip \
     git \
-    gridengine-client
+    gridengine-client \
+    && apt-get clean
 RUN git clone https://github.com/metno/eva.git /opt/eva
 RUN pip install -e /opt/eva/
 RUN mkdir -p /var/lib/eva

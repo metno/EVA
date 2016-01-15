@@ -68,7 +68,7 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
         # Create a temporary submit script
         fd, submit_script_path = tempfile.mkstemp()
         os.close(fd)
-        with open(submit_script_path) as submit_script:
+        with open(submit_script_path, 'w') as submit_script:
             script_content = generate_job_script(job)
             submit_script.write(script_content)
 
@@ -124,9 +124,12 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
         stdout, stderr = process.communicate()
         exit_code = process.returncode
         logging.info('[%s] Exit status: %d' % (job.id, exit_code))
+
+        # Exit code non-zero means that the job is not found in the accounting database.
+        # Should be checked with `qstat` whether or not it is still running.
         if exit_code != 0:
-            logging.error('[%s] qacct failed, so I was unable to retrieve the job status.', (job.id))
             return
+
         exit_code = get_exit_code_from_qacct_output(get_std_lines(stdout))
         if exit_code is None:
             return
@@ -142,3 +145,6 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
             job.stdout = strip_stdout_newlines(f.readlines())
         with open(job.stderr_path, 'r') as f:
             job.stderr = strip_stdout_newlines(f.readlines())
+
+        os.unlink(job.stdout)
+        os.unlink(job.stderr)
