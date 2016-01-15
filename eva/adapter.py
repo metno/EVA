@@ -52,11 +52,13 @@ class TestDownloadAdapter(BaseAdapter):
         job.command = """#!/bin/bash -x
         echo "Running on host: `hostname`"
         echo "Working directory: `pwd`"
+        cd %(destination)s
         echo "Productstatus DataInstance points to %(url)s"
         echo "Now downloading file..."
         wget %(url)s
         echo "Finished."
         """ % {
-            'url': resource.url
+            'url': resource.url,
+            'destination': self.env['EVA_TEST_DOWNLOAD_DESTINATION'],
         }
         return job
