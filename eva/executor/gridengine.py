@@ -19,25 +19,6 @@ def get_std_lines(std):
     return std.splitlines() if std is not None else []
 
 
-def log_stdout_stderr(job, stdout, stderr):
-    """
-    Print stdout and stderr to syslog
-    """
-    logging.debug('[%s] --- Standard output ---', (job.id))
-    [logging.debug(line) for line in stdout]
-    logging.debug('[%s] --- End of standard output ---', (job.id))
-    logging.debug('[%s] --- Standard error ---', (job.id))
-    [logging.debug(line) for line in stderr]
-    logging.debug('[%s] --- End of standard error ---', (job.id))
-
-
-def strip_stdout_newlines(lines):
-    """
-    Strip newlines from an array of strings.
-    """
-    return [line.strip() for line in lines]
-
-
 def get_job_id_from_qsub_output(output):
     """
     Parse the JOB_ID from qsub output. Unfortunately, there is no command-line
@@ -115,7 +96,7 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
             logging.error('[%s] Job failed to start because there are no free Grid Engine resources at the moment. Please try again later.', (job.id))
         else:
             logging.error('[%s] Job failed to start because an unspecified error occured. Refer to Grid Engine documentation.', (job.id))
-        log_stdout_stderr(job, get_std_lines(stdout), get_std_lines(stderr))
+        eva.executor.log_stdout_stderr(job, get_std_lines(stdout), get_std_lines(stderr))
         logging.debug('[%s] --- Script file contents ---', (job.id))
         with open(submit_script_path, 'r') as submit_script:
             [logging.debug(line) for line in submit_script.readlines()]
@@ -148,11 +129,6 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
             job.set_status(eva.job.COMPLETE)
         else:
             job.set_status(eva.job.FAILED)
-        with open(job.stdout_path, 'r') as f:
-            job.stdout = strip_stdout_newlines(f.readlines())
-        with open(job.stderr_path, 'r') as f:
-            job.stderr = strip_stdout_newlines(f.readlines())
-
-        log_stdout_stderr(job, job.stdout, job.stderr)
+        eva.executor.read_and_log_stdout_stderr(job, job.stdout_path, job.stderr_path)
         os.unlink(job.stdout_path)
         os.unlink(job.stderr_path)
