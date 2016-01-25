@@ -7,6 +7,7 @@ import logging
 import logging.config
 
 import productstatus
+import productstatus.api
 
 import eva.eventloop
 import eva.adapter
@@ -74,15 +75,15 @@ if __name__ == "__main__":
     for key, var in environment_variables.iteritems():
         logging.info('Environment: %s=%s' % (key, var))
 
+    executor = import_module_class(args.executor)(environment_variables)
+    logging.info('Using executor: %s' % executor.__class__)
+
     adapters = []
     for adapter_name in args.adapter:
         adapter_class = import_module_class(adapter_name)
         adapter_instance = adapter_class(productstatus_api, environment_variables)
         logging.info('Adding adapter: %s' % adapter_instance.__class__)
         adapters.append(adapter_instance)
-
-    executor = import_module_class(args.executor)(environment_variables)
-    logging.info('Using executor: %s' % executor.__class__)
 
     checkpoint = eva.checkpoint.Checkpoint(args.checkpoint_file)
     logging.info('Checkpoint database: %s' % args.checkpoint_file)

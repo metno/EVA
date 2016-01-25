@@ -1,10 +1,7 @@
 import shelve
-import hashlib
 import os
 import os.path
 import logging
-
-import eva.exceptions
 
 
 class Checkpoint(object):
@@ -21,47 +18,27 @@ class Checkpoint(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def set(self, object_):
+    def set(self, key, value):
         """
         Serialize any python object.
         """
-        logging.info('Saving checkpoint for %s' % unicode(object_))
+        logging.info('Saving checkpoint for key \'%s\'', key)
         self._open()
-        key = self.key(object_)
-        self.checkpoint[key] = object_
+        self.checkpoint[key] = value
         self._close()
 
-    def key(self, object_):
-        """
-        Create a unique key for an object by hashing __repr__.
-        """
-        return hashlib.sha256(unicode(object_)).hexdigest()
-
-    def delete(self, object_):
-        """
-        Remove serialized python object.
-        """
-        logging.info('Deleting checkpoint for %s' % unicode(object_))
-        self._open()
-        key = self.key(object_)
-
-        if key not in self.checkpoint.keys():
-            raise eva.exceptions.CheckpointKeyDoesntExist("Cannot delete object with key %s as it doesn't exist."
-                                                          % key)
-        del self.checkpoint[key]
-        self._close()
-
-    def load(self):
+    def get(self, key):
         """
         Return all serialized python objects.
         """
         self._open()
-        objects = []
-        for key in self.checkpoint.keys():
-            objects.append(self.checkpoint[key])
+        if key in self.checkpoint:
+            value = self.checkpoint[key]
+        else:
+            value = None
 
         self._close()
-        return objects
+        return value
 
     def _close(self):
         """

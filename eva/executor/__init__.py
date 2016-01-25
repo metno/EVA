@@ -11,18 +11,32 @@ class BaseExecutor(object):
     def __init__(self, environment_variables):
         self.env = environment_variables
 
-    def execute_async(self, job):
+    def execute_async(self, adapter, job):
         """
         Execute the job asynchronously, and return immediately.
         """
         raise NotImplementedError()
 
-    def update_status(self, job):
+    def update_status(self, adapter, job):
         """
         Check job status, and update the Job object accordingly, populating
         Job.exit_code, Job.stdout, Job.stderr, and Job.status.
         """
         raise NotImplementedError()
+
+    def set_state(self, state):
+        """
+        @brief Restore state of the executor from serialization
+        @param state state from serialization
+        """
+        pass
+
+    def get_state(self):
+        """
+        @brief Get current state of the executor for serialization
+        @returns state for serialization
+        """
+        return None
 
 
 class NullExecutor(BaseExecutor):
@@ -30,10 +44,10 @@ class NullExecutor(BaseExecutor):
     Pretend to execute tasks, but don't actually do it.
     """
 
-    def execute_async(self, job):
+    def execute_async(self, adapter, job):
         job.status = eva.job.STARTED
 
-    def update_status(self, job):
+    def update_status(self, adapter, job):
         job.status = eva.job.COMPLETE
 
 
