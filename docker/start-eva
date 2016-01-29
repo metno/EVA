@@ -1,5 +1,0 @@
-#!/bin/bash
-
-echo $SGE_MASTER > /var/lib/gridengine/default/common/act_qmaster
-
-exec "$@"
