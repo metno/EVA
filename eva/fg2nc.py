@@ -5,36 +5,40 @@ import eva.job
 import eva.adapter
 
 
-class FimexGribNetcdfAdapter(eva.adapter.JobQueueAdapter):
-    def __init__(self, *args):
-        super(FimexGribNetcdfAdapter, self).__init__("FimexGribNetcdfAdapter", *args)
-        self.job_data = {}
+class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
+    REQUIRED_CONFIG = {
+        'EVA_FG2NC_INPUT_PRODUCT_UUID': 'Productstatus Product UUID to process events for',
+        'EVA_FG2NC_LIB': 'Path to .../EVA-adapter-support/FimexGribNetcdfAdapter',
+        'EVA_FG2NC_OUTPUT_BASE_URL': 'Where to place the complete processed file',
+        'EVA_FG2NC_OUTPUT_PRODUCT_UUID': 'Productstatus Product UUID for the finished product',
+        'EVA_FG2NC_OUTPUT_SERVICE_BACKEND_UUID': 'Productstatus Service Backend UUID for the position of the finished product',
+        'EVA_FG2NC_TEMPLATEDIR': 'Path to the NetCDF template files required for this conversion',
+    }
 
-    def get_env(self, key):
-        klass = "FG2NC"
-        return self.env['EVA_%s_%s' % (klass, key)]
-
-    def match_event(self, event, resource):
+    def process_event(self, event, resource):
         if event.resource != 'datainstance' or not resource:
-            return []
-        try:
-            product_id = resource.data.productinstance.product.id
-        except Exception, e:
-            logging.warn("error retrieving product UUID", exc_info=e)
-            return []
-        expected_product_id = self.get_env('INPUT_PRODUCT_UUID')
-        logging.debug("product_id: %s INPUT_PRODUCT_UUID=%s" % (product_id, expected_product_id))
-        if product_id != expected_product_id:
-            return []
-        logging.debug("matching product uuid '%s'" % product_id)
-        try:
-            return self.create_job(event, resource)
-        except Exception, e:
-            logging.warn("error creating job", exc_info=e)
-            return []
+            logging.info('Event is not of type DataInstance, ignoring.')
+            return
 
-    def match_timeout(self):
-        return []
+        # FIXME: should have retry_n(...) or at least throw a RetryException
+        product_id = resource.data.productinstance.product.id
+
+        expected_product_id = self.env['EVA_FG2NC_INPUT_PRODUCT_UUID']
+        if product_id != expected_product_id:
+            logging.info('DataInstance Product UUID does not match configured value, ignoring.')
+            return
+
+        logging.info('DataInstance Product UUID matches configuration.')
+
+        logging.info('Generating processing job.')
+        job = self.create_job(event, resource)
+        logging.info('Finished job generation, now executing.')
+
+        self.executor.execute(job)
+
+        if job.exit_code == 0:
+            logging.info('Output file generated successfully, registering new DataInstance...')
+            self.register_output(job.data)
 
     def create_job(self, event, datainstance):
         reftime = datainstance.data.productinstance.reference_time
@@ -52,28 +56,21 @@ class FimexGribNetcdfAdapter(eva.adapter.JobQueueAdapter):
             'url': datainstance.url,
             'gribfile': (datainstance.id + '.grib'),
             'reftime': reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
-            'lib_fg2nc': self.get_env('LIB'),
-            'templatedir': self.get_env('TEMPLATEDIR'),
+            'lib_fg2nc': self.env['EVA_FG2NC_LIB'],
+            'templatedir': self.env['EVA_FG2NC_TEMPLATEDIR'],
         }
 
         with open(os.path.join(params['templatedir'], 'pattern.nc'), 'r') as nc_pattern:
             job_data['nc_filename'] = reftime.strftime(nc_pattern.readline().strip())
 
         job.command = """
-cd "{lib_fg2nc}"
-./evaFimexFillNcFromGrib "{url}" "{gribfile}" "{reftime}" "{templatedir}"
-""".format(**params)
+        set -e
+        cd "{lib_fg2nc}"
+        ./evaFimexFillNcFromGrib "{url}" "{gribfile}" "{reftime}" "{templatedir}"
+        """.format(**params)
+        job.data = job_data
 
-        self.job_data[job.id] = job_data
-        return self.enqueue_jobs([job])
-
-    def finished_jobs(self, jobs):
-        for job in jobs:
-            if job.status == eva.job.COMPLETE:
-                self.register_output(self.job_data[job.id])
-            del self.job_data[job.id]
-
-        return super(FimexGribNetcdfAdapter, self).finished_jobs(jobs)
+        return job
 
     def register_output(self, job_data):
         productinstance = self.get_or_post_productinstance_resource(job_data)

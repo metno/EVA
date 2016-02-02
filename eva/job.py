@@ -18,7 +18,6 @@ class Job(object):
         self.id = uuid.uuid4()
         self.command = ""  # a multi-line string containing the commands to be run
         self.exit_code = None  # process exit code
-        self.pid = None  # process id
         self.stdout = []  # multi-line standard output
         self.stderr = []  # multi-line standard error
         self.set_status(INITIALIZED)  # what state the job is in

@@ -1,4 +1,7 @@
+import logging
+
 import eva.job
+import eva.exceptions
 
 
 class BaseAdapter(object):
@@ -6,150 +9,68 @@ class BaseAdapter(object):
     Adapters contain all the information and configuration needed to translate
     a Productstatus event into job execution.
     """
+    REQUIRED_CONFIG = {}
 
-    def __init__(self, id, api, environment_variables):
+    def __init__(self, environment_variables, executor, api):
         """
         @param id an identifier for the adapter; must be constant across program restart
         @param api Productstatus API object
         @param environment_variables Dictionary of EVA_* environment variables
         """
-        self.id = id
+        self.executor = executor
         self.api = api
         self.env = environment_variables
+        self.validate_configuration()
 
-    def match_event(self, event, resource):
+    def process_event(self, event, resource):
         """
-        @brief Check if the event and resource fits this adapter.
+        @brief Check if the Event and Resource fits this adapter, and execute any commands.
         @param event The message sent by the Productstatus server.
         @param resource The Productstatus resource referred to by the event.
-        @returns a (possibly empty) list of jobs to be executed in parallel
         """
         raise NotImplementedError()
 
-    def match_timeout(self):
+    def execute(self, job):
         """
-        @brief Called regularly when no events are received.
-        @returns a (possibly empty) list of jobs to be executed in parallel
+        @brief Execute a job with the assigned Executor.
         """
-        raise NotImplementedError()
+        return self.executor.execute(job)
 
-    def finished_jobs(self, jobs):
+    def validate_configuration(self):
         """
-        @brief Called when one or more jobs have finished.
-        @param jobs list of finished jobs
-        @returns a (possibly empty) list of jobs to be executed in parallel
+        @brief Throw an exception if all required environment variables are not set.
         """
-        raise NotImplementedError()
-
-    def set_state(self, state):
-        """
-        @brief Restore state of the adapter from serialization
-        @param state state from serialization; might be None when starting up
-        """
-        raise NotImplementedError()
-
-    def get_state(self):
-        """
-        @brief Get current state of the adapter for serialization
-        @returns state for serialization
-        """
-        raise NotImplementedError()
+        for key, helptext in self.REQUIRED_CONFIG.iteritems():
+            if key not in self.env:
+                error = 'Missing required environment variable %s (%s)' % (key, helptext)
+                raise eva.exceptions.MissingConfigurationException(error)
 
 
 class NullAdapter(BaseAdapter):
     """
-    An adapter that matches nothing.
+    An adapter that matches nothing and does nothing.
     """
 
-    def __init__(self, *args):
-        super(NullAdapter, self).__init__("NullAdapter", *args)
-
-    def match_event(self, event, resource):
-        return []
-
-    def match_timeout(self):
-        return []
-
-    def finished_jobs(self, jobs):
-        return []
-
-    def set_state(self, state):
-        pass
-
-    def get_state(self):
-        return None
+    def process_event(self, *args, **kwargs):
+        logging.info('NullAdapter has successfully sent the event to /dev/null')
 
 
-class JobQueueAdapter(BaseAdapter):
-    """
-    An adapter with a job queue.
-    """
-
-    def __init__(self, *args):
-        super(JobQueueAdapter, self).__init__(*args)
-        self.job_queue = []
-
-    def set_state(self, state):
-        """
-        @brief Restore job queue
-        @param state job queue from serialization
-        """
-        if state is None:
-            self.job_queue = []
-        else:
-            self.job_queue = state
-
-    def get_state(self):
-        """
-        @brief Serialize job queue
-        @returns job queue for serialization
-        """
-        return self.job_queue
-
-    def enqueue_jobs(self, jobs):
-        """
-        Add a list of jobs to the job queue.
-        @param jobs jobs to enqueue
-        @returns jobs if the job queue was empty, else None
-        """
-        if len(jobs) == 0:
-            return []
-        self.job_queue.append(jobs)
-        if len(self.job_queue) == 1:
-            return jobs
-        else:
-            return []
-
-    def finished_jobs(self, jobs):
-        """
-        Remove finished jobs from the job queue.
-        @param jobs finished jobs
-        @returns next queue element if all jobs in the first element have finished
-        """
-        for job in jobs:
-            self.job_queue[0].remove(job)
-        if len(self.job_queue[0]) > 0:
-            return []
-        del self.job_queue[0]
-        if len(self.job_queue) == 0:
-            return []
-        else:
-            return self.job_queue[0]
-
-
-class TestDownloadAdapter(JobQueueAdapter):
+class DownloadAdapter(BaseAdapter):
     """
     An adapter that downloads any posted DataInstance using wget.
     """
+    REQUIRED_CONFIG = {
+        'EVA_DOWNLOAD_DESTINATION': 'Where to download files',
+    }
 
-    def __init__(self, *args):
-        super(TestDownloadAdapter, self).__init__("TestDownloadAdapter", *args)
-
-    def match_event(self, event, resource):
+    def process_event(self, event, resource):
         if event.resource != 'datainstance':
-            return []
+            logging.info('Ignoring event with resource type %s', event.resource)
+            return
+        logging.info('Downloading data file %s...', resource.url)
         job = eva.job.Job()
-        job.command = """#!/bin/bash -x
+        job.command = """
+        set -ex
         echo "Running on host: `hostname`"
         echo "Working directory: `pwd`"
         cd %(destination)s
@@ -159,9 +80,6 @@ class TestDownloadAdapter(JobQueueAdapter):
         echo "Finished."
         """ % {
             'url': resource.url,
-            'destination': self.env['EVA_TEST_DOWNLOAD_DESTINATION'],
+            'destination': self.env['EVA_DOWNLOAD_DESTINATION'],
         }
-        return self.enqueue_job(job)
-
-    def match_timeout(self):
-        return []
+        self.execute(job)
