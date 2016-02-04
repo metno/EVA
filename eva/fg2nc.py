@@ -76,7 +76,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         productinstance = self.get_or_post_productinstance_resource(job_data)
         data = self.get_or_post_data_resource(productinstance, job_data)
         datainstance = self.post_datainstance_resource(data, job_data)
-        logging.info("%s: registered datainstance %s", self.id, datainstance)
+        logging.info("registered datainstance %s", datainstance)
 
     def get_productstatus_dataformat(self, file_type):
         """
@@ -94,7 +94,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         return resource
 
     def get_productstatus_product(self):
-        output_product_uuid = self.get_env('OUTPUT_PRODUCT_UUID')
+        output_product_uuid = self.env['EVA_FG2NC_OUTPUT_PRODUCT_UUID']
         return self.api.product[output_product_uuid]
 
     def get_or_post_productinstance_resource(self, job_data):
@@ -133,7 +133,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         resource.data = data
         resource.expires = job_data['expires']
         resource.format = self.get_productstatus_dataformat("NetCDF")
-        resource.servicebackend = self.api.servicebackend[self.get_env('OUTPUT_SERVICE_BACKEND_UUID')]
-        resource.url = self.get_env('OUTPUT_BASE_URL') + job_data['nc_filename']
+        resource.servicebackend = self.api.servicebackend[self.env['EVA_FG2NC_OUTPUT_SERVICE_BACKEND_UUID']]
+        resource.url = self.env['EVA_FG2NC_OUTPUT_BASE_URL'] + job_data['nc_filename']
         resource.save()
         return resource
