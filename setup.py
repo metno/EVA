@@ -13,7 +13,7 @@ config = {
     'install_requires': [
         'nose==1.3.7',
         'python-dateutil==2.4.2',
-        'productstatus-client==3.1.3',
+        'productstatus-client==3.1.4',
     ],
     'packages': [],
     'scripts': [],

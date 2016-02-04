@@ -1,7 +1,6 @@
 import os
 import sys
 import traceback
-import ConfigParser
 import logging
 import logging.config
 
@@ -74,13 +73,11 @@ if __name__ == "__main__":
 
         logging.info('Starting EVA: the EVent Adapter.')
 
-        config_parser = ConfigParser.SafeConfigParser()
-        config_parser.read(arg['log_config'])
-
         productstatus_api = productstatus.api.Api(arg['productstatus_url'],
                                                   username=arg['productstatus_username'],
                                                   api_key=arg['productstatus_api_key'],
-                                                  verify_ssl=arg['productstatus_verify_ssl'])
+                                                  verify_ssl=arg['productstatus_verify_ssl'],
+                                                  timeout=10)
 
         event_listener = productstatus.event.Listener(arg['productstatus_event_socket'])
 
@@ -99,7 +96,7 @@ if __name__ == "__main__":
         logging.info('Using adapter: %s' % adapter.__class__)
 
     except eva.exceptions.MissingConfigurationException, e:
-        logging.critical(e)
+        logging.info(unicode(e))
         logging.info('Shutting down because of missing configuration.')
         sys.exit(1)
 

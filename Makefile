@@ -1,4 +1,4 @@
 .PHONY: docker
 
 docker:
-	docker build -t metno/eva .
+	docker build --no-cache --tag metno/eva .
