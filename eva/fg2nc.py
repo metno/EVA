@@ -7,13 +7,15 @@ import eva.adapter
 
 class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
     REQUIRED_CONFIG = {
+        'EVA_FG2NC_INPUT_DATA_FORMAT_UUID': 'Productstatus data format UUID to filter by',
         'EVA_FG2NC_INPUT_PRODUCT_UUID': 'Productstatus Product UUID to process events for',
-        'EVA_FG2NC_LIB': 'Path to .../EVA-adapter-support/FimexGribNetcdfAdapter',
+        'EVA_FG2NC_INPUT_SERVICE_BACKEND_UUID': 'Productstatus service backend UUID to filter by',
+        'EVA_FG2NC_LIB': 'Path to .../eva-adapter-support/FimexGRIB2NetCDFAdapter',
         'EVA_FG2NC_OUTPUT_BASE_URL': 'Where to place the complete processed file',
+        'EVA_FG2NC_OUTPUT_PATTERN': 'strftime pattern for NetCDF output filename',
         'EVA_FG2NC_OUTPUT_PRODUCT_UUID': 'Productstatus Product UUID for the finished product',
         'EVA_FG2NC_OUTPUT_SERVICE_BACKEND_UUID': 'Productstatus Service Backend UUID for the position of the finished product',
         'EVA_FG2NC_TEMPLATEDIR': 'Path to the NetCDF template files required for this conversion',
-        'EVA_FG2NC_OUTPUT_PATTERN': 'strftime pattern for NetCDF output filename',
     }
 
     def process_event(self, event, resource):
@@ -21,15 +23,22 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
             logging.info('Event is not of type DataInstance, ignoring.')
             return
 
-        # FIXME: should have retry_n(...) or at least throw a RetryException
-        product_id = resource.data.productinstance.product.id
-
-        expected_product_id = self.env['EVA_FG2NC_INPUT_PRODUCT_UUID']
-        if product_id != expected_product_id:
+        # FIXME: Productstatus lookups should have retry_n(...) or at least throw a RetryException
+        if resource.data.productinstance.product.id != self.env['EVA_FG2NC_INPUT_PRODUCT_UUID']:
             logging.info('DataInstance Product UUID does not match configured value, ignoring.')
             return
 
-        logging.info('DataInstance Product UUID matches configuration.')
+        # FIXME
+        if resource.format.id != self.env['EVA_FG2NC_INPUT_DATA_FORMAT_UUID']:
+            logging.info('Data format %s does not match configured value, ignoring.', resource.format.name)
+            return
+
+        # FIXME
+        if resource.servicebackend.id != self.env['EVA_FG2NC_INPUT_SERVICE_BACKEND_UUID']:
+            logging.info('Service backend %s does not match configured value, ignoring.', resource.servicebackend.name)
+            return
+
+        logging.info('DataInstance matches configuration.')
 
         logging.info('Generating processing job.')
         job = self.create_job(event, resource)
