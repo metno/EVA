@@ -13,6 +13,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         'EVA_FG2NC_OUTPUT_PRODUCT_UUID': 'Productstatus Product UUID for the finished product',
         'EVA_FG2NC_OUTPUT_SERVICE_BACKEND_UUID': 'Productstatus Service Backend UUID for the position of the finished product',
         'EVA_FG2NC_TEMPLATEDIR': 'Path to the NetCDF template files required for this conversion',
+        'EVA_FG2NC_OUTPUT_PATTERN': 'strftime pattern for NetCDF output filename',
     }
 
     def process_event(self, event, resource):
@@ -38,45 +39,55 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
 
         if job.exit_code == 0:
             logging.info('Output file generated successfully, registering new DataInstance...')
-            self.register_output(job.data)
+            self.register_output(job)
+
+    def url_to_filename(self, url):
+        """
+        @brief Convert a file://... URL to a path name. Raises an exception if
+        the URL does not start with file://.
+        """
+        start = 'file://'
+        if not url.startswith(start):
+            raise RuntimeError('Expected an URL starting with %s, got %s instead' % (start, url))
+        return url[len(start):]
 
     def create_job(self, event, datainstance):
         reftime = datainstance.data.productinstance.reference_time
 
         job = eva.job.Job()
-        job_data = {
+        job.data = {
             'reftime': reftime,
             'version': datainstance.data.productinstance.version,
             'time_period_begin': datainstance.data.time_period_begin,
             'time_period_end': datainstance.data.time_period_end,
             'expires': datainstance.expires,
+            'filename': reftime.strftime(self.env['EVA_FG2NC_OUTPUT_PATTERN']),
         }
 
         params = {
-            'url': datainstance.url,
-            'gribfile': (datainstance.id + '.grib'),
+            'gribfile': self.url_to_filename(datainstance.url),
             'reftime': reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
             'lib_fg2nc': self.env['EVA_FG2NC_LIB'],
             'templatedir': self.env['EVA_FG2NC_TEMPLATEDIR'],
+            'destfile': os.path.join(self.env['EVA_FG2NC_OUTPUT_DESTINATION'], job.data['filename'])
         }
 
-        with open(os.path.join(params['templatedir'], 'pattern.nc'), 'r') as nc_pattern:
-            job_data['nc_filename'] = reftime.strftime(nc_pattern.readline().strip())
-
-        job.command = """
-        set -e
-        cd "{lib_fg2nc}"
-        ./evaFimexFillNcFromGrib "{url}" "{gribfile}" "{reftime}" "{templatedir}"
+        job.command = """#!/bin/bash
+        set -ex
+        {lib_fg2nc}/grib2nc \
+            --input "{gribfile}" \
+            --output "{destfile}" \
+            --reference_time "{reftime}" \
+            --template_directory "{templatedir}"
         """.format(**params)
-        job.data = job_data
 
         return job
 
-    def register_output(self, job_data):
-        productinstance = self.get_or_post_productinstance_resource(job_data)
-        data = self.get_or_post_data_resource(productinstance, job_data)
-        datainstance = self.post_datainstance_resource(data, job_data)
-        logging.info("registered datainstance %s", datainstance)
+    def register_output(self, job):
+        productinstance = self.get_or_post_productinstance_resource(job)
+        data = self.get_or_post_data_resource(productinstance, job)
+        datainstance = self.post_datainstance_resource(data, job)
+        logging.info("Registered DataInstance: %s", datainstance)
 
     def get_productstatus_dataformat(self, file_type):
         """
@@ -97,7 +108,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         output_product_uuid = self.env['EVA_FG2NC_OUTPUT_PRODUCT_UUID']
         return self.api.product[output_product_uuid]
 
-    def get_or_post_productinstance_resource(self, job_data):
+    def get_or_post_productinstance_resource(self, job):
         """
         Return a matching ProductInstance resource according to Product, reference time and version.
         """
@@ -105,12 +116,12 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         product = self.get_productstatus_product()
         parameters = {
             'product': product,
-            'reference_time': job_data['reftime'],
-            'version': job_data['version'],  # FIXME is this the correct version?
+            'reference_time': job.data['reftime'],
+            'version': job.data['version'],  # FIXME is this the correct version?
         }
         return self.api.productinstance.find_or_create(parameters)
 
-    def get_or_post_data_resource(self, productinstance, job_data):
+    def get_or_post_data_resource(self, productinstance, job):
         """
         Return a matching Data resource according to ProductInstance and data file
         begin/end times.
@@ -118,12 +129,12 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         # FIXME mostly copied from ecreceive.dataset
         parameters = {
             'productinstance': productinstance,
-            'time_period_begin': job_data['time_period_begin'],
-            'time_period_end': job_data['time_period_end'],
+            'time_period_begin': job.data['time_period_begin'],
+            'time_period_end': job.data['time_period_end'],
         }
         return self.api.data.find_or_create(parameters)
 
-    def post_datainstance_resource(self, data, job_data):
+    def post_datainstance_resource(self, data, job):
         """
         Create a DataInstance resource at the Productstatus server, referring to the
         given data set.
@@ -131,9 +142,9 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         # FIXME mostly copied from ecreceive.dataset
         resource = self.api.datainstance.create()
         resource.data = data
-        resource.expires = job_data['expires']
+        resource.expires = job.data['expires']
         resource.format = self.get_productstatus_dataformat("NetCDF")
         resource.servicebackend = self.api.servicebackend[self.env['EVA_FG2NC_OUTPUT_SERVICE_BACKEND_UUID']]
-        resource.url = self.env['EVA_FG2NC_OUTPUT_BASE_URL'] + job_data['nc_filename']
+        resource.url = os.path.join(self.env['EVA_FG2NC_OUTPUT_BASE_URL'], job.data['filename'])
         resource.save()
         return resource
