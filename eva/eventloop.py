@@ -33,6 +33,10 @@ class Eventloop(object):
 
     def process_all_in_product_instance(self, product_instance):
         instances = self.productstatus_api.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
-        logging.info('Processing %d DataInstance resources that are children of ProductInstance %s', instances.count(), product_instance)
+        index = 1
+        count = instances.count()
+        logging.info('Processing %d DataInstance resources that are children of ProductInstance %s', count, product_instance)
         for resource in instances:
+            logging.info('[%d/%d] Start processing resource: %s', index, count, resource)
             self.adapter.process_resource(resource)
+            index += 1
