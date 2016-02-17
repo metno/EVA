@@ -18,9 +18,9 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         'EVA_FG2NC_TEMPLATEDIR': 'Path to the NetCDF template files required for this conversion',
     }
 
-    def process_event(self, event, resource):
-        if event.resource != 'datainstance' or not resource:
-            logging.info('Event is not of type DataInstance, ignoring.')
+    def process_resource(self, resource):
+        if resource._collection._resource_name != 'datainstance':
+            logging.info('Resource is not of type DataInstance, ignoring.')
             return
 
         # FIXME: Productstatus lookups should have retry_n(...) or at least throw a RetryException
@@ -41,7 +41,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         logging.info('DataInstance matches configuration.')
 
         logging.info('Generating processing job.')
-        job = self.create_job(event, resource)
+        job = self.create_job(resource)
         logging.info('Finished job generation, now executing.')
 
         self.executor.execute(job)
@@ -60,7 +60,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
             raise RuntimeError('Expected an URL starting with %s, got %s instead' % (start, url))
         return url[len(start):]
 
-    def create_job(self, event, datainstance):
+    def create_job(self, datainstance):
         reftime = datainstance.data.productinstance.reference_time
 
         job = eva.job.Job()

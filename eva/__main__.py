@@ -3,6 +3,7 @@ import sys
 import traceback
 import logging
 import logging.config
+import argparse
 
 import productstatus
 import productstatus.api
@@ -61,6 +62,14 @@ if __name__ == "__main__":
     event_listener = None
     environment_variables = None
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--oneshot',
+                        action='store',
+                        type=unicode,
+                        required=False,
+                        help='Process all DataInstance resources belonging to a specific ProductInstance')
+    args = parser.parse_args()
+
     try:
         arg = build_argument_list()
 
@@ -106,7 +115,11 @@ if __name__ == "__main__":
                                           adapter,
                                           environment_variables
                                           )
-        evaloop()
+        if args.oneshot:
+            product_instance = productstatus_api.productinstance[args.oneshot]
+            evaloop.process_all_in_product_instance(product_instance)
+        else:
+            evaloop()
     except KeyboardInterrupt:
         pass
     except Exception, e:

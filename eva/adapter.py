@@ -9,7 +9,7 @@ import eva.exceptions
 class BaseAdapter(object):
     """
     Adapters contain all the information and configuration needed to translate
-    a Productstatus event into job execution.
+    a Productstatus resource into job execution.
     """
     REQUIRED_CONFIG = {}
     OPTIONAL_CONFIG = {}
@@ -26,11 +26,10 @@ class BaseAdapter(object):
         self.validate_configuration()
         self.init()
 
-    def process_event(self, event, resource):
+    def process_resource(self, resource):
         """
-        @brief Check if the Event and Resource fits this adapter, and execute
-        any commands. This function must be overridden by subclasses.
-        @param event The message sent by the Productstatus server.
+        @brief Check if the Resource fits this adapter, and execute any
+        commands. This function must be overridden by subclasses.
         @param resource The Productstatus resource referred to by the event.
         """
         raise NotImplementedError()
@@ -79,8 +78,8 @@ class NullAdapter(BaseAdapter):
     An adapter that matches nothing and does nothing.
     """
 
-    def process_event(self, *args, **kwargs):
-        logging.info('NullAdapter has successfully sent the event to /dev/null')
+    def process_resource(self, *args, **kwargs):
+        logging.info('NullAdapter has successfully sent the resource to /dev/null')
 
 
 class DownloadAdapter(BaseAdapter):
@@ -144,12 +143,12 @@ class DownloadAdapter(BaseAdapter):
             (self.env['EVA_DOWNLOAD_OUTPUT_BASE_URL'] is not None)
         )
 
-    def event_matches(self, event, resource):
+    def resource_matches(self, resource):
         """
-        @brief Check that the event matches the configured processing criteria.
+        @brief Check that the resource matches the configured processing criteria.
         """
-        if event.resource != 'datainstance':
-            logging.info('Event is not of resource type DataInstance, ignoring.')
+        if resource._collection._resource_name != 'datainstance':
+            logging.info('Resource is not of type DataInstance, ignoring.')
         elif resource.data.productinstance.product.id not in self.env['EVA_DOWNLOAD_PRODUCT_UUID']:
             logging.info('DataInstance belongs to Product "%s", ignoring.',
                          resource.data.productinstance.product.name)
@@ -163,11 +162,11 @@ class DownloadAdapter(BaseAdapter):
             return True
         return False
 
-    def process_event(self, event, resource):
+    def process_resource(self, resource):
         """
         @brief Check if the file matches, download it, and post to Productstatus.
         """
-        if not self.event_matches(event, resource):
+        if not self.resource_matches(resource):
             return
         logging.info('DataInstance matches configured criteria, will download from %s...', resource.url)
 
