@@ -82,7 +82,6 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         }
 
         job.command = """#!/bin/bash
-        set -ex
         {lib_fg2nc}/grib2nc \
             --input "{gribfile}" \
             --output "{destfile}" \
