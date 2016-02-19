@@ -3,16 +3,18 @@ import tempfile
 import os
 import subprocess
 
+import eva
 import eva.job
 
 
-class BaseExecutor(object):
+class BaseExecutor(eva.ConfigurableObject):
     """
     @brief Abstract base class for execution engines.
     """
 
     def __init__(self, environment_variables):
         self.env = environment_variables
+        self.validate_configuration()
 
     def execute(self, job):
         """

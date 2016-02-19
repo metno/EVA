@@ -14,6 +14,7 @@ config = {
         'nose==1.3.7',
         'python-dateutil==2.4.2',
         'productstatus-client==3.1.4',
+        'paramiko==1.16.0',
     ],
     'packages': [],
     'scripts': [],

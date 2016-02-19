@@ -2,17 +2,16 @@ import logging
 import os
 import datetime
 
+import eva
 import eva.job
 import eva.exceptions
 
 
-class BaseAdapter(object):
+class BaseAdapter(eva.ConfigurableObject):
     """
     Adapters contain all the information and configuration needed to translate
     a Productstatus resource into job execution.
     """
-    REQUIRED_CONFIG = {}
-    OPTIONAL_CONFIG = {}
 
     def __init__(self, environment_variables, executor, api):
         """
@@ -56,22 +55,6 @@ class BaseAdapter(object):
             (self.env['EVA_PRODUCTSTATUS_API_KEY'] is not None)
         )
 
-    def validate_configuration(self):
-        """
-        @brief Throw an exception if all required environment variables are not set.
-        """
-        errors = 0
-        for key, helptext in self.REQUIRED_CONFIG.iteritems():
-            if key not in self.env:
-                logging.critical('Missing required environment variable %s (%s)', key, helptext)
-                errors += 1
-        for key, helptext in self.OPTIONAL_CONFIG.iteritems():
-            if key not in self.env:
-                logging.info('Optional environment variable not configured: %s (%s)', key, helptext)
-                self.env[key] = None
-        if errors > 0:
-            raise eva.exceptions.MissingConfigurationException('Missing %d required environment variables' % errors)
-
 
 class NullAdapter(BaseAdapter):
     """
@@ -80,6 +63,24 @@ class NullAdapter(BaseAdapter):
 
     def process_resource(self, *args, **kwargs):
         logging.info('NullAdapter has successfully sent the resource to /dev/null')
+
+
+class TestExecutorAdapter(BaseAdapter):
+    """
+    An adapter that matches nothing and does nothing.
+    """
+
+    def process_resource(self, resource):
+        """
+        @brief Execute a Job that echoes the URI of the received resource.
+        """
+        job = eva.job.Job()
+        job.command = """#!/bin/bash
+        echo %(url)s
+        """ % {
+            'url': resource.url,
+        }
+        self.execute(job)
 
 
 class DownloadAdapter(BaseAdapter):
