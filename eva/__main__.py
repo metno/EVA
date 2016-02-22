@@ -92,21 +92,21 @@ if __name__ == "__main__":
 
         environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith('EVA_')}
         for key, var in sorted(environment_variables.iteritems()):
-            logging.info('Environment: %s=%s' % (key, var))
+            logging.debug('Environment: %s=%s' % (key, var))
 
         executor = import_module_class(arg['executor'])(environment_variables)
-        logging.info('Using executor: %s' % executor.__class__)
+        logging.debug('Using executor: %s' % executor.__class__)
 
         adapter = import_module_class(arg['adapter'])(
             environment_variables,
             executor,
             productstatus_api,
         )
-        logging.info('Using adapter: %s' % adapter.__class__)
+        logging.debug('Using adapter: %s' % adapter.__class__)
 
     except eva.exceptions.MissingConfigurationException, e:
-        logging.info(unicode(e))
-        logging.info('Shutting down because of missing configuration.')
+        logging.critical(unicode(e))
+        logging.info('Shutting down due to missing configuration.')
         sys.exit(1)
 
     try:

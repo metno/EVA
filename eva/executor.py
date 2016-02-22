@@ -63,7 +63,7 @@ class ShellExecutor(BaseExecutor):
         script = self.create_temporary_script(job.command)
 
         # Run the script
-        logging.info("[%s] Executing job via script '%s'", job.id, script)
+        logging.debug("[%s] Executing job via script '%s'", job.id, script)
         proc = subprocess.Popen(
             ['sh', script],
             stdout=subprocess.PIPE,

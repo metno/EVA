@@ -20,34 +20,34 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
 
     def process_resource(self, resource):
         if resource._collection._resource_name != 'datainstance':
-            logging.info('Resource is not of type DataInstance, ignoring.')
+            logging.debug('Resource is not of type DataInstance, ignoring.')
             return
 
         # FIXME: Productstatus lookups should have retry_n(...) or at least throw a RetryException
         if resource.data.productinstance.product.id != self.env['EVA_FG2NC_INPUT_PRODUCT_UUID']:
-            logging.info('DataInstance Product UUID does not match configured value, ignoring.')
+            logging.debug('DataInstance Product UUID does not match configured value, ignoring.')
             return
 
         # FIXME
         if resource.format.id != self.env['EVA_FG2NC_INPUT_DATA_FORMAT_UUID']:
-            logging.info('Data format %s does not match configured value, ignoring.', resource.format.name)
+            logging.debug('Data format %s does not match configured value, ignoring.', resource.format.name)
             return
 
         # FIXME
         if resource.servicebackend.id != self.env['EVA_FG2NC_INPUT_SERVICE_BACKEND_UUID']:
-            logging.info('Service backend %s does not match configured value, ignoring.', resource.servicebackend.name)
+            logging.debug('Service backend %s does not match configured value, ignoring.', resource.servicebackend.name)
             return
 
-        logging.info('DataInstance matches configuration.')
+        logging.debug('DataInstance matches configuration.')
 
-        logging.info('Generating processing job.')
+        logging.debug('Generating processing job.')
         job = self.create_job(resource)
-        logging.info('Finished job generation, now executing.')
+        logging.debug('Finished job generation, now executing.')
 
         self.executor.execute(job)
 
         if job.exit_code == 0:
-            logging.info('Output file generated successfully, registering new DataInstance...')
+            logging.debug('Output file generated successfully, registering new DataInstance...')
             self.register_output(job)
 
     def url_to_filename(self, url):
@@ -109,7 +109,7 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
                 "Data format '%s' was not found on the Productstatus server" % file_type
             )
         resource = qs[0]
-        logging.info('%s: Productstatus dataformat for %s' % (resource, file_type))
+        logging.debug('%s: Productstatus dataformat for %s' % (resource, file_type))
         return resource
 
     def get_productstatus_product(self):
