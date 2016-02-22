@@ -21,22 +21,22 @@ class Eventloop(object):
         """
         @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
         """
-        logging.info('Starting main loop.')
+        logging.debug('Starting main loop.')
         while True:
-            logging.info('Waiting for next Productstatus event...')
+            logging.debug('Waiting for next Productstatus event...')
             event = self.event_listener.get_next_event()
             logging.info('Received Productstatus event for resource URI %s' % event.uri)
             resource = self.productstatus_api[event.uri]
-            logging.info('Start processing event.')
+            logging.debug('Start processing event.')
             self.adapter.process_resource(resource)
-            logging.info('Finished processing event.')
+            logging.debug('Finished processing event.')
 
     def process_all_in_product_instance(self, product_instance):
         instances = self.productstatus_api.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
         index = 1
         count = instances.count()
-        logging.info('Processing %d DataInstance resources that are children of ProductInstance %s', count, product_instance)
+        logging.debug('Processing %d DataInstance resources that are children of ProductInstance %s', count, product_instance)
         for resource in instances:
-            logging.info('[%d/%d] Start processing resource: %s', index, count, resource)
+            logging.debug('[%d/%d] Start processing resource: %s', index, count, resource)
             self.adapter.process_resource(resource)
             index += 1
