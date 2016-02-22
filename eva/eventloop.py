@@ -38,7 +38,9 @@ class Eventloop(object):
         return eva.retry_n(func,
                            args=args,
                            kwargs=kwargs,
-                           exceptions=(eva.exceptions.RetryException,),
+                           exceptions=(eva.exceptions.RetryException,
+                                       productstatus.exceptions.ServiceUnavailableException,
+                                       ),
                            give_up=0)
 
     def __call__(self):
