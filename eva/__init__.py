@@ -32,7 +32,7 @@ class ConfigurableObject(object):
                 errors += 1
         for key, helptext in self.OPTIONAL_CONFIG.iteritems():
             if key not in self.env:
-                logging.info('Optional environment variable not configured: %s (%s)', key, helptext)
+                logging.debug('Optional environment variable not configured: %s (%s)', key, helptext)
                 self.env[key] = None
         if errors > 0:
             raise eva.exceptions.MissingConfigurationException('Missing %d required environment variables' % errors)

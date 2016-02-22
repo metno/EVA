@@ -132,7 +132,7 @@ class DownloadAdapter(BaseAdapter):
                 raise eva.exceptions.InvalidConfigurationException('EVA_DOWNLOAD_INPUT_SERVICE_BACKEND_UUID and EVA_DOWNLOAD_OUTPUT_SERVICE_BACKEND_UUID cannot be equal as that will result in an endless loop.')
         else:
             self.post_to_productstatus = False
-            logging.info('Will not post any data to Productstatus.')
+            logging.debug('Will not post any data to Productstatus.')
 
     def has_valid_output_config(self):
         """
@@ -149,15 +149,15 @@ class DownloadAdapter(BaseAdapter):
         @brief Check that the resource matches the configured processing criteria.
         """
         if resource._collection._resource_name != 'datainstance':
-            logging.info('Resource is not of type DataInstance, ignoring.')
+            logging.debug('Resource is not of type DataInstance, ignoring.')
         elif resource.data.productinstance.product.id not in self.env['EVA_DOWNLOAD_PRODUCT_UUID']:
-            logging.info('DataInstance belongs to Product "%s", ignoring.',
+            logging.debug('DataInstance belongs to Product "%s", ignoring.',
                          resource.data.productinstance.product.name)
         elif resource.servicebackend.id not in self.env['EVA_DOWNLOAD_INPUT_SERVICE_BACKEND_UUID']:
-            logging.info('DataInstance is hosted on service backend %s, ignoring.',
+            logging.debug('DataInstance is hosted on service backend %s, ignoring.',
                          resource.servicebackend.name)
         elif resource.format.id not in self.env['EVA_DOWNLOAD_FORMAT_UUID']:
-            logging.info('DataInstance file type is %s, ignoring.',
+            logging.debug('DataInstance file type is %s, ignoring.',
                          resource.format.name)
         else:
             return True
@@ -174,7 +174,6 @@ class DownloadAdapter(BaseAdapter):
         filename = os.path.basename(resource.url)
         job = eva.job.Job()
         job.command = """#!/bin/bash
-        set -ex
         wget --no-verbose --output-document='%(destination)s' %(url)s
         """ % {
             'url': resource.url,
@@ -183,18 +182,19 @@ class DownloadAdapter(BaseAdapter):
         self.execute(job)
 
         if job.status != eva.job.COMPLETE:
-            logging.error("The download failed. That's probably a bad sign.")
-            return
+            raise eva.exceptions.RetryException("Download of '%s' failed." % resource.url)
 
         if not self.post_to_productstatus:
             return
 
-        logging.info('Creating a new DataInstance on the Productstatus server...')
+        logging.debug('Creating a new DataInstance on the Productstatus server...')
         datainstance = self.api.datainstance.create()
         datainstance.data = resource.data
         datainstance.format = resource.format
         datainstance.expires = datetime.datetime.now() + self.lifetime
         datainstance.servicebackend = self.api.servicebackend[self.env['EVA_DOWNLOAD_OUTPUT_SERVICE_BACKEND_UUID']]
         datainstance.url = os.path.join(self.env['EVA_DOWNLOAD_OUTPUT_BASE_URL'], filename)
-        datainstance.save()
+        eva.retry_n(datainstance.save,
+                    exceptions=(productstatus.exceptions.ServiceUnavailableException,),
+                    give_up=0)
         logging.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
