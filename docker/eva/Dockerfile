@@ -1,6 +1,6 @@
 # Dockerfile for EVA.
 
-FROM metno/eva-base:14.04
+FROM metno/eva-base
 RUN git clone https://github.com/metno/eva.git /opt/eva
 RUN git clone https://gitlab.met.no/it-geo/eva-adapter-support.git /opt/eva-adapter-support
 RUN pip install -e /opt/eva/
