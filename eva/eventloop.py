@@ -1,6 +1,7 @@
 import logging
 
 import eva
+import productstatus.exceptions
 
 
 class Eventloop(object):
@@ -19,14 +20,13 @@ class Eventloop(object):
         self.adapter = adapter
         self.env = environment_variables
 
-    def iteration(self):
+    def iteration(self, event):
         """
         @brief A single main loop iteration.
         """
-        logging.debug('Waiting for next Productstatus event...')
-        event = self.event_listener.get_next_event()
-        logging.info('Received Productstatus event for resource URI %s' % event.uri)
-        resource = self.productstatus_api[event.uri]
+        resource = eva.retry_n(lambda: self.productstatus_api[event.uri],
+                               exceptions=(productstatus.exceptions.ServiceUnavailableException,),
+                               give_up=0)
         logging.debug('Start processing event.')
         self.adapter.process_resource(resource)
         logging.debug('Finished processing event.')
@@ -47,7 +47,10 @@ class Eventloop(object):
         """
         logging.info('Ready to start processing events.')
         while True:
-            self.run_forever(self.iteration)
+            logging.debug('Waiting for next Productstatus event...')
+            event = self.event_listener.get_next_event()
+            logging.info('Received Productstatus event for resource URI %s' % event.uri)
+            self.run_forever(self.iteration, event)
 
     def process_all_in_product_instance(self, product_instance):
         """
