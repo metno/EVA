@@ -69,7 +69,7 @@ class NullAdapter(BaseAdapter):
 
 class TestExecutorAdapter(BaseAdapter):
     """
-    An adapter that matches nothing and does nothing.
+    An adapter that echoes the URL of the received DataInstance.
     """
 
     def process_resource(self, resource):
