@@ -6,6 +6,8 @@ import eva
 import eva.job
 import eva.exceptions
 
+import productstatus
+
 
 class BaseAdapter(eva.ConfigurableObject):
     """
