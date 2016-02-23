@@ -154,13 +154,13 @@ class DownloadAdapter(BaseAdapter):
             logging.debug('Resource is not of type DataInstance, ignoring.')
         elif resource.data.productinstance.product.id not in self.env['EVA_DOWNLOAD_PRODUCT_UUID']:
             logging.debug('DataInstance belongs to Product "%s", ignoring.',
-                         resource.data.productinstance.product.name)
+                          resource.data.productinstance.product.name)
         elif resource.servicebackend.id not in self.env['EVA_DOWNLOAD_INPUT_SERVICE_BACKEND_UUID']:
             logging.debug('DataInstance is hosted on service backend %s, ignoring.',
-                         resource.servicebackend.name)
+                          resource.servicebackend.name)
         elif resource.format.id not in self.env['EVA_DOWNLOAD_FORMAT_UUID']:
             logging.debug('DataInstance file type is %s, ignoring.',
-                         resource.format.name)
+                          resource.format.name)
         else:
             return True
         return False
