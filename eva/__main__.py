@@ -104,9 +104,9 @@ if __name__ == "__main__":
         )
         logging.debug('Using adapter: %s' % adapter.__class__)
 
-    except eva.exceptions.MissingConfigurationException, e:
+    except eva.exceptions.EvaException, e:
         logging.critical(unicode(e))
-        logging.info('Shutting down due to missing configuration.')
+        logging.info('Shutting down due to missing or invalid configuration.')
         sys.exit(1)
 
     try:

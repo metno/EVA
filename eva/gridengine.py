@@ -1,3 +1,4 @@
+import os
 import re
 import time
 import logging
@@ -42,6 +43,11 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
         'EVA_GRIDENGINE_SSH_USER': 'Username on the Grid Engine submit host',
         'EVA_GRIDENGINE_SSH_KEY_FILE': 'Path to a SSH private key used for connecting to the Grid Engine submit host',
     }
+
+    def validate_configuration(self, *args, **kwargs):
+        super(GridEngineExecutor, self).validate_configuration(*args, **kwargs)
+        if not os.access(self.env['EVA_GRIDENGINE_SSH_KEY_FILE'], os.R_OK):
+            raise eva.exceptions.InvalidConfigurationException("The SSH key '%s' is not readable!" % self.env['EVA_GRIDENGINE_SSH_KEY_FILE'])
 
     def create_job_filename(self, job, *args):
         """
