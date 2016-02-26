@@ -13,26 +13,40 @@ class ConfigurableObject(object):
 
     Variables are configured as such:
 
-        REQUIRED_CONFIG = {
-            'EVA_VARIABLE': 'Description of what this setting does',
+        CONFIG = {
+            'EVA_VARIABLE_FOO': 'Description of what this setting does',
+            'EVA_FOO_BAR': 'Helpful description of what the other setting does',
         }
+
+    Then, to use them either as required or optional variables, you may do:
+
+        REQUIRED_CONFIG = ['EVA_VARIABLE']
+        OPTIONAL_CONFIG = ['EVA_FOO_BAR']
+
     """
 
-    REQUIRED_CONFIG = {}
-    OPTIONAL_CONFIG = {}
+    # @brief Hash with available configuration variables.
+    CONFIG = {
+    }
+
+    # @brief List of required configuration variables.
+    REQUIRED_CONFIG = []
+
+    # @brief List of optional configuration variables.
+    OPTIONAL_CONFIG = []
 
     def validate_configuration(self):
         """
         @brief Throw an exception if all required environment variables are not set.
         """
         errors = 0
-        for key, helptext in self.REQUIRED_CONFIG.iteritems():
+        for key in self.REQUIRED_CONFIG:
             if key not in self.env:
-                logging.critical('Missing required environment variable %s (%s)', key, helptext)
+                logging.critical('Missing required environment variable %s (%s)', key, self.CONFIG[key])
                 errors += 1
-        for key, helptext in self.OPTIONAL_CONFIG.iteritems():
+        for key in self.OPTIONAL_CONFIG:
             if key not in self.env:
-                logging.debug('Optional environment variable not configured: %s (%s)', key, helptext)
+                logging.debug('Optional environment variable not configured: %s (%s)', key, self.CONFIG[key])
                 self.env[key] = None
         if errors > 0:
             raise eva.exceptions.MissingConfigurationException('Missing %d required environment variables' % errors)
