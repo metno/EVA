@@ -27,9 +27,7 @@ class Eventloop(object):
         resource = eva.retry_n(lambda: self.productstatus_api[event.uri],
                                exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                                give_up=0)
-        logging.debug('Start processing event.')
-        self.adapter.process_resource(resource)
-        logging.debug('Finished processing event.')
+        self.adapter.validate_and_process_resource(resource)
 
     def run_forever(self, func, *args, **kwargs):
         """
@@ -63,6 +61,6 @@ class Eventloop(object):
         count = instances.count()
         logging.debug('Processing %d DataInstance resources that are children of ProductInstance %s', count, product_instance)
         for resource in instances:
-            logging.debug('[%d/%d] Start processing resource: %s', index, count, resource)
-            self.run_forever(self.adapter.process_resource, resource)
+            logging.debug('[%d/%d] Resource: %s', index, count, resource)
+            self.run_forever(self.adapter.validate_and_process_resource, resource)
             index += 1

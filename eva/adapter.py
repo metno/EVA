@@ -85,19 +85,19 @@ class BaseAdapter(eva.ConfigurableObject):
         if resource._collection._resource_name != 'datainstance':
             logging.debug('Resource is not of type DataInstance, ignoring.')
 
-        elif self.in_array_or_empty(resource.data.productinstance.product.id, self.env['EVA_INPUT_PRODUCT_UUID']):
+        elif not self.in_array_or_empty(resource.data.productinstance.product.id, self.env['EVA_INPUT_PRODUCT_UUID']):
             logging.debug('DataInstance belongs to Product "%s", ignoring.',
                           resource.data.productinstance.product.name)
 
-        elif self.in_array_or_empty(resource.servicebackend.id, self.env['EVA_INPUT_SERVICE_BACKEND_UUID']):
+        elif not self.in_array_or_empty(resource.servicebackend.id, self.env['EVA_INPUT_SERVICE_BACKEND_UUID']):
             logging.debug('DataInstance is hosted on service backend %s, ignoring.',
                           resource.servicebackend.name)
 
-        elif self.in_array_or_empty(resource.format.id, self.env['EVA_INPUT_DATA_FORMAT_UUID']):
+        elif not self.in_array_or_empty(resource.format.id, self.env['EVA_INPUT_DATA_FORMAT_UUID']):
             logging.debug('DataInstance file type is %s, ignoring.',
                           resource.format.name)
         else:
-            logging.debug('DataInstance matches all configured criteria, will download from %s...', resource.url)
+            logging.debug('DataInstance matches all configured criteria.')
             return True
 
         return False

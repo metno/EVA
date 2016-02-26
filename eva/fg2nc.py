@@ -34,30 +34,30 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         """
         job = eva.job.Job()
 
-        reftime = datainstance.data.productinstance.reference_time
+        reftime = resource.data.productinstance.reference_time
 
         job.data = {
             'reftime': reftime,
-            'version': datainstance.data.productinstance.version,
-            'time_period_begin': datainstance.data.time_period_begin,
-            'time_period_end': datainstance.data.time_period_end,
-            'expires': datainstance.expires,
+            'version': resource.data.productinstance.version,
+            'time_period_begin': resource.data.time_period_begin,
+            'time_period_end': resource.data.time_period_end,
+            'expires': resource.expires,
             'filename': reftime.strftime(self.env['EVA_OUTPUT_FILENAME_PATTERN']),
         }
 
         job.command = """#!/bin/bash
-        {lib_fg2nc}/grib2nc \
-            --input "{gribfile}" \
-            --output "{destfile}" \
-            --reference_time "{reftime}" \
-            --template_directory "{templatedir}"
-        """.format({
-            'gribfile': self.url_to_filename(datainstance.url),
-            'reftime': reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
-            'lib_fg2nc': self.env['EVA_FG2NC_LIB'],
-            'templatedir': self.env['EVA_FG2NC_TEMPLATEDIR'],
-            'destfile': job.data['filename'],
-        })
+            {lib_fg2nc}/grib2nc \
+                --input "{gribfile}" \
+                --output "{destfile}" \
+                --reference_time "{reftime}" \
+                --template_directory "{templatedir}"
+        """.format(
+            gribfile=self.url_to_filename(resource.url),
+            reftime=reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
+            lib_fg2nc=self.env['EVA_FG2NC_LIB'],
+            templatedir=self.env['EVA_FG2NC_TEMPLATEDIR'],
+            destfile=job.data['filename'],
+        )
 
         self.executor.execute(job)
 
@@ -102,8 +102,10 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         return resource
 
     def get_productstatus_product(self):
-        output_product_uuid = self.env['EVA_OUTPUT_PRODUCT_UUID']
-        return self.api.product[output_product_uuid]
+        """
+        @returns The Productstatus output Product resource.
+        """
+        return self.api.product[self.env['EVA_OUTPUT_PRODUCT_UUID']]
 
     def get_or_post_productinstance_resource(self, job):
         """
