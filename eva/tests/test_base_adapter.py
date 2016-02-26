@@ -4,7 +4,6 @@ import productstatus
 import productstatus.api
 import productstatus.event
 
-import eva.eventloop
 import eva.adapter
 import eva.executor
 
@@ -15,8 +14,7 @@ INVALID_UUID = 'foobarba-trol-olol-olol-abcdefabcdef'
 
 class TestBaseAdapter(unittest.TestCase):
 
-    @classmethod
-    def setupClass(self):
+    def setUp(self):
         self.env = {}
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.executor = eva.executor.NullExecutor(self.env)
@@ -102,8 +100,8 @@ class TestBaseAdapter(unittest.TestCase):
 
     def test_has_productstatus_credentials(self):
         self.env = {
-            'EVA_PRODUCTSTATUS_USERNAME': 'admin',
             'EVA_PRODUCTSTATUS_API_KEY': '5bcf851f09bc65043d987910e1448781fcf4ea12',
+            'EVA_PRODUCTSTATUS_USERNAME': 'admin',
         }
         self.create_adapter()
         self.assertTrue(self.adapter.has_productstatus_credentials())
@@ -117,8 +115,8 @@ class TestBaseAdapter(unittest.TestCase):
 
     def test_require_productstatus_credentials(self):
         self.env = {
-            'EVA_PRODUCTSTATUS_USERNAME': 'admin',
             'EVA_PRODUCTSTATUS_API_KEY': '5bcf851f09bc65043d987910e1448781fcf4ea12',
+            'EVA_PRODUCTSTATUS_USERNAME': 'admin',
         }
         self.create_adapter()
         self.adapter.require_productstatus_credentials()

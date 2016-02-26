@@ -42,8 +42,8 @@ class BaseAdapter(eva.ConfigurableObject):
         @param api Productstatus API object
         @param environment_variables Dictionary of EVA_* environment variables
         """
-        self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
-        self.OPTIONAL_CONFIG += self._OPTIONAL_CONFIG
+        self.CONFIG = dict(self.CONFIG.items() + self._COMMON_ADAPTER_CONFIG.items())
+        self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
         self.executor = executor
         self.api = api
         self.env = environment_variables
@@ -224,8 +224,8 @@ class DownloadAdapter(BaseAdapter):
             self.post_to_productstatus = True
             self.require_productstatus_credentials()
             self.lifetime = datetime.timedelta(hours=int(self.env['EVA_OUTPUT_LIFETIME']))
-            if self.env['EVA_INPUT_SERVICE_BACKEND_UUID'] == self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID']:
-                raise eva.exceptions.InvalidConfigurationException('EVA_INPUT_SERVICE_BACKEND_UUID and EVA_OUTPUT_SERVICE_BACKEND_UUID cannot be equal as that will result in an endless loop.')
+            if self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID'] in self.env['EVA_INPUT_SERVICE_BACKEND_UUID']:
+                raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND_UUID cannot be present in the list of EVA_INPUT_SERVICE_BACKEND_UUID, as that will result in an endless loop.')
         else:
             self.post_to_productstatus = False
             logging.debug('Will not post any data to Productstatus.')
