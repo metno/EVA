@@ -38,13 +38,22 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
     Execute programs on Sun OpenGridEngine via an SSH connection to a submit host.
     """
 
-    REQUIRED_CONFIG = {
+    CONFIG = {
         'EVA_GRIDENGINE_SSH_HOST': 'Hostname of the Grid Engine submit host',
         'EVA_GRIDENGINE_SSH_USER': 'Username on the Grid Engine submit host',
         'EVA_GRIDENGINE_SSH_KEY_FILE': 'Path to a SSH private key used for connecting to the Grid Engine submit host',
     }
 
+    REQUIRED_CONFIG = [
+        'EVA_GRIDENGINE_SSH_HOST',
+        'EVA_GRIDENGINE_SSH_USER',
+        'EVA_GRIDENGINE_SSH_KEY_FILE',
+    ]
+
     def validate_configuration(self, *args, **kwargs):
+        """
+        @brief Make sure that the SSH key file exists.
+        """
         super(GridEngineExecutor, self).validate_configuration(*args, **kwargs)
         if not os.access(self.env['EVA_GRIDENGINE_SSH_KEY_FILE'], os.R_OK):
             raise eva.exceptions.InvalidConfigurationException("The SSH key '%s' is not readable!" % self.env['EVA_GRIDENGINE_SSH_KEY_FILE'])
@@ -71,6 +80,9 @@ class GridEngineExecutor(eva.executor.BaseExecutor):
         self.sftp_client.get_channel().settimeout(SSH_TIMEOUT)
 
     def destroy_ssh_connection(self):
+        """
+        @brief Tear down the SSH connection.
+        """
         self.ssh_client.close()
         del self.sftp_client
         del self.ssh_client
