@@ -1,6 +1,7 @@
 import logging
 import os.path
 
+import eva
 import eva.job
 import eva.adapter
 
@@ -32,6 +33,20 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
         @brief Generate a Job which converts GRIB to NetCDF using the
         eva-adapter-support library.
         """
+        job = self.create_job(resource)
+
+        self.executor.execute(job)
+
+        if job.status != eva.job.COMPLETE:
+            raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % resource.url)
+
+        logging.debug('Output file generated successfully, registering new DataInstance...')
+        self.register_output(job)
+
+    def create_job(self, resource):
+        """
+        @brief Generate a Job object from a Productstatus Resource.
+        """
         job = eva.job.Job()
 
         reftime = resource.data.productinstance.reference_time
@@ -52,30 +67,14 @@ class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
                 --reference_time "{reftime}" \
                 --template_directory "{templatedir}"
         """.format(
-            gribfile=self.url_to_filename(resource.url),
+            gribfile=eva.url_to_filename(resource.url),
             reftime=reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
             lib_fg2nc=self.env['EVA_FG2NC_LIB'],
             templatedir=self.env['EVA_FG2NC_TEMPLATEDIR'],
             destfile=job.data['filename'],
         )
 
-        self.executor.execute(job)
-
-        if job.status != eva.job.COMPLETE:
-            raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % resource.url)
-
-        logging.debug('Output file generated successfully, registering new DataInstance...')
-        self.register_output(job)
-
-    def url_to_filename(self, url):
-        """
-        @brief Convert a file://... URL to a path name. Raises an exception if
-        the URL does not start with file://.
-        """
-        start = 'file://'
-        if not url.startswith(start):
-            raise RuntimeError('Expected an URL starting with %s, got %s instead' % (start, url))
-        return url[len(start):]
+        return job
 
     def register_output(self, job):
         """

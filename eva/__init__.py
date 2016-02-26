@@ -83,3 +83,14 @@ def in_array_or_empty(id, array):
     @returns true if `id` is found in `array`, or `array` is empty.
     """
     return (len(array) == 0) or (id in array)
+
+
+def url_to_filename(url):
+    """
+    @brief Convert a file://... URL to a path name. Raises an exception if
+    the URL does not start with file://.
+    """
+    start = 'file://'
+    if not url.startswith(start):
+        raise RuntimeError('Expected an URL starting with %s, got %s instead' % (start, url))
+    return url[len(start):]

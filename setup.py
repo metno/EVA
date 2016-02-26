@@ -15,6 +15,7 @@ config = {
         'python-dateutil==2.4.2',
         'productstatus-client==3.1.4',
         'paramiko==1.16.0',
+        'mock==1.3.0',
     ],
     'packages': [],
     'scripts': [],
