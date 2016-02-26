@@ -78,7 +78,7 @@ def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warni
             time.sleep(interval)
 
 
-def in_array_or_empty(self, id, array):
+def in_array_or_empty(id, array):
     """
     @returns true if `id` is found in `array`, or `array` is empty.
     """
