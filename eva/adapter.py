@@ -27,7 +27,14 @@ class BaseAdapter(eva.ConfigurableObject):
         'EVA_OUTPUT_LIFETIME': 'Lifetime of output data instance, in hours, before it can be deleted',
         'EVA_OUTPUT_PRODUCT_UUID': 'Productstatus Product UUID for the finished product',
         'EVA_OUTPUT_SERVICE_BACKEND_UUID': 'Productstatus Service Backend UUID for the position of the finished product',
+        'EVA_PRODUCTSTATUS_API_KEY': 'Productstatus API key',
+        'EVA_PRODUCTSTATUS_USERNAME': 'Productstatus user name',
     }
+
+    _OPTIONAL_CONFIG = [
+        'EVA_PRODUCTSTATUS_API_KEY',
+        'EVA_PRODUCTSTATUS_USERNAME',
+    ]
 
     def __init__(self, environment_variables, executor, api):
         """
@@ -36,6 +43,7 @@ class BaseAdapter(eva.ConfigurableObject):
         @param environment_variables Dictionary of EVA_* environment variables
         """
         self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
+        self.OPTIONAL_CONFIG += self._OPTIONAL_CONFIG
         self.executor = executor
         self.api = api
         self.env = environment_variables
@@ -55,6 +63,8 @@ class BaseAdapter(eva.ConfigurableObject):
         for key, value in self.env.iteritems():
             if key not in self.REQUIRED_CONFIG and key not in self.OPTIONAL_CONFIG:
                 continue
+            if self.env[key] is None:
+                continue
             if uuid_input_regex.match(key):
                 self.env[key] = [x.strip() for x in self.env[key].strip().split(',')]
                 uuids = self.env[key]
@@ -71,12 +81,6 @@ class BaseAdapter(eva.ConfigurableObject):
         if errors > 0:
             raise eva.exceptions.InvalidConfigurationException('%d errors occurred during UUID normalization' % errors)
 
-    def in_array_or_empty(self, id, array):
-        """
-        @returns true if `id` is found in `array`, or `array` is empty.
-        """
-        return (len(array) == 0) or (id in array)
-
     def resource_matches_input_config(self, resource):
         """
         @brief Check that a Productstatus resource matches the configured
@@ -85,15 +89,15 @@ class BaseAdapter(eva.ConfigurableObject):
         if resource._collection._resource_name != 'datainstance':
             logging.debug('Resource is not of type DataInstance, ignoring.')
 
-        elif not self.in_array_or_empty(resource.data.productinstance.product.id, self.env['EVA_INPUT_PRODUCT_UUID']):
+        elif not eva.in_array_or_empty(resource.data.productinstance.product.id, self.env['EVA_INPUT_PRODUCT_UUID']):
             logging.debug('DataInstance belongs to Product "%s", ignoring.',
                           resource.data.productinstance.product.name)
 
-        elif not self.in_array_or_empty(resource.servicebackend.id, self.env['EVA_INPUT_SERVICE_BACKEND_UUID']):
+        elif not eva.in_array_or_empty(resource.servicebackend.id, self.env['EVA_INPUT_SERVICE_BACKEND_UUID']):
             logging.debug('DataInstance is hosted on service backend %s, ignoring.',
                           resource.servicebackend.name)
 
-        elif not self.in_array_or_empty(resource.format.id, self.env['EVA_INPUT_DATA_FORMAT_UUID']):
+        elif not eva.in_array_or_empty(resource.format.id, self.env['EVA_INPUT_DATA_FORMAT_UUID']):
             logging.debug('DataInstance file type is %s, ignoring.',
                           resource.format.name)
         else:
@@ -139,8 +143,10 @@ class BaseAdapter(eva.ConfigurableObject):
         to Productstatus, False otherwise.
         """
         return (
-            ('EVA_PRODUCTSTATUS_USERNAME' in self.env and self.env['EVA_PRODUCTSTATUS_USERNAME'] is not None) and
-            ('EVA_PRODUCTSTATUS_API_KEY' in self.env and self.env['EVA_PRODUCTSTATUS_API_KEY'] is not None)
+            ('EVA_PRODUCTSTATUS_USERNAME' in self.env) and
+            ('EVA_PRODUCTSTATUS_API_KEY' in self.env) and
+            (self.env['EVA_PRODUCTSTATUS_USERNAME'] is not None) and
+            (self.env['EVA_PRODUCTSTATUS_API_KEY'] is not None)
         )
 
     def require_productstatus_credentials(self):

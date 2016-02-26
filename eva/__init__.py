@@ -41,11 +41,11 @@ class ConfigurableObject(object):
         """
         errors = 0
         for key in self.REQUIRED_CONFIG:
-            if key not in self.env:
+            if key not in self.env or self.env[key] is None:
                 logging.critical('Missing required environment variable %s (%s)', key, self.CONFIG[key])
                 errors += 1
         for key in self.OPTIONAL_CONFIG:
-            if key not in self.env:
+            if key not in self.env or self.env[key] is None:
                 logging.debug('Optional environment variable not configured: %s (%s)', key, self.CONFIG[key])
                 self.env[key] = None
         if errors > 0:
@@ -76,3 +76,10 @@ def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warni
                 logfunc = logging.info
             logfunc('Action failed, retrying in %d seconds: %s' % (interval, e))
             time.sleep(interval)
+
+
+def in_array_or_empty(self, id, array):
+    """
+    @returns true if `id` is found in `array`, or `array` is empty.
+    """
+    return (len(array) == 0) or (id in array)
