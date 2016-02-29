@@ -14,6 +14,12 @@ import eva.adapter
 import eva.executor
 
 
+# Environment variables in this list will be censored in the log output.
+SECRET_ENVIRONMENT_VARIABLES = [
+    'EVA_PRODUCTSTATUS_API_KEY',
+]
+
+
 def import_module_class(name):
     components = name.split('.')
     modname = ('.').join(components[0:-1])
@@ -92,6 +98,8 @@ if __name__ == "__main__":
 
         environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith('EVA_')}
         for key, var in sorted(environment_variables.iteritems()):
+            if key in SECRET_ENVIRONMENT_VARIABLES:
+                var = '****CENSORED****'
             logging.debug('Environment: %s=%s' % (key, var))
 
         executor = import_module_class(arg['executor'])(environment_variables)
