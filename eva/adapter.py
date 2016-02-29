@@ -81,6 +81,18 @@ class BaseAdapter(eva.ConfigurableObject):
         if errors > 0:
             raise eva.exceptions.InvalidConfigurationException('%d errors occurred during UUID normalization' % errors)
 
+    def in_array_or_empty(self, data, env):
+        """
+        @brief Filter input events by filter list. If a filter is not defined,
+        then it is skipped and treated as matching. If a filter array is empty,
+        it is also treated as matching.
+        @returns True if `env` is not found in `self.env`, or if
+        `self.env[env]` is empty, or if `env` is found in `self.env`.
+        """
+        if env not in self.env:
+            return True
+        return eva.in_array_or_empty(data, self.env[env])
+
     def resource_matches_input_config(self, resource):
         """
         @brief Check that a Productstatus resource matches the configured
@@ -89,15 +101,15 @@ class BaseAdapter(eva.ConfigurableObject):
         if resource._collection._resource_name != 'datainstance':
             logging.debug('Resource is not of type DataInstance, ignoring.')
 
-        elif not eva.in_array_or_empty(resource.data.productinstance.product.id, self.env['EVA_INPUT_PRODUCT_UUID']):
+        elif not self.in_array_or_empty(resource.data.productinstance.product.id, 'EVA_INPUT_PRODUCT_UUID'):
             logging.debug('DataInstance belongs to Product "%s", ignoring.',
                           resource.data.productinstance.product.name)
 
-        elif not eva.in_array_or_empty(resource.servicebackend.id, self.env['EVA_INPUT_SERVICE_BACKEND_UUID']):
+        elif not self.in_array_or_empty(resource.servicebackend.id, 'EVA_INPUT_SERVICE_BACKEND_UUID'):
             logging.debug('DataInstance is hosted on service backend %s, ignoring.',
                           resource.servicebackend.name)
 
-        elif not eva.in_array_or_empty(resource.format.id, self.env['EVA_INPUT_DATA_FORMAT_UUID']):
+        elif not self.in_array_or_empty(resource.format.id, 'EVA_INPUT_DATA_FORMAT_UUID'):
             logging.debug('DataInstance file type is %s, ignoring.',
                           resource.format.name)
         else:
