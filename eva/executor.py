@@ -12,8 +12,9 @@ class BaseExecutor(eva.ConfigurableObject):
     @brief Abstract base class for execution engines.
     """
 
-    def __init__(self, environment_variables):
+    def __init__(self, environment_variables, logger):
         self.env = environment_variables
+        self.logger = logger
         self.validate_configuration()
 
     def execute(self, job):
@@ -47,7 +48,7 @@ class NullExecutor(BaseExecutor):
     """
 
     def execute(self, job):
-        logging.info("[%s] Faking job execution and setting exit code to zero.", job.id)
+        self.logger.info("[%s] Faking job execution and setting exit code to zero.", job.id)
         job.exit_code = 0
         job.stdout = []
         job.stderr = []
@@ -63,13 +64,13 @@ class ShellExecutor(BaseExecutor):
         script = self.create_temporary_script(job.command)
 
         # Run the script
-        logging.debug("[%s] Executing job via script '%s'", job.id, script)
+        self.logger.debug("[%s] Executing job via script '%s'", job.id, script)
         proc = subprocess.Popen(
             ['sh', script],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        logging.info("[%s] Script started with pid %d, waiting for process to finish...", job.id, proc.pid)
+        self.logger.info("[%s] Script started with pid %d, waiting for process to finish...", job.id, proc.pid)
         job.set_status(eva.job.STARTED)
         stdout, stderr = proc.communicate()
 
@@ -77,7 +78,7 @@ class ShellExecutor(BaseExecutor):
         job.exit_code = proc.returncode
         job.stdout = eva.executor.get_std_lines(stdout)
         job.stderr = eva.executor.get_std_lines(stderr)
-        logging.info("[%s] Script finished, exit code: %d", job.id, job.exit_code)
+        self.logger.info("[%s] Script finished, exit code: %d", job.id, job.exit_code)
         eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
 
         if job.exit_code == 0:
@@ -100,12 +101,12 @@ def log_stdout_stderr(job, stdout, stderr):
     """
     Print stdout and stderr to syslog
     """
-    logging.debug('[%s] --- Standard output ---', (job.id))
-    [logging.debug(line) for line in stdout]
-    logging.debug('[%s] --- End of standard output ---', (job.id))
-    logging.debug('[%s] --- Standard error ---', (job.id))
-    [logging.debug(line) for line in stderr]
-    logging.debug('[%s] --- End of standard error ---', (job.id))
+    self.logger.debug('[%s] --- Standard output ---', (job.id))
+    [self.logger.debug(line) for line in stdout]
+    self.logger.debug('[%s] --- End of standard output ---', (job.id))
+    self.logger.debug('[%s] --- Standard error ---', (job.id))
+    [self.logger.debug(line) for line in stderr]
+    self.logger.debug('[%s] --- End of standard error ---', (job.id))
 
 
 def strip_stdout_newlines(lines):

@@ -3,6 +3,7 @@ import datetime
 import dateutil.tz
 import mock
 import re
+import logging
 
 import productstatus
 import productstatus.api
@@ -30,10 +31,11 @@ class TestDownloadAdapter(unittest.TestCase):
             'EVA_OUTPUT_SERVICE_BACKEND_UUID': BLANK_UUID,
         }
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
-        self.executor = eva.executor.NullExecutor(self.env)
+        self.logger = logging
+        self.executor = eva.executor.NullExecutor(self.env, self.logger)
 
     def create_adapter(self):
-        self.adapter = eva.fg2nc.FimexGRIB2NetCDFAdapter(self.env, self.executor, self.productstatus_api)
+        self.adapter = eva.fg2nc.FimexGRIB2NetCDFAdapter(self.env, self.executor, self.productstatus_api, self.logger)
 
     def test_productstatus_read_only_default(self):
         """

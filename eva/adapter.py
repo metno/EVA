@@ -36,7 +36,7 @@ class BaseAdapter(eva.ConfigurableObject):
         'EVA_PRODUCTSTATUS_USERNAME',
     ]
 
-    def __init__(self, environment_variables, executor, api):
+    def __init__(self, environment_variables, executor, api, logger):
         """
         @param id an identifier for the adapter; must be constant across program restart
         @param api Productstatus API object
@@ -44,6 +44,7 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         self.CONFIG = dict(self.CONFIG.items() + self._COMMON_ADAPTER_CONFIG.items())
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
+        self.logger = logger
         self.executor = executor
         self.api = api
         self.env = environment_variables
@@ -76,7 +77,7 @@ class BaseAdapter(eva.ConfigurableObject):
                 try:
                     uuid.UUID(id)
                 except ValueError, e:
-                    logging.critical("Invalid UUID '%s' in configuration variable %s: %s" % (id, key, e))
+                    self.logger.critical("Invalid UUID '%s' in configuration variable %s: %s" % (id, key, e))
                     errors += 1
         if errors > 0:
             raise eva.exceptions.InvalidConfigurationException('%d errors occurred during UUID normalization' % errors)
@@ -99,21 +100,21 @@ class BaseAdapter(eva.ConfigurableObject):
         processing criteria.
         """
         if resource._collection._resource_name != 'datainstance':
-            logging.debug('Resource is not of type DataInstance, ignoring.')
+            self.logger.debug('Resource is not of type DataInstance, ignoring.')
 
         elif not self.in_array_or_empty(resource.data.productinstance.product.id, 'EVA_INPUT_PRODUCT_UUID'):
-            logging.debug('DataInstance belongs to Product "%s", ignoring.',
+            self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
                           resource.data.productinstance.product.name)
 
         elif not self.in_array_or_empty(resource.servicebackend.id, 'EVA_INPUT_SERVICE_BACKEND_UUID'):
-            logging.debug('DataInstance is hosted on service backend %s, ignoring.',
+            self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
                           resource.servicebackend.name)
 
         elif not self.in_array_or_empty(resource.format.id, 'EVA_INPUT_DATA_FORMAT_UUID'):
-            logging.debug('DataInstance file type is %s, ignoring.',
+            self.logger.debug('DataInstance file type is %s, ignoring.',
                           resource.format.name)
         else:
-            logging.debug('DataInstance matches all configured criteria.')
+            self.logger.debug('DataInstance matches all configured criteria.')
             return True
 
         return False
@@ -125,9 +126,9 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         if not self.resource_matches_input_config(resource):
             return
-        logging.info('Start processing resource: %s', resource)
+        self.logger.info('Start processing resource: %s', resource)
         self.process_resource(resource)
-        logging.info('Finish processing resource: %s', resource)
+        self.logger.info('Finish processing resource: %s', resource)
 
     def process_resource(self, resource):
         """
@@ -177,7 +178,7 @@ class NullAdapter(BaseAdapter):
     """
 
     def process_resource(self, *args, **kwargs):
-        logging.info('NullAdapter has successfully sent the resource to /dev/null')
+        self.logger.info('NullAdapter has successfully sent the resource to /dev/null')
 
 
 class TestExecutorAdapter(BaseAdapter):
@@ -240,7 +241,7 @@ class DownloadAdapter(BaseAdapter):
                 raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND_UUID cannot be present in the list of EVA_INPUT_SERVICE_BACKEND_UUID, as that will result in an endless loop.')
         else:
             self.post_to_productstatus = False
-            logging.debug('Will not post any data to Productstatus.')
+            self.logger.debug('Will not post any data to Productstatus.')
 
     def has_valid_output_config(self):
         """
@@ -272,7 +273,7 @@ class DownloadAdapter(BaseAdapter):
         if not self.post_to_productstatus:
             return
 
-        logging.debug('Creating a new DataInstance on the Productstatus server...')
+        self.logger.debug('Creating a new DataInstance on the Productstatus server...')
         datainstance = self.api.datainstance.create()
         datainstance.data = resource.data
         datainstance.format = resource.format
@@ -282,4 +283,4 @@ class DownloadAdapter(BaseAdapter):
         eva.retry_n(datainstance.save,
                     exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                     give_up=0)
-        logging.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
+        self.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)

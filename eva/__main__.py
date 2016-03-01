@@ -4,6 +4,7 @@ import traceback
 import logging
 import logging.config
 import argparse
+import json
 
 import productstatus
 import productstatus.api
@@ -61,6 +62,15 @@ def build_argument_list():
     return arg
 
 
+class MesosLogAdapter(logging.LoggerAdapter):
+    """
+    @brief Log extra This example adapter expects the passed in dict-like object to have a
+    'connid' key, whose value in brackets is prepended to the log message.
+    """
+    def process(self, msg, kwargs):
+        return '%s %s %s' % (self.extra['MARATHON_APP_ID'], self.extra['MESOS_TASK_ID'], msg), kwargs
+
+
 if __name__ == "__main__":
 
     adapter = None
@@ -74,6 +84,10 @@ if __name__ == "__main__":
                         type=unicode,
                         required=False,
                         help='Process all DataInstance resources belonging to a specific ProductInstance')
+    parser.add_argument('--mesos-log',
+                        action='store_true',
+                        default=False,
+                        help='Use this flag if running inside a Mesos Docker container for extra logging output')
     args = parser.parse_args()
 
     try:
@@ -86,7 +100,20 @@ if __name__ == "__main__":
                                 datefmt='%Y-%m-%dT%H:%M:%S%Z',
                                 level=logging.DEBUG)
 
-        logging.info('Starting EVA: the EVent Adapter.')
+        # Extract useful environment variables
+        environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith(('EVA_', 'MARATHON_', 'MESOS_',))}
+
+        # Test for Mesos + Marathon execution, and set appropriate logging configuration
+        logger = logging.getLogger('root')
+        if 'MARATHON_APP_ID' in environment_variables:
+            logger = MesosLogAdapter(logger, environment_variables)
+
+        logger.info('Starting EVA: the EVent Adapter.')
+
+        for key, var in sorted(environment_variables.iteritems()):
+            if key in SECRET_ENVIRONMENT_VARIABLES:
+                var = '****CENSORED****'
+            logger.debug('Environment: %s=%s' % (key, var))
 
         productstatus_api = productstatus.api.Api(arg['productstatus_url'],
                                                   username=arg['productstatus_username'],
@@ -96,32 +123,28 @@ if __name__ == "__main__":
 
         event_listener = productstatus.event.Listener(arg['productstatus_event_socket'])
 
-        environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith('EVA_')}
-        for key, var in sorted(environment_variables.iteritems()):
-            if key in SECRET_ENVIRONMENT_VARIABLES:
-                var = '****CENSORED****'
-            logging.debug('Environment: %s=%s' % (key, var))
-
-        executor = import_module_class(arg['executor'])(environment_variables)
-        logging.debug('Using executor: %s' % executor.__class__)
+        executor = import_module_class(arg['executor'])(environment_variables, logger)
+        logger.debug('Using executor: %s' % executor.__class__)
 
         adapter = import_module_class(arg['adapter'])(
             environment_variables,
             executor,
             productstatus_api,
+            logger,
         )
-        logging.debug('Using adapter: %s' % adapter.__class__)
+        logger.debug('Using adapter: %s' % adapter.__class__)
 
     except eva.exceptions.EvaException, e:
-        logging.critical(unicode(e))
-        logging.info('Shutting down due to missing or invalid configuration.')
+        logger.critical(unicode(e))
+        logger.info('Shutting down due to missing or invalid configuration.')
         sys.exit(1)
 
     try:
         evaloop = eva.eventloop.Eventloop(productstatus_api,
                                           event_listener,
                                           adapter,
-                                          environment_variables
+                                          environment_variables,
+                                          logger,
                                           )
         if args.oneshot:
             product_instance = productstatus_api.productinstance[args.oneshot]
@@ -131,13 +154,13 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     except Exception, e:
-        logging.critical("Fatal error: %s" % e)
+        logger.critical("Fatal error: %s" % e)
         exception = traceback.format_exc().split("\n")
-        logging.debug("***********************************************************")
-        logging.debug("Uncaught exception during program execution. THIS IS A BUG!")
-        logging.debug("***********************************************************")
+        logger.debug("***********************************************************")
+        logger.debug("Uncaught exception during program execution. THIS IS A BUG!")
+        logger.debug("***********************************************************")
         for line in exception:
-            logging.debug(line)
+            logger.debug(line)
         sys.exit(255)
 
-    logging.info('Shutting down EVA.')
+    logger.info('Shutting down EVA.')

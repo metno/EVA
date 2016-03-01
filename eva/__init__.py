@@ -11,6 +11,9 @@ class ConfigurableObject(object):
 
     The subclass has the responsibility of calling `validate_configuration()`.
 
+    Additionally, the subclass must have the property `logger`, which points to
+    a Python self.logger object.
+
     Variables are configured as such:
 
         CONFIG = {
@@ -42,17 +45,17 @@ class ConfigurableObject(object):
         errors = 0
         for key in self.REQUIRED_CONFIG:
             if key not in self.env or self.env[key] is None:
-                logging.critical('Missing required environment variable %s (%s)', key, self.CONFIG[key])
+                self.logger.critical('Missing required environment variable %s (%s)', key, self.CONFIG[key])
                 errors += 1
         for key in self.OPTIONAL_CONFIG:
             if key not in self.env or self.env[key] is None:
-                logging.debug('Optional environment variable not configured: %s (%s)', key, self.CONFIG[key])
+                self.logger.debug('Optional environment variable not configured: %s (%s)', key, self.CONFIG[key])
                 self.env[key] = None
         if errors > 0:
             raise eva.exceptions.MissingConfigurationException('Missing %d required environment variables' % errors)
 
 
-def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warning=1, error=3, give_up=5):
+def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warning=1, error=3, give_up=5, logger=logging):
     """
     Call 'func' and, if it throws anything listed in 'exceptions', catch it and retry again
     up to 'give_up' times. If give_up is <= 0, retry indefinitely.
@@ -66,14 +69,14 @@ def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warni
         except exceptions, e:
             tries += 1
             if give_up > 0 and tries >= give_up:
-                logging.error('Action failed %d times, giving up: %s' % (give_up, e))
+                logger.error('Action failed %d times, giving up: %s' % (give_up, e))
                 return False
             if tries >= error:
-                logfunc = logging.error
+                logfunc = logger.error
             elif tries >= warning:
-                logfunc = logging.warning
+                logfunc = logger.warning
             else:
-                logfunc = logging.info
+                logfunc = logger.info
             logfunc('Action failed, retrying in %d seconds: %s' % (interval, e))
             time.sleep(interval)
 

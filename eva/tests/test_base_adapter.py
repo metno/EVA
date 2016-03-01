@@ -1,4 +1,5 @@
 import unittest
+import logging
 
 import productstatus
 import productstatus.api
@@ -17,10 +18,11 @@ class TestBaseAdapter(unittest.TestCase):
     def setUp(self):
         self.env = {}
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
-        self.executor = eva.executor.NullExecutor(self.env)
+        self.logger = logging
+        self.executor = eva.executor.NullExecutor(self.env, self.logger)
 
     def create_adapter(self):
-        self.adapter = eva.adapter.BaseAdapter(self.env, self.executor, self.productstatus_api)
+        self.adapter = eva.adapter.BaseAdapter(self.env, self.executor, self.productstatus_api, self.logger)
 
     def test_default_configuration_keys(self):
         self.create_adapter()
@@ -42,7 +44,7 @@ class TestBaseAdapter(unittest.TestCase):
             CONFIG = {
                 'EVA_TEST_FOO': 'Foo documentation',
             }
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger)
         self.assertIn('EVA_TEST_FOO', self.adapter.CONFIG.keys())
         self.assertIn('EVA_INPUT_DATA_FORMAT_UUID', self.adapter.CONFIG.keys())
 
@@ -52,14 +54,14 @@ class TestBaseAdapter(unittest.TestCase):
                 'EVA_INPUT_PRODUCT_UUID',
             ]
         with self.assertRaises(eva.exceptions.MissingConfigurationException):
-            self.adapter = Foo(self.env, self.executor, self.productstatus_api)
+            self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger)
 
     def test_optional_configuration_keys(self):
         class Foo(eva.adapter.BaseAdapter):
             OPTIONAL_CONFIG = [
                 'EVA_INPUT_PRODUCT_UUID',
             ]
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger)
         self.assertIn('EVA_INPUT_PRODUCT_UUID', self.adapter.env)
         self.assertEqual(self.adapter.env['EVA_INPUT_PRODUCT_UUID'], None)
 
@@ -77,7 +79,7 @@ class TestBaseAdapter(unittest.TestCase):
             'EVA_INPUT_SERVICE_BACKEND_UUID': '%s,%s, %s' % (BLANK_UUID, BLANK_UUID, BLANK_UUID),
             'EVA_OUTPUT_SERVICE_BACKEND_UUID': BLANK_UUID,
         }
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger)
         self.assertListEqual(self.adapter.env['EVA_INPUT_PRODUCT_UUID'], [BLANK_UUID])
         self.assertListEqual(self.adapter.env['EVA_INPUT_SERVICE_BACKEND_UUID'], [BLANK_UUID, BLANK_UUID, BLANK_UUID])
         self.assertEqual(self.adapter.env['EVA_OUTPUT_SERVICE_BACKEND_UUID'], BLANK_UUID)
@@ -91,7 +93,7 @@ class TestBaseAdapter(unittest.TestCase):
             'EVA_INPUT_PRODUCT_UUID': INVALID_UUID,
         }
         with self.assertRaises(eva.exceptions.InvalidConfigurationException):
-            self.adapter = Foo(self.env, self.executor, self.productstatus_api)
+            self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger)
 
     def test_productstatus_environment_variables(self):
         self.create_adapter()

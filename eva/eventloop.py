@@ -14,11 +14,13 @@ class Eventloop(object):
                  event_listener,
                  adapter,
                  environment_variables,
+                 logger,
                  ):
         self.event_listener = event_listener
         self.productstatus_api = productstatus_api
         self.adapter = adapter
         self.env = environment_variables
+        self.logger = logger
 
     def iteration(self, event):
         """
@@ -45,11 +47,11 @@ class Eventloop(object):
         """
         @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
         """
-        logging.info('Ready to start processing events.')
+        self.logger.info('Ready to start processing events.')
         while True:
-            logging.debug('Waiting for next Productstatus event...')
+            self.logger.debug('Waiting for next Productstatus event...')
             event = self.event_listener.get_next_event()
-            logging.info('Received Productstatus event for resource URI %s' % event.uri)
+            self.logger.info('Received Productstatus event for resource URI %s' % event.uri)
             self.run_forever(self.iteration, event)
 
     def process_all_in_product_instance(self, product_instance):
@@ -59,8 +61,8 @@ class Eventloop(object):
         instances = self.productstatus_api.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
         index = 1
         count = instances.count()
-        logging.debug('Processing %d DataInstance resources that are children of ProductInstance %s', count, product_instance)
+        self.logger.debug('Processing %d DataInstance resources that are children of ProductInstance %s', count, product_instance)
         for resource in instances:
-            logging.debug('[%d/%d] Resource: %s', index, count, resource)
+            self.logger.debug('[%d/%d] Resource: %s', index, count, resource)
             self.run_forever(self.adapter.validate_and_process_resource, resource)
             index += 1
