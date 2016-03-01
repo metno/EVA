@@ -7,7 +7,7 @@ import paramiko
 import paramiko.ssh_exception
 
 import eva
-import eva.executor
+import eva.base.executor
 import eva.job
 
 
@@ -34,7 +34,7 @@ def get_job_id_from_qsub_output(output):
     return int(matches.group(0))
 
 
-class GridEngineExecutor(eva.executor.BaseExecutor):
+class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """
     Execute programs on Sun OpenGridEngine via an SSH connection to a submit host.
     """
