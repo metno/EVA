@@ -16,6 +16,7 @@ SSH_TIMEOUT = 5
 SSH_RETRY_EXCEPTIONS = (paramiko.ssh_exception.NoValidConnectionsError,
                         paramiko.ssh_exception.SSHException,
                         paramiko.ssh_exception.socket.timeout,
+                        paramiko.ssh_exception.socket.error,
                         )
 NO_PID = -1
 EXIT_OK = 0
