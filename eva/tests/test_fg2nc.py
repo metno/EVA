@@ -8,9 +8,8 @@ import logging
 import productstatus
 import productstatus.api
 
-import eva.adapter
 import eva.executor
-import eva.fg2nc
+import eva.adapter.fimex_grib_to_netcdf
 
 
 BLANK_UUID = '00000000-0000-0000-0000-000000000000'
@@ -35,7 +34,7 @@ class TestDownloadAdapter(unittest.TestCase):
         self.executor = eva.executor.NullExecutor(self.env, self.logger)
 
     def create_adapter(self):
-        self.adapter = eva.fg2nc.FimexGRIB2NetCDFAdapter(self.env, self.executor, self.productstatus_api, self.logger)
+        self.adapter = eva.adapter.FimexGRIB2NetCDFAdapter(self.env, self.executor, self.productstatus_api, self.logger)
 
     def test_productstatus_read_only_default(self):
         """

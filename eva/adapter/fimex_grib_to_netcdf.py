@@ -3,10 +3,10 @@ import os.path
 
 import eva
 import eva.job
-import eva.adapter
+import eva.base.adapter
 
 
-class FimexGRIB2NetCDFAdapter(eva.adapter.BaseAdapter):
+class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
     """
     This adapter fills a NetCDF file with GRIB data using Fimex.
     The adapter requires an external library called `eva-adapter-support`.
