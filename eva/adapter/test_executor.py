@@ -11,7 +11,7 @@ class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
         """
         @brief Execute a Job that echoes the URI of the received resource.
         """
-        job = eva.job.Job()
+        job = eva.job.Job(self.logger)
         job.command = """#!/bin/bash
         echo %(url)s
         """ % {

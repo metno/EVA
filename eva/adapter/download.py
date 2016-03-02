@@ -68,7 +68,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         @brief Download a file, and optionally post the result to Productstatus.
         """
         filename = os.path.basename(resource.url)
-        job = eva.job.Job()
+        job = eva.job.Job(self.logger)
         job.command = """#!/bin/bash
         wget --no-verbose --output-document='%(destination)s' %(url)s
         """ % {

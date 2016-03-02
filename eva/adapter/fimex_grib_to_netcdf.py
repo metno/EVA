@@ -47,7 +47,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         """
         @brief Generate a Job object from a Productstatus Resource.
         """
-        job = eva.job.Job()
+        job = eva.job.Job(self.logger)
 
         reftime = resource.data.productinstance.reference_time
 
