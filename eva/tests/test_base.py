@@ -33,4 +33,4 @@ class TestBase(unittest.TestCase):
             pass
         job = Job()
         job.id = 'foo'
-        eva.executor.log_stdout_stderr(job, ['x'], [])
+        eva.executor.log_stdout_stderr(logging, job, ['x'], [])

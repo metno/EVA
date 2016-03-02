@@ -31,7 +31,7 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         job.stdout = eva.executor.get_std_lines(stdout)
         job.stderr = eva.executor.get_std_lines(stderr)
         self.logger.info("[%s] Script finished, exit code: %d", job.id, job.exit_code)
-        eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
+        eva.executor.log_stdout_stderr(self.logger, job, job.stdout, job.stderr)
 
         if job.exit_code == 0:
             job.set_status(eva.job.COMPLETE)

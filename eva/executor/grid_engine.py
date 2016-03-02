@@ -1,7 +1,6 @@
 import os
 import re
 import time
-import logging
 
 import paramiko
 import paramiko.ssh_exception
@@ -70,7 +69,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         """
         @brief Open an SSH connection to the submit host, and open an SFTP channel.
         """
-        logging.debug('Creating SSH connection to %s@%s', self.env['EVA_GRIDENGINE_SSH_USER'], self.env['EVA_GRIDENGINE_SSH_HOST'])
+        self.logger.debug('Creating SSH connection to %s@%s', self.env['EVA_GRIDENGINE_SSH_USER'], self.env['EVA_GRIDENGINE_SSH_HOST'])
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         self.ssh_client.connect(self.env['EVA_GRIDENGINE_SSH_HOST'],
@@ -149,7 +148,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                    job.submit_script_path,
                    ]
         command = ' '.join(command)
-        logging.info('[%s] Executing: %s' % (job.id, command))
+        self.logger.info('[%s] Executing: %s' % (job.id, command))
 
         # Execute synchronously
         try:
@@ -162,7 +161,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
         except (TypeError, IndexError):
             job.pid = NO_PID
-        logging.info('[%s] Grid Engine job %d finished with exit status %d' % (job.id, job.pid, job.exit_code))
+        self.logger.info('[%s] Grid Engine job %d finished with exit status %d' % (job.id, job.pid, job.exit_code))
 
         # Set job exit status and remove submit script and log files
         if job.exit_code == EXIT_OK:
@@ -181,12 +180,12 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 with self.sftp_client.open(job.stderr_path, 'r') as f:
                     job.stderr = eva.executor.strip_stdout_newlines(f.readlines())
             except SSH_RETRY_EXCEPTIONS, e:
-                logging.warning('[%s] Unable to retrieve stdout and stderr from finished Grid Engine job! The files will remain on the server.', job.id)
+                self.logger.warning('[%s] Unable to retrieve stdout and stderr from finished Grid Engine job! The files will remain on the server.', job.id)
                 self.destroy_ssh_connection()
                 return
 
         # Print stdout and stderr
-        eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
+        eva.executor.log_stdout_stderr(logger, job, job.stdout, job.stderr)
 
         try:
             self.sftp_client.unlink(job.submit_script_path)
@@ -194,7 +193,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 self.sftp_client.unlink(job.stdout_path)
                 self.sftp_client.unlink(job.stderr_path)
         except SSH_RETRY_EXCEPTIONS, e:
-            logging.warning('[%s] Could not remove script file, stdout and stderr', job.id)
+            self.logger.warning('[%s] Could not remove script file, stdout and stderr', job.id)
 
         # Close the SSH connection
         self.destroy_ssh_connection()
