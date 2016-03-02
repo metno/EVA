@@ -34,11 +34,3 @@ def strip_stdout_newlines(lines):
     Strip newlines from an array of strings.
     """
     return [line.strip() for line in lines]
-
-
-def read_and_log_stdout_stderr(logger, job, stdout_path, stderr_path):
-    with open(stdout_path, 'r') as f:
-        job.stdout = strip_stdout_newlines(f.readlines())
-    with open(stderr_path, 'r') as f:
-        job.stderr = strip_stdout_newlines(f.readlines())
-    log_stdout_stderr(logger, job, job.stdout, job.stderr)
