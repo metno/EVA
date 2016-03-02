@@ -1,6 +1,8 @@
 import unittest
+import logging
 
 import eva
+import eva.executor
 
 
 class TestBase(unittest.TestCase):
@@ -25,3 +27,10 @@ class TestBase(unittest.TestCase):
     def test_url_to_filename_wrong_protocol(self):
         with self.assertRaises(RuntimeError):
             eva.url_to_filename('https://example.com/foo.nc')
+
+    def test_log_stdout_stderr(self):
+        class Job(object):
+            pass
+        job = Job()
+        job.id = 'foo'
+        eva.executor.log_stdout_stderr(job, ['x'], [])
