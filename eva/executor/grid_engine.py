@@ -185,7 +185,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 return
 
         # Print stdout and stderr
-        eva.executor.log_stdout_stderr(logger, job, job.stdout, job.stderr)
+        eva.executor.log_stdout_stderr(self.logger, job, job.stdout, job.stderr)
 
         try:
             self.sftp_client.unlink(job.submit_script_path)
