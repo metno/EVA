@@ -94,3 +94,4 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
                     exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                     give_up=0)
         self.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
+        self.logger.info('The file %s has been successfully copied to %s', resource.url, datainstance.url)

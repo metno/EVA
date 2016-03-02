@@ -40,8 +40,8 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         if job.status != eva.job.COMPLETE:
             raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % resource.url)
 
-        logging.debug('Output file generated successfully, registering new DataInstance...')
-        self.register_output(job)
+        datainstance = self.register_output(job)
+        self.logger.info('Successfully filled the NetCDF file %s with data from %s', datainstance.url, resource.url)
 
     def create_job(self, resource):
         """
@@ -83,7 +83,8 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         productinstance = self.get_or_post_productinstance_resource(job)
         data = self.get_or_post_data_resource(productinstance, job)
         datainstance = self.post_datainstance_resource(data, job)
-        logging.info("Registered DataInstance: %s", datainstance)
+        self.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
+        return datainstance
 
     def get_productstatus_dataformat(self, file_type):
         """
