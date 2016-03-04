@@ -15,7 +15,7 @@ import eva.adapter.fimex_grib_to_netcdf
 BLANK_UUID = '00000000-0000-0000-0000-000000000000'
 
 
-class TestDownloadAdapter(unittest.TestCase):
+class TestFimexGRIB2NetCDFAdapter(unittest.TestCase):
 
     def setUp(self):
         self.env = {
