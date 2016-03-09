@@ -6,7 +6,7 @@ import eva.job
 
 
 class CompleteAdapter(eva.base.adapter.BaseAdapter):
-    """
+    """!
     @brief Re-post fragmented datasets back to Productstatus when they are complete
 
     Using a combination of product, data format and backend UUID parameters,
@@ -28,7 +28,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
     CACHE_TTL = 7200
 
     def init(self):
-        """
+        """!
         @brief Require Productstatus credentials, and set dataset lifetime.
         """
         self.require_productstatus_credentials()
@@ -36,7 +36,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         self.resource_cache = {}
 
     def validate_prognosis_length(self, datainstance):
-        """
+        """!
         @brief Raise an exception if the DataInstance's
         Product.prognosis_length is not a positive integer.
         """
@@ -46,7 +46,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
             )
 
     def validate_file_count(self, datainstance):
-        """
+        """!
         @brief Raise an exception if the DataInstance's Product.file_count is
         not a positive integer.
         """
@@ -56,19 +56,19 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
             )
 
     def check_time_period_equality(self, datainstance):
-        """
+        """!
         @returns True if the DataInstance's Data start and end time are the same, False otherwise.
         """
         return datainstance.data.time_period_end == datainstance.data.time_period_begin
 
     def complete_time_period_begin(self, datainstance):
-        """
+        """!
         @returns The start time of a complete DataInstance.
         """
         return datainstance.data.productinstance.reference_time
 
     def complete_time_period_end(self, datainstance):
-        """
+        """!
         @returns The end time of a complete DataInstance.
         """
         return datainstance.data.productinstance.reference_time + \
@@ -77,7 +77,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
             )
 
     def complete_datainstance_exists(self, datainstance):
-        """
+        """!
         @returns True if a DataInstance spanning the entire prognosis length of
         this Product already exists on the configured service backend.
         """
@@ -91,7 +91,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         return datainstances.count() > 0
 
     def get_sibling_datainstances(self, datainstance):
-        """
+        """!
         @returns a queryset with all DataInstance resources with the same
         product instance, data format, service backend, and URL as the supplied DataInstance.
         """
@@ -103,7 +103,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         )
 
     def add_cache(self, resource):
-        """
+        """!
         @brief Add a Productstatus Resource to a local cache. If the Resource
         already is cached, it is ignored.
         """
@@ -118,13 +118,13 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
                    self.resource_cache[resource.resource_uri]['expires'])
 
     def get_cache(self, id):
-        """
+        """!
         @brief Retrieve a Productstatus Resource from a local cache.
         """
         return self.resource_cache[id]['resource']
 
     def clean_cache(self):
-        """
+        """!
         @brief Remove expired cache entries from the local cache.
         """
         now = datetime.datetime.now()
@@ -134,7 +134,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
                 del self.resource_cache[key]
 
     def cache_queryset(self, queryset):
-        """
+        """!
         @brief Given a Productstatus query set consisting of DataInstance
         resources, store them in a local cache.
         """
@@ -142,7 +142,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
             self.add_cache(datainstance)
 
     def get_filtered_datainstances(self, queryset):
-        """
+        """!
         @returns Given a Productstatus queryset with DataInstances, returns a
         sorted list of related Data resources where time_period_begin equals
         time_period_end.
@@ -156,7 +156,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         return sorted(data_instances, key=lambda x: x.data.time_period_begin)
 
     def datainstance_set_has_correct_prognosis_length(self, resource, datainstances):
-        """
+        """!
         @brief Check that a collection of DataInstance resources spans the time
         period defined by Product.prognosis_length.
         """
@@ -172,7 +172,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         return total_hours == resource.data.productinstance.product.prognosis_length
 
     def datainstance_set_has_correct_file_count(self, resource, datainstances):
-        """
+        """!
         @brief Check that the number of DataInstance resources is the same as
         required by Product.file_count.
         """
@@ -187,7 +187,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         return file_count == resource.data.productinstance.product.file_count
 
     def get_or_create_data(self, product_instance, time_period_begin, time_period_end):
-        """
+        """!
         @returns a Data resource for a product instance, spanning the given
         time period. If the resource already exists, it is used. Otherwise, it
         is created.
@@ -217,7 +217,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         return data
 
     def create_datainstance(self, data, source_instance):
-        """
+        """!
         @returns a newly created DataInstance resource of a complete dataset.
         """
         datainstance = self.api.datainstance.create()
@@ -230,7 +230,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         return datainstance
 
     def process_resource(self, resource):
-        """
+        """!
         @brief post to productstatus if dataset is complete
         """
 

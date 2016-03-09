@@ -2,7 +2,7 @@ import eva.base.adapter
 
 
 class NullAdapter(eva.base.adapter.BaseAdapter):
-    """
+    """!
     An adapter that matches nothing and does nothing.
     """
 

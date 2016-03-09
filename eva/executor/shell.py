@@ -6,7 +6,7 @@ import eva.job
 
 
 class ShellExecutor(eva.base.executor.BaseExecutor):
-    """
+    """!
     @brief Execute tasks in a thread.
     """
 

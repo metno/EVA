@@ -2,7 +2,7 @@ import eva.base.executor
 
 
 class NullExecutor(eva.base.executor.BaseExecutor):
-    """
+    """!
     @brief Pretend to execute tasks, but don't actually do it.
     """
 

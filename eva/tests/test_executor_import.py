@@ -14,6 +14,9 @@ class TestImport(unittest.TestCase):
     def test_import_adapter_download(self):
         from eva.adapter import DownloadAdapter
 
+    def test_import_adapter_complete(self):
+        from eva.adapter import CompleteAdapter
+
     def test_import_adapter_fimex_grib_to_netcdf(self):
         from eva.adapter import FimexGRIB2NetCDFAdapter
 

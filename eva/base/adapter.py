@@ -7,7 +7,7 @@ import eva.exceptions
 
 
 class BaseAdapter(eva.ConfigurableObject):
-    """
+    """!
     Adapters contain all the information and configuration needed to translate
     a Productstatus resource into job execution.
     """
@@ -32,7 +32,7 @@ class BaseAdapter(eva.ConfigurableObject):
     ]
 
     def __init__(self, environment_variables, executor, api, logger):
-        """
+        """!
         @param id an identifier for the adapter; must be constant across program restart
         @param api Productstatus API object
         @param environment_variables Dictionary of EVA_* environment variables
@@ -48,7 +48,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.init()
 
     def normalize_config_uuids(self):
-        """
+        """!
         @brief Converts comma-separated configuration variable UUIDs starting
         with "EVA_INPUT_" to lists of UUIDs, and check that the UUID formats
         are valid.
@@ -78,7 +78,7 @@ class BaseAdapter(eva.ConfigurableObject):
             raise eva.exceptions.InvalidConfigurationException('%d errors occurred during UUID normalization' % errors)
 
     def in_array_or_empty(self, data, env):
-        """
+        """!
         @brief Filter input events by filter list. If a filter is not defined,
         then it is skipped and treated as matching. If a filter array is empty,
         it is also treated as matching.
@@ -90,7 +90,7 @@ class BaseAdapter(eva.ConfigurableObject):
         return eva.in_array_or_empty(data, self.env[env])
 
     def resource_matches_input_config(self, resource):
-        """
+        """!
         @brief Check that a Productstatus resource matches the configured
         processing criteria.
         """
@@ -115,7 +115,7 @@ class BaseAdapter(eva.ConfigurableObject):
         return False
 
     def validate_and_process_resource(self, resource):
-        """
+        """!
         @brief Check if the Resource fits this adapter, and send it to `process_resource`.
         @param resource A Productstatus resource.
         """
@@ -126,7 +126,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.logger.info('Finish processing resource: %s', resource)
 
     def process_resource(self, resource):
-        """
+        """!
         @brief Perform any action based on a Productstatus resource. The
         resource is guaranteed to be validated against input configuration.
         @param resource A Productstatus resource.
@@ -134,19 +134,19 @@ class BaseAdapter(eva.ConfigurableObject):
         raise NotImplementedError()
 
     def init(self):
-        """
+        """!
         @brief This function provides a place for subclasses to initialize itself before accepting jobs.
         """
         pass
 
     def execute(self, job):
-        """
+        """!
         @brief Execute a job with the assigned Executor.
         """
         return self.executor.execute(job)
 
     def has_productstatus_credentials(self):
-        """
+        """!
         @return True if the adapter is configured with a user name and API key
         to Productstatus, False otherwise.
         """
@@ -158,7 +158,7 @@ class BaseAdapter(eva.ConfigurableObject):
         )
 
     def require_productstatus_credentials(self):
-        """
+        """!
         @brief Raise an exception if Productstatus credentials are not configured.
         """
         if not self.has_productstatus_credentials():

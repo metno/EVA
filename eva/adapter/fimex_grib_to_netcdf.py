@@ -7,7 +7,7 @@ import eva.base.adapter
 
 
 class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
-    """
+    """!
     This adapter fills a NetCDF file with GRIB data using Fimex.
     The adapter requires an external library called `eva-adapter-support`.
     """
@@ -29,7 +29,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     def process_resource(self, resource):
-        """
+        """!
         @brief Generate a Job which converts GRIB to NetCDF using the
         eva-adapter-support library.
         """
@@ -44,7 +44,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         self.logger.info('Successfully filled the NetCDF file %s with data from %s', datainstance.url, resource.url)
 
     def create_job(self, resource):
-        """
+        """!
         @brief Generate a Job object from a Productstatus Resource.
         """
         job = eva.job.Job(self.logger)
@@ -77,7 +77,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         return job
 
     def register_output(self, job):
-        """
+        """!
         @brief Create a Productstatus DataInstance based on a Job object.
         """
         productinstance = self.get_or_post_productinstance_resource(job)
@@ -87,7 +87,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         return datainstance
 
     def get_productstatus_dataformat(self, file_type):
-        """
+        """!
         Given a file type string, return a DataFormat object pointing to the
         correct data format.
         """
@@ -102,13 +102,13 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         return resource
 
     def get_productstatus_product(self):
-        """
+        """!
         @returns The Productstatus output Product resource.
         """
         return self.api.product[self.env['EVA_OUTPUT_PRODUCT_UUID']]
 
     def get_or_post_productinstance_resource(self, job):
-        """
+        """!
         Return a matching ProductInstance resource according to Product, reference time and version.
         """
         # FIXME mostly copied from ecreceive.dataset
@@ -121,7 +121,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         return self.api.productinstance.find_or_create(parameters)
 
     def get_or_post_data_resource(self, productinstance, job):
-        """
+        """!
         Return a matching Data resource according to ProductInstance and data file
         begin/end times.
         """
@@ -134,7 +134,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         return self.api.data.find_or_create(parameters)
 
     def post_datainstance_resource(self, data, job):
-        """
+        """!
         Create a DataInstance resource at the Productstatus server, referring to the
         given data set.
         """

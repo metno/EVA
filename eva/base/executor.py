@@ -5,7 +5,7 @@ import eva
 
 
 class BaseExecutor(eva.ConfigurableObject):
-    """
+    """!
     @brief Abstract base class for execution engines.
     """
 
@@ -15,13 +15,13 @@ class BaseExecutor(eva.ConfigurableObject):
         self.validate_configuration()
 
     def execute(self, job):
-        """
+        """!
         @brief Execute a job and populate members exit_code, stdout, stderr.
         """
         raise NotImplementedError()
 
     def create_temporary_script(self, content):
-        """
+        """!
         @brief Generate a temporary file and fill it with the specified content.
         @param content Content of the temporary file.
         @return The full path of the temporary file.
@@ -33,7 +33,7 @@ class BaseExecutor(eva.ConfigurableObject):
         return path
 
     def delete_temporary_script(self, path):
-        """
+        """!
         @brief Remove a temporary script.
         """
         return os.unlink(path)

@@ -10,7 +10,7 @@ import productstatus
 
 
 class DownloadAdapter(eva.base.adapter.BaseAdapter):
-    """
+    """!
     An adapter that downloads files, and optionally posts their metadata to Productstatus.
 
     The consumer specifies Productstatus product, format, and service backend.
@@ -40,7 +40,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     def init(self):
-        """
+        """!
         @brief Check that optional configuration is consistent.
         """
         if self.has_valid_output_config():
@@ -54,7 +54,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
             self.logger.debug('Will not post any data to Productstatus.')
 
     def has_valid_output_config(self):
-        """
+        """!
         @return True if all optional output variables are configured, False otherwise.
         """
         return (
@@ -64,7 +64,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         )
 
     def process_resource(self, resource):
-        """
+        """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
         filename = os.path.basename(resource.url)

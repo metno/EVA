@@ -31,7 +31,7 @@ class TestDownloadAdapter(unittest.TestCase):
         self.adapter = eva.adapter.DownloadAdapter(self.env, self.executor, self.productstatus_api, self.logger)
 
     def test_productstatus_read_only_default(self):
-        """
+        """!
         @brief Test that DownloadAdapter doesn't post to Productstatus when
         output configuration is not given.
         """
@@ -39,7 +39,7 @@ class TestDownloadAdapter(unittest.TestCase):
         self.assertFalse(self.adapter.post_to_productstatus)
 
     def test_productstatus_write_with_output_config(self):
-        """
+        """!
         @brief Test that DownloadAdapter posts to Productstatus when valid
         output configuration is given.
         """
@@ -55,7 +55,7 @@ class TestDownloadAdapter(unittest.TestCase):
         self.assertEqual(datetime.timedelta(hours=60), self.adapter.lifetime)
 
     def test_input_output_service_backend_equal(self):
-        """
+        """!
         @brief Test that the input service backend cannot be the same as the
         output service backend.
         """

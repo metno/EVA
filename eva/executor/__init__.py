@@ -1,4 +1,4 @@
-"""
+"""!
 Collection of all executors, for easy access when configuring EVA. Also
 includes some useful function for writing executors.
 
@@ -11,14 +11,14 @@ from eva.executor.grid_engine import GridEngineExecutor
 
 
 def get_std_lines(std):
-    """
+    """!
     Return a list of lines from stderr or stdout
     """
     return std.splitlines() if std is not None else []
 
 
 def log_stdout_stderr(logger, job, stdout, stderr):
-    """
+    """!
     Print stdout and stderr to syslog
     """
     logger.debug('[%s] --- Standard output ---', (job.id))
@@ -30,7 +30,7 @@ def log_stdout_stderr(logger, job, stdout, stderr):
 
 
 def strip_stdout_newlines(lines):
-    """
+    """!
     Strip newlines from an array of strings.
     """
     return [line.strip() for line in lines]

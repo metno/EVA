@@ -1,4 +1,4 @@
-.PHONY: eva eva-base upload-eva upload-eva-base
+.PHONY: eva eva-base upload-eva upload-eva-base doc
 
 eva:
 	docker build --no-cache --tag metno/eva docker/eva
@@ -11,5 +11,8 @@ upload-eva:
 
 upload-eva-base:
 	docker push metno/eva-base
+
+doc:
+	doxygen doxygen.conf
 
 all: eva-base eva

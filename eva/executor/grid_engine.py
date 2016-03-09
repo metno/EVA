@@ -22,7 +22,7 @@ EXIT_OK = 0
 
 
 def get_job_id_from_qsub_output(output):
-    """
+    """!
     Parse the JOB_ID from qsub output. Unfortunately, there is no command-line
     option to make it explicitly machine readable, so we use a regular
     expression to extract the first number instead.
@@ -34,7 +34,7 @@ def get_job_id_from_qsub_output(output):
 
 
 class GridEngineExecutor(eva.base.executor.BaseExecutor):
-    """
+    """!
     Execute programs on Sun OpenGridEngine via an SSH connection to a submit host.
     """
 
@@ -51,7 +51,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     ]
 
     def validate_configuration(self, *args, **kwargs):
-        """
+        """!
         @brief Make sure that the SSH key file exists.
         """
         super(GridEngineExecutor, self).validate_configuration(*args, **kwargs)
@@ -59,14 +59,14 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             raise eva.exceptions.InvalidConfigurationException("The SSH key '%s' is not readable!" % self.env['EVA_GRIDENGINE_SSH_KEY_FILE'])
 
     def create_job_filename(self, job, *args):
-        """
+        """!
         @brief Generate a unique job name that can be used as a filename.
         """
         params = ['eva', unicode(job.id)] + list(args)
         return '.'.join(params)
 
     def create_ssh_connection(self):
-        """
+        """!
         @brief Open an SSH connection to the submit host, and open an SFTP channel.
         """
         self.logger.debug('Creating SSH connection to %s@%s', self.env['EVA_GRIDENGINE_SSH_USER'], self.env['EVA_GRIDENGINE_SSH_HOST'])
@@ -80,7 +80,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         self.sftp_client.get_channel().settimeout(SSH_TIMEOUT)
 
     def destroy_ssh_connection(self):
-        """
+        """!
         @brief Tear down the SSH connection.
         """
         self.ssh_client.close()
@@ -88,7 +88,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         del self.ssh_client
 
     def execute_ssh_command(self, command):
-        """
+        """!
         @brief Execute a command remotely using a new SSH channel.
         @returns A tuple of (exit_status, stdout, stderr).
         """
@@ -118,7 +118,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         return exit_status, stdout, stderr
 
     def execute(self, job):
-        """
+        """!
         @brief Execute a job on Grid Engine.
         """
 

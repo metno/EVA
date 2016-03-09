@@ -1,4 +1,4 @@
-"""
+"""!
 Collection of all adapters, for easy access when configuring EVA.
 
 _DO NOT_ import anything from here when subclassing adapters!
