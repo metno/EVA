@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 import traceback
 import logging
@@ -91,6 +92,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
+        # Catch interrupts and exit cleanly
+        def signal_handler(sig, frame):
+            raise eva.exceptions.ShutdownException('Caught signal %d, exiting.' % sig)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+
         arg = build_argument_list()
 
         if arg['log_config']:
@@ -136,7 +143,7 @@ if __name__ == "__main__":
 
     except eva.exceptions.EvaException, e:
         logger.critical(unicode(e))
-        logger.info('Shutting down due to missing or invalid configuration.')
+        logger.info('Shutting down EVA due to missing or invalid configuration.')
         sys.exit(1)
 
     try:
@@ -151,8 +158,8 @@ if __name__ == "__main__":
             evaloop.process_all_in_product_instance(product_instance)
         else:
             evaloop()
-    except KeyboardInterrupt:
-        pass
+    except eva.exceptions.ShutdownException, e:
+        logger.info(unicode(e))
     except Exception, e:
         logger.critical("Fatal error: %s" % e)
         exception = traceback.format_exc().split("\n")

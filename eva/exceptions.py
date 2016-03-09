@@ -2,6 +2,13 @@ class EvaException(Exception):
     pass
 
 
+class ShutdownException(EvaException):
+    """
+    @brief Thrown when EVA is sent a SIGINT or SIGTERM signal.
+    """
+    pass
+
+
 class MissingConfigurationException(EvaException):
     """
     @brief Thrown when a configuration variable is missing.
