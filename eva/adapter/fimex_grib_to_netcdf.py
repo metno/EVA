@@ -144,6 +144,6 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         resource.expires = job.data['expires']
         resource.format = self.get_productstatus_dataformat("NetCDF")
         resource.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID']]
-        resource.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], job.data['filename'])
+        resource.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.data['filename']))
         resource.save()
         return resource
