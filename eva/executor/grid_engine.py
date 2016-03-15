@@ -39,6 +39,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """
 
     CONFIG = {
+        'EVA_GRIDENGINE_QUEUE': 'Which Grid Engine queue to run jobs in',
         'EVA_GRIDENGINE_SSH_HOST': 'Hostname of the Grid Engine submit host',
         'EVA_GRIDENGINE_SSH_USER': 'Username on the Grid Engine submit host',
         'EVA_GRIDENGINE_SSH_KEY_FILE': 'Path to a SSH private key used for connecting to the Grid Engine submit host',
@@ -145,8 +146,14 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                    '-sync', 'y',
                    '-o', job.stdout_path,
                    '-e', job.stderr_path,
-                   job.submit_script_path,
                    ]
+
+        # Run jobs in a specified queue
+        if 'EVA_GRIDENGINE_QUEUE' in self.env:
+            command += ['-q', self.env['EVA_GRIDENGINE_QUEUE']]
+
+        command += [job.submit_script_path]
+
         command = ' '.join(command)
         self.logger.info('[%s] Executing: %s' % (job.id, command))
 
