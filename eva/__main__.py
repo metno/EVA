@@ -5,7 +5,6 @@ import traceback
 import logging
 import logging.config
 import argparse
-import json
 
 import productstatus
 import productstatus.api
@@ -51,8 +50,6 @@ def build_argument_list():
     arg['productstatus_username'] = os.getenv('EVA_PRODUCTSTATUS_USERNAME')
     # Productstatus API key matching the username
     arg['productstatus_api_key'] = os.getenv('EVA_PRODUCTSTATUS_API_KEY')
-    # Socket for receiving Productstatus events
-    arg['productstatus_event_socket'] = os.getenv('EVA_PRODUCTSTATUS_EVENT_SOCKET', 'tcp://productstatus.met.no:9797')
     # Set this option to skip Productstatus SSL certificate verification
     arg['productstatus_verify_ssl'] = parse_bool(os.getenv('EVA_PRODUCTSTATUS_VERIFY_SSL', True))
     # Comma_separated Python class name of adapters that should be run
@@ -107,13 +104,19 @@ if __name__ == "__main__":
                                 datefmt='%Y-%m-%dT%H:%M:%S%Z',
                                 level=logging.DEBUG)
 
+        # Default to auto-generated Kafka client and group ID's
+        client_id = None
+        group_id = None
+
         # Extract useful environment variables
         environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith(('EVA_', 'MARATHON_', 'MESOS_',))}
 
-        # Test for Mesos + Marathon execution, and set appropriate logging configuration
+        # Test for Mesos + Marathon execution, and set appropriate configuration
         logger = logging.getLogger('root')
         if 'MARATHON_APP_ID' in environment_variables:
             logger = MesosLogAdapter(logger, environment_variables)
+            client_id = environment_variables['MARATHON_APP_ID']
+            group_id = client_id
 
         logger.info('Starting EVA: the EVent Adapter.')
 
@@ -128,7 +131,8 @@ if __name__ == "__main__":
                                                   verify_ssl=arg['productstatus_verify_ssl'],
                                                   timeout=10)
 
-        event_listener = productstatus.event.Listener(arg['productstatus_event_socket'])
+        event_listener = productstatus_api.get_event_listener(client_id=client_id,
+                                                              group_id=group_id)
 
         executor = import_module_class(arg['executor'])(environment_variables, logger)
         logger.debug('Using executor: %s' % executor.__class__)
