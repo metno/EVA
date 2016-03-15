@@ -1,4 +1,5 @@
 import logging
+import time
 
 import eva
 import productstatus.exceptions
@@ -51,6 +52,8 @@ class Eventloop(object):
         while True:
             self.logger.debug('Waiting for next Productstatus event...')
             event = self.event_listener.get_next_event()
+            # Workaround asynchronicity in database transaction; will result in fewer 404 errors
+            time.sleep(0.1)
             self.logger.info('Received Productstatus event for resource URI %s' % event.uri)
             self.run_forever(self.iteration, event)
             # Store our current message offset remotely
