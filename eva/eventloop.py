@@ -53,6 +53,8 @@ class Eventloop(object):
             event = self.event_listener.get_next_event()
             self.logger.info('Received Productstatus event for resource URI %s' % event.uri)
             self.run_forever(self.iteration, event)
+            # Store our current message offset remotely
+            self.event_listener.save_position()
 
     def process_all_in_product_instance(self, product_instance):
         """!
