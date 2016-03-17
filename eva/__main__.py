@@ -117,7 +117,7 @@ if __name__ == "__main__":
         logger = logging.getLogger('root')
         if 'MARATHON_APP_ID' in environment_variables:
             logger = MesosLogAdapter(logger, environment_variables)
-            group_id = client_id
+            group_id = environment_variables['MARATHON_APP_ID']
 
         logger.info('Starting EVA: the EVent Adapter.')
 
