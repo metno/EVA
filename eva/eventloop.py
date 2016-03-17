@@ -1,4 +1,5 @@
 import datetime
+import dateutil.tz
 import copy
 import time
 
@@ -31,7 +32,7 @@ class Eventloop(object):
         self.logger = logger
         self.event_queue = []
         self.rpc_queue = []
-        self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0)
+        self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
     def poll_productstatus(self):
         """!
