@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+import logging
+import kafka
+import argparse
+import uuid
+import json
+
+
+if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
+                        datefmt='%Y-%m-%dT%H:%M:%S%Z',
+                        level=logging.INFO)
+
+    helptext = "This utility sends a remote procedure call to EVA instances through a Kafka topic. Specify which EVA you want to manipulate by using the `instance_id` regular expression. Note that this is a one-way operation and you will not get any reply from the EVA instances; you must monitor the EVA logs to know the result of the RPC request."
+
+    parser = argparse.ArgumentParser(description=helptext)
+    parser.add_argument('--broker', type=unicode, action='append', required=True,
+                        help='Which broker to publish the message to. Can be specified multiple times.')
+    parser.add_argument('--instance_id', type=unicode, required=True,
+                        help='Regular expression matching the EVA instance ID you want to send the RPC to.')
+    parser.add_argument('--function', type=unicode, required=True,
+                        help='The remote function to run.')
+    parser.add_argument('--arg', type=unicode, action='append', default=[],
+                        help='Positional argument to the remote function. Can be specified multiple times.')
+    parser.add_argument('--kwarg', type=lambda kv: kv.split("="), action='append',
+                        help='Keyword argument to the remote function, in the form of key=value. ' +
+                             'Can be specified multiple times.')
+    parser.add_argument('--topic', type=unicode, default='eva.rpc',
+                        help='Which topic to publish the RPC request through. ' +
+                             'EVA will listen on the "eva.rpc" queue.')
+    args = parser.parse_args()
+    args.kwarg = dict(args.kwarg) if args.kwarg else {}
+
+    rpc = {
+        'type': 'rpc',
+        'instance_id': args.instance_id,
+        'function': args.function,
+        'args': args.arg,
+        'kwargs': args.kwarg,
+    }
+
+    logging.info('Sending RPC to topic %s: %s', args.topic, rpc)
+
+    producer = kafka.KafkaProducer(bootstrap_servers=args.broker,
+                                   client_id=unicode(uuid.uuid4()),
+                                   value_serializer=lambda m: json.dumps(m).encode('utf-8'))
+
+    future = producer.send(args.topic, rpc)
+    record = future.get(timeout=5000)
+
+    logging.info("Published message to Kafka (topic: %s, partition: %s, offset: %s)"
+                 % (record.topic, record.partition, record.offset))
+
+    logging.info('RPC has been sent successfully.')

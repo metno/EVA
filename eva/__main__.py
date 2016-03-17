@@ -1,4 +1,5 @@
 import os
+import uuid
 import signal
 import sys
 import traceback
@@ -13,6 +14,7 @@ import productstatus.event
 import eva.eventloop
 import eva.adapter
 import eva.executor
+import eva.rpc_listener
 
 
 # Environment variables in this list will be censored in the log output.
@@ -102,11 +104,11 @@ if __name__ == "__main__":
         else:
             logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
                                 datefmt='%Y-%m-%dT%H:%M:%S%Z',
-                                level=logging.DEBUG)
+                                level=logging.INFO)
 
         # Default to auto-generated Kafka client and group ID's
-        client_id = None
-        group_id = None
+        client_id = unicode(uuid.uuid4())
+        group_id = unicode(uuid.uuid4())
 
         # Extract useful environment variables
         environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith(('EVA_', 'MARATHON_', 'MESOS_',))}
@@ -115,7 +117,6 @@ if __name__ == "__main__":
         logger = logging.getLogger('root')
         if 'MARATHON_APP_ID' in environment_variables:
             logger = MesosLogAdapter(logger, environment_variables)
-            client_id = environment_variables['MARATHON_APP_ID']
             group_id = client_id
 
         logger.info('Starting EVA: the EVent Adapter.')
@@ -123,19 +124,31 @@ if __name__ == "__main__":
         for key, var in sorted(environment_variables.iteritems()):
             if key in SECRET_ENVIRONMENT_VARIABLES:
                 var = '****CENSORED****'
-            logger.debug('Environment: %s=%s' % (key, var))
+            logger.info('Environment: %s=%s' % (key, var))
 
+        # Instantiate the Productstatus client
         productstatus_api = productstatus.api.Api(arg['productstatus_url'],
                                                   username=arg['productstatus_username'],
                                                   api_key=arg['productstatus_api_key'],
                                                   verify_ssl=arg['productstatus_verify_ssl'],
                                                   timeout=10)
 
+        # Instantiate the Productstatus message listener
         event_listener = productstatus_api.get_event_listener(client_id=client_id,
-                                                              group_id=group_id)
+                                                              group_id=group_id,
+                                                              consumer_timeout_ms=1000)
+
+        # Instantiate the RPC message listener
+        rpc_configuration = productstatus_api.get_event_listener_configuration()
+        rpc_event_listener = eva.rpc_listener.RPCListener('eva.rpc',
+                                                          bootstrap_servers=rpc_configuration.brokers,
+                                                          client_id=client_id,
+                                                          group_id=group_id,
+                                                          consumer_timeout_ms=1000)
+        logger.info('Instance ID for RPC calls: %s', group_id)
 
         executor = import_module_class(arg['executor'])(environment_variables, logger)
-        logger.debug('Using executor: %s' % executor.__class__)
+        logger.info('Using executor: %s' % executor.__class__)
 
         adapter = import_module_class(arg['adapter'])(
             environment_variables,
@@ -143,7 +156,7 @@ if __name__ == "__main__":
             productstatus_api,
             logger,
         )
-        logger.debug('Using adapter: %s' % adapter.__class__)
+        logger.info('Using adapter: %s' % adapter.__class__)
 
     except eva.exceptions.EvaException, e:
         logger.critical(unicode(e))
@@ -153,6 +166,7 @@ if __name__ == "__main__":
     try:
         evaloop = eva.eventloop.Eventloop(productstatus_api,
                                           event_listener,
+                                          rpc_event_listener,
                                           adapter,
                                           environment_variables,
                                           logger,
@@ -167,11 +181,11 @@ if __name__ == "__main__":
     except Exception, e:
         logger.critical("Fatal error: %s" % e)
         exception = traceback.format_exc().split("\n")
-        logger.debug("***********************************************************")
-        logger.debug("Uncaught exception during program execution. THIS IS A BUG!")
-        logger.debug("***********************************************************")
+        logger.info("***********************************************************")
+        logger.info("Uncaught exception during program execution. THIS IS A BUG!")
+        logger.info("***********************************************************")
         for line in exception:
-            logger.debug(line)
+            logger.info(line)
         sys.exit(255)
 
     logger.info('Shutting down EVA.')
