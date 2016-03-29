@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import kafka
+import kafka.common
 import argparse
 import uuid
 import json
+import sys
 
 
 class Message(object):
@@ -19,6 +21,9 @@ class Message(object):
     def text(self):
         return self.json['short_message']
 
+    def timestamp(self):
+        return self.json['created']
+
 
 if __name__ == '__main__':
     helptext = "This utility concatenates EVA logs from a Kafka server, and outputs them to stdout."
@@ -28,6 +33,8 @@ if __name__ == '__main__':
                         help='Which broker to publish the message to. Can be specified multiple times.')
     parser.add_argument('--topic', type=unicode, default='mesos.logstash',
                         help='The Kafka topic to which log events are published.')
+    parser.add_argument('--from-beginning', default=False, action='store_true',
+                        help='Replay all logs, starting from the beginning of Kafka\'s cache.')
     args = parser.parse_args()
 
     consumer = kafka.KafkaConsumer(args.topic,
@@ -35,15 +42,20 @@ if __name__ == '__main__':
                                    client_id=unicode(uuid.uuid4()),
                                    value_deserializer=lambda m: Message(m))
 
+    if args.from_beginning:
+        consumer.seek_to_beginning()
+
     try:
         while True:
             message = consumer.next().value
             if not message.valid():
                 continue
-            output = '%(name)s: %(text)s' % {
+            output = "%(timestamp)s %(name)s: %(text)s\n" % {
+                'timestamp': message.timestamp(),
                 'name': message.name(),
                 'text': message.text(),
             }
-            print output
+            sys.stdout.write(output)
+            sys.stdout.flush()
     except KeyboardInterrupt:
         pass
