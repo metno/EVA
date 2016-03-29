@@ -24,6 +24,12 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         'EVA_DELETE_INSTANCE_MAX',
     ]
 
+    OPTIONAL_CONFIG = [
+        'EVA_INPUT_DATA_FORMAT_UUID',
+        'EVA_INPUT_PRODUCT_UUID',
+        'EVA_INPUT_SERVICE_BACKEND_UUID',
+    ]
+
     def unlink(self, path):
         if not os.path.exists(path):
             return False
