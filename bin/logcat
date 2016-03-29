@@ -10,7 +10,7 @@ import sys
 
 class Message(object):
     def __init__(self, data):
-        self.json = json.loads(data)
+        self.json = json.loads(data.decode('utf-8'))
 
     def valid(self):
         return 'eva' in self.json['tags']
@@ -18,11 +18,16 @@ class Message(object):
     def name(self):
         return self.json['marathon_app_id']
 
+    def log_level(self):
+        return self.json['log_level']
+
     def text(self):
+        if 'eva_message' in self.json:
+            return self.json['eva_message']
         return self.json['short_message']
 
     def timestamp(self):
-        return self.json['created']
+        return self.json['@timestamp']
 
 
 if __name__ == '__main__':
@@ -50,9 +55,10 @@ if __name__ == '__main__':
             message = consumer.next().value
             if not message.valid():
                 continue
-            output = "%(timestamp)s %(name)s: %(text)s\n" % {
+            output = "%(timestamp)s %(name)s %(log_level)s: %(text)s\n" % {
                 'timestamp': message.timestamp(),
                 'name': message.name(),
+                'log_level': message.log_level(),
                 'text': message.text(),
             }
             sys.stdout.write(output)
