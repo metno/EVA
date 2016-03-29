@@ -85,7 +85,7 @@ def in_array_or_empty(id, array):
     """
     @returns true if `id` is found in `array`, or `array` is empty.
     """
-    return (len(array) == 0) or (id in array)
+    return (array is None) or (len(array) == 0) or (id in array)
 
 
 def url_to_filename(url):
