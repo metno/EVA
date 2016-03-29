@@ -14,6 +14,9 @@ class TestImport(unittest.TestCase):
     def test_import_adapter_download(self):
         from eva.adapter import DownloadAdapter
 
+    def test_import_adapter_delete(self):
+        from eva.adapter import DeleteAdapter
+
     def test_import_adapter_complete(self):
         from eva.adapter import CompleteAdapter
 
