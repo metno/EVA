@@ -15,28 +15,17 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
     physical file from the file system.
     """
 
-    CONFIG = {
-        'EVA_DELETE_INSTANCE_MAX': 'When determining data instances to delete, only look up the N latest instances, to prevent hammering the Productstatus server.',
-    }
-
     REQUIRED_CONFIG = [
-        'EVA_DELETE_INSTANCE_MAX',
-    ]
-
-    OPTIONAL_CONFIG = [
-        'EVA_INPUT_DATA_FORMAT_UUID',
-        'EVA_INPUT_PRODUCT_UUID',
         'EVA_INPUT_SERVICE_BACKEND_UUID',
     ]
 
+    OPTIONAL_CONFIG = [
+        'EVA_INPUT_PRODUCT_UUID',
+        'EVA_INPUT_DATA_FORMAT_UUID',
+    ]
+
     def init(self, *args, **kwargs):
-        try:
-            self.limit = int(self.env['EVA_DELETE_INSTANCE_MAX'])
-            assert self.limit > 0
-        except:
-            raise eva.exceptions.InvalidConfigurationException(
-                'EVA_DELETE_INSTANCE_MAX must be a positive, non-zero integer.'
-            )
+        self.require_productstatus_credentials()
 
     def process_resource(self, resource):
         """
@@ -47,28 +36,41 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         now = datetime.datetime.now().replace(tzinfo=dateutil.tz.tzutc())
         datainstances = self.api.datainstance.objects.filter(
             data__productinstance__product=resource.data.productinstance.product,
+            format=resource.format,
+            servicebackend=resource.servicebackend,
             expires__lte=now,
+            deleted=False,
         ).order_by('-expires')
 
-        self.logger.info("Found %d expired data instances" % datainstances.count())
-        processed = self.limit
+        count = datainstances.count()
+        if count == 0:
+            self.logger.info("No expired data instances matching this Data Instance's product, format, and service backend.")
+            return
+        self.logger.info("Found %d expired data instances", count)
 
+        job = eva.job.Job(self.logger)
+        job.command = "#!/bin/bash\n"
+
+        # One line in delete script per data instance
+        instance_list = []
         for datainstance in datainstances:
+            instance_list.append(datainstance)
             path = datainstance.url
             if path.startswith('file://'):
                 path = path[7:]
-            self.logger.info("%s: deleting expired file (EOL %s)", datainstance, datainstance.expires)
+            self.logger.info("%s: expired at %s, queueing for deletion", datainstance.expires, datainstance)
+            job.command += "rm -vf '%s' && \\\n" % path
 
-            job = eva.job.Job(self.logger)
-            job.command = "#!/bin/bash\nrm -vf '%s'\n" % path
-            self.execute(job)
+        job.command += "exit 0\n"
+        self.logger.info(job.command)
+        self.execute(job)
 
-            if job.status != eva.job.COMPLETE:
-                raise eva.exceptions.RetryException("Executing deletion of '%s' failed." % resource.url)
-            self.logger.info("The file '%s' has been permanently removed, or was already gone.", path)
+        if job.status != eva.job.COMPLETE:
+            raise eva.exceptions.RetryException("%s: deleting files failed." % resource)
 
-            processed -= 1
-            if processed == 0:
-                break
+        for datainstance in instance_list:
+            datainstance.deleted = True
+            datainstance.save()
+            self.logger.info('%s: marked DataInstance as deleted in Productstatus', datainstance)
 
         self.logger.info("All expired data instances successfully processed.")
