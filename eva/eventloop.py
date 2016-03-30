@@ -32,7 +32,7 @@ class Eventloop(object):
         self.logger = logger
         self.event_queue = []
         self.rpc_queue = []
-        self.shutdown = False
+        self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
     def poll_productstatus(self):
@@ -70,7 +70,7 @@ class Eventloop(object):
         @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
         """
         self.logger.info('Start processing events and RPC calls.')
-        while not self.shutdown:
+        while not self.do_shutdown:
             # Poll for new messages
             self.poll_productstatus()
             self.poll_rpc()
@@ -132,7 +132,7 @@ class Eventloop(object):
         """!
         @brief Process all child DataInstance objects of a ProductInstance.
         """
-        while not self.shutdown:
+        while not self.do_shutdown:
             try:
                 self.logger.info('Fetching DataInstance resources descended from %s', product_instance)
                 instances = self.productstatus_api.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
@@ -156,4 +156,4 @@ class Eventloop(object):
         @brief Shutdown EVA after the current resource has been processed.
         """
         self.logger.info('Received shutdown call, will stop processing resources.')
-        self.shutdown = True
+        self.do_shutdown = True
