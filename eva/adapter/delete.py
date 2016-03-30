@@ -29,14 +29,14 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         'EVA_INPUT_SERVICE_BACKEND_UUID',
     ]
 
-    def unlink(self, path):
-        if not os.path.exists(path):
-            return False
+    def init(self, *args, **kwargs):
         try:
-            os.unlink(path)
-        except OSError, e:
-            raise eva.exceptions.RetryException(e)
-        return True
+            self.limit = int(self.env['EVA_DELETE_INSTANCE_MAX'])
+            assert self.limit > 0
+        except:
+            raise eva.exceptions.InvalidConfigurationException(
+                'EVA_DELETE_INSTANCE_MAX must be a positive, non-zero integer.'
+            )
 
     def process_resource(self, resource):
         """
@@ -48,15 +48,27 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         datainstances = self.api.datainstance.objects.filter(
             data__productinstance__product=resource.data.productinstance.product,
             expires__lte=now,
-        ).order_by('-expires').limit(int(self.env['EVA_DELETE_INSTANCE_MAX']))
+        ).order_by('-expires')
 
         self.logger.info("Found %d expired data instances" % datainstances.count())
+        processed = self.limit
+
         for datainstance in datainstances:
             path = datainstance.url
             if path.startswith('file://'):
                 path = path[7:]
             self.logger.info("%s: deleting expired file (EOL %s)", datainstance, datainstance.expires)
-            if self.unlink(path):
-                self.logger.info("The file '%s' has been permanently removed.", path)
-            else:
-                self.logger.warning("The file '%s' could not be found on the file system; may already be deleted.", path)
+
+            job = eva.job.Job(self.logger)
+            job.command = "#!/bin/bash\nrm -vf '%s'\n" % path
+            self.execute(job)
+
+            if job.status != eva.job.COMPLETE:
+                raise eva.exceptions.RetryException("Executing deletion of '%s' failed." % resource.url)
+            self.logger.info("The file '%s' has been permanently removed, or was already gone.", path)
+
+            processed -= 1
+            if processed == 0:
+                break
+
+        self.logger.info("All expired data instances successfully processed.")
