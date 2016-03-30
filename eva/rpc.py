@@ -61,3 +61,9 @@ class RPC(object):
         @see Eventloop.set_message_timestamp_threshold
         """
         return self.eventloop.process_all_in_product_instance(uuid)
+
+    def shutdown(self):
+        """!
+        @see Eventloop.shutdown
+        """
+        return self.eventloop.shutdown()
