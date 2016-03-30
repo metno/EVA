@@ -1,4 +1,3 @@
-import logging
 import datetime
 import os
 import dateutil.tz
@@ -51,13 +50,13 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
             expires__lte=now,
         ).order_by('-expires').limit(int(self.env['EVA_DELETE_INSTANCE_MAX']))
 
-        logging.info("Found %d expired data instances" % datainstances.count())
+        self.logger.info("Found %d expired data instances" % datainstances.count())
         for datainstance in datainstances:
             path = datainstance.url
             if path.startswith('file://'):
                 path = path[7:]
-            logging.info("%s: deleting expired file (EOL %s)", datainstance, datainstance.expires)
+            self.logger.info("%s: deleting expired file (EOL %s)", datainstance, datainstance.expires)
             if self.unlink(path):
-                logging.info("The file '%s' has been permanently removed.", path)
+                self.logger.info("The file '%s' has been permanently removed.", path)
             else:
-                logging.warning("The file '%s' could not be found on the file system; may already be deleted.", path)
+                self.logger.warning("The file '%s' could not be found on the file system; may already be deleted.", path)
