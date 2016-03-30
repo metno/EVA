@@ -108,6 +108,8 @@ class BaseAdapter(eva.ConfigurableObject):
         elif not self.in_array_or_empty(resource.format.id, 'EVA_INPUT_DATA_FORMAT_UUID'):
             self.logger.debug('DataInstance file type is %s, ignoring.',
                               resource.format.name)
+        elif resource.deleted:
+            self.logger.debug('DataInstance is marked as deleted, ignoring.')
         else:
             self.logger.debug('DataInstance matches all configured criteria.')
             return True
