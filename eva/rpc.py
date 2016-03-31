@@ -67,3 +67,11 @@ class RPC(object):
         @see Eventloop.shutdown
         """
         return self.eventloop.shutdown()
+
+    def ping(self):
+        """!
+        @brief Null function, allowing the RPC sender to discover if the
+        message is received by looking in the logs. Will not trigger any
+        errors, so that log statistics looks clean.
+        """
+        pass
