@@ -31,3 +31,9 @@ class TestImport(unittest.TestCase):
 
     def test_import_executor_grid_engine(self):
         from eva.executor import GridEngineExecutor
+
+    def test_import_listener_rpc(self):
+        from eva.listener import RPCListener
+
+    def test_import_listener_productstatus(self):
+        from eva.listener import ProductstatusListener

@@ -14,13 +14,18 @@ class RPC(object):
         instance()
     """
 
-    def __init__(self, rpc_message, eventloop):
-        self.eventloop = eventloop
+    def __init__(self, rpc_message):
         self.rpc_message = rpc_message
         self.function = None
         self.args = None
         self.kwargs = None
         self._parse()
+
+    def set_executor_instance(self, executor):
+        """!
+        @brief Set the class instance that will execute RPC functions.
+        """
+        self.executor = executor
 
     def _parse(self):
         """!
@@ -54,19 +59,19 @@ class RPC(object):
         @see Eventloop.set_message_timestamp_threshold
         """
         ts = dateutil.parser.parse(timestamp_string)
-        return self.eventloop.set_message_timestamp_threshold(ts)
+        return self.executor.set_message_timestamp_threshold(ts)
 
     def process_all_in_product_instance(self, uuid):
         """!
         @see Eventloop.set_message_timestamp_threshold
         """
-        return self.eventloop.process_all_in_product_instance(uuid)
+        return self.executor.process_all_in_product_instance(uuid)
 
     def shutdown(self):
         """!
         @see Eventloop.shutdown
         """
-        return self.eventloop.shutdown()
+        return self.executor.shutdown()
 
     def ping(self):
         """!

@@ -34,3 +34,8 @@ class TestBase(unittest.TestCase):
         job = Job()
         job.id = 'foo'
         eva.executor.log_stdout_stderr(logging, job, ['x'], [])
+
+    def test_split_comma_separated(self):
+        string = ' foo , bar,baz  '
+        list_ = eva.split_comma_separated(string)
+        self.assertListEqual(list_, ['foo', 'bar', 'baz'])

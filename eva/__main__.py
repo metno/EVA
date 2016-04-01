@@ -11,6 +11,7 @@ import productstatus
 import productstatus.api
 import productstatus.event
 
+import eva
 import eva.eventloop
 import eva.adapter
 import eva.executor
@@ -54,10 +55,12 @@ def build_argument_list():
     arg['productstatus_api_key'] = os.getenv('EVA_PRODUCTSTATUS_API_KEY')
     # Set this option to skip Productstatus SSL certificate verification
     arg['productstatus_verify_ssl'] = parse_bool(os.getenv('EVA_PRODUCTSTATUS_VERIFY_SSL', True))
-    # Comma_separated Python class name of adapters that should be run
+    # Python class name of adapters that should be run
     arg['adapter'] = os.getenv('EVA_ADAPTER', 'eva.adapter.NullAdapter')
     # Python class name of executor that should be used
     arg['executor'] = os.getenv('EVA_EXECUTOR', 'eva.executor.ShellExecutor')
+    # Comma separated Python class names of listeners that should be run
+    arg['listeners'] = os.getenv('EVA_LISTENERS', 'eva.listener.RPCListener,eva.listener.ProductstatusListener')
 
     return arg
 
@@ -106,7 +109,7 @@ if __name__ == "__main__":
                                 datefmt='%Y-%m-%dT%H:%M:%S%Z',
                                 level=logging.INFO)
 
-        # Default to auto-generated Kafka client and group ID's
+        # Randomly generated message queue client and group ID's
         client_id = unicode(uuid.uuid4())
         group_id = unicode(uuid.uuid4())
 
@@ -127,25 +130,28 @@ if __name__ == "__main__":
             logger.info('Environment: %s=%s' % (key, var))
 
         # Instantiate the Productstatus client
-        productstatus_api = productstatus.api.Api(arg['productstatus_url'],
-                                                  username=arg['productstatus_username'],
-                                                  api_key=arg['productstatus_api_key'],
-                                                  verify_ssl=arg['productstatus_verify_ssl'],
-                                                  timeout=10)
+        productstatus_api = productstatus.api.Api(
+            arg['productstatus_url'],
+            username=arg['productstatus_username'],
+            api_key=arg['productstatus_api_key'],
+            verify_ssl=arg['productstatus_verify_ssl'],
+            timeout=10,
+        )
 
-        # Instantiate the Productstatus message listener
-        event_listener = productstatus_api.get_event_listener(client_id=client_id,
-                                                              group_id=group_id,
-                                                              consumer_timeout_ms=1000)
-
-        # Instantiate the RPC message listener
-        rpc_configuration = productstatus_api.get_event_listener_configuration()
-        rpc_event_listener = eva.rpc_listener.RPCListener('eva.rpc',
-                                                          bootstrap_servers=rpc_configuration.brokers,
-                                                          client_id=client_id,
-                                                          group_id=group_id,
-                                                          consumer_timeout_ms=1000)
-        logger.info('Instance ID for RPC calls: %s', group_id)
+        # Instantiate and configure all message listeners
+        listeners = []
+        listener_classes = eva.split_comma_separated(arg['listeners'])
+        for listener_class in listener_classes:
+            listener = import_module_class(listener_class)(
+                environment_variables,
+                logger,
+                client_id=client_id,
+                group_id=group_id,
+                productstatus_api=productstatus_api,
+            )
+            listener.setup_listener()
+            logger.info('Adding listener: %s' % listener.__class__)
+            listeners += [listener]
 
         executor = import_module_class(arg['executor'])(environment_variables, logger)
         logger.info('Using executor: %s' % executor.__class__)
@@ -165,8 +171,7 @@ if __name__ == "__main__":
 
     try:
         evaloop = eva.eventloop.Eventloop(productstatus_api,
-                                          event_listener,
-                                          rpc_event_listener,
+                                          listeners,
                                           adapter,
                                           environment_variables,
                                           logger,

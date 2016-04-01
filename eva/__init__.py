@@ -82,10 +82,18 @@ def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warni
 
 
 def in_array_or_empty(id, array):
-    """
+    """!
     @returns true if `id` is found in `array`, or `array` is empty.
     """
     return (array is None) or (len(array) == 0) or (id in array)
+
+
+def split_comma_separated(string):
+    """!
+    @brief Given a comma-separated string, return a list of components.
+    @returns list
+    """
+    return [x.strip() for x in string.strip().split(',')]
 
 
 def url_to_filename(url):

@@ -62,7 +62,7 @@ class BaseAdapter(eva.ConfigurableObject):
             if self.env[key] is None:
                 continue
             if uuid_input_regex.match(key):
-                self.env[key] = [x.strip() for x in self.env[key].strip().split(',')]
+                self.env[key] = eva.split_comma_separated(self.env[key])
                 uuids = self.env[key]
             elif uuid_regex.match(key):
                 uuids = [self.env[key]]
