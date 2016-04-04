@@ -4,7 +4,8 @@
             "type": "flake8",
             "include": "(\\.py$)",
             "severity": {
-                "E501": "disabled"
+                "E501": "disabled",
+                "F401": "warning"
             },
             "exclude": [
                 "(^build/)",

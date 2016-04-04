@@ -1,5 +1,4 @@
 import datetime
-import os
 import dateutil.tz
 
 import eva.exceptions
@@ -20,6 +19,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
+        'EVA_INPUT_PARTIAL',
         'EVA_INPUT_PRODUCT_UUID',
         'EVA_INPUT_DATA_FORMAT_UUID',
     ]

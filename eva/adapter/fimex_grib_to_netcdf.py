@@ -28,6 +28,10 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_SERVICE_BACKEND_UUID',
     ]
 
+    OPTIONAL_CONFIG = [
+        'EVA_INPUT_PARTIAL',
+    ]
+
     def process_resource(self, resource):
         """!
         @brief Generate a Job which converts GRIB to NetCDF using the
@@ -91,7 +95,6 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         Given a file type string, return a DataFormat object pointing to the
         correct data format.
         """
-        # FIXME copied from ecreceive.dataset, except for parameter and exception
         qs = self.api.dataformat.objects.filter(name=file_type)
         if qs.count() == 0:
             raise Exception(
@@ -111,12 +114,11 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         """!
         Return a matching ProductInstance resource according to Product, reference time and version.
         """
-        # FIXME mostly copied from ecreceive.dataset
         product = self.get_productstatus_product()
         parameters = {
             'product': product,
             'reference_time': job.data['reftime'],
-            'version': job.data['version'],  # FIXME is this the correct version?
+            'version': job.data['version'],
         }
         return self.api.productinstance.find_or_create(parameters)
 
@@ -125,7 +127,6 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         Return a matching Data resource according to ProductInstance and data file
         begin/end times.
         """
-        # FIXME mostly copied from ecreceive.dataset
         parameters = {
             'productinstance': productinstance,
             'time_period_begin': job.data['time_period_begin'],
@@ -138,9 +139,9 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         Create a DataInstance resource at the Productstatus server, referring to the
         given data set.
         """
-        # FIXME mostly copied from ecreceive.dataset
         resource = self.api.datainstance.create()
         resource.data = data
+        resource.partial = True
         resource.expires = job.data['expires']
         resource.format = self.get_productstatus_dataformat("NetCDF")
         resource.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID']]

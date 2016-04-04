@@ -23,6 +23,9 @@ class TestImport(unittest.TestCase):
     def test_import_adapter_fimex_grib_to_netcdf(self):
         from eva.adapter import FimexGRIB2NetCDFAdapter
 
+    def test_import_adapter_fimex(self):
+        from eva.adapter import FimexAdapter
+
     def test_import_executor_null(self):
         from eva.executor import NullExecutor
 

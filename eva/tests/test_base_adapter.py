@@ -28,9 +28,11 @@ class TestBaseAdapter(unittest.TestCase):
         self.create_adapter()
         self.assertListEqual(sorted(self.adapter.CONFIG.keys()), [
             'EVA_INPUT_DATA_FORMAT_UUID',
+            'EVA_INPUT_PARTIAL',
             'EVA_INPUT_PRODUCT_UUID',
             'EVA_INPUT_SERVICE_BACKEND_UUID',
             'EVA_OUTPUT_BASE_URL',
+            'EVA_OUTPUT_DATA_FORMAT_UUID',
             'EVA_OUTPUT_FILENAME_PATTERN',
             'EVA_OUTPUT_LIFETIME',
             'EVA_OUTPUT_PRODUCT_UUID',

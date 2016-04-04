@@ -138,6 +138,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         except SSH_RETRY_EXCEPTIONS, e:
             raise eva.exceptions.RetryException(e)
 
+        # Print the job script to the log
+        eva.executor.log_job_script(self.logger, job)
+
         # Submit the job using qsub
         job.stdout_path = self.create_job_filename(job, 'stdout')
         job.stderr_path = self.create_job_filename(job, 'stderr')

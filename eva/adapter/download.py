@@ -34,6 +34,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
+        'EVA_INPUT_PARTIAL',
         'EVA_OUTPUT_BASE_URL',
         'EVA_OUTPUT_LIFETIME',
         'EVA_OUTPUT_SERVICE_BACKEND_UUID',

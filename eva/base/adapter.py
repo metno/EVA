@@ -15,9 +15,11 @@ class BaseAdapter(eva.ConfigurableObject):
     # @brief Common configuration variables all subclasses may use.
     _COMMON_ADAPTER_CONFIG = {
         'EVA_INPUT_DATA_FORMAT_UUID': 'Comma-separated input Productstatus data format UUIDs',
+        'EVA_INPUT_PARTIAL': 'Whether or not to process partial data instances (allowed values are yes, no, and both; defaults to no)',
         'EVA_INPUT_PRODUCT_UUID': 'Comma-separated input Productstatus product UUIDs',
         'EVA_INPUT_SERVICE_BACKEND_UUID': 'Comma-separated input Productstatus service backend UUIDs',
         'EVA_OUTPUT_BASE_URL': 'Base URL for DataInstances posted to Productstatus',
+        'EVA_OUTPUT_DATA_FORMAT_UUID': 'Productstatus Data Format UUID for the finished product',
         'EVA_OUTPUT_FILENAME_PATTERN': 'strftime pattern for output data instance filename',
         'EVA_OUTPUT_LIFETIME': 'Lifetime of output data instance, in hours, before it can be deleted',
         'EVA_OUTPUT_PRODUCT_UUID': 'Productstatus Product UUID for the finished product',
@@ -31,6 +33,10 @@ class BaseAdapter(eva.ConfigurableObject):
         'EVA_PRODUCTSTATUS_USERNAME',
     ]
 
+    PROCESS_PARTIAL_ONLY = 0
+    PROCESS_PARTIAL_NO = 1
+    PROCESS_PARTIAL_BOTH = 2
+
     def __init__(self, environment_variables, executor, api, logger):
         """!
         @param id an identifier for the adapter; must be constant across program restart
@@ -43,9 +49,25 @@ class BaseAdapter(eva.ConfigurableObject):
         self.executor = executor
         self.api = api
         self.env = environment_variables
+        self.template = eva.template.Environment()
+        self.process_partial = self.PROCESS_PARTIAL_NO
+        self.read_input_partial_config()
         self.normalize_config_uuids()
         self.validate_configuration()
         self.init()
+
+    def read_input_partial_config(self):
+        if 'EVA_INPUT_PARTIAL' not in self.env:
+            return
+        partial = eva.parse_boolean_string(self.env['EVA_INPUT_PARTIAL'])
+        if partial is True:
+            self.process_partial = self.PROCESS_PARTIAL_ONLY
+        elif partial is False:
+            self.process_partial = self.PROCESS_PARTIAL_NO
+        elif partial is None and self.env['EVA_INPUT_PARTIAL'] == 'both':
+            self.process_partial = self.PROCESS_PARTIAL_BOTH
+        else:
+            raise eva.exceptions.InvalidConfigurationException('Invalid value for EVA_INPUT_PARTIAL: %s, expected one of "yes", "no", or "both"' % self.env['EVA_INPUT_PARTIAL'])
 
     def normalize_config_uuids(self):
         """!
@@ -95,23 +117,27 @@ class BaseAdapter(eva.ConfigurableObject):
         processing criteria.
         """
         if resource._collection._resource_name != 'datainstance':
-            self.logger.debug('Resource is not of type DataInstance, ignoring.')
+            self.logger.info('Resource is not of type DataInstance, ignoring.')
 
         elif not self.in_array_or_empty(resource.data.productinstance.product.id, 'EVA_INPUT_PRODUCT_UUID'):
-            self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
-                              resource.data.productinstance.product.name)
+            self.logger.info('DataInstance belongs to Product "%s", ignoring.',
+                             resource.data.productinstance.product.name)
 
         elif not self.in_array_or_empty(resource.servicebackend.id, 'EVA_INPUT_SERVICE_BACKEND_UUID'):
-            self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
-                              resource.servicebackend.name)
+            self.logger.info('DataInstance is hosted on service backend %s, ignoring.',
+                             resource.servicebackend.name)
 
         elif not self.in_array_or_empty(resource.format.id, 'EVA_INPUT_DATA_FORMAT_UUID'):
-            self.logger.debug('DataInstance file type is %s, ignoring.',
-                              resource.format.name)
+            self.logger.info('DataInstance file type is %s, ignoring.',
+                             resource.format.name)
         elif resource.deleted:
-            self.logger.debug('DataInstance is marked as deleted, ignoring.')
+            self.logger.info('DataInstance is marked as deleted, ignoring.')
+        elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO:
+            self.logger.info('DataInstance is marked as partial, ignoring.')
+        elif not resource.partial and self.process_partial == self.PROCESS_PARTIAL_ONLY:
+            self.logger.info('DataInstance is not marked as partial, ignoring.')
         else:
-            self.logger.debug('DataInstance matches all configured criteria.')
+            self.logger.info('DataInstance matches all configured criteria.')
             return True
 
         return False

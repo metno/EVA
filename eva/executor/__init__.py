@@ -17,16 +17,25 @@ def get_std_lines(std):
     return std.splitlines() if std is not None else []
 
 
+def log_job_script(logger, job):
+    """!
+    Print log script to syslog
+    """
+    logger.info('[%s] --- Job script ---', job.id)
+    [logger.info('[%s] %s', job.id, line.strip()) for line in job.command.splitlines()]
+    logger.info('[%s] --- End of job script ---', job.id)
+
+
 def log_stdout_stderr(logger, job, stdout, stderr):
     """!
     Print stdout and stderr to syslog
     """
-    logger.debug('[%s] --- Standard output ---', (job.id))
-    [logger.debug(line) for line in stdout]
-    logger.debug('[%s] --- End of standard output ---', (job.id))
-    logger.debug('[%s] --- Standard error ---', (job.id))
-    [logger.debug(line) for line in stderr]
-    logger.debug('[%s] --- End of standard error ---', (job.id))
+    logger.info('[%s] --- Standard output ---', (job.id))
+    [logger.info('[%s] %s', job.id, line) for line in stdout]
+    logger.info('[%s] --- End of standard output ---', (job.id))
+    logger.info('[%s] --- Standard error ---', (job.id))
+    [logger.info('[%s] %s', job.id, line) for line in stderr]
+    logger.info('[%s] --- End of standard error ---', (job.id))
 
 
 def strip_stdout_newlines(lines):

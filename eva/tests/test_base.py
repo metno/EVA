@@ -39,3 +39,19 @@ class TestBase(unittest.TestCase):
         string = ' foo , bar,baz  '
         list_ = eva.split_comma_separated(string)
         self.assertListEqual(list_, ['foo', 'bar', 'baz'])
+
+    def test_parse_boolean_string_true(self):
+        self.assertTrue(eva.parse_boolean_string('yes'))
+        self.assertTrue(eva.parse_boolean_string('YES'))
+        self.assertTrue(eva.parse_boolean_string('true'))
+        self.assertTrue(eva.parse_boolean_string('TRUE'))
+        self.assertTrue(eva.parse_boolean_string('True'))
+        self.assertTrue(eva.parse_boolean_string('1'))
+
+    def test_parse_boolean_string_false(self):
+        self.assertFalse(eva.parse_boolean_string('no'))
+        self.assertFalse(eva.parse_boolean_string('NO'))
+        self.assertFalse(eva.parse_boolean_string('false'))
+        self.assertFalse(eva.parse_boolean_string('FALSE'))
+        self.assertFalse(eva.parse_boolean_string('False'))
+        self.assertFalse(eva.parse_boolean_string('0'))

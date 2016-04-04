@@ -16,6 +16,7 @@ config = {
         'productstatus-client==5.0.1',
         'paramiko==1.16.0',
         'mock==1.3.0',
+        'jinja2==2.8',
     ],
     'packages': [],
     'scripts': [],

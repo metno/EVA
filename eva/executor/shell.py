@@ -1,8 +1,8 @@
-import os
 import subprocess
 
 import eva
 import eva.job
+import eva.executor
 
 
 class ShellExecutor(eva.base.executor.BaseExecutor):
@@ -14,8 +14,13 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         # Generate a temporary script file
         script = self.create_temporary_script(job.command)
 
+        # Start logging
+        self.logger.info("[%s] Executing job via script '%s'", job.id, script)
+
+        # Print the job script to the log
+        eva.executor.log_job_script(self.logger, job)
+
         # Run the script
-        self.logger.debug("[%s] Executing job via script '%s'", job.id, script)
         proc = subprocess.Popen(
             ['sh', script],
             stdout=subprocess.PIPE,

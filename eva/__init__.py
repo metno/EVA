@@ -97,7 +97,7 @@ def split_comma_separated(string):
 
 
 def url_to_filename(url):
-    """
+    """!
     @brief Convert a file://... URL to a path name. Raises an exception if
     the URL does not start with file://.
     """
@@ -105,3 +105,15 @@ def url_to_filename(url):
     if not url.startswith(start):
         raise RuntimeError('Expected an URL starting with %s, got %s instead' % (start, url))
     return url[len(start):]
+
+
+def parse_boolean_string(string):
+    """!
+    @brief Given a string, return its boolean value.
+    @returns True if parsed as true, False if parsed as false, otherwise None.
+    """
+    if string in ['yes', 'YES', 'true', 'TRUE', 'True', '1']:
+        return True
+    if string in ['no', 'NO', 'false', 'FALSE', 'False', '0']:
+        return False
+    return None

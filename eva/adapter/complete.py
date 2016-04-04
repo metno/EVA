@@ -31,6 +31,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Require Productstatus credentials, and set dataset lifetime.
         """
+        self.process_partial = self.PROCESS_PARTIAL_ONLY
         self.require_productstatus_credentials()
         self.lifetime = datetime.timedelta(hours=int(self.env['EVA_OUTPUT_LIFETIME']))
         self.resource_cache = {}
@@ -114,8 +115,8 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
             'resource': resource,
         }
         self.logger.debug('Added to cache: %s, expires %s',
-                   resource,
-                   self.resource_cache[resource.resource_uri]['expires'])
+                          resource,
+                          self.resource_cache[resource.resource_uri]['expires'])
 
     def get_cache(self, id):
         """!
@@ -165,9 +166,9 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         total_hours = (end - begin).total_seconds() / 3600.0
 
         self.logger.debug("Data resources cover a total of %d hours, required is %d hours",
-                      total_hours,
-                      resource.data.productinstance.product.prognosis_length,
-                      )
+                          total_hours,
+                          resource.data.productinstance.product.prognosis_length,
+                          )
 
         return total_hours == resource.data.productinstance.product.prognosis_length
 
