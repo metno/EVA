@@ -156,6 +156,15 @@ class Eventloop(object):
                 continue
             break
 
+    def process_data_instance(self, data_instance_uuid):
+        """!
+        @brief Process a single DataInstance resource.
+        """
+        data_instance = self.productstatus_api.datainstance[data_instance_uuid]
+        self.logger.info('Processing DataInstance %s', data_instance)
+        self.adapter.validate_and_process_resource(resource)
+        self.logger.info('Finished processing DataInstance %s', data_instance)
+
     def shutdown(self):
         """!
         @brief Shutdown EVA after the current resource has been processed.
