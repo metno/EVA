@@ -18,10 +18,20 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
     prognosis length.
     """
 
+    CONFIG = {
+        'EVA_COMPLETE_CHECK_FILE_COUNT': 'Set to YES to require the total file count of the data set to match the configured value on the Product; defaults to YES',
+        'EVA_COMPLETE_CHECK_PROGNOSIS_LENGTH': 'Set to YES to require the prognosis length of the data set to match the configured value on the Product; defaults to YES',
+    }
+
     REQUIRED_CONFIG = [
         'EVA_INPUT_DATA_FORMAT_UUID',
         'EVA_INPUT_PRODUCT_UUID',
         'EVA_OUTPUT_LIFETIME',
+    ]
+
+    OPTIONAL_CONFIG = [
+        'EVA_COMPLETE_CHECK_FILE_COUNT',
+        'EVA_COMPLETE_CHECK_PROGNOSIS_LENGTH',
     ]
 
     # How long to cache Productstatus resources retrieved earlier, in seconds
@@ -34,7 +44,18 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         self.process_partial = self.PROCESS_PARTIAL_ONLY
         self.require_productstatus_credentials()
         self.lifetime = datetime.timedelta(hours=int(self.env['EVA_OUTPUT_LIFETIME']))
+        self.check_file_count = True
+        self.check_prognosis_length = True
+        self.read_check_parameters()
         self.resource_cache = {}
+
+    def read_check_parameters(self):
+        for key, var in [('EVA_COMPLETE_CHECK_FILE_COUNT',
+                          'check_file_count',),
+                         ('EVA_COMPLETE_CHECK_PROGNOSIS_LENGTH',
+                          'check_prognosis_length',)]:
+            if self.env[key] is not None:
+                setattr(self, var, eva.parse_boolean_string(self.env[key]))
 
     def validate_prognosis_length(self, datainstance):
         """!
@@ -88,19 +109,22 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
             format=datainstance.format,
             servicebackend=datainstance.servicebackend,
             data__productinstance=datainstance.data.productinstance,
+            partial=False,
         )
         return datainstances.count() > 0
 
     def get_sibling_datainstances(self, datainstance):
         """!
         @returns a queryset with all DataInstance resources with the same
-        product instance, data format, service backend, and URL as the supplied DataInstance.
+        product instance, data format, service backend, and URL as the supplied
+        DataInstance. Returns only DataInstance resources that are partial.
         """
         return self.api.datainstance.objects.filter(
             data__productinstance=datainstance.data.productinstance,
             format=datainstance.format,
             servicebackend=datainstance.servicebackend,
             url=datainstance.url,
+            partial=True,
         )
 
     def add_cache(self, resource):
@@ -114,9 +138,9 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
             'expires': datetime.datetime.now() + datetime.timedelta(seconds=self.CACHE_TTL),
             'resource': resource,
         }
-        self.logger.debug('Added to cache: %s, expires %s',
-                          resource,
-                          self.resource_cache[resource.resource_uri]['expires'])
+        self.logger.info('Added to cache: %s, expires %s',
+                         resource,
+                         self.resource_cache[resource.resource_uri]['expires'])
 
     def get_cache(self, id):
         """!
@@ -131,7 +155,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         now = datetime.datetime.now()
         for key in self.resource_cache.keys():
             if self.resource_cache[key]['expires'] < now:
-                self.logger.debug('Removed from cache: %s', self.resource_cache[key])
+                self.logger.info('Removed from cache: %s', self.resource_cache[key])
                 del self.resource_cache[key]
 
     def cache_queryset(self, queryset):
@@ -165,10 +189,10 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         end = datainstances[-1].data.time_period_end
         total_hours = (end - begin).total_seconds() / 3600.0
 
-        self.logger.debug("Data resources cover a total of %d hours, required is %d hours",
-                          total_hours,
-                          resource.data.productinstance.product.prognosis_length,
-                          )
+        self.logger.info("Data resources cover a total of %d hours, required is %d hours",
+                         total_hours,
+                         resource.data.productinstance.product.prognosis_length,
+                         )
 
         return total_hours == resource.data.productinstance.product.prognosis_length
 
@@ -178,9 +202,9 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         required by Product.file_count.
         """
         file_count = len(datainstances)
-        self.logger.debug("Data resources file count: %d", file_count)
+        self.logger.info("Data resources file count: %d", file_count)
 
-        if file_count < resource.data.productinstance.product.file_count:
+        if file_count > resource.data.productinstance.product.file_count:
             raise eva.exceptions.InvalidConfigurationException(
                 "Too many files in data set, this is possibly a misconfiguration of Productstatus."
             )
@@ -243,37 +267,43 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
 
         # Start and end time must be equal
         if not self.check_time_period_equality(resource):
-            self.logger.debug('DataInstance start and end time differs, ignoring.')
+            self.logger.info('DataInstance start and end time differs, ignoring.')
             return
 
         # Skip processing if already done
         if self.complete_datainstance_exists(resource):
-            self.logger.debug('A complete DataInstance already exists, ignoring.')
+            self.logger.info('A complete DataInstance already exists, ignoring.')
             return
 
         # Get all datainstances for the product/format/servicebackend combo
         datainstances = self.get_sibling_datainstances(resource)
-        self.logger.debug('Number of sibling data instances: %d', datainstances.count())
+        self.logger.info('Number of sibling data instances: %d', datainstances.count())
 
         # Clean out old Productstatus resources from the cache
-        self.logger.debug('Removing expired cache entries...')
+        self.logger.info('Removing expired cache entries...')
         self.clean_cache()
 
         # Add Productstatus resources to local cache
-        self.logger.debug('Adding new data instances to cache...')
+        self.logger.info('Adding new data instances to cache...')
         self.cache_queryset(datainstances)
 
         # Get a sorted list of datainstances from the local cache that corresponds to our query set
         datainstances = self.get_filtered_datainstances(datainstances)
-        self.logger.debug('Number of eligible data instances for complete data set: %d', len(datainstances))
+        self.logger.info('Number of eligible data instances for complete data set: %d', len(datainstances))
 
         # Check file count
-        if not self.datainstance_set_has_correct_file_count(resource, datainstances):
-            return
+        if self.check_file_count and \
+            not self.datainstance_set_has_correct_file_count(resource, datainstances):
+                self.logger.info('Not enough DataInstance resources in data set, need %d',
+                                 resource.data.productinstance.product.file_count)
+                return
 
         # Check prognosis length
-        if not self.datainstance_set_has_correct_prognosis_length(resource, datainstances):
-            return
+        if self.check_prognosis_length and \
+            not self.datainstance_set_has_correct_prognosis_length(resource, datainstances):
+                self.logger.info('Prognosis length is not correct, need %d hours',
+                                 resource.data.productinstance.product.prognosis_length)
+                return
 
         # Data set is complete; create DataInstance resource
         self.logger.info("Data set is complete: %d hours, %d files, start %s, end %s",

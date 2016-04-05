@@ -164,6 +164,7 @@ class TestDownloadAdapter(unittest.TestCase):
             'format': format,
             'servicebackend': servicebackend,
             'data__productinstance': productinstance,
+            'partial': False,
         }
 
         self.assertTrue(self.adapter.complete_datainstance_exists(datainstance))
@@ -193,6 +194,7 @@ class TestDownloadAdapter(unittest.TestCase):
             'servicebackend': servicebackend,
             'data__productinstance': productinstance,
             'url': datainstance.url,
+            'partial': True,
         }
 
         self.assertEqual(self.adapter.get_sibling_datainstances(datainstance), [])
