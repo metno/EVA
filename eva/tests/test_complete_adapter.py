@@ -300,7 +300,7 @@ class TestDownloadAdapter(unittest.TestCase):
         datainstances = [1, 2, 3, 4]
         self.assertTrue(self.adapter.datainstance_set_has_correct_file_count(datainstance, datainstances))
         datainstances = [1, 2, 3, 4, 5]
-        self.assertFalse(self.adapter.datainstance_set_has_correct_file_count(datainstance, datainstances))
-        datainstances = [1, 2]
         with self.assertRaises(eva.exceptions.InvalidConfigurationException):
             self.adapter.datainstance_set_has_correct_file_count(datainstance, datainstances)
+        datainstances = [1, 2]
+        self.assertFalse(self.adapter.datainstance_set_has_correct_file_count(datainstance, datainstances))

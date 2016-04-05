@@ -313,8 +313,8 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
                          datainstances[-1].data.time_period_end)
 
         data = self.get_or_create_data(resource.data.productinstance,
-                                       datainstances[0].data.time_period_begin,
-                                       datainstances[-1].data.time_period_end)
+                                       self.complete_time_period_begin(datainstances[0]),
+                                       self.complete_time_period_end(datainstances[0]))
         self.logger.info("Using Data resource: %s", data)
 
         datainstance = self.create_datainstance(data, resource)
