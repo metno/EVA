@@ -82,15 +82,29 @@ if __name__ == "__main__":
     environment_variables = None
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--oneshot',
-                        action='store',
-                        type=unicode,
-                        required=False,
-                        help='Process all DataInstance resources belonging to a specific ProductInstance')
-    parser.add_argument('--mesos-log',
-                        action='store_true',
-                        default=False,
-                        help='Use this flag if running inside a Mesos Docker container for extra logging output')
+    parser_rpc_group = parser.add_mutually_exclusive_group()
+    parser_rpc_group.add_argument(
+        '--process_all_in_product_instance',
+        action='store',
+        type=unicode,
+        required=False,
+        metavar='UUID',
+        help='Process all DataInstance resources belonging to a specific ProductInstance',
+    )
+    parser_rpc_group.add_argument(
+        '--process_data_instance',
+        action='store',
+        type=unicode,
+        required=False,
+        metavar='UUID',
+        help='Process a single DataInstance resource',
+    )
+    parser.add_argument(
+        '--mesos-log',
+        action='store_true',
+        default=False,
+        help='Use this flag if running inside a Mesos Docker container for extra logging output',
+    )
     args = parser.parse_args()
 
     try:
@@ -176,9 +190,11 @@ if __name__ == "__main__":
                                           environment_variables,
                                           logger,
                                           )
-        if args.oneshot:
-            product_instance = productstatus_api.productinstance[args.oneshot]
+        if args.process_all_in_product_instance:
+            product_instance = productstatus_api.productinstance[args.process_all_in_product_instance]
             evaloop.process_all_in_product_instance(product_instance)
+        if args.process_data_instance:
+            evaloop.process_data_instance(args.process_data_instance)
         else:
             evaloop()
     except eva.exceptions.ShutdownException, e:

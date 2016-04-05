@@ -160,10 +160,10 @@ class Eventloop(object):
         """!
         @brief Process a single DataInstance resource.
         """
-        data_instance = self.productstatus_api.datainstance[data_instance_uuid]
-        self.logger.info('Processing DataInstance %s', data_instance)
+        resource = self.productstatus_api.datainstance[data_instance_uuid]
+        self.logger.info('Processing DataInstance %s', resource)
         self.adapter.validate_and_process_resource(resource)
-        self.logger.info('Finished processing DataInstance %s', data_instance)
+        self.logger.info('Finished processing DataInstance %s', resource)
 
     def shutdown(self):
         """!
