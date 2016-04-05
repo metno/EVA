@@ -1,3 +1,6 @@
+import uuid
+
+
 class Event(object):
     """!
     @brief Base class for received events.
@@ -11,6 +14,13 @@ class Event(object):
 
     def __repr__(self):
         return unicode(self)
+
+    def id(self):
+        """!
+        @brief Return a unique ID that represents this event. This method
+        SHOULD be implemented by subclasses.
+        """
+        return uuid.uuid4()
 
     def timestamp(self):
         """!
@@ -32,6 +42,12 @@ class ProductstatusEvent(Event):
     """!
     @brief Productstatus events.
     """
+
+    def id(self):
+        """!
+        @brief Return Productstatus' message id for this event.
+        """
+        return self.kwargs['id']
 
     def acknowledge(self):
         """!

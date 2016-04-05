@@ -254,7 +254,7 @@ class CompleteAdapter(eva.base.adapter.BaseAdapter):
         datainstance.save()
         return datainstance
 
-    def process_resource(self, resource):
+    def process_resource(self, message_id, resource):
         """!
         @brief post to productstatus if dataset is complete
         """

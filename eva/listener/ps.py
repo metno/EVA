@@ -42,6 +42,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
             time.sleep(0.5)  # workaround database transaction race condition
             return eva.event.ProductstatusEvent(
                 self.kwargs['productstatus_api'][event.uri],
+                id=event.message_id,
                 event_listener=self.event_listener,
             )
         except self.RECOVERABLE_EXCEPTIONS, e:

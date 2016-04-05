@@ -27,7 +27,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
     def init(self, *args, **kwargs):
         self.require_productstatus_credentials()
 
-    def process_resource(self, resource):
+    def process_resource(self, message_id, resource):
         """
         @brief Look up and remove expired files.
         """
@@ -48,7 +48,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
             return
         self.logger.info("Found %d expired data instances", count)
 
-        job = eva.job.Job(self.logger)
+        job = eva.job.Job(message_id, self.logger)
         job.command = "#!/bin/bash\n"
 
         # One line in delete script per data instance

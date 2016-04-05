@@ -2,6 +2,7 @@ import datetime
 import dateutil.tz
 import copy
 import time
+import uuid
 
 import eva
 import eva.rpc
@@ -108,7 +109,7 @@ class Eventloop(object):
         @brief Process a non-RPC event.
         """
         self.logger.info('Start processing event: %s', unicode(event))
-        self.adapter.validate_and_process_resource(event.data)
+        self.adapter.validate_and_process_resource(event.id(), event.data)
         self.logger.info('Finished processing event: %s', unicode(event))
 
     def process_rpc_event(self, event):
@@ -146,7 +147,7 @@ class Eventloop(object):
                 self.logger.info('Processing %d DataInstance resources...', count)
                 for resource in instances:
                     self.logger.info('[%d/%d] Processing %s', index, count, resource)
-                    eva.retry_n(lambda: self.adapter.validate_and_process_resource(resource),
+                    eva.retry_n(lambda: self.adapter.validate_and_process_resource(uuid.uuid4(), resource),
                                 exceptions=self.RECOVERABLE_EXCEPTIONS,
                                 give_up=0)
                     index += 1
@@ -162,7 +163,7 @@ class Eventloop(object):
         """
         resource = self.productstatus_api.datainstance[data_instance_uuid]
         self.logger.info('Processing DataInstance %s', resource)
-        self.adapter.validate_and_process_resource(resource)
+        self.adapter.validate_and_process_resource(uuid.uuid4(), resource)
         self.logger.info('Finished processing DataInstance %s', resource)
 
     def shutdown(self):

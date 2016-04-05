@@ -142,18 +142,19 @@ class BaseAdapter(eva.ConfigurableObject):
 
         return False
 
-    def validate_and_process_resource(self, resource):
+    def validate_and_process_resource(self, message_id, resource):
         """!
         @brief Check if the Resource fits this adapter, and send it to `process_resource`.
         @param resource A Productstatus resource.
         """
         if not self.resource_matches_input_config(resource):
             return
+        self.message_id = uuid.UUID(message_id)
         self.logger.info('Start processing resource: %s', resource)
-        self.process_resource(resource)
+        self.process_resource(message_id, resource)
         self.logger.info('Finish processing resource: %s', resource)
 
-    def process_resource(self, resource):
+    def process_resource(self, message_id, resource):
         """!
         @brief Perform any action based on a Productstatus resource. The
         resource is guaranteed to be validated against input configuration.

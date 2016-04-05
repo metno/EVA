@@ -75,7 +75,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             (self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID'] is not None)
         )
 
-    def process_resource(self, resource):
+    def process_resource(self, message_id, resource):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
@@ -94,7 +94,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             raise eva.exceptions.InvalidConfigurationException(e)
 
         # Generate and execute Fimex job
-        job = eva.job.Job(self.logger)
+        job = eva.job.Job(message_id, self.logger)
         job.command = """#!/bin/bash
         time fimex --input.file '%(input.file)s' --output.file '%(output.file)s' %(params)s
         """ % {

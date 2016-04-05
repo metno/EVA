@@ -2,6 +2,7 @@ import unittest
 import datetime
 import dateutil.tz
 import mock
+import uuid
 import re
 import logging
 
@@ -50,6 +51,6 @@ class TestFimexGRIB2NetCDFAdapter(unittest.TestCase):
         resource.data.time_period_begin = datetime.datetime(2016, 02, 29, 03, 00, 00, tzinfo=dateutil.tz.tzutc())
         resource.expires = datetime.datetime(2016, 03, 01, 12, 00, 00, tzinfo=dateutil.tz.tzutc())
         resource.url = 'file:///path/to/source/grib'
-        job = self.adapter.create_job(resource)
+        job = self.adapter.create_job(uuid.uuid4(), resource)
         command = re.sub(r'[\s$]+', ' ', job.command.strip(), re.MULTILINE)
         self.assertEqual(command, compare_command)

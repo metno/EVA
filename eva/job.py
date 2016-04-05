@@ -14,8 +14,8 @@ class Job(object):
     state, exit status, standard output, and standard error.
     """
 
-    def __init__(self, logger):
-        self.id = uuid.uuid4()
+    def __init__(self, id, logger):
+        self.id = id
         self.logger = logger
         self.command = ""  # a multi-line string containing the commands to be run
         self.exit_code = None  # process exit code

@@ -32,12 +32,12 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         'EVA_INPUT_PARTIAL',
     ]
 
-    def process_resource(self, resource):
+    def process_resource(self, message_id, resource):
         """!
         @brief Generate a Job which converts GRIB to NetCDF using the
         eva-adapter-support library.
         """
-        job = self.create_job(resource)
+        job = self.create_job(message_id, resource)
 
         self.executor.execute(job)
 
@@ -47,11 +47,11 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         datainstance = self.register_output(job)
         self.logger.info('Successfully filled the NetCDF file %s with data from %s', datainstance.url, resource.url)
 
-    def create_job(self, resource):
+    def create_job(self, message_id, resource):
         """!
         @brief Generate a Job object from a Productstatus Resource.
         """
-        job = eva.job.Job(self.logger)
+        job = eva.job.Job(message_id, self.logger)
 
         reftime = resource.data.productinstance.reference_time
 
