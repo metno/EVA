@@ -17,7 +17,7 @@ INPUT_PRODUCT_UUID = '1cfdbc88-6033-4e70-b404-8ae48167bb21'
 INPUT_SERVICE_BACKEND_UUID = '8e92ce42-f363-44b4-b20e-280dedb9244a'
 
 
-class TestDownloadAdapter(unittest.TestCase):
+class TestCompleteAdapter(unittest.TestCase):
 
     def setUp(self):
         self.env = {
@@ -30,10 +30,11 @@ class TestDownloadAdapter(unittest.TestCase):
         }
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
-        self.executor = eva.executor.NullExecutor(self.env, self.logger)
+        self.zookeeper = None
+        self.executor = eva.executor.NullExecutor(self.env, self.logger, self.zookeeper)
 
     def create_adapter(self):
-        self.adapter = eva.adapter.CompleteAdapter(self.env, self.executor, self.productstatus_api, self.logger)
+        self.adapter = eva.adapter.CompleteAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
 
     def test_validate_prognosis_length(self):
         self.create_adapter()
@@ -133,7 +134,8 @@ class TestDownloadAdapter(unittest.TestCase):
         self.adapter = eva.adapter.CompleteAdapter(self.env,
                                                    self.executor,
                                                    api,
-                                                   self.logger)
+                                                   self.logger,
+                                                   self.zookeeper,)
         begin = datetime.datetime(year=2016,
                                   month=1,
                                   day=1,
@@ -178,7 +180,8 @@ class TestDownloadAdapter(unittest.TestCase):
         self.adapter = eva.adapter.CompleteAdapter(self.env,
                                                    self.executor,
                                                    api,
-                                                   self.logger)
+                                                   self.logger,
+                                                   self.zookeeper,)
         format = mock.MagicMock()
         productinstance = mock.MagicMock()
         servicebackend = mock.MagicMock()

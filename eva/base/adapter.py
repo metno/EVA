@@ -37,7 +37,7 @@ class BaseAdapter(eva.ConfigurableObject):
     PROCESS_PARTIAL_NO = 1
     PROCESS_PARTIAL_BOTH = 2
 
-    def __init__(self, environment_variables, executor, api, logger):
+    def __init__(self, environment_variables, executor, api, logger, zookeeper):
         """!
         @param id an identifier for the adapter; must be constant across program restart
         @param api Productstatus API object
@@ -46,6 +46,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.CONFIG = dict(self.CONFIG.items() + self._COMMON_ADAPTER_CONFIG.items())
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
         self.logger = logger
+        self.zookeeper = zookeeper
         self.executor = executor
         self.api = api
         self.env = environment_variables

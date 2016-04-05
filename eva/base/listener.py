@@ -6,9 +6,10 @@ class BaseListener(eva.ConfigurableObject):
     @brief Abstract base class for execution engines.
     """
 
-    def __init__(self, environment_variables, logger, **kwargs):
+    def __init__(self, environment_variables, logger, zookeeper, **kwargs):
         self.env = environment_variables
         self.logger = logger
+        self.zookeeper = zookeeper
         self.kwargs = kwargs
         self.validate_configuration()
 

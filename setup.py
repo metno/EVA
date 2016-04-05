@@ -17,6 +17,7 @@ config = {
         'paramiko==1.16.0',
         'mock==1.3.0',
         'jinja2==2.8',
+        'kazoo==2.2.1',
     ],
     'packages': [],
     'scripts': [],

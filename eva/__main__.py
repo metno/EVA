@@ -6,6 +6,7 @@ import traceback
 import logging
 import logging.config
 import argparse
+import kazoo.client
 
 import productstatus
 import productstatus.api
@@ -61,6 +62,8 @@ def build_argument_list():
     arg['executor'] = os.getenv('EVA_EXECUTOR', 'eva.executor.ShellExecutor')
     # Comma separated Python class names of listeners that should be run
     arg['listeners'] = os.getenv('EVA_LISTENERS', 'eva.listener.RPCListener,eva.listener.ProductstatusListener')
+    # ZooKeeper endpoints
+    arg['zookeeper'] = os.getenv('EVA_ZOOKEEPER')
 
     return arg
 
@@ -136,12 +139,32 @@ if __name__ == "__main__":
             logger = MesosLogAdapter(logger, environment_variables)
             group_id = environment_variables['MARATHON_APP_ID']
 
+        # Log startup event
         logger.info('Starting EVA: the EVent Adapter.')
 
+        # Print environment variables
         for key, var in sorted(environment_variables.iteritems()):
             if key in SECRET_ENVIRONMENT_VARIABLES:
                 var = '****CENSORED****'
             logger.info('Environment: %s=%s' % (key, var))
+
+        # Instantiate the Zookeeper client, if enabled
+        if arg['zookeeper']:
+            logger.info('Setting up Zookeeper connection to %s', arg['zookeeper'])
+            tokens = arg['zookeeper'].strip().split('/')
+            server_string = tokens[0]
+            base_path = '/' + '/'.join(tokens[1:])
+            zookeeper = kazoo.client.KazooClient(
+                hosts=server_string,
+                randomize_hosts=True,
+                logger=logger,
+            )
+            zookeeper.start()
+            zookeeper.EVA_BASE_PATH = base_path
+            zookeeper.ensure_path(zookeeper.EVA_BASE_PATH)
+        else:
+            zookeeper = None
+            logger.info('Not using Zookeeper.')
 
         # Instantiate the Productstatus client
         productstatus_api = productstatus.api.Api(
@@ -162,12 +185,17 @@ if __name__ == "__main__":
                 client_id=client_id,
                 group_id=group_id,
                 productstatus_api=productstatus_api,
+                zookeeper=zookeeper,
             )
             listener.setup_listener()
             logger.info('Adding listener: %s' % listener.__class__)
             listeners += [listener]
 
-        executor = import_module_class(arg['executor'])(environment_variables, logger)
+        executor = import_module_class(arg['executor'])(
+            environment_variables,
+            logger,
+            zookeeper,
+        )
         logger.info('Using executor: %s' % executor.__class__)
 
         adapter = import_module_class(arg['adapter'])(
@@ -175,6 +203,7 @@ if __name__ == "__main__":
             executor,
             productstatus_api,
             logger,
+            zookeeper,
         )
         logger.info('Using adapter: %s' % adapter.__class__)
 
@@ -209,4 +238,6 @@ if __name__ == "__main__":
             logger.info(line)
         sys.exit(255)
 
+    if zookeeper:
+        zookeeper.stop()
     logger.info('Shutting down EVA.')

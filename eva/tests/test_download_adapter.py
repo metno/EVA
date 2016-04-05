@@ -25,10 +25,11 @@ class TestDownloadAdapter(unittest.TestCase):
         }
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
-        self.executor = eva.executor.NullExecutor(self.env, self.logger)
+        self.zookeeper = None
+        self.executor = eva.executor.NullExecutor(self.env, self.logger, self.zookeeper)
 
     def create_adapter(self):
-        self.adapter = eva.adapter.DownloadAdapter(self.env, self.executor, self.productstatus_api, self.logger)
+        self.adapter = eva.adapter.DownloadAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
 
     def test_productstatus_read_only_default(self):
         """!
