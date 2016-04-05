@@ -149,7 +149,7 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         if not self.resource_matches_input_config(resource):
             return
-        self.message_id = uuid.UUID(message_id)
+        self.message_id = message_id
         self.logger.info('Start processing resource: %s', resource)
         self.process_resource(message_id, resource)
         self.logger.info('Finish processing resource: %s', resource)
