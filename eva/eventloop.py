@@ -61,23 +61,19 @@ class Eventloop(object):
         """
         if self.queue_empty():
             return
-        try:
-            event = self.event_queue[0]
-            # Discard message if below timestamp threshold
-            if event.timestamp() < self.message_timestamp_threshold:
-                self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
-                                    event.timestamp(),
-                                    self.message_timestamp_threshold)
+        event = self.event_queue[0]
+        # Discard message if below timestamp threshold
+        if event.timestamp() < self.message_timestamp_threshold:
+            self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
+                                event.timestamp(),
+                                self.message_timestamp_threshold)
+        else:
+            if isinstance(event, eva.event.RPCEvent):
+                event.data.set_executor_instance(self)
+                self.process_rpc_event(event)
             else:
-                if isinstance(event, eva.event.RPCEvent):
-                    event.data.set_executor_instance(self)
-                    self.process_rpc_event(event)
-                else:
-                    self.process_normal_event(event)
-            event.acknowledge()
-        except self.RECOVERABLE_EXCEPTIONS, e:
-            self.logger.error('Restarting processing of event %s in 2 seconds due to error: %s', event, e)
-            time.sleep(2.0)
+                self.process_normal_event(event)
+        event.acknowledge()
 
     def sort_queue(self):
         """!
@@ -100,7 +96,12 @@ class Eventloop(object):
         while not self.do_shutdown:
             self.poll_listeners()
             self.sort_queue()
-            self.process_first_in_queue()
+            try:
+                self.process_first_in_queue()
+            except self.RECOVERABLE_EXCEPTIONS, e:
+                self.logger.error('Restarting processing of event in 2 seconds due to error: %s', e)
+                time.sleep(2.0)
+                continue
             self.shift_queue()
         self.logger.info('Stop processing events and RPC calls.')
 

@@ -33,6 +33,17 @@ def get_job_id_from_qsub_output(output):
     return int(matches.group(0))
 
 
+def get_job_id_from_qstat_output(output):
+    """!
+    @brief Parse the JOB_ID from qstat output using a regular expression.
+    """
+    regex = re.compile('^job_number:\s+(\d+)\s*$')
+    for line in output.splitlines():
+        if regex.match(line):
+            return int(matches.group(1))
+    raise RuntimeError('Could not parse job_number from qstat output, perhaps the format changed?')
+
+
 class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """!
     Execute programs on Sun OpenGridEngine via an SSH connection to a submit host.
@@ -70,7 +81,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         """!
         @brief Open an SSH connection to the submit host, and open an SFTP channel.
         """
-        self.logger.debug('Creating SSH connection to %s@%s', self.env['EVA_GRIDENGINE_SSH_USER'], self.env['EVA_GRIDENGINE_SSH_HOST'])
+        self.logger.info('Creating SSH connection to %s@%s', self.env['EVA_GRIDENGINE_SSH_USER'], self.env['EVA_GRIDENGINE_SSH_HOST'])
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         self.ssh_client.connect(self.env['EVA_GRIDENGINE_SSH_HOST'],
@@ -129,6 +140,27 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         except SSH_RETRY_EXCEPTIONS, e:
             raise eva.exceptions.RetryException(e)
 
+        # Check whether a GridEngine task is already running for this job. If
+        # it is, we abort the task and throw a RetryException to make EVA try
+        # to process this job again.
+        self.logger.info('[%s] Querying if job is already running.', job.id)
+        job_id = 'eva.%s' % unicode(job.id)
+        command = 'qstat -j %s' % job_id
+        try:
+            exit_code, stdout, stderr = self.execute_ssh_command(command)
+            if exit_code == 0:
+                self.logger.warning('[%s] Job is already running, trying to kill it', job.id)
+                command = 'qdel %s' % job_id
+                exit_code, stdout, stderr = self.execute_ssh_command(command)
+                if exit_code == 0:
+                    self.logger.info('[%s] Job was submitted for deletion, will now retry', job.id)
+                else:
+                    self.logger.info('[%s] Job could not be deleted, will retry', job.id)
+                raise eva.exceptions.RetryException('Job is already running.')
+        except SSH_RETRY_EXCEPTIONS, e:
+            raise eva.exceptions.RetryException(e)
+        self.logger.info('Job is not running, continuing as planned.')
+
         # Create a submit script
         job.submit_script_path = self.create_job_filename(job, 'sh')
         try:
@@ -145,6 +177,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         job.stdout_path = self.create_job_filename(job, 'stdout')
         job.stderr_path = self.create_job_filename(job, 'stderr')
         command = ['qsub',
+                   '-N', job_id,
                    '-b', 'n',
                    '-sync', 'y',
                    '-o', job.stdout_path,
