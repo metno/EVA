@@ -24,6 +24,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
 
     CONFIG = {
         'EVA_DOWNLOAD_DESTINATION': 'Where to place downloaded files',
+        'EVA_DOWNLOAD_CHECK_HASH': 'Whether or not to check the hash of downloaded files against the Productstatus hash. Defaults to YES.',
     }
 
     REQUIRED_CONFIG = [
@@ -34,6 +35,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
+        'EVA_DOWNLOAD_CHECK_HASH',
         'EVA_INPUT_PARTIAL',
         'EVA_OUTPUT_BASE_URL',
         'EVA_OUTPUT_LIFETIME',
@@ -44,6 +46,12 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Check that optional configuration is consistent.
         """
+        if self.env['EVA_DOWNLOAD_CHECK_HASH'] is not None:
+            self.check_hash = eva.parse_boolean_string(self.env['EVA_DOWNLOAD_CHECK_HASH'])
+            if self.check_hash is None:
+                self.check_hash = True
+        else:
+            self.check_hash = False
         if self.has_valid_output_config():
             self.post_to_productstatus = True
             self.require_productstatus_credentials()
