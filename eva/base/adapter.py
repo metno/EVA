@@ -50,6 +50,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.executor = executor
         self.api = api
         self.env = environment_variables
+        self.blacklist = set()
         self.template = eva.template.Environment()
         self.process_partial = self.PROCESS_PARTIAL_NO
         self.read_input_partial_config()
@@ -112,6 +113,19 @@ class BaseAdapter(eva.ConfigurableObject):
             return True
         return eva.in_array_or_empty(data, self.env[env])
 
+    def blacklist_add(self, uuid):
+        """!
+        @brief Add a resource UUID to the blacklist. Once added to the
+        blacklist, no ProductInstance with this UUID will be processed.
+        """
+        self.blacklist.add(uuid)
+
+    def is_blacklisted(self, uuid):
+        """!
+        @returns True if a resource UUID is blacklisted, False otherwise.
+        """
+        return uuid in self.blacklist
+
     def resource_matches_input_config(self, resource):
         """!
         @brief Check that a Productstatus resource matches the configured
@@ -137,6 +151,12 @@ class BaseAdapter(eva.ConfigurableObject):
             self.logger.info('DataInstance is marked as partial, ignoring.')
         elif not resource.partial and self.process_partial == self.PROCESS_PARTIAL_ONLY:
             self.logger.info('DataInstance is not marked as partial, ignoring.')
+        elif self.is_blacklisted(resource.id):
+            self.logger.info('DataInstance %s is blacklisted, ignoring.', resource)
+        elif self.is_blacklisted(resource.data.id):
+            self.logger.info('Data %s is blacklisted, ignoring.', resource.data)
+        elif self.is_blacklisted(resource.data.productinstance.id):
+            self.logger.info('ProductInstance %s is blacklisted, ignoring.', resource.data.productinstance)
         else:
             self.logger.info('DataInstance matches all configured criteria.')
             return True

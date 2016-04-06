@@ -73,6 +73,12 @@ class RPC(object):
         """
         return self.executor.process_data_instance(uuid)
 
+    def blacklist_uuid(self, uuid):
+        """!
+        @see Eventloop.blacklist_uuid
+        """
+        return self.executor.blacklist_uuid(uuid)
+
     def shutdown(self):
         """!
         @see Eventloop.shutdown

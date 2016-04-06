@@ -133,3 +133,9 @@ class TestBaseAdapter(unittest.TestCase):
         self.create_adapter()
         with self.assertRaises(eva.exceptions.MissingConfigurationException):
             self.adapter.require_productstatus_credentials()
+
+    def test_blacklist_add(self):
+        self.create_adapter()
+        self.assertFalse(self.adapter.is_blacklisted('abc'))
+        self.adapter.blacklist_add('abc')
+        self.assertTrue(self.adapter.is_blacklisted('abc'))

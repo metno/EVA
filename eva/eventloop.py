@@ -167,6 +167,12 @@ class Eventloop(object):
         self.adapter.validate_and_process_resource(uuid.uuid4(), resource)
         self.logger.info('Finished processing DataInstance %s', resource)
 
+    def blacklist_uuid(self, uuid):
+        """!
+        @brief Omit processing a specific DataInstance for the lifetime of this EVA process.
+        """
+        self.adapter.blacklist_add(uuid)
+
     def shutdown(self):
         """!
         @brief Shutdown EVA after the current resource has been processed.
