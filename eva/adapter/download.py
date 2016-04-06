@@ -70,12 +70,31 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         """
         filename = os.path.basename(resource.url)
         job = eva.job.Job(message_id, self.logger)
-        job.command = """#!/bin/bash
-        wget --no-verbose --output-document='%(destination)s' %(url)s
-        """ % {
+
+        lines = [
+            "#!/bin/bash",
+            "wget --no-verbose --output-document='%(destination)s' %(url)s",
+        ]
+        values = {
             'url': resource.url,
-            'destination': os.path.join(self.env['EVA_DOWNLOAD_DESTINATION'], filename)
+            'destination': os.path.join(self.env['EVA_DOWNLOAD_DESTINATION'], filename),
         }
+
+        if resource.hash:
+            if resource.hash_type == 'md5':
+                self.logger.info("Will check downloaded file against %s hash sum %s",
+                                 resource.hash_type,
+                                 resource.hash)
+                lines += ["echo '%(md5sum)s  %(destination)s' | md5sum -c -"]
+                lines += ["status=$?"]
+                lines += ["if [ $status -ne 0 ]; then rm -fv %(destination)s; exit $status; fi"]
+                values['md5sum'] = resource.hash
+            else:
+                self.logger.warning("Don't know how to process hash type %s, ignoring hash",
+                                    resource.hash_type)
+
+        job.command = "\n".join(lines) + "\n"
+        job.command = job.command % values
         self.execute(job)
 
         if job.status != eva.job.COMPLETE:
