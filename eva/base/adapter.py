@@ -2,6 +2,7 @@ import re
 import uuid
 
 import eva
+import eva.logger
 import eva.job
 import eva.exceptions
 

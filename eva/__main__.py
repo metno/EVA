@@ -13,6 +13,7 @@ import productstatus.api
 import productstatus.event
 
 import eva
+import eva.logger
 import eva.eventloop
 import eva.adapter
 import eva.executor
@@ -66,15 +67,6 @@ def build_argument_list():
     arg['zookeeper'] = os.getenv('EVA_ZOOKEEPER')
 
     return arg
-
-
-class MesosLogAdapter(logging.LoggerAdapter):
-    """
-    @brief Log extra This example adapter expects the passed in dict-like object to have a
-    'connid' key, whose value in brackets is prepended to the log message.
-    """
-    def process(self, msg, kwargs):
-        return '%s %s %s' % (self.extra['MARATHON_APP_ID'], self.extra['MESOS_TASK_ID'], msg), kwargs
 
 
 if __name__ == "__main__":
@@ -136,7 +128,7 @@ if __name__ == "__main__":
         # Test for Mesos + Marathon execution, and set appropriate configuration
         logger = logging.getLogger('root')
         if 'MARATHON_APP_ID' in environment_variables:
-            logger = MesosLogAdapter(logger, environment_variables)
+            logger = eva.logger.MesosLogAdapter(logger, environment_variables)
             group_id = environment_variables['MARATHON_APP_ID']
 
         # Log startup event

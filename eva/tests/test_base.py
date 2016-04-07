@@ -29,11 +29,8 @@ class TestBase(unittest.TestCase):
             eva.url_to_filename('https://example.com/foo.nc')
 
     def test_log_stdout_stderr(self):
-        class Job(object):
-            pass
-        job = Job()
-        job.id = 'foo'
-        eva.executor.log_stdout_stderr(logging, job, ['x'], [])
+        job = eva.job.Job('foo', logging)
+        eva.executor.log_stdout_stderr(job, ['x'], [])
 
     def test_split_comma_separated(self):
         string = ' foo , bar,baz  '

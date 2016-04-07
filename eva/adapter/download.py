@@ -91,9 +91,8 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
 
         if resource.hash:
             if resource.hash_type == 'md5':
-                self.logger.info(
-                    "[%s] Will check downloaded file against %s hash sum %s",
-                    job.id,
+                job.logger.info(
+                    "Will check downloaded file against %s hash sum %s",
                     resource.hash_type,
                     resource.hash,
                 )
@@ -102,9 +101,8 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
                 lines += ["if [ $status -ne 0 ]; then rm -fv %(destination)s; exit $status; fi"]
                 values['md5sum'] = resource.hash
             else:
-                self.logger.warning(
-                    "[%s] Don't know how to process hash type %s, ignoring hash",
-                    job.id,
+                job.logger.warning(
+                    "Don't know how to process hash type %s, ignoring hash",
                     resource.hash_type,
                 )
 
@@ -118,7 +116,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         if not self.post_to_productstatus:
             return
 
-        self.logger.info('Creating a new DataInstance on the Productstatus server...')
+        job.logger.info('Creating a new DataInstance on the Productstatus server...')
         datainstance = self.api.datainstance.create()
         datainstance.data = resource.data
         datainstance.format = resource.format
@@ -128,5 +126,5 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         eva.retry_n(datainstance.save,
                     exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                     give_up=0)
-        self.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
-        self.logger.info('The file %s has been successfully copied to %s', resource.url, datainstance.url)
+        job.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
+        job.logger.info('The file %s has been successfully copied to %s', resource.url, datainstance.url)

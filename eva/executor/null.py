@@ -7,7 +7,7 @@ class NullExecutor(eva.base.executor.BaseExecutor):
     """
 
     def execute(self, job):
-        self.logger.info("[%s] Faking job execution and setting exit code to zero.", job.id)
+        job.logger.info("Faking job execution and setting exit code to zero.")
         job.set_status(job.INITIALIZED)
         job.set_status(job.COMPLETE)
         job.exit_code = 0

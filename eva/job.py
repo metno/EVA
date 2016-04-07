@@ -1,5 +1,4 @@
-import uuid
-import logging
+import eva.logger
 
 
 INITIALIZED = "INITIALIZED"
@@ -16,7 +15,7 @@ class Job(object):
 
     def __init__(self, id, logger):
         self.id = id
-        self.logger = logger
+        self.logger = self.create_logger(logger)
         self.command = ""  # a multi-line string containing the commands to be run
         self.exit_code = None  # process exit code
         self.stdout = []  # multi-line standard output
@@ -27,3 +26,10 @@ class Job(object):
         assert status in [INITIALIZED, STARTED, COMPLETE, FAILED]
         self.status = status
         self.logger.info('[%s] Setting job status to %s' % (self.id, self.status))
+
+    def create_logger(self, logger):
+        """!
+        @brief Returns a custom log adapter for logging contextual information
+        about jobs.
+        """
+        return eva.logger.JobLogAdapter(logger, {'JOB': self})

@@ -15,10 +15,10 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         script = self.create_temporary_script(job.command)
 
         # Start logging
-        self.logger.info("[%s] Executing job via script '%s'", job.id, script)
+        job.logger.info("Executing job via script '%s'", script)
 
         # Print the job script to the log
-        eva.executor.log_job_script(self.logger, job)
+        eva.executor.log_job_script(job)
 
         # Run the script
         proc = subprocess.Popen(
@@ -26,7 +26,7 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        self.logger.info("[%s] Script started with pid %d, waiting for process to finish...", job.id, proc.pid)
+        job.logger.info("Script started with pid %d, waiting for process to finish...", proc.pid)
         job.set_status(eva.job.STARTED)
         stdout, stderr = proc.communicate()
 
@@ -34,8 +34,8 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         job.exit_code = proc.returncode
         job.stdout = eva.executor.get_std_lines(stdout)
         job.stderr = eva.executor.get_std_lines(stderr)
-        self.logger.info("[%s] Script finished, exit code: %d", job.id, job.exit_code)
-        eva.executor.log_stdout_stderr(self.logger, job, job.stdout, job.stderr)
+        job.logger.info("Script finished, exit code: %d", job.exit_code)
+        eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
 
         if job.exit_code == 0:
             job.set_status(eva.job.COMPLETE)
