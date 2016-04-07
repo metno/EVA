@@ -5,6 +5,7 @@ hindering imports of the exception classes.
 """
 
 import time
+import dateutil.parser
 
 import eva.event
 import eva.base.listener
@@ -43,6 +44,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
             return eva.event.ProductstatusEvent(
                 self.kwargs['productstatus_api'][event.uri],
                 id=event.message_id,
+                timestamp=dateutil.parser.parse(event.message_timestamp),
                 event_listener=self.event_listener,
             )
         except self.RECOVERABLE_EXCEPTIONS, e:

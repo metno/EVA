@@ -59,7 +59,7 @@ class ProductstatusEvent(Event):
         """!
         @brief Return the modified timestamp of the Productstatus resource.
         """
-        return self.data.modified
+        return self.kwargs['timestamp']
 
 
 class RPCEvent(Event):
