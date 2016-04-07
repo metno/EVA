@@ -81,6 +81,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
 
         lines = [
             "#!/bin/bash",
+            "#$ -S /bin/bash",  # for GridEngine compatibility
             "wget --no-verbose --output-document='%(destination)s' %(url)s",
         ]
         values = {
