@@ -32,6 +32,10 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         @brief Look up and remove expired files.
         """
 
+        # Create Job object
+        job = eva.job.Job(message_id, self.logger)
+        job.logger.info('Job resource: %s', resource)
+
         # Get all expired datainstances for the product
         now = datetime.datetime.now().replace(tzinfo=dateutil.tz.tzutc())
         datainstances = self.api.datainstance.objects.filter(
@@ -44,11 +48,11 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
 
         count = datainstances.count()
         if count == 0:
-            self.logger.info("No expired data instances matching this Data Instance's product, format, and service backend.")
+            job.logger.info("No expired data instances matching this Data Instance's product, format, and service backend.")
             return
-        self.logger.info("Found %d expired data instances", count)
 
-        job = eva.job.Job(message_id, self.logger)
+        job.logger.info("Found %d expired data instances", count)
+
         job.command = "#!/bin/bash\n"
 
         # One line in delete script per data instance
@@ -58,11 +62,11 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
             path = datainstance.url
             if path.startswith('file://'):
                 path = path[7:]
-            self.logger.info("%s: expired at %s, queueing for deletion", datainstance.expires, datainstance)
+            job.logger.info("%s: expired at %s, queueing for deletion", datainstance.expires, datainstance)
             job.command += "rm -vf '%s' && \\\n" % path
 
         job.command += "exit 0\n"
-        self.logger.info(job.command)
+        job.logger.info(job.command)
         self.execute(job)
 
         if job.status != eva.job.COMPLETE:
@@ -71,6 +75,6 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         for datainstance in instance_list:
             datainstance.deleted = True
             datainstance.save()
-            self.logger.info('%s: marked DataInstance as deleted in Productstatus', datainstance)
+            job.logger.info('%s: marked DataInstance as deleted in Productstatus', datainstance)
 
-        self.logger.info("All expired data instances successfully processed.")
+        job.logger.info("All expired data instances successfully processed.")

@@ -78,6 +78,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         """
         filename = os.path.basename(resource.url)
         job = eva.job.Job(message_id, self.logger)
+        job.logger.info('Job resource: %s', resource)
 
         lines = [
             "#!/bin/bash",
