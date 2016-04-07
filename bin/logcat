@@ -55,13 +55,13 @@ if __name__ == '__main__':
             message = consumer.next().value
             if not message.valid():
                 continue
-            output = "%(timestamp)s %(name)s %(log_level)s: %(text)s\n" % {
+            output = u"%(timestamp)s %(name)s %(log_level)s: %(text)s\n" % {
                 'timestamp': message.timestamp(),
                 'name': message.name(),
                 'log_level': message.log_level(),
                 'text': message.text(),
             }
-            sys.stdout.write(output)
+            sys.stdout.write(output.encode('utf-8'))
             sys.stdout.flush()
     except KeyboardInterrupt:
         pass
