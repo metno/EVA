@@ -172,7 +172,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         except SSH_RETRY_EXCEPTIONS, e:
             raise eva.exceptions.RetryException(e)
 
+        # Skip submitting the job if it already exists
         if not skip_submit:
+
             # Create a submit script
             job.submit_script_path = self.create_job_filename(job, 'sh')
             try:
@@ -218,6 +220,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             except SSH_RETRY_EXCEPTIONS, e:
                 raise eva.exceptions.RetryException(e)
 
+        # Poll continuously for job completion
         check_command = 'qacct -j %d' % job.pid
         while True:
             exit_code, stdout, stderr = self.execute_ssh_command(check_command)
@@ -249,6 +252,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         # Print stdout and stderr
         eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
 
+        # Remove job script, stdout, and stderr caches
         try:
             self.sftp_client.unlink(job.submit_script_path)
             self.sftp_client.unlink(job.stdout_path)
