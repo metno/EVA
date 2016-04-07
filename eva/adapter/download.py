@@ -91,16 +91,22 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
 
         if resource.hash:
             if resource.hash_type == 'md5':
-                self.logger.info("Will check downloaded file against %s hash sum %s",
-                                 resource.hash_type,
-                                 resource.hash)
+                self.logger.info(
+                    "[%s] Will check downloaded file against %s hash sum %s",
+                    job.id,
+                    resource.hash_type,
+                    resource.hash,
+                )
                 lines += ["echo '%(md5sum)s  %(destination)s' | md5sum -c -"]
                 lines += ["status=$?"]
                 lines += ["if [ $status -ne 0 ]; then rm -fv %(destination)s; exit $status; fi"]
                 values['md5sum'] = resource.hash
             else:
-                self.logger.warning("Don't know how to process hash type %s, ignoring hash",
-                                    resource.hash_type)
+                self.logger.warning(
+                    "[%s] Don't know how to process hash type %s, ignoring hash",
+                    job.id,
+                    resource.hash_type,
+                )
 
         job.command = "\n".join(lines) + "\n"
         job.command = job.command % values
@@ -112,7 +118,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         if not self.post_to_productstatus:
             return
 
-        self.logger.debug('Creating a new DataInstance on the Productstatus server...')
+        self.logger.info('Creating a new DataInstance on the Productstatus server...')
         datainstance = self.api.datainstance.create()
         datainstance.data = resource.data
         datainstance.format = resource.format
