@@ -172,6 +172,10 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         except SSH_RETRY_EXCEPTIONS, e:
             raise eva.exceptions.RetryException(e)
 
+        # Generate stdout and stderr paths
+        job.stdout_path = self.create_job_filename(job, 'stdout')
+        job.stderr_path = self.create_job_filename(job, 'stderr')
+
         # Skip submitting the job if it already exists
         if not skip_submit:
 
@@ -188,8 +192,6 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             eva.executor.log_job_script(job)
 
             # Submit the job using qsub
-            job.stdout_path = self.create_job_filename(job, 'stdout')
-            job.stderr_path = self.create_job_filename(job, 'stderr')
             command = ['qsub',
                        '-N', job_id,
                        '-b', 'n',
