@@ -25,7 +25,7 @@ class Job(object):
     def set_status(self, status):
         assert status in [INITIALIZED, STARTED, COMPLETE, FAILED]
         self.status = status
-        self.logger.info('[%s] Setting job status to %s' % (self.id, self.status))
+        self.logger.info('Setting job status to %s', self.status)
 
     def create_logger(self, logger):
         """!
