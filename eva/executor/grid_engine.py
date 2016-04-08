@@ -172,15 +172,15 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         except SSH_RETRY_EXCEPTIONS, e:
             raise eva.exceptions.RetryException(e)
 
-        # Generate stdout and stderr paths
+        # Generate paths
         job.stdout_path = self.create_job_filename(job, 'stdout')
         job.stderr_path = self.create_job_filename(job, 'stderr')
+        job.submit_script_path = self.create_job_filename(job, 'sh')
 
         # Skip submitting the job if it already exists
         if not skip_submit:
 
             # Create a submit script
-            job.submit_script_path = self.create_job_filename(job, 'sh')
             try:
                 with self.sftp_client.open(job.submit_script_path, 'w') as submit_script:
                     script_content = job.command
