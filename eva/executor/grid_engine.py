@@ -246,7 +246,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 job.stdout = eva.executor.strip_stdout_newlines(f.readlines())
             with self.sftp_client.open(job.stderr_path, 'r') as f:
                 job.stderr = eva.executor.strip_stdout_newlines(f.readlines())
-        except SSH_RETRY_EXCEPTIONS, e:
+        except SSH_RETRY_EXCEPTIONS + (IOError,), e:
             job.logger.warning('Unable to retrieve stdout and stderr from finished Grid Engine job! The files will remain on the server.')
             self.destroy_ssh_connection()
             return
@@ -259,7 +259,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             self.sftp_client.unlink(job.submit_script_path)
             self.sftp_client.unlink(job.stdout_path)
             self.sftp_client.unlink(job.stderr_path)
-        except SSH_RETRY_EXCEPTIONS, e:
+        except SSH_RETRY_EXCEPTIONS + (IOError,), e:
             job.logger.warning('Could not remove script file, stdout and stderr')
 
         # Close the SSH connection
