@@ -163,3 +163,11 @@ class TestBaseAdapter(unittest.TestCase):
         self.assertFalse(self.adapter.is_in_required_uuids('def'))
         self.adapter.remove_required_uuid('abc')
         self.assertTrue(self.adapter.is_in_required_uuids('def'))
+
+    def test_clear_required_uuid(self):
+        self.create_adapter()
+        self.adapter.forward_to_uuid('abc')
+        self.adapter.forward_to_uuid('def')
+        self.assertFalse(self.adapter.is_in_required_uuids('ghi'))
+        self.adapter.clear_required_uuids()
+        self.assertTrue(self.adapter.is_in_required_uuids('ghi'))

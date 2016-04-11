@@ -143,6 +143,12 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         self.required_uuids.remove(uuid)
 
+    def clear_required_uuids(self):
+        """!
+        @brief Delete all UUIDs from the required UUID set.
+        """
+        self.required_uuids.clear()
+
     def is_in_required_uuids(self, uuid):
         """!
         @returns True if self.required_uuids is empty or the specified UUID is
@@ -203,6 +209,7 @@ class BaseAdapter(eva.ConfigurableObject):
         elif not self.datainstance_has_required_uuids(resource):
             self.logger.info('DataInstance %s does not have any relationships to required UUIDs %s, ignoring.', resource.data.productinstance, list(self.required_uuids))
         else:
+            self.clear_required_uuids()
             self.logger.info('DataInstance matches all configured criteria.')
             return True
 
