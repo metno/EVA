@@ -173,6 +173,14 @@ class Eventloop(object):
         """
         self.adapter.blacklist_add(uuid)
 
+    def forward_to_uuid(self, uuid):
+        """!
+        @brief Skip all Productstatus messages where parents or children do not
+        contain the specified UUID. That includes Product, ProductInstance,
+        Data, DataInstance, ServiceBackend and Format resources.
+        """
+        self.adapter.forward_to_uuid(uuid)
+
     def shutdown(self):
         """!
         @brief Shutdown EVA after the current resource has been processed.

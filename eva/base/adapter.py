@@ -52,6 +52,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.api = api
         self.env = environment_variables
         self.blacklist = set()
+        self.required_uuids = set()
         self.template = eva.template.Environment()
         self.process_partial = self.PROCESS_PARTIAL_NO
         self.read_input_partial_config()
@@ -127,6 +128,47 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         return uuid in self.blacklist
 
+    def forward_to_uuid(self, uuid):
+        """!
+        @brief Instruct the adapter to ignore messages that do not refer to the
+        specified UUID through either its own ID or any child or parent IDs.
+        This parameter is deleted once a valid message is accepted for
+        processing.
+        """
+        self.required_uuids.add(uuid)
+
+    def remove_required_uuid(self, uuid):
+        """!
+        @brief Delete an UUID from the required UUID set.
+        """
+        self.required_uuids.remove(uuid)
+
+    def is_in_required_uuids(self, uuid):
+        """!
+        @returns True if self.required_uuids is empty or the specified UUID is
+        in that set.
+        """
+        return (len(self.required_uuids) == 0) or (uuid in self.required_uuids)
+
+    def datainstance_has_required_uuids(self, datainstance):
+        """!
+        @returns True if the DataInstance or any of its parents or children
+        have the specified UUID as their primary key.
+        """
+        if self.is_in_required_uuids(datainstance.id):
+            return True
+        if self.is_in_required_uuids(datainstance.data.id):
+            return True
+        if self.is_in_required_uuids(datainstance.data.productinstance.id):
+            return True
+        if self.is_in_required_uuids(datainstance.data.productinstance.product.id):
+            return True
+        if self.is_in_required_uuids(datainstance.format.id):
+            return True
+        if self.is_in_required_uuids(datainstance.servicebackend.id):
+            return True
+        return False
+
     def resource_matches_input_config(self, resource):
         """!
         @brief Check that a Productstatus resource matches the configured
@@ -158,6 +200,8 @@ class BaseAdapter(eva.ConfigurableObject):
             self.logger.info('Data %s is blacklisted, ignoring.', resource.data)
         elif self.is_blacklisted(resource.data.productinstance.id):
             self.logger.info('ProductInstance %s is blacklisted, ignoring.', resource.data.productinstance)
+        elif not self.datainstance_has_required_uuids(resource):
+            self.logger.info('DataInstance %s does not have any relationships to required UUIDs %s, ignoring.', resource.data.productinstance, list(self.required_uuids))
         else:
             self.logger.info('DataInstance matches all configured criteria.')
             return True

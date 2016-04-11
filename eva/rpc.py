@@ -79,6 +79,12 @@ class RPC(object):
         """
         return self.executor.blacklist_uuid(uuid)
 
+    def forward_to_uuid(self, uuid):
+        """!
+        @see Eventloop.forward_to_uuid
+        """
+        return self.executor.forward_to_uuid(uuid)
+
     def shutdown(self):
         """!
         @see Eventloop.shutdown
