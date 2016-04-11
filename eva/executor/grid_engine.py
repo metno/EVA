@@ -225,7 +225,10 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         # Poll continuously for job completion
         check_command = 'qacct -j %d' % job.pid
         while True:
-            exit_code, stdout, stderr = self.execute_ssh_command(check_command)
+            try:
+                exit_code, stdout, stderr = self.execute_ssh_command(check_command)
+            except SSH_RETRY_EXCEPTIONS, e:
+                raise eva.exceptions.RetryException(e)
             if exit_code != EXIT_OK:
                 job.logger.debug('Job has not completed yet, sleeping for %d seconds...',
                                  QACCT_CHECK_INTERVAL_SECS)
