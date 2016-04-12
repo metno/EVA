@@ -237,12 +237,6 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             job.exit_code = get_exit_code_from_qacct_output(stdout)
             break
 
-        # Set job exit status and remove submit script and log files
-        if job.exit_code == EXIT_OK:
-            job.set_status(eva.job.COMPLETE)
-        else:
-            job.set_status(eva.job.FAILED)
-
         # Retrieve stdout and stderr
         try:
             with self.sftp_client.open(job.stdout_path, 'r') as f:
@@ -250,9 +244,15 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             with self.sftp_client.open(job.stderr_path, 'r') as f:
                 job.stderr = eva.executor.strip_stdout_newlines(f.readlines())
         except SSH_RETRY_EXCEPTIONS + (IOError,), e:
-            job.logger.warning('Unable to retrieve stdout and stderr from finished Grid Engine job! The files will remain on the server.')
-            self.destroy_ssh_connection()
-            return
+            raise eva.exceptions.RetryException(
+                'Unable to retrieve stdout and stderr from finished Grid Engine job.'
+            )
+
+        # Set job exit status
+        if job.exit_code == EXIT_OK:
+            job.set_status(eva.job.COMPLETE)
+        else:
+            job.set_status(eva.job.FAILED)
 
         # Print stdout and stderr
         eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
