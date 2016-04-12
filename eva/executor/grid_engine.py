@@ -22,6 +22,13 @@ SSH_RETRY_EXCEPTIONS = (paramiko.ssh_exception.NoValidConnectionsError,
 EXIT_OK = 0
 
 
+def create_job_unique_id(group_id, job_id):
+    """!
+    @brief Given a EVA group_id and a job UUID, returns a valid job id for GridEngine.
+    """
+    return u'eva.' + re.sub(r'[^\w\d]', u'-', group_id).strip(u'-') + u'.' + unicode(job_id)
+
+
 def get_job_id_from_qsub_output(output):
     """!
     Parse the JOB_ID from qsub output. Unfortunately, there is no command-line
@@ -84,12 +91,11 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         if not os.access(self.env['EVA_GRIDENGINE_SSH_KEY_FILE'], os.R_OK):
             raise eva.exceptions.InvalidConfigurationException("The SSH key '%s' is not readable!" % self.env['EVA_GRIDENGINE_SSH_KEY_FILE'])
 
-    def create_job_filename(self, job, *args):
+    def create_job_filename(self, *args):
         """!
         @brief Generate a unique job name that can be used as a filename.
         """
-        params = ['eva', unicode(job.id)] + list(args)
-        return '.'.join(params)
+        return '.'.join(list(args))
 
     def create_ssh_connection(self, job):
         """!
@@ -159,7 +165,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         # Check whether a GridEngine task is already running for this job. If
         # it is, we skip submitting the job and jump right to the qacct polling.
         job.logger.info('Querying if job is already running.')
-        job_id = 'eva.%s' % unicode(job.id)
+        job_id = create_job_unique_id(self.group_id, job.id)
         command = 'qstat -j %s' % job_id
         try:
             exit_code, stdout, stderr = self.execute_ssh_command(command)
@@ -173,9 +179,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             raise eva.exceptions.RetryException(e)
 
         # Generate paths
-        job.stdout_path = self.create_job_filename(job, 'stdout')
-        job.stderr_path = self.create_job_filename(job, 'stderr')
-        job.submit_script_path = self.create_job_filename(job, 'sh')
+        job.stdout_path = self.create_job_filename(job_id, 'stdout')
+        job.stderr_path = self.create_job_filename(job_id, 'stderr')
+        job.submit_script_path = self.create_job_filename(job_id, 'sh')
 
         # Skip submitting the job if it already exists
         if not skip_submit:

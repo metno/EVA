@@ -9,7 +9,8 @@ class BaseExecutor(eva.ConfigurableObject):
     @brief Abstract base class for execution engines.
     """
 
-    def __init__(self, environment_variables, logger, zookeeper):
+    def __init__(self, group_id, environment_variables, logger, zookeeper):
+        self.group_id = group_id
         self.env = environment_variables
         self.logger = logger
         self.zookeeper = zookeeper

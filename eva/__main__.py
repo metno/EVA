@@ -184,6 +184,7 @@ if __name__ == "__main__":
             listeners += [listener]
 
         executor = import_module_class(arg['executor'])(
+            group_id,
             environment_variables,
             logger,
             zookeeper,
