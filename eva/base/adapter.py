@@ -6,6 +6,8 @@ import eva.logger
 import eva.job
 import eva.exceptions
 
+import productstatus
+
 
 class BaseAdapter(eva.ConfigurableObject):
     """!
@@ -196,10 +198,10 @@ class BaseAdapter(eva.ConfigurableObject):
                              resource.format.name)
         elif resource.deleted:
             self.logger.info('DataInstance is marked as deleted, ignoring.')
-        elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO:
-            self.logger.info('DataInstance is marked as partial, ignoring.')
-        elif not resource.partial and self.process_partial == self.PROCESS_PARTIAL_ONLY:
-            self.logger.info('DataInstance is not marked as partial, ignoring.')
+        elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
+            self.logger.info('DataInstance is not complete, ignoring.')
+        elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_ONLY and productstatus.datainstance_has_complete_file_count(resource):
+            self.logger.info('DataInstance is complete, ignoring.')
         elif self.is_blacklisted(resource.id):
             self.logger.info('DataInstance %s is blacklisted, ignoring.', resource)
         elif self.is_blacklisted(resource.data.id):
