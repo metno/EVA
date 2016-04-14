@@ -21,6 +21,7 @@ class BaseAdapter(eva.ConfigurableObject):
         'EVA_INPUT_PARTIAL': 'Whether or not to process partial data instances (allowed values are yes, no, and both; defaults to no)',
         'EVA_INPUT_PRODUCT_UUID': 'Comma-separated input Productstatus product UUIDs',
         'EVA_INPUT_SERVICE_BACKEND_UUID': 'Comma-separated input Productstatus service backend UUIDs',
+        'EVA_INPUT_REFERENCE_HOURS': 'Comma-separated reference hours to process data for',
         'EVA_OUTPUT_BASE_URL': 'Base URL for DataInstances posted to Productstatus',
         'EVA_OUTPUT_DATA_FORMAT_UUID': 'Productstatus Data Format UUID for the finished product',
         'EVA_OUTPUT_FILENAME_PATTERN': 'strftime pattern for output data instance filename',
@@ -58,9 +59,16 @@ class BaseAdapter(eva.ConfigurableObject):
         self.template = eva.template.Environment()
         self.process_partial = self.PROCESS_PARTIAL_NO
         self.read_input_partial_config()
+        self.read_input_reference_hours_config()
         self.normalize_config_uuids()
         self.validate_configuration()
         self.init()
+
+    def read_input_reference_hours_config(self):
+        key = 'EVA_INPUT_REFERENCE_HOURS'
+        if key not in self.env:
+            return
+        self.env[key] = eva.split_comma_separated(self.env[key])
 
     def read_input_partial_config(self):
         if 'EVA_INPUT_PARTIAL' not in self.env:
@@ -196,6 +204,8 @@ class BaseAdapter(eva.ConfigurableObject):
         elif not self.in_array_or_empty(resource.format.id, 'EVA_INPUT_DATA_FORMAT_UUID'):
             self.logger.info('DataInstance file type is %s, ignoring.',
                              resource.format.name)
+        elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
+            self.logger.info('DataInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
         elif resource.deleted:
             self.logger.info('DataInstance is marked as deleted, ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
