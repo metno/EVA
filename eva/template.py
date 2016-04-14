@@ -20,6 +20,10 @@ def filter_timedelta(value, **kwargs):
     return value + datetime.timedelta(**kwargs)
 
 
+def filter_strftime(value, *args, **kwargs):
+    return value.strftime(*args, **kwargs)
+
+
 class Environment(jinja2.Environment):
     def __init__(self, *args, **kwargs):
         """!
@@ -31,3 +35,4 @@ class Environment(jinja2.Environment):
         self.filters['iso8601'] = filter_iso8601
         self.filters['iso8601_compact'] = filter_iso8601_compact
         self.filters['timedelta'] = filter_timedelta
+        self.filters['strftime'] = filter_strftime
