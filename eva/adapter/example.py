@@ -2,6 +2,23 @@
 @brief Example adapter, good for starting out writing EVA jobs.
 
 This adapter serves as a reusable example of how to write your own EVA jobs.
+
+To run this adapter on GridEngine, you might want to configure these environment variables:
+
+    export EVA_ADAPTER="eva.adapter.example.ExampleAdapter"
+    export EVA_EXECUTOR="eva.executor.GridEngineExecutor"
+    export EVA_GRIDENGINE_SSH_HOST="<gridengine-login-node>"
+    export EVA_GRIDENGINE_SSH_KEY_FILE="/home/<username>/.ssh/id_rsa"
+    export EVA_GRIDENGINE_SSH_USER="<username>"
+    export EVA_INPUT_DATA_FORMAT_UUID="4fbc5c33-272a-4d5f-a29d-6d4c5e7e47f0"
+    export EVA_INPUT_PRODUCT_UUID="7d955184-aa2e-4298-8f9c-2c4b63eae170"
+    export EVA_INPUT_SERVICE_BACKEND_UUID="34615199-4941-496d-831e-1679d7b35f5a"
+    export EVA_OUTPUT_FILENAME_PATTERN="{{reference_time|timedelta(hours=6)|iso8601_compact}}"
+
+Then, run EVA:
+
+    python -m eva --process_data_instance <data-instance-uuid>
+
 """
 
 # Import required Python modules
