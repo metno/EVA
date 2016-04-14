@@ -10,6 +10,16 @@ source deps/bin/activate
 pip install -e .
 ```
 
+## Writing adapters
+
+See the file [eva/adapter/example.py] for an example.
+
+## Running EVA
+
+```
+python -m eva --help
+```
+
 ## Building a Docker container
 
 ```
