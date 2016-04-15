@@ -225,6 +225,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                     )
                 job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
                 job.logger.info('Job has been submitted, JOB_ID = %d', job.pid)
+                job.set_status(eva.job.STARTED)
             except SSH_RETRY_EXCEPTIONS, e:
                 raise eva.exceptions.RetryException(e)
 
