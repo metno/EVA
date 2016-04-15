@@ -32,10 +32,6 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         @brief Look up and remove expired files.
         """
 
-        # Create Job object
-        job = eva.job.Job(message_id, self.logger)
-        job.logger.info('Job resource: %s', resource)
-
         # Get all expired datainstances for the product
         now = datetime.datetime.now().replace(tzinfo=dateutil.tz.tzutc())
         datainstances = self.api.datainstance.objects.filter(
@@ -48,9 +44,12 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
 
         count = datainstances.count()
         if count == 0:
-            job.logger.info("No expired data instances matching this Data Instance's product, format, and service backend.")
+            self.logger.info("No expired data instances matching this Data Instance's product, format, and service backend.")
             return
 
+        # Create Job object and log startup info
+        job = eva.job.Job(message_id, self.logger)
+        job.logger.info('Job resource: %s', resource)
         job.logger.info("Found %d expired data instances", count)
 
         job.command = "#!/bin/bash\n"
