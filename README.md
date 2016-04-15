@@ -5,6 +5,7 @@ This daemon listens for messages coming from Productstatus, creates jobs based o
 ## Set up your build environment
 
 ```
+sudo apt-get install python-pip python-virtualenv python-dev
 virtualenv deps
 source deps/bin/activate
 pip install -e .
