@@ -213,3 +213,10 @@ def parse_boolean_string(string):
     if string in ['no', 'NO', 'false', 'FALSE', 'False', '0']:
         return False
     return None
+
+
+def strftime_iso8601(dt):
+    """!
+    @brief Given a DateTime object, return an ISO8601 formatted string.
+    """
+    return dt.strftime("%Y-%m-%dT%H:%M:%S%z")

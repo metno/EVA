@@ -240,11 +240,23 @@ class BaseAdapter(eva.ConfigurableObject):
 
         return False
 
+    def print_datainstance_info(self, datainstance):
+        """!
+        @brief Print information about a DataInstance to the debug log.
+        """
+        self.logger.debug('Product: %s', datainstance.data.productinstance.product.name)
+        self.logger.debug('Reference time: %s', eva.strftime_iso8601(datainstance.data.productinstance.reference_time))
+        self.logger.debug('Time step: from %s to %s', eva.strftime_iso8601(datainstance.data.time_period_begin), eva.strftime_iso8601(datainstance.data.time_period_end))
+        self.logger.debug('Data format: %s', datainstance.format.name)
+        self.logger.debug('Service backend: %s', datainstance.servicebackend.name)
+
     def validate_and_process_resource(self, message_id, resource):
         """!
         @brief Check if the Resource fits this adapter, and send it to `process_resource`.
         @param resource A Productstatus resource.
         """
+        if resource._collection._resource_name == 'datainstance':
+            self.print_datainstance_info(resource)
         if not self.resource_matches_input_config(resource):
             return
         self.message_id = message_id
