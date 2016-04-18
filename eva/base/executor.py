@@ -14,7 +14,7 @@ class BaseExecutor(eva.ConfigurableObject):
         self.env = environment_variables
         self.logger = logger
         self.zookeeper = zookeeper
-        self.validate_configuration()
+        self.read_configuration()
 
     def execute(self, job):
         """!

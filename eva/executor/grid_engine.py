@@ -71,11 +71,31 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """
 
     CONFIG = {
-        'EVA_GRIDENGINE_QUEUE': 'Which Grid Engine queue to run jobs in',
-        'EVA_GRIDENGINE_SSH_HOST': 'Hostname of the Grid Engine submit host',
-        'EVA_GRIDENGINE_SSH_USER': 'Username on the Grid Engine submit host',
-        'EVA_GRIDENGINE_SSH_KEY_FILE': 'Path to a SSH private key used for connecting to the Grid Engine submit host',
+        'EVA_GRIDENGINE_QUEUE': {
+            'type': 'string',
+            'help': 'Which Grid Engine queue to run jobs in',
+            'default': '',
+        },
+        'EVA_GRIDENGINE_SSH_HOST': {
+            'type': 'string',
+            'help': 'Hostname of the Grid Engine submit host',
+            'default': '',
+        },
+        'EVA_GRIDENGINE_SSH_USER': {
+            'type': 'string',
+            'help': 'Username on the Grid Engine submit host',
+            'default': '',
+        },
+        'EVA_GRIDENGINE_SSH_KEY_FILE': {
+            'type': 'string',
+            'help': 'Path to a SSH private key used for connecting to the Grid Engine submit host',
+            'default': '',
+        },
     }
+
+    OPTIONAL_CONFIG = [
+        'EVA_GRIDENGINE_QUEUE',
+    ]
 
     REQUIRED_CONFIG = [
         'EVA_GRIDENGINE_SSH_HOST',

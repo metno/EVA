@@ -12,8 +12,16 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
     The adapter requires an external library called `eva-adapter-support`.
     """
     CONFIG = {
-        'EVA_FG2NC_LIB': ('string', 'Path to .../eva-adapter-support/FimexGRIB2NetCDFAdapter',),
-        'EVA_FG2NC_TEMPLATEDIR': ('string', 'Path to the NetCDF template files required for this conversion',),
+        'EVA_FG2NC_LIB': {
+            'type': 'string',
+            'help': 'Path to .../eva-adapter-support/FimexGRIB2NetCDFAdapter',
+            'default': '',
+        },
+        'EVA_FG2NC_TEMPLATEDIR': {
+            'type': 'string',
+            'help': 'Path to the NetCDF template files required for this conversion',
+            'default': '',
+        },
     }
 
     REQUIRED_CONFIG = [

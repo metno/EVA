@@ -67,9 +67,9 @@ class TestBaseAdapter(unittest.TestCase):
             ]
         self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
         self.assertIn('EVA_INPUT_PRODUCT', self.adapter.env)
-        self.assertEqual(self.adapter.env['EVA_INPUT_PRODUCT'], None)
+        self.assertEqual(self.adapter.env['EVA_INPUT_PRODUCT'], [])
 
-    def test_normalize_config(self):
+    def test_read_config(self):
         class Foo(eva.adapter.BaseAdapter):
             REQUIRED_CONFIG = [
                 'EVA_INPUT_PRODUCT',
@@ -164,3 +164,24 @@ class TestBaseAdapter(unittest.TestCase):
         self.assertFalse(self.adapter.is_in_required_uuids('ghi'))
         self.adapter.clear_required_uuids()
         self.assertTrue(self.adapter.is_in_required_uuids('ghi'))
+
+    def test_input_partial_true(self):
+        class Foo(eva.adapter.BaseAdapter):
+            REQUIRED_CONFIG = ['EVA_INPUT_PARTIAL']
+        self.env['EVA_INPUT_PARTIAL'] = 'NO'
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.assertEqual(self.adapter.process_partial, self.adapter.PROCESS_PARTIAL_NO)
+
+    def test_input_partial_false(self):
+        class Foo(eva.adapter.BaseAdapter):
+            REQUIRED_CONFIG = ['EVA_INPUT_PARTIAL']
+        self.env['EVA_INPUT_PARTIAL'] = 'YES'
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.assertEqual(self.adapter.process_partial, self.adapter.PROCESS_PARTIAL_ONLY)
+
+    def test_input_partial_both(self):
+        class Foo(eva.adapter.BaseAdapter):
+            REQUIRED_CONFIG = ['EVA_INPUT_PARTIAL']
+        self.env['EVA_INPUT_PARTIAL'] = 'BOTH'
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.assertEqual(self.adapter.process_partial, self.adapter.PROCESS_PARTIAL_BOTH)

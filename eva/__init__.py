@@ -9,7 +9,7 @@ class ConfigurableObject(object):
     Base class that allows the subclass to define a list of required and
     optional configuration environment variables.
 
-    The subclass has the responsibility of calling `validate_configuration()`.
+    The subclass has the responsibility of calling `read_configuration()`.
 
     Additionally, the subclass must have the property `logger`, which points to
     a Python self.logger object.
@@ -40,22 +40,6 @@ class ConfigurableObject(object):
     # @brief List of optional configuration variables.
     OPTIONAL_CONFIG = []
 
-    def validate_configuration(self):
-        """
-        @brief Throw an exception if all required environment variables are not set.
-        """
-        errors = 0
-        for key in self.REQUIRED_CONFIG:
-            if key not in self.env or self.env[key] is None:
-                self.logger.critical('Missing required environment variable %s (%s)', key, self.CONFIG[key][1])
-                errors += 1
-        for key in self.OPTIONAL_CONFIG:
-            if key not in self.env or self.env[key] is None:
-                self.logger.debug('Optional environment variable not configured: %s (%s)', key, self.CONFIG[key][1])
-                self.env[key] = None
-        if errors > 0:
-            raise eva.exceptions.MissingConfigurationException('Missing %d required environment variables' % errors)
-
     def normalize_config_string(self, value):
         """!
         Coerce a type into a unicode string.
@@ -66,13 +50,15 @@ class ConfigurableObject(object):
         """!
         Coerce a type into an integer.
         """
+        if len(value) == 0:
+            return None
         return int(value)
 
     def normalize_config_null_bool(self, value):
         """!
         Coerce a type into a unicode string.
         """
-        return eva.parse_boolean_string(self.env['EVA_INPUT_PARTIAL'])
+        return eva.parse_boolean_string(value)
 
     def normalize_config_bool(self, value):
         """!
@@ -93,7 +79,7 @@ class ConfigurableObject(object):
         """!
         Split a comma-separated string into a list of unicode strings.
         """
-        return [self.normalize_config_string(x) for x in self.normalize_config_list(value)]
+        return [self.normalize_config_string(x) for x in self.normalize_config_list(value) if len(x) > 0]
 
     def normalize_config_list_int(self, value):
         """!
@@ -101,18 +87,40 @@ class ConfigurableObject(object):
         """
         return [self.normalize_config_int(x) for x in self.normalize_config_list(value)]
 
-    def normalize_config(self):
+    def read_configuration(self):
         """!
         @brief Normalize input configuration based on the configuration
         definition: split strings into lists, convert to types.
         """
+        env = {}
         errors = 0
-        for key, value in self.env.iteritems():
-            if key not in self.REQUIRED_CONFIG and key not in self.OPTIONAL_CONFIG:
-                continue
+        missing = 0
+        keys = list(set(self.REQUIRED_CONFIG + self.OPTIONAL_CONFIG))
+
+        # Iterate through required and optional config, and read only those variables
+        for key in keys:
             if key not in self.CONFIG:
-                raise RuntimeError("Missing configuration option '%s' in adapter CONFIG array, please fix your code!" % key)
-            option_type = self.CONFIG[key][0]
+                raise RuntimeError(
+                    "Missing configuration option '%s' in adapter CONFIG hash, please fix your code!" % key
+                )
+
+            # Read default value and enforce requirements
+            if key not in self.env:
+                if key in self.REQUIRED_CONFIG:
+                    self.logger.critical(
+                        'Missing required environment variable %s (%s)', key, self.CONFIG[key]['help']
+                    )
+                    missing += 1
+                    errors += 1
+                    continue
+                if key in self.OPTIONAL_CONFIG:
+                    self.logger.debug('Optional environment variable not configured: %s (%s), defaults to "%s"', key, self.CONFIG[key]['help'], self.CONFIG[key]['default'])
+                value = self.CONFIG[key]['default']
+            else:
+                value = self.env[key]
+
+            # Normalize configuration option
+            option_type = self.CONFIG[key]['type']
             func_name = 'normalize_config_' + option_type
             try:
                 func = getattr(self, func_name)
@@ -124,9 +132,22 @@ class ConfigurableObject(object):
                 self.logger.critical("Invalid value '%s' for configuration '%s': %s", value, key, e)
                 errors += 1
                 continue
-            self.env[key] = value
+
+            # Write normalized value into configuration hash
+            env[key] = value
+
+        # Terminate if invalid configuration
+        if missing > 0:
+            raise eva.exceptions.MissingConfigurationException(
+                'Missing %d required configuration values' % missing
+            )
         if errors > 0:
-            raise eva.exceptions.InvalidConfigurationException('%d errors occurred during UUID normalization' % errors)
+            raise eva.exceptions.InvalidConfigurationException(
+                'Encountered %d errors while reading configuration' % errors
+            )
+
+        # Drop non-normalized values
+        self.env = env
 
 
 

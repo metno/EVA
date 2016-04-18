@@ -26,7 +26,11 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
     """
 
     CONFIG = {
-        'EVA_FIMEX_PARAMETERS': 'FIMEX command-line parameters.',
+        'EVA_FIMEX_PARAMETERS': {
+            'type': 'string',
+            'help': 'FIMEX command-line parameters.',
+            'default': '',
+        }
     }
 
     REQUIRED_CONFIG = [

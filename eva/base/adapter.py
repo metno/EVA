@@ -17,19 +17,71 @@ class BaseAdapter(eva.ConfigurableObject):
 
     # @brief Common configuration variables all subclasses may use.
     _COMMON_ADAPTER_CONFIG = {
-        'EVA_INPUT_DATA_FORMAT': ('list_string', 'Comma-separated input Productstatus data format slugs',),
-        'EVA_INPUT_PARTIAL': ('null_bool', 'Whether or not to process partial data instances (allowed values are yes, no, and both; defaults to no)',),
-        'EVA_INPUT_PRODUCT': ('list_string', 'Comma-separated input Productstatus product slugs',),
-        'EVA_INPUT_SERVICE_BACKEND': ('list_string', 'Comma-separated input Productstatus service backend slugs',),
-        'EVA_INPUT_REFERENCE_HOURS': ('list_int', 'Comma-separated reference hours to process data for',),
-        'EVA_OUTPUT_BASE_URL': ('string', 'Base URL for DataInstances posted to Productstatus',),
-        'EVA_OUTPUT_DATA_FORMAT': ('string', 'Productstatus Data Format ID for the finished product',),
-        'EVA_OUTPUT_FILENAME_PATTERN': ('string', 'strftime pattern for output data instance filename',),
-        'EVA_OUTPUT_LIFETIME': ('int', 'Lifetime of output data instance, in hours, before it can be deleted',),
-        'EVA_OUTPUT_PRODUCT': ('string', 'Productstatus Product ID for the finished product',),
-        'EVA_OUTPUT_SERVICE_BACKEND': ('string', 'Productstatus Service Backend ID for the position of the finished product',),
-        'EVA_PRODUCTSTATUS_API_KEY': ('string', 'Productstatus API key',),
-        'EVA_PRODUCTSTATUS_USERNAME': ('string', 'Productstatus user name',),
+        'EVA_INPUT_DATA_FORMAT': {
+            'type': 'list_string',
+            'help': 'Comma-separated input Productstatus data format slugs',
+            'default': '',
+        },
+        'EVA_INPUT_PARTIAL': {
+            'type': 'null_bool',
+            'help': 'Whether or not to process partial data instances',
+            'default': 'NO',
+        },
+        'EVA_INPUT_PRODUCT': {
+            'type': 'list_string',
+            'help': 'Comma-separated input Productstatus product slugs',
+            'default': '',
+        },
+        'EVA_INPUT_SERVICE_BACKEND': {
+            'type': 'list_string',
+            'help': 'Comma-separated input Productstatus service backend slugs',
+            'default': '',
+        },
+        'EVA_INPUT_REFERENCE_HOURS': {
+            'type': 'list_int',
+            'help': 'Comma-separated reference hours to process data for',
+            'default': '',
+        },
+        'EVA_OUTPUT_BASE_URL': {
+            'type': 'string',
+            'help': 'Base URL for DataInstances posted to Productstatus',
+            'default': '',
+        },
+        'EVA_OUTPUT_DATA_FORMAT': {
+            'type': 'string',
+            'help': 'Productstatus Data Format ID for the finished product',
+            'default': '',
+        },
+        'EVA_OUTPUT_FILENAME_PATTERN': {
+            'type': 'string',
+            'help': 'strftime pattern for output data instance filename',
+            'default': '',
+        },
+        'EVA_OUTPUT_LIFETIME': {
+            'type': 'int',
+            'help': 'Lifetime of output data instance, in hours, before it can be deleted',
+            'default': '',
+        },
+        'EVA_OUTPUT_PRODUCT': {
+            'type': 'string',
+            'help': 'Productstatus Product ID for the finished product',
+            'default': '',
+        },
+        'EVA_OUTPUT_SERVICE_BACKEND': {
+            'type': 'string',
+            'help': 'Productstatus Service Backend ID for the position of the finished product',
+            'default': '',
+        },
+        'EVA_PRODUCTSTATUS_API_KEY': {
+            'type': 'string',
+            'help': 'Productstatus API key',
+            'default': '',
+        },
+        'EVA_PRODUCTSTATUS_USERNAME': {
+            'type': 'string',
+            'help': 'Productstatus user name',
+            'default': '',
+        },
     }
 
     _OPTIONAL_CONFIG = [
@@ -57,10 +109,22 @@ class BaseAdapter(eva.ConfigurableObject):
         self.blacklist = set()
         self.required_uuids = set()
         self.template = eva.template.Environment()
-        self.process_partial = self.PROCESS_PARTIAL_NO
-        self.normalize_config()
-        self.validate_configuration()
+        self.read_configuration()
+        self.setup_process_partial()
         self.init()
+
+    def setup_process_partial(self):
+        """!
+        @brief Set up the `process_partial` variable.
+        """
+        if 'EVA_INPUT_PARTIAL' not in self.env:
+            self.process_partial = self.PROCESS_PARTIAL_NO
+        elif self.env['EVA_INPUT_PARTIAL'] is None:
+            self.process_partial = self.PROCESS_PARTIAL_BOTH
+        elif self.env['EVA_INPUT_PARTIAL'] is True:
+            self.process_partial = self.PROCESS_PARTIAL_ONLY
+        else:
+            self.process_partial = self.PROCESS_PARTIAL_NO
 
     def in_array_or_empty(self, data, env):
         """!
@@ -214,10 +278,8 @@ class BaseAdapter(eva.ConfigurableObject):
         to Productstatus, False otherwise.
         """
         return (
-            ('EVA_PRODUCTSTATUS_USERNAME' in self.env) and
-            ('EVA_PRODUCTSTATUS_API_KEY' in self.env) and
-            (self.env['EVA_PRODUCTSTATUS_USERNAME'] is not None) and
-            (self.env['EVA_PRODUCTSTATUS_API_KEY'] is not None)
+            (len(self.env['EVA_PRODUCTSTATUS_USERNAME']) > 0) and
+            (len(self.env['EVA_PRODUCTSTATUS_API_KEY']) > 0)
         )
 
     def require_productstatus_credentials(self):

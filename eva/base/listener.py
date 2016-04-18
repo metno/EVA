@@ -11,7 +11,7 @@ class BaseListener(eva.ConfigurableObject):
         self.logger = logger
         self.zookeeper = zookeeper
         self.kwargs = kwargs
-        self.validate_configuration()
+        self.read_configuration()
 
     def setup_listener(self):
         """!
