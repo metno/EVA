@@ -28,16 +28,17 @@ class TestBaseAdapter(unittest.TestCase):
     def test_default_configuration_keys(self):
         self.create_adapter()
         self.assertListEqual(sorted(self.adapter.CONFIG.keys()), [
-            'EVA_INPUT_DATA_FORMAT_UUID',
+            'EVA_INPUT_DATA_FORMAT',
             'EVA_INPUT_PARTIAL',
-            'EVA_INPUT_PRODUCT_UUID',
-            'EVA_INPUT_SERVICE_BACKEND_UUID',
+            'EVA_INPUT_PRODUCT',
+            'EVA_INPUT_REFERENCE_HOURS',
+            'EVA_INPUT_SERVICE_BACKEND',
             'EVA_OUTPUT_BASE_URL',
-            'EVA_OUTPUT_DATA_FORMAT_UUID',
+            'EVA_OUTPUT_DATA_FORMAT',
             'EVA_OUTPUT_FILENAME_PATTERN',
             'EVA_OUTPUT_LIFETIME',
-            'EVA_OUTPUT_PRODUCT_UUID',
-            'EVA_OUTPUT_SERVICE_BACKEND_UUID',
+            'EVA_OUTPUT_PRODUCT',
+            'EVA_OUTPUT_SERVICE_BACKEND',
             'EVA_PRODUCTSTATUS_API_KEY',
             'EVA_PRODUCTSTATUS_USERNAME',
         ])
@@ -49,12 +50,12 @@ class TestBaseAdapter(unittest.TestCase):
             }
         self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
         self.assertIn('EVA_TEST_FOO', self.adapter.CONFIG.keys())
-        self.assertIn('EVA_INPUT_DATA_FORMAT_UUID', self.adapter.CONFIG.keys())
+        self.assertIn('EVA_INPUT_DATA_FORMAT', self.adapter.CONFIG.keys())
 
     def test_required_configuration_keys(self):
         class Foo(eva.adapter.BaseAdapter):
             REQUIRED_CONFIG = [
-                'EVA_INPUT_PRODUCT_UUID',
+                'EVA_INPUT_PRODUCT',
             ]
         with self.assertRaises(eva.exceptions.MissingConfigurationException):
             self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
@@ -62,41 +63,33 @@ class TestBaseAdapter(unittest.TestCase):
     def test_optional_configuration_keys(self):
         class Foo(eva.adapter.BaseAdapter):
             OPTIONAL_CONFIG = [
-                'EVA_INPUT_PRODUCT_UUID',
+                'EVA_INPUT_PRODUCT',
             ]
         self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
-        self.assertIn('EVA_INPUT_PRODUCT_UUID', self.adapter.env)
-        self.assertEqual(self.adapter.env['EVA_INPUT_PRODUCT_UUID'], None)
+        self.assertIn('EVA_INPUT_PRODUCT', self.adapter.env)
+        self.assertEqual(self.adapter.env['EVA_INPUT_PRODUCT'], None)
 
-    def test_normalize_uuid(self):
+    def test_normalize_config(self):
         class Foo(eva.adapter.BaseAdapter):
             REQUIRED_CONFIG = [
-                'EVA_INPUT_PRODUCT_UUID',
-                'EVA_INPUT_SERVICE_BACKEND_UUID',
+                'EVA_INPUT_PRODUCT',
+                'EVA_INPUT_REFERENCE_HOURS',
+                'EVA_INPUT_SERVICE_BACKEND',
             ]
             OPTIONAL_CONFIG = [
-                'EVA_OUTPUT_SERVICE_BACKEND_UUID',
+                'EVA_OUTPUT_SERVICE_BACKEND',
             ]
         self.env = {
-            'EVA_INPUT_PRODUCT_UUID': BLANK_UUID,
-            'EVA_INPUT_SERVICE_BACKEND_UUID': '%s,%s, %s' % (BLANK_UUID, BLANK_UUID, BLANK_UUID),
-            'EVA_OUTPUT_SERVICE_BACKEND_UUID': BLANK_UUID,
+            'EVA_INPUT_PRODUCT': BLANK_UUID,
+            'EVA_INPUT_REFERENCE_HOURS': ' 00, 12,18',
+            'EVA_INPUT_SERVICE_BACKEND': '%s,%s, %s' % (BLANK_UUID, BLANK_UUID, BLANK_UUID),
+            'EVA_OUTPUT_SERVICE_BACKEND': BLANK_UUID,
         }
         self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
-        self.assertListEqual(self.adapter.env['EVA_INPUT_PRODUCT_UUID'], [BLANK_UUID])
-        self.assertListEqual(self.adapter.env['EVA_INPUT_SERVICE_BACKEND_UUID'], [BLANK_UUID, BLANK_UUID, BLANK_UUID])
-        self.assertEqual(self.adapter.env['EVA_OUTPUT_SERVICE_BACKEND_UUID'], BLANK_UUID)
-
-    def test_normalize_uuid_invalid(self):
-        class Foo(eva.adapter.BaseAdapter):
-            REQUIRED_CONFIG = [
-                'EVA_INPUT_PRODUCT_UUID',
-            ]
-        self.env = {
-            'EVA_INPUT_PRODUCT_UUID': INVALID_UUID,
-        }
-        with self.assertRaises(eva.exceptions.InvalidConfigurationException):
-            self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.assertListEqual(self.adapter.env['EVA_INPUT_PRODUCT'], [BLANK_UUID])
+        self.assertListEqual(self.adapter.env['EVA_INPUT_REFERENCE_HOURS'], [0, 12, 18])
+        self.assertListEqual(self.adapter.env['EVA_INPUT_SERVICE_BACKEND'], [BLANK_UUID, BLANK_UUID, BLANK_UUID])
+        self.assertEqual(self.adapter.env['EVA_OUTPUT_SERVICE_BACKEND'], BLANK_UUID)
 
     def test_productstatus_environment_variables(self):
         self.create_adapter()

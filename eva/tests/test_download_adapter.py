@@ -19,9 +19,9 @@ class TestDownloadAdapter(unittest.TestCase):
     def setUp(self):
         self.env = {
             'EVA_DOWNLOAD_DESTINATION': '/path/to/download',
-            'EVA_INPUT_DATA_FORMAT_UUID': BLANK_UUID,
-            'EVA_INPUT_PRODUCT_UUID': BLANK_UUID,
-            'EVA_INPUT_SERVICE_BACKEND_UUID': BLANK_UUID,
+            'EVA_INPUT_DATA_FORMAT': BLANK_UUID,
+            'EVA_INPUT_PRODUCT': BLANK_UUID,
+            'EVA_INPUT_SERVICE_BACKEND': BLANK_UUID,
         }
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
@@ -47,7 +47,7 @@ class TestDownloadAdapter(unittest.TestCase):
         self.env.update({
             'EVA_OUTPUT_BASE_URL': 'file:///path/to/download',
             'EVA_OUTPUT_LIFETIME': 60,
-            'EVA_OUTPUT_SERVICE_BACKEND_UUID': RANDOM_UUID,
+            'EVA_OUTPUT_SERVICE_BACKEND': RANDOM_UUID,
             'EVA_PRODUCTSTATUS_API_KEY': '5bcf851f09bc65043d987910e1448781fcf4ea12',
             'EVA_PRODUCTSTATUS_USERNAME': 'admin',
         })
@@ -63,7 +63,7 @@ class TestDownloadAdapter(unittest.TestCase):
         self.env.update({
             'EVA_OUTPUT_BASE_URL': 'file:///path/to/download',
             'EVA_OUTPUT_LIFETIME': 60,
-            'EVA_OUTPUT_SERVICE_BACKEND_UUID': BLANK_UUID,
+            'EVA_OUTPUT_SERVICE_BACKEND': BLANK_UUID,
             'EVA_PRODUCTSTATUS_API_KEY': '5bcf851f09bc65043d987910e1448781fcf4ea12',
             'EVA_PRODUCTSTATUS_USERNAME': 'admin',
         })

@@ -23,15 +23,15 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
     """
 
     CONFIG = {
-        'EVA_DOWNLOAD_DESTINATION': 'Where to place downloaded files',
-        'EVA_DOWNLOAD_CHECK_HASH': 'Whether or not to check the hash of downloaded files against the Productstatus hash. Defaults to YES.',
+        'EVA_DOWNLOAD_DESTINATION': ('string', 'Where to place downloaded files',),
+        'EVA_DOWNLOAD_CHECK_HASH': ('bool', 'Whether or not to check the hash of downloaded files against the Productstatus hash. Defaults to YES.',),
     }
 
     REQUIRED_CONFIG = [
         'EVA_DOWNLOAD_DESTINATION',
-        'EVA_INPUT_DATA_FORMAT_UUID',
-        'EVA_INPUT_PRODUCT_UUID',
-        'EVA_INPUT_SERVICE_BACKEND_UUID',
+        'EVA_INPUT_DATA_FORMAT',
+        'EVA_INPUT_PRODUCT',
+        'EVA_INPUT_SERVICE_BACKEND',
     ]
 
     OPTIONAL_CONFIG = [
@@ -39,7 +39,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         'EVA_INPUT_PARTIAL',
         'EVA_OUTPUT_BASE_URL',
         'EVA_OUTPUT_LIFETIME',
-        'EVA_OUTPUT_SERVICE_BACKEND_UUID',
+        'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
     def init(self):
@@ -56,8 +56,8 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
             self.post_to_productstatus = True
             self.require_productstatus_credentials()
             self.lifetime = datetime.timedelta(hours=int(self.env['EVA_OUTPUT_LIFETIME']))
-            if self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID'] in self.env['EVA_INPUT_SERVICE_BACKEND_UUID']:
-                raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND_UUID cannot be present in the list of EVA_INPUT_SERVICE_BACKEND_UUID, as that will result in an endless loop.')
+            if self.env['EVA_OUTPUT_SERVICE_BACKEND'] in self.env['EVA_INPUT_SERVICE_BACKEND']:
+                raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND cannot be present in the list of EVA_INPUT_SERVICE_BACKEND, as that will result in an endless loop.')
         else:
             self.post_to_productstatus = False
             self.logger.debug('Will not post any data to Productstatus.')
@@ -69,7 +69,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         return (
             (self.env['EVA_OUTPUT_BASE_URL'] is not None) and
             (self.env['EVA_OUTPUT_LIFETIME'] is not None) and
-            (self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID'] is not None)
+            (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
         )
 
     def process_resource(self, message_id, resource):
@@ -122,7 +122,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         datainstance.data = resource.data
         datainstance.format = resource.format
         datainstance.expires = datetime.datetime.now() + self.lifetime
-        datainstance.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID']]
+        datainstance.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], filename)
         eva.retry_n(datainstance.save,
                     exceptions=(productstatus.exceptions.ServiceUnavailableException,),

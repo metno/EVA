@@ -31,19 +31,19 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
 
     REQUIRED_CONFIG = [
         'EVA_FIMEX_PARAMETERS',
-        'EVA_INPUT_DATA_FORMAT_UUID',
-        'EVA_INPUT_PRODUCT_UUID',
-        'EVA_INPUT_SERVICE_BACKEND_UUID',
+        'EVA_INPUT_DATA_FORMAT',
+        'EVA_INPUT_PRODUCT',
+        'EVA_INPUT_SERVICE_BACKEND',
         'EVA_OUTPUT_FILENAME_PATTERN',
     ]
 
     OPTIONAL_CONFIG = [
         'EVA_INPUT_PARTIAL',
         'EVA_OUTPUT_BASE_URL',
-        'EVA_OUTPUT_DATA_FORMAT_UUID',
+        'EVA_OUTPUT_DATA_FORMAT',
         'EVA_OUTPUT_LIFETIME',
-        'EVA_OUTPUT_PRODUCT_UUID',
-        'EVA_OUTPUT_SERVICE_BACKEND_UUID',
+        'EVA_OUTPUT_PRODUCT',
+        'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
     def init(self):
@@ -54,9 +54,9 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             self.post_to_productstatus = True
             self.require_productstatus_credentials()
             self.lifetime = datetime.timedelta(hours=int(self.env['EVA_OUTPUT_LIFETIME']))
-            self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT_UUID']]
-            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT_UUID']]
-            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID']]
+            self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
+            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
+            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         else:
             self.post_to_productstatus = False
             self.logger.info('Will not post any data to Productstatus.')
@@ -69,10 +69,10 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         """
         return (
             (self.env['EVA_OUTPUT_BASE_URL'] is not None) and
-            (self.env['EVA_OUTPUT_DATA_FORMAT_UUID'] is not None) and
+            (self.env['EVA_OUTPUT_DATA_FORMAT'] is not None) and
             (self.env['EVA_OUTPUT_LIFETIME'] is not None) and
-            (self.env['EVA_OUTPUT_PRODUCT_UUID'] is not None) and
-            (self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID'] is not None)
+            (self.env['EVA_OUTPUT_PRODUCT'] is not None) and
+            (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
         )
 
     def process_resource(self, message_id, resource):

@@ -15,13 +15,13 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
     """
 
     REQUIRED_CONFIG = [
-        'EVA_INPUT_SERVICE_BACKEND_UUID',
+        'EVA_INPUT_SERVICE_BACKEND',
     ]
 
     OPTIONAL_CONFIG = [
         'EVA_INPUT_PARTIAL',
-        'EVA_INPUT_PRODUCT_UUID',
-        'EVA_INPUT_DATA_FORMAT_UUID',
+        'EVA_INPUT_PRODUCT',
+        'EVA_INPUT_DATA_FORMAT',
     ]
 
     def init(self, *args, **kwargs):

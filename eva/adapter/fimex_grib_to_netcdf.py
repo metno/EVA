@@ -12,20 +12,20 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
     The adapter requires an external library called `eva-adapter-support`.
     """
     CONFIG = {
-        'EVA_FG2NC_LIB': 'Path to .../eva-adapter-support/FimexGRIB2NetCDFAdapter',
-        'EVA_FG2NC_TEMPLATEDIR': 'Path to the NetCDF template files required for this conversion',
+        'EVA_FG2NC_LIB': ('string', 'Path to .../eva-adapter-support/FimexGRIB2NetCDFAdapter',),
+        'EVA_FG2NC_TEMPLATEDIR': ('string', 'Path to the NetCDF template files required for this conversion',),
     }
 
     REQUIRED_CONFIG = [
         'EVA_FG2NC_LIB',
         'EVA_FG2NC_TEMPLATEDIR',
-        'EVA_INPUT_DATA_FORMAT_UUID',
-        'EVA_INPUT_PRODUCT_UUID',
-        'EVA_INPUT_SERVICE_BACKEND_UUID',
+        'EVA_INPUT_DATA_FORMAT',
+        'EVA_INPUT_PRODUCT',
+        'EVA_INPUT_SERVICE_BACKEND',
         'EVA_OUTPUT_BASE_URL',
         'EVA_OUTPUT_FILENAME_PATTERN',
-        'EVA_OUTPUT_PRODUCT_UUID',
-        'EVA_OUTPUT_SERVICE_BACKEND_UUID',
+        'EVA_OUTPUT_PRODUCT',
+        'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
     OPTIONAL_CONFIG = [
@@ -109,7 +109,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         """!
         @returns The Productstatus output Product resource.
         """
-        return self.api.product[self.env['EVA_OUTPUT_PRODUCT_UUID']]
+        return self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
 
     def get_or_post_productinstance_resource(self, job):
         """!
@@ -145,7 +145,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         resource.partial = True
         resource.expires = job.data['expires']
         resource.format = self.get_productstatus_dataformat("NetCDF")
-        resource.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND_UUID']]
+        resource.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         resource.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.data['filename']))
         resource.save()
         return resource

@@ -17,19 +17,19 @@ class BaseAdapter(eva.ConfigurableObject):
 
     # @brief Common configuration variables all subclasses may use.
     _COMMON_ADAPTER_CONFIG = {
-        'EVA_INPUT_DATA_FORMAT_UUID': 'Comma-separated input Productstatus data format UUIDs',
-        'EVA_INPUT_PARTIAL': 'Whether or not to process partial data instances (allowed values are yes, no, and both; defaults to no)',
-        'EVA_INPUT_PRODUCT_UUID': 'Comma-separated input Productstatus product UUIDs',
-        'EVA_INPUT_SERVICE_BACKEND_UUID': 'Comma-separated input Productstatus service backend UUIDs',
-        'EVA_INPUT_REFERENCE_HOURS': 'Comma-separated reference hours to process data for',
-        'EVA_OUTPUT_BASE_URL': 'Base URL for DataInstances posted to Productstatus',
-        'EVA_OUTPUT_DATA_FORMAT_UUID': 'Productstatus Data Format UUID for the finished product',
-        'EVA_OUTPUT_FILENAME_PATTERN': 'strftime pattern for output data instance filename',
-        'EVA_OUTPUT_LIFETIME': 'Lifetime of output data instance, in hours, before it can be deleted',
-        'EVA_OUTPUT_PRODUCT_UUID': 'Productstatus Product UUID for the finished product',
-        'EVA_OUTPUT_SERVICE_BACKEND_UUID': 'Productstatus Service Backend UUID for the position of the finished product',
-        'EVA_PRODUCTSTATUS_API_KEY': 'Productstatus API key',
-        'EVA_PRODUCTSTATUS_USERNAME': 'Productstatus user name',
+        'EVA_INPUT_DATA_FORMAT': ('list_string', 'Comma-separated input Productstatus data format slugs',),
+        'EVA_INPUT_PARTIAL': ('null_bool', 'Whether or not to process partial data instances (allowed values are yes, no, and both; defaults to no)',),
+        'EVA_INPUT_PRODUCT': ('list_string', 'Comma-separated input Productstatus product slugs',),
+        'EVA_INPUT_SERVICE_BACKEND': ('list_string', 'Comma-separated input Productstatus service backend slugs',),
+        'EVA_INPUT_REFERENCE_HOURS': ('list_int', 'Comma-separated reference hours to process data for',),
+        'EVA_OUTPUT_BASE_URL': ('string', 'Base URL for DataInstances posted to Productstatus',),
+        'EVA_OUTPUT_DATA_FORMAT': ('string', 'Productstatus Data Format ID for the finished product',),
+        'EVA_OUTPUT_FILENAME_PATTERN': ('string', 'strftime pattern for output data instance filename',),
+        'EVA_OUTPUT_LIFETIME': ('int', 'Lifetime of output data instance, in hours, before it can be deleted',),
+        'EVA_OUTPUT_PRODUCT': ('string', 'Productstatus Product ID for the finished product',),
+        'EVA_OUTPUT_SERVICE_BACKEND': ('string', 'Productstatus Service Backend ID for the position of the finished product',),
+        'EVA_PRODUCTSTATUS_API_KEY': ('string', 'Productstatus API key',),
+        'EVA_PRODUCTSTATUS_USERNAME': ('string', 'Productstatus user name',),
     }
 
     _OPTIONAL_CONFIG = [
@@ -58,60 +58,9 @@ class BaseAdapter(eva.ConfigurableObject):
         self.required_uuids = set()
         self.template = eva.template.Environment()
         self.process_partial = self.PROCESS_PARTIAL_NO
-        self.read_input_partial_config()
-        self.read_input_reference_hours_config()
-        self.normalize_config_uuids()
+        self.normalize_config()
         self.validate_configuration()
         self.init()
-
-    def read_input_reference_hours_config(self):
-        key = 'EVA_INPUT_REFERENCE_HOURS'
-        if key not in self.env:
-            return
-        self.env[key] = eva.split_comma_separated(self.env[key])
-
-    def read_input_partial_config(self):
-        if 'EVA_INPUT_PARTIAL' not in self.env:
-            return
-        partial = eva.parse_boolean_string(self.env['EVA_INPUT_PARTIAL'])
-        if partial is True:
-            self.process_partial = self.PROCESS_PARTIAL_ONLY
-        elif partial is False:
-            self.process_partial = self.PROCESS_PARTIAL_NO
-        elif partial is None and self.env['EVA_INPUT_PARTIAL'] == 'both':
-            self.process_partial = self.PROCESS_PARTIAL_BOTH
-        else:
-            raise eva.exceptions.InvalidConfigurationException('Invalid value for EVA_INPUT_PARTIAL: %s, expected one of "yes", "no", or "both"' % self.env['EVA_INPUT_PARTIAL'])
-
-    def normalize_config_uuids(self):
-        """!
-        @brief Converts comma-separated configuration variable UUIDs starting
-        with "EVA_INPUT_" to lists of UUIDs, and check that the UUID formats
-        are valid.
-        """
-        errors = 0
-        uuid_regex = re.compile('^EVA_\w+_UUID$')
-        uuid_input_regex = re.compile('^EVA_INPUT_\w+_UUID$')
-        for key, value in self.env.iteritems():
-            if key not in self.REQUIRED_CONFIG and key not in self.OPTIONAL_CONFIG:
-                continue
-            if self.env[key] is None:
-                continue
-            if uuid_input_regex.match(key):
-                self.env[key] = eva.split_comma_separated(self.env[key])
-                uuids = self.env[key]
-            elif uuid_regex.match(key):
-                uuids = [self.env[key]]
-            else:
-                continue
-            for id in uuids:
-                try:
-                    uuid.UUID(id)
-                except ValueError, e:
-                    self.logger.critical("Invalid UUID '%s' in configuration variable %s: %s" % (id, key, e))
-                    errors += 1
-        if errors > 0:
-            raise eva.exceptions.InvalidConfigurationException('%d errors occurred during UUID normalization' % errors)
 
     def in_array_or_empty(self, data, env):
         """!
@@ -193,15 +142,15 @@ class BaseAdapter(eva.ConfigurableObject):
         if resource._collection._resource_name != 'datainstance':
             self.logger.info('Resource is not of type DataInstance, ignoring.')
 
-        elif not self.in_array_or_empty(resource.data.productinstance.product.id, 'EVA_INPUT_PRODUCT_UUID'):
+        elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'EVA_INPUT_PRODUCT'):
             self.logger.info('DataInstance belongs to Product "%s", ignoring.',
                              resource.data.productinstance.product.name)
 
-        elif not self.in_array_or_empty(resource.servicebackend.id, 'EVA_INPUT_SERVICE_BACKEND_UUID'):
+        elif not self.in_array_or_empty(resource.servicebackend.slug, 'EVA_INPUT_SERVICE_BACKEND'):
             self.logger.info('DataInstance is hosted on service backend %s, ignoring.',
                              resource.servicebackend.name)
 
-        elif not self.in_array_or_empty(resource.format.id, 'EVA_INPUT_DATA_FORMAT_UUID'):
+        elif not self.in_array_or_empty(resource.format.slug, 'EVA_INPUT_DATA_FORMAT'):
             self.logger.info('DataInstance file type is %s, ignoring.',
                              resource.format.name)
         elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):

@@ -22,13 +22,13 @@ class TestFimexGRIB2NetCDFAdapter(unittest.TestCase):
         self.env = {
             'EVA_FG2NC_LIB': '/eva-adapter-support',
             'EVA_FG2NC_TEMPLATEDIR': '/template',
-            'EVA_INPUT_DATA_FORMAT_UUID': BLANK_UUID,
-            'EVA_INPUT_PRODUCT_UUID': BLANK_UUID,
-            'EVA_INPUT_SERVICE_BACKEND_UUID': BLANK_UUID,
+            'EVA_INPUT_DATA_FORMAT': BLANK_UUID,
+            'EVA_INPUT_PRODUCT': BLANK_UUID,
+            'EVA_INPUT_SERVICE_BACKEND': BLANK_UUID,
             'EVA_OUTPUT_BASE_URL': '/output',
             'EVA_OUTPUT_FILENAME_PATTERN': '/output/%Y%m%dT%H%M%S',
-            'EVA_OUTPUT_PRODUCT_UUID': BLANK_UUID,
-            'EVA_OUTPUT_SERVICE_BACKEND_UUID': BLANK_UUID,
+            'EVA_OUTPUT_PRODUCT': BLANK_UUID,
+            'EVA_OUTPUT_SERVICE_BACKEND': BLANK_UUID,
         }
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging

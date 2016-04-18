@@ -17,9 +17,11 @@ class ConfigurableObject(object):
     Variables are configured as such:
 
         CONFIG = {
-            'EVA_VARIABLE_FOO': 'Description of what this setting does',
-            'EVA_FOO_BAR': 'Helpful description of what the other setting does',
+            'EVA_VARIABLE_FOO': ('list_string', 'Description of what this setting does',),
+            'EVA_FOO_BAR': ('bool', 'Helpful description of what the other setting does',),
         }
+
+    The types are defined as `normalize_config_<type>` functions in this class.
 
     Then, to use them either as required or optional variables, you may do:
 
@@ -45,14 +47,87 @@ class ConfigurableObject(object):
         errors = 0
         for key in self.REQUIRED_CONFIG:
             if key not in self.env or self.env[key] is None:
-                self.logger.critical('Missing required environment variable %s (%s)', key, self.CONFIG[key])
+                self.logger.critical('Missing required environment variable %s (%s)', key, self.CONFIG[key][1])
                 errors += 1
         for key in self.OPTIONAL_CONFIG:
             if key not in self.env or self.env[key] is None:
-                self.logger.debug('Optional environment variable not configured: %s (%s)', key, self.CONFIG[key])
+                self.logger.debug('Optional environment variable not configured: %s (%s)', key, self.CONFIG[key][1])
                 self.env[key] = None
         if errors > 0:
             raise eva.exceptions.MissingConfigurationException('Missing %d required environment variables' % errors)
+
+    def normalize_config_string(self, value):
+        """!
+        Coerce a type into a unicode string.
+        """
+        return unicode(value)
+
+    def normalize_config_int(self, value):
+        """!
+        Coerce a type into an integer.
+        """
+        return int(value)
+
+    def normalize_config_null_bool(self, value):
+        """!
+        Coerce a type into a unicode string.
+        """
+        return eva.parse_boolean_string(self.env['EVA_INPUT_PARTIAL'])
+
+    def normalize_config_bool(self, value):
+        """!
+        Coerce a type into a unicode string.
+        """
+        v = self.normalize_config_null_bool(value)
+        if v is None:
+            raise eva.exceptions.InvalidConfigurationException('Invalid boolean value')
+        return v
+
+    def normalize_config_list(self, value):
+        """!
+        Split a comma-separated string into a list.
+        """
+        return eva.split_comma_separated(value)
+
+    def normalize_config_list_string(self, value):
+        """!
+        Split a comma-separated string into a list of unicode strings.
+        """
+        return [self.normalize_config_string(x) for x in self.normalize_config_list(value)]
+
+    def normalize_config_list_int(self, value):
+        """!
+        Split a comma-separated string into a list of integers.
+        """
+        return [self.normalize_config_int(x) for x in self.normalize_config_list(value)]
+
+    def normalize_config(self):
+        """!
+        @brief Normalize input configuration based on the configuration
+        definition: split strings into lists, convert to types.
+        """
+        errors = 0
+        for key, value in self.env.iteritems():
+            if key not in self.REQUIRED_CONFIG and key not in self.OPTIONAL_CONFIG:
+                continue
+            if key not in self.CONFIG:
+                raise RuntimeError("Missing configuration option '%s' in adapter CONFIG array, please fix your code!" % key)
+            option_type = self.CONFIG[key][0]
+            func_name = 'normalize_config_' + option_type
+            try:
+                func = getattr(self, func_name)
+            except:
+                raise RuntimeError("No normalization function for configuration type '%s' found!" % option_type)
+            try:
+                value = func(value)
+            except Exception, e:
+                self.logger.critical("Invalid value '%s' for configuration '%s': %s", value, key, e)
+                errors += 1
+                continue
+            self.env[key] = value
+        if errors > 0:
+            raise eva.exceptions.InvalidConfigurationException('%d errors occurred during UUID normalization' % errors)
+
 
 
 def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warning=1, error=3, give_up=5, logger=logging):

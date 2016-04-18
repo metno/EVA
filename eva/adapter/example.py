@@ -10,9 +10,9 @@ To run this adapter on GridEngine, you might want to configure these environment
     export EVA_GRIDENGINE_SSH_HOST="<gridengine-login-node>"
     export EVA_GRIDENGINE_SSH_KEY_FILE="/home/<username>/.ssh/id_rsa"
     export EVA_GRIDENGINE_SSH_USER="<username>"
-    export EVA_INPUT_DATA_FORMAT_UUID="4fbc5c33-272a-4d5f-a29d-6d4c5e7e47f0"
-    export EVA_INPUT_PRODUCT_UUID="7d955184-aa2e-4298-8f9c-2c4b63eae170"
-    export EVA_INPUT_SERVICE_BACKEND_UUID="34615199-4941-496d-831e-1679d7b35f5a"
+    export EVA_INPUT_DATA_FORMAT="netcdf"
+    export EVA_INPUT_PRODUCT="ecmwf-atmospheric-model-bc-surface"
+    export EVA_INPUT_SERVICE_BACKEND="lustre-b"
     export EVA_OUTPUT_FILENAME_PATTERN="{{reference_time|timedelta(hours=6)|iso8601_compact}}"
 
 Then, run EVA:
@@ -48,16 +48,16 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
         # the IT-GEO team. You will most certainly want to select one or more
         # products so that your script only processed files that have your
         # required input data.
-        'EVA_INPUT_PRODUCT_UUID',
+        'EVA_INPUT_PRODUCT',
 
         # Define the service backend. Service backends are physical storage
         # devices such as Lustre store A or Opdata. They are defined in
         # Productstatus by the IT-GEO team.
-        'EVA_INPUT_SERVICE_BACKEND_UUID',
+        'EVA_INPUT_SERVICE_BACKEND',
 
         # Define the file format of our input data set. File formats are
         # defined in Productstatus by the IT-GEO team.
-        'EVA_INPUT_DATA_FORMAT_UUID',
+        'EVA_INPUT_DATA_FORMAT',
     ]
 
     # This function is called every time a data instance (an actual data entry)
