@@ -99,20 +99,6 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         job.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
         return datainstance
 
-    def get_productstatus_dataformat(self, file_type):
-        """!
-        Given a file type string, return a DataFormat object pointing to the
-        correct data format.
-        """
-        qs = self.api.dataformat.objects.filter(name=file_type)
-        if qs.count() == 0:
-            raise Exception(
-                "Data format '%s' was not found on the Productstatus server" % file_type
-            )
-        resource = qs[0]
-        logging.debug('%s: Productstatus dataformat for %s' % (resource, file_type))
-        return resource
-
     def get_productstatus_product(self):
         """!
         @returns The Productstatus output Product resource.
@@ -152,7 +138,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         resource.data = data
         resource.partial = True
         resource.expires = job.data['expires']
-        resource.format = self.get_productstatus_dataformat("NetCDF")
+        resource.format = self.api.dataformat['netcdf']
         resource.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         resource.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.data['filename']))
         resource.save()
