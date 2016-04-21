@@ -11,7 +11,7 @@ class MesosLogAdapter(logging.LoggerAdapter):
     a 'connid' key, whose value in brackets is prepended to the log message.
     """
     def process(self, msg, kwargs):
-        return '%s %s %s' % (self.extra['MARATHON_APP_ID'], self.extra['MESOS_TASK_ID'], msg), kwargs
+        return u'%s %s %s' % (self.extra['MARATHON_APP_ID'], self.extra['MESOS_TASK_ID'], msg), kwargs
 
 
 class JobLogAdapter(logging.LoggerAdapter):
@@ -19,4 +19,4 @@ class JobLogAdapter(logging.LoggerAdapter):
     @brief This adapter prepends the job ID in brackets to all log messages.
     """
     def process(self, msg, kwargs):
-        return '[%s] %s' % (self.extra['JOB'].id, msg), kwargs
+        return u'[%s] %s' % (self.extra['JOB'].id, msg), kwargs
