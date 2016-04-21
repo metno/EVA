@@ -58,7 +58,6 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         if self.has_valid_output_config():
             self.post_to_productstatus = True
             self.require_productstatus_credentials()
-            self.lifetime = datetime.timedelta(hours=int(self.env['EVA_OUTPUT_LIFETIME']))
             if self.env['EVA_OUTPUT_SERVICE_BACKEND'] in self.env['EVA_INPUT_SERVICE_BACKEND']:
                 raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND cannot be present in the list of EVA_INPUT_SERVICE_BACKEND, as that will result in an endless loop.')
         else:
@@ -124,7 +123,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         datainstance = self.api.datainstance.create()
         datainstance.data = resource.data
         datainstance.format = resource.format
-        datainstance.expires = datetime.datetime.now() + self.lifetime
+        datainstance.expires = self.expiry_from_lifetime()
         datainstance.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], filename)
         eva.retry_n(datainstance.save,

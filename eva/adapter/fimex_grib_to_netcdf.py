@@ -38,6 +38,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
 
     OPTIONAL_CONFIG = [
         'EVA_INPUT_PARTIAL',
+        'EVA_OUTPUT_LIFETIME',
     ]
 
     def process_resource(self, message_id, resource):
@@ -69,7 +70,6 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
             'version': resource.data.productinstance.version,
             'time_period_begin': resource.data.time_period_begin,
             'time_period_end': resource.data.time_period_end,
-            'expires': resource.expires,
             'filename': reftime.strftime(self.env['EVA_OUTPUT_FILENAME_PATTERN']),
         }
 
@@ -137,7 +137,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         resource = self.api.datainstance.create()
         resource.data = data
         resource.partial = True
-        resource.expires = job.data['expires']
+        resource.expires = self.expiry_from_lifetime()
         resource.format = self.api.dataformat['netcdf']
         resource.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         resource.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.data['filename']))
