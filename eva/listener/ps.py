@@ -40,7 +40,6 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         try:
             event = self.event_listener.get_next_event()
             self.logger.info('Productstatus message received: %s', event)
-            time.sleep(0.5)  # workaround database transaction race condition
             return eva.event.ProductstatusEvent(
                 self.kwargs['productstatus_api'][event.uri],
                 id=event.message_id,

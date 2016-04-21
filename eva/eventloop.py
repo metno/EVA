@@ -72,6 +72,11 @@ class Eventloop(object):
                 event.data.set_executor_instance(self)
                 self.process_rpc_event(event)
             else:
+                delay = event.get_processing_delay().total_seconds()
+                if delay > 0:
+                    self.logger.info('Sleeping %.1f seconds before processing next event due to event delay',
+                                     delay)
+                    time.sleep(delay)
                 self.process_normal_event(event)
         event.acknowledge()
 

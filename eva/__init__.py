@@ -1,5 +1,7 @@
 import logging
 import time
+import datetime
+import dateutil.tz
 
 import eva.exceptions
 
@@ -220,3 +222,10 @@ def strftime_iso8601(dt):
     @brief Given a DateTime object, return an ISO8601 formatted string.
     """
     return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+
+def now_with_timezone():
+    """!
+    @returns a timezone-aware UTC datetime object representing the current timestamp.
+    """
+    return datetime.datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc())
