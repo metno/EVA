@@ -1,5 +1,6 @@
 import re
 import uuid
+import datetime
 
 import eva
 import eva.logger
@@ -302,3 +303,19 @@ class BaseAdapter(eva.ConfigurableObject):
             raise eva.exceptions.MissingConfigurationException(
                 'Posting to Productstatus requires environment variables EVA_PRODUCTSTATUS_USERNAME and EVA_PRODUCTSTATUS_API_KEY.'
             )
+
+    def has_output_lifetime(self):
+        """!
+        @returns True if a DataInstance lifetime is specified, false otherwise.
+        """
+        return 'EVA_OUTPUT_LIFETIME' in self.env and self.env['EVA_OUTPUT_LIFETIME'] is not None
+
+    def expiry_from_lifetime(self):
+        """!
+        @returns a DateTime object representing an absolute DataInstance expiry
+        time, based on the EVA_OUTPUT_LIFETIME environment variable. If the
+        variable is not set, this function returns None.
+        """
+        if not self.has_output_lifetime():
+            return None
+        return eva.now_with_timezone() + datetime.timedelta(hours=self.env['EVA_OUTPUT_LIFETIME'])

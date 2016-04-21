@@ -1,5 +1,6 @@
 import unittest
 import logging
+import datetime
 
 import productstatus
 import productstatus.api
@@ -185,3 +186,35 @@ class TestBaseAdapter(unittest.TestCase):
         self.env['EVA_INPUT_PARTIAL'] = 'BOTH'
         self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
         self.assertEqual(self.adapter.process_partial, self.adapter.PROCESS_PARTIAL_BOTH)
+
+    def test_lifetime_none(self):
+        class Foo(eva.adapter.BaseAdapter):
+            OPTIONAL_CONFIG = ['EVA_OUTPUT_LIFETIME']
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.assertFalse(self.adapter.has_output_lifetime())
+        self.assertIsNone(self.adapter.expiry_from_lifetime())
+
+    def test_lifetime_zero(self):
+        """!
+        Note that this test might fail if your system is reeeeally slow.
+        """
+        class Foo(eva.adapter.BaseAdapter):
+            OPTIONAL_CONFIG = ['EVA_OUTPUT_LIFETIME']
+        self.env['EVA_OUTPUT_LIFETIME'] = '0'
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.assertTrue(self.adapter.has_output_lifetime())
+        timediff = eva.now_with_timezone() - self.adapter.expiry_from_lifetime()
+        self.assertEqual(int(timediff.total_seconds()), 0)
+
+    def test_lifetime_positive(self):
+        """!
+        Note that this test might fail if your system is reeeeally slow.
+        """
+        class Foo(eva.adapter.BaseAdapter):
+            OPTIONAL_CONFIG = ['EVA_OUTPUT_LIFETIME']
+        self.env['EVA_OUTPUT_LIFETIME'] = '24'
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.assertTrue(self.adapter.has_output_lifetime())
+        expiry = self.adapter.expiry_from_lifetime()
+        future = eva.now_with_timezone() + datetime.timedelta(days=1)
+        self.assertEqual(future.date(), expiry.date())
