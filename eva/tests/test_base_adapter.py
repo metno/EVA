@@ -1,6 +1,7 @@
 import unittest
 import logging
 import datetime
+import mock
 
 import productstatus
 import productstatus.api
@@ -42,6 +43,7 @@ class TestBaseAdapter(unittest.TestCase):
             'EVA_OUTPUT_SERVICE_BACKEND',
             'EVA_PRODUCTSTATUS_API_KEY',
             'EVA_PRODUCTSTATUS_USERNAME',
+            'EVA_SINGLE_INSTANCE',
         ])
 
     def test_additional_configuration_keys(self):
@@ -207,9 +209,6 @@ class TestBaseAdapter(unittest.TestCase):
         self.assertEqual(int(timediff.total_seconds()), 0)
 
     def test_lifetime_positive(self):
-        """!
-        Note that this test might fail if your system is reeeeally slow.
-        """
         class Foo(eva.adapter.BaseAdapter):
             OPTIONAL_CONFIG = ['EVA_OUTPUT_LIFETIME']
         self.env['EVA_OUTPUT_LIFETIME'] = '24'
@@ -218,3 +217,16 @@ class TestBaseAdapter(unittest.TestCase):
         expiry = self.adapter.expiry_from_lifetime()
         future = eva.now_with_timezone() + datetime.timedelta(days=1)
         self.assertEqual(future.date(), expiry.date())
+
+    def test_single_instance_fails(self):
+        self.env['EVA_SINGLE_INSTANCE'] = 'YES'
+        with self.assertRaises(eva.exceptions.InvalidConfigurationException):
+            self.create_adapter()
+
+    def test_single_instance(self):
+        self.env['EVA_SINGLE_INSTANCE'] = 'YES'
+        self.zookeeper = mock.MagicMock()
+        self.zookeeper.EVA_BASE_PATH = '/foo'
+        self.zookeeper.create = mock.MagicMock()
+        self.create_adapter()
+        self.zookeeper.create.assert_called_once_with('/foo/single_instance_lock', None, ephemeral=True)

@@ -1,6 +1,8 @@
 import re
+import os
 import uuid
 import datetime
+import kazoo.exceptions
 
 import eva
 import eva.logger
@@ -83,11 +85,17 @@ class BaseAdapter(eva.ConfigurableObject):
             'help': 'Productstatus user name',
             'default': '',
         },
+        'EVA_SINGLE_INSTANCE': {
+            'type': 'bool',
+            'help': 'Allow only one EVA instance with the same group id running at the same time',
+            'default': 'NO',
+        },
     }
 
     _OPTIONAL_CONFIG = [
         'EVA_PRODUCTSTATUS_API_KEY',
         'EVA_PRODUCTSTATUS_USERNAME',
+        'EVA_SINGLE_INSTANCE',
     ]
 
     PROCESS_PARTIAL_ONLY = 0
@@ -112,6 +120,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.template = eva.template.Environment()
         self.read_configuration()
         self.setup_process_partial()
+        self.setup_single_instance()
         self.init()
 
     def setup_process_partial(self):
@@ -126,6 +135,24 @@ class BaseAdapter(eva.ConfigurableObject):
             self.process_partial = self.PROCESS_PARTIAL_ONLY
         else:
             self.process_partial = self.PROCESS_PARTIAL_NO
+
+    def setup_single_instance(self):
+        """!
+        @brief Check that we have a Zookeeper endpoint if EVA requires that
+        only a single instance is running at any given time.
+        """
+        if not self.env['EVA_SINGLE_INSTANCE']:
+            return
+        if not self.zookeeper:
+            raise eva.exceptions.InvalidConfigurationException(
+                'Running with EVA_SINGLE_INSTANCE enabled requires Zookeeper configuration.'
+            )
+        lock_path = os.path.join(self.zookeeper.EVA_BASE_PATH, 'single_instance_lock')
+        try:
+            self.logger.info('Creating a Zookeeper ephemeral node with path %s', lock_path)
+            self.zookeeper.create(lock_path, None, ephemeral=True)
+        except kazoo.exceptions.NodeExistsError:
+            raise eva.exceptions.AlreadyRunningException('EVA is already running with the same group id, aborting!')
 
     def in_array_or_empty(self, data, env):
         """!

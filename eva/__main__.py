@@ -100,6 +100,11 @@ if __name__ == "__main__":
         default=False,
         help='Use this flag if running inside a Mesos Docker container for extra logging output',
     )
+    parser.add_argument(
+        '--group-id',
+        action='store',
+        help='Manually set the EVA group id (DANGEROUS!)',
+    )
     args = parser.parse_args()
 
     try:
@@ -120,7 +125,7 @@ if __name__ == "__main__":
 
         # Randomly generated message queue client and group ID's
         client_id = unicode(uuid.uuid4())
-        group_id = unicode(uuid.uuid4())
+        group_id = unicode(uuid.uuid4()) if not args.group_id else args.group_id
 
         # Extract useful environment variables
         environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith(('EVA_', 'MARATHON_', 'MESOS_',))}
@@ -145,12 +150,13 @@ if __name__ == "__main__":
             logger.info('Setting up Zookeeper connection to %s', arg['zookeeper'])
             tokens = arg['zookeeper'].strip().split('/')
             server_string = tokens[0]
-            base_path = '/' + '/'.join(tokens[1:])
+            base_path = os.path.join('/', os.path.join(*tokens[1:]), eva.zookeeper_group_id(group_id))
             zookeeper = kazoo.client.KazooClient(
                 hosts=server_string,
                 randomize_hosts=True,
                 logger=logger,
             )
+            logger.info('Using ZooKeeper, base path "%s"', base_path)
             zookeeper.start()
             zookeeper.EVA_BASE_PATH = base_path
             zookeeper.ensure_path(zookeeper.EVA_BASE_PATH)

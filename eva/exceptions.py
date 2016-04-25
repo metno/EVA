@@ -77,3 +77,18 @@ class RPCFailedException(RPCException):
     @brief Thrown when an RPC call fails.
     """
     pass
+
+
+class InvalidGroupIdException(EvaException):
+    """!
+    @brief Thrown when a group_id is incompatible with Zookeeper.
+    """
+    pass
+
+
+class AlreadyRunningException(EvaException):
+    """!
+    @brief Thrown when EVA is configured to run as a single instance, but it is
+    already running according to Zookeeper.
+    """
+    pass

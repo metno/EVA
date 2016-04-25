@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import unittest
 import logging
 
@@ -52,3 +54,11 @@ class TestBase(unittest.TestCase):
         self.assertFalse(eva.parse_boolean_string('FALSE'))
         self.assertFalse(eva.parse_boolean_string('False'))
         self.assertFalse(eva.parse_boolean_string('0'))
+
+    def test_zookeeper_group_id(self):
+        self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), 'this.~isan..id')
+        with self.assertRaises(eva.exceptions.InvalidGroupIdException):
+            eva.zookeeper_group_id(u'áćé')
+        with self.assertRaises(eva.exceptions.InvalidGroupIdException):
+            eva.zookeeper_group_id('zookeeper')
+        self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), 'this.~isan..id')

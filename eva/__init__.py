@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 import datetime
 import dateutil.tz
@@ -229,3 +230,18 @@ def now_with_timezone():
     @returns a timezone-aware UTC datetime object representing the current timestamp.
     """
     return datetime.datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc())
+
+
+def zookeeper_group_id(group_id):
+    """!
+    @brief Clean up a group_id name so that it can be used in a Zookeeper path.
+    """
+    g = re.sub(r'[/\000]', '.', group_id)
+    g = g.strip('.')
+    g = g.encode('ascii', 'ignore')
+    g = g.lower()
+    if g == 'zookeeper':
+        raise eva.exceptions.InvalidGroupIdException('The name "zookeeper" is reserved and cannot be used as a Zookeeper node name.')
+    if len(g) == 0:
+        raise eva.exceptions.InvalidGroupIdException('The group id "%s" translates to an empty string, which cannot be used as a Zookeeper node name.' % group_id)
+    return g
