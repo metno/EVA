@@ -53,7 +53,6 @@ class TestDownloadAdapter(unittest.TestCase):
         })
         self.create_adapter()
         self.assertTrue(self.adapter.post_to_productstatus)
-        self.assertEqual(datetime.timedelta(hours=60), self.adapter.lifetime)
 
     def test_input_output_service_backend_equal(self):
         """!
