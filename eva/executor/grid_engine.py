@@ -26,7 +26,7 @@ def create_job_unique_id(group_id, job_id):
     """!
     @brief Given a EVA group_id and a job UUID, returns a valid job id for GridEngine.
     """
-    return u'eva.' + re.sub(r'[^\w\d]', u'-', group_id).strip(u'-') + u'.' + unicode(job_id)
+    return u'eva.' + re.sub(r'[^a-zA-Z0-9]', u'-', group_id).strip(u'-') + u'.' + str(job_id)
 
 
 def get_job_id_from_qsub_output(output):
@@ -179,7 +179,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         # Create SSH connection
         try:
             self.create_ssh_connection(job)
-        except SSH_RETRY_EXCEPTIONS, e:
+        except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
 
         # Check whether a GridEngine task is already running for this job. If
@@ -195,7 +195,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 skip_submit = True
             else:
                 job.logger.info('Job is not running, continuing with submission.')
-        except SSH_RETRY_EXCEPTIONS, e:
+        except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
 
         # Generate paths
@@ -211,7 +211,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 with self.sftp_client.open(job.submit_script_path, 'w') as submit_script:
                     script_content = job.command
                     submit_script.write(script_content)
-            except SSH_RETRY_EXCEPTIONS, e:
+            except SSH_RETRY_EXCEPTIONS as e:
                 raise eva.exceptions.RetryException(e)
 
             # Print the job script to the log
@@ -246,7 +246,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
                 job.logger.info('Job has been submitted, JOB_ID = %d', job.pid)
                 job.set_status(eva.job.STARTED)
-            except SSH_RETRY_EXCEPTIONS, e:
+            except SSH_RETRY_EXCEPTIONS as e:
                 raise eva.exceptions.RetryException(e)
 
         # Poll continuously for job completion
@@ -254,7 +254,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         while True:
             try:
                 exit_code, stdout, stderr = self.execute_ssh_command(check_command)
-            except SSH_RETRY_EXCEPTIONS, e:
+            except SSH_RETRY_EXCEPTIONS as e:
                 raise eva.exceptions.RetryException(e)
             if exit_code != EXIT_OK:
                 job.logger.debug('Job has not completed yet, sleeping for %d seconds...',
@@ -270,7 +270,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 job.stdout = eva.executor.strip_stdout_newlines(f.readlines())
             with self.sftp_client.open(job.stderr_path, 'r') as f:
                 job.stderr = eva.executor.strip_stdout_newlines(f.readlines())
-        except SSH_RETRY_EXCEPTIONS + (IOError,), e:
+        except SSH_RETRY_EXCEPTIONS + (IOError,) as e:
             raise eva.exceptions.RetryException(
                 'Unable to retrieve stdout and stderr from finished Grid Engine job.'
             )
@@ -289,7 +289,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             self.sftp_client.unlink(job.submit_script_path)
             self.sftp_client.unlink(job.stdout_path)
             self.sftp_client.unlink(job.stderr_path)
-        except SSH_RETRY_EXCEPTIONS + (IOError,), e:
+        except SSH_RETRY_EXCEPTIONS + (IOError,) as e:
             job.logger.warning('Could not remove script file, stdout and stderr')
 
         # Close the SSH connection

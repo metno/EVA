@@ -31,7 +31,7 @@ class TestFimexGRIB2NetCDFAdapter(unittest.TestCase):
             'EVA_OUTPUT_SERVICE_BACKEND': BLANK_UUID,
         }
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
-        self.logger = logging
+        self.logger = logging.getLogger('root')
         self.zookeeper = None
         self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper)
 
@@ -46,11 +46,11 @@ class TestFimexGRIB2NetCDFAdapter(unittest.TestCase):
         compare_command = '#!/bin/bash # -S /bin/bash /eva-adapter-support/grib2nc --input "/path/to/source/grib" --output "/output/20160226T120000" --reference_time "2016-02-26T12:00:00+0000" --template_directory "/template"'
         self.create_adapter()
         resource = mock.MagicMock()
-        resource.data.productinstance.reference_time = datetime.datetime(2016, 02, 26, 12, 00, 00, tzinfo=dateutil.tz.tzutc())
+        resource.data.productinstance.reference_time = datetime.datetime(2016, 2, 26, 12, 0, 0, tzinfo=dateutil.tz.tzutc())
         resource.data.productinstance.version = 1
-        resource.data.time_period_begin = datetime.datetime(2016, 02, 26, 12, 00, 00, tzinfo=dateutil.tz.tzutc())
-        resource.data.time_period_begin = datetime.datetime(2016, 02, 29, 03, 00, 00, tzinfo=dateutil.tz.tzutc())
-        resource.expires = datetime.datetime(2016, 03, 01, 12, 00, 00, tzinfo=dateutil.tz.tzutc())
+        resource.data.time_period_begin = datetime.datetime(2016, 2, 26, 12, 0, 0, tzinfo=dateutil.tz.tzutc())
+        resource.data.time_period_begin = datetime.datetime(2016, 2, 29, 3, 0, 0, tzinfo=dateutil.tz.tzutc())
+        resource.expires = datetime.datetime(2016, 3, 1, 12, 0, 0, tzinfo=dateutil.tz.tzutc())
         resource.url = 'file:///path/to/source/grib'
         job = self.adapter.create_job(uuid.uuid4(), resource)
         command = re.sub(r'[\s$]+', ' ', job.command.strip(), re.MULTILINE)

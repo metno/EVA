@@ -36,7 +36,7 @@ class RPC(object):
             self.function = getattr(self, self.rpc_message.function)
             self.args = list(self.rpc_message.args)
             self.kwargs = dict(self.rpc_message.kwargs)
-        except Exception, e:
+        except Exception as e:
             raise eva.exceptions.InvalidRPCException('Invalid RPC request: %s' % e)
 
     def __call__(self):
@@ -45,7 +45,7 @@ class RPC(object):
         """
         try:
             return self.function(*self.args, **self.kwargs)
-        except Exception, e:
+        except Exception as e:
             raise eva.exceptions.RPCFailedException(e)
 
     def __repr__(self):

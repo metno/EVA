@@ -44,7 +44,7 @@ class Eventloop(object):
                 assert isinstance(event, eva.event.Event)
             except eva.exceptions.EventTimeoutException:
                 continue
-            except eva.exceptions.InvalidEventException, e:
+            except eva.exceptions.InvalidEventException as e:
                 self.logger.warning('Received invalid event: %s', e)
                 continue
             self.event_queue += [event]
@@ -103,7 +103,7 @@ class Eventloop(object):
             self.sort_queue()
             try:
                 self.process_first_in_queue()
-            except self.RECOVERABLE_EXCEPTIONS, e:
+            except self.RECOVERABLE_EXCEPTIONS as e:
                 self.logger.error('Restarting processing of event in 2 seconds due to error: %s', e)
                 time.sleep(2.0)
                 continue
@@ -125,7 +125,7 @@ class Eventloop(object):
         self.logger.info('Processing RPC request: %s', unicode(event))
         try:
             event.data()
-        except eva.exceptions.RPCFailedException, e:
+        except eva.exceptions.RPCFailedException as e:
             self.logger.error('Error while executing RPC request: %s', e)
         self.logger.info('Finished processing RPC request: %s', unicode(event))
 
@@ -157,7 +157,7 @@ class Eventloop(object):
                                 exceptions=self.RECOVERABLE_EXCEPTIONS,
                                 give_up=0)
                     index += 1
-            except self.RECOVERABLE_EXCEPTIONS, e:
+            except self.RECOVERABLE_EXCEPTIONS as e:
                 self.logger.error('A recoverable error occurred: %s', e)
                 time.sleep(2.0)
                 continue

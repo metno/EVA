@@ -24,7 +24,7 @@ class RPCListener(productstatus.event.Listener):
         try:
             event = super(RPCListener, self).get_next_event()
             self.save_position()
-        except productstatus.exceptions.EventTimeoutException, e:
+        except productstatus.exceptions.EventTimeoutException as e:
             raise eva.exceptions.RPCTimeoutException(e)
         self.filter_event(event)
         return event
@@ -42,5 +42,5 @@ class RPCListener(productstatus.event.Listener):
                         self.group_id,
                     )
                 )
-        except re.error, e:
+        except re.error as e:
             raise eva.exceptions.RPCInvalidRegexException(e)

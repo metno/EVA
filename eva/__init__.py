@@ -47,7 +47,7 @@ class ConfigurableObject(object):
         """!
         Coerce a type into a unicode string.
         """
-        return unicode(value)
+        return str(value)
 
     def normalize_config_int(self, value):
         """!
@@ -131,7 +131,7 @@ class ConfigurableObject(object):
                 raise RuntimeError("No normalization function for configuration type '%s' found!" % option_type)
             try:
                 value = func(value)
-            except Exception, e:
+            except Exception as e:
                 self.logger.critical("Invalid value '%s' for configuration '%s': %s", value, key, e)
                 errors += 1
                 continue
@@ -165,7 +165,7 @@ def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warni
     while True:
         try:
             return func(*args, **kwargs)
-        except exceptions, e:
+        except exceptions as e:
             tries += 1
             if give_up > 0 and tries >= give_up:
                 logger.error('Action failed %d times, giving up: %s' % (give_up, e))
@@ -240,7 +240,7 @@ def zookeeper_group_id(group_id):
     g = g.strip('.')
     g = g.encode('ascii', 'ignore')
     g = g.lower()
-    if g == 'zookeeper':
+    if g == b'zookeeper':
         raise eva.exceptions.InvalidGroupIdException('The name "zookeeper" is reserved and cannot be used as a Zookeeper node name.')
     if len(g) == 0:
         raise eva.exceptions.InvalidGroupIdException('The group id "%s" translates to an empty string, which cannot be used as a Zookeeper node name.' % group_id)

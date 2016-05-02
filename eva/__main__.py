@@ -36,7 +36,7 @@ def import_module_class(name):
 
 
 def parse_bool(value):
-    value = unicode(value).lower()
+    value = str(value).lower()
     if value == 'yes' or value == 'true' or value == '1':
         return True
     if value == 'no' or value == 'false' or value == '0' or value == 'None':
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser_rpc_group.add_argument(
         '--process_all_in_product_instance',
         action='store',
-        type=unicode,
+        type=str,
         required=False,
         metavar='UUID',
         help='Process all DataInstance resources belonging to a specific ProductInstance',
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     parser_rpc_group.add_argument(
         '--process_data_instance',
         action='store',
-        type=unicode,
+        type=str,
         required=False,
         metavar='UUID',
         help='Process a single DataInstance resource',
@@ -124,11 +124,11 @@ if __name__ == "__main__":
                                 level=logging.INFO)
 
         # Randomly generated message queue client and group ID's
-        client_id = unicode(uuid.uuid4())
-        group_id = unicode(uuid.uuid4()) if not args.group_id else args.group_id
+        client_id = str(uuid.uuid4())
+        group_id = str(uuid.uuid4()) if not args.group_id else args.group_id
 
         # Extract useful environment variables
-        environment_variables = {key: var for key, var in os.environ.iteritems() if key.startswith(('EVA_', 'MARATHON_', 'MESOS_',))}
+        environment_variables = {key: var for key, var in os.environ.items() if key.startswith(('EVA_', 'MARATHON_', 'MESOS_',))}
 
         # Test for Mesos + Marathon execution, and set appropriate configuration
         logger = logging.getLogger('root')
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         logger.info('Starting EVA: the EVent Adapter.')
 
         # Print environment variables
-        for key, var in sorted(environment_variables.iteritems()):
+        for key, var in sorted(environment_variables.items()):
             if key in SECRET_ENVIRONMENT_VARIABLES:
                 var = '****CENSORED****'
             logger.info('Environment: %s=%s' % (key, var))
@@ -206,8 +206,8 @@ if __name__ == "__main__":
         )
         logger.info('Using adapter: %s' % adapter.__class__)
 
-    except eva.exceptions.EvaException, e:
-        logger.critical(unicode(e))
+    except eva.exceptions.EvaException as e:
+        logger.critical(str(e))
         logger.info('Shutting down EVA due to missing or invalid configuration.')
         sys.exit(1)
 
@@ -225,9 +225,9 @@ if __name__ == "__main__":
             evaloop.process_data_instance(args.process_data_instance)
         else:
             evaloop()
-    except eva.exceptions.ShutdownException, e:
-        logger.info(unicode(e))
-    except Exception, e:
+    except eva.exceptions.ShutdownException as e:
+        logger.info(str(e))
+    except Exception as e:
         logger.critical("Fatal error: %s" % e)
         exception = traceback.format_exc().split("\n")
         logger.info("***********************************************************")

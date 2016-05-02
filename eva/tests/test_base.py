@@ -31,7 +31,7 @@ class TestBase(unittest.TestCase):
             eva.url_to_filename('https://example.com/foo.nc')
 
     def test_log_stdout_stderr(self):
-        job = eva.job.Job('foo', logging)
+        job = eva.job.Job('foo', logging.getLogger('root'))
         eva.executor.log_stdout_stderr(job, ['x'], [])
 
     def test_split_comma_separated(self):
@@ -56,9 +56,8 @@ class TestBase(unittest.TestCase):
         self.assertFalse(eva.parse_boolean_string('0'))
 
     def test_zookeeper_group_id(self):
-        self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), 'this.~isan..id')
+        self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), b'this.~isan..id')
         with self.assertRaises(eva.exceptions.InvalidGroupIdException):
             eva.zookeeper_group_id(u'áćé')
         with self.assertRaises(eva.exceptions.InvalidGroupIdException):
             eva.zookeeper_group_id('zookeeper')
-        self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), 'this.~isan..id')

@@ -46,5 +46,5 @@ class ProductstatusListener(eva.base.listener.BaseListener):
                 timestamp=dateutil.parser.parse(event.message_timestamp),
                 event_listener=self.event_listener,
             )
-        except self.RECOVERABLE_EXCEPTIONS, e:
+        except self.RECOVERABLE_EXCEPTIONS as e:
             raise eva.exceptions.EventTimeoutException(e)

@@ -94,7 +94,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         try:
             params = self.fimex_parameters.render(**template_variables)
             output_filename = self.output_filename.render(**template_variables)
-        except Exception, e:
+        except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
 
         # Generate and execute Fimex job

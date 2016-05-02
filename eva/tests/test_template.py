@@ -8,7 +8,7 @@ import eva.template
 class TestTemplate(unittest.TestCase):
 
     def setUp(self):
-        self.dt = datetime.datetime(2016, 01, 01, 12, 30, 05, tzinfo=dateutil.tz.tzutc())
+        self.dt = datetime.datetime(2016, 1, 1, 12, 30, 5, tzinfo=dateutil.tz.tzutc())
         self.environment = eva.template.Environment()
 
     def test_filter_iso8601(self):
@@ -21,7 +21,7 @@ class TestTemplate(unittest.TestCase):
 
     def test_filter_timedelta(self):
         filtered = eva.template.filter_timedelta(self.dt, days=6, hours=6, minutes=29, seconds=55)
-        self.assertEqual(filtered, datetime.datetime(2016, 01, 07, 19, 00, 00, tzinfo=dateutil.tz.tzutc()))
+        self.assertEqual(filtered, datetime.datetime(2016, 1, 7, 19, 0, 0, tzinfo=dateutil.tz.tzutc()))
 
     def test_render_iso8601(self):
         template = self.environment.from_string('{{dt|iso8601}}')

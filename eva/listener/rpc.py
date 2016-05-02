@@ -42,7 +42,7 @@ class RPCListener(eva.base.listener.BaseListener):
             self.event_listener.save_position()
             self.filter_event(event)
             rpc = eva.rpc.RPC(event)
-        except productstatus.exceptions.EventTimeoutException, e:
+        except productstatus.exceptions.EventTimeoutException as e:
             raise eva.exceptions.EventTimeoutException(e)
         return eva.event.RPCEvent(
             rpc,
@@ -62,5 +62,5 @@ class RPCListener(eva.base.listener.BaseListener):
                         self.kwargs['group_id'],
                     )
                 )
-        except re.error, e:
+        except re.error as e:
             raise eva.exceptions.RPCInvalidRegexException("Invalid regular expression in event instance_id: %s" % unicode(e))
