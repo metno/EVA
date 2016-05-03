@@ -114,20 +114,20 @@ class Eventloop(object):
         """!
         @brief Process a non-RPC event.
         """
-        self.logger.info('Start processing event: %s', unicode(event))
+        self.logger.info('Start processing event: %s', str(event))
         self.adapter.validate_and_process_resource(event.id(), event.data)
-        self.logger.info('Finished processing event: %s', unicode(event))
+        self.logger.info('Finished processing event: %s', str(event))
 
     def process_rpc_event(self, event):
         """!
         @brief Process the latest RPC message in the RPC queue.
         """
-        self.logger.info('Processing RPC request: %s', unicode(event))
+        self.logger.info('Processing RPC request: %s', str(event))
         try:
             event.data()
         except eva.exceptions.RPCFailedException as e:
             self.logger.error('Error while executing RPC request: %s', e)
-        self.logger.info('Finished processing RPC request: %s', unicode(event))
+        self.logger.info('Finished processing RPC request: %s', str(event))
 
     def set_message_timestamp_threshold(self, timestamp):
         """!

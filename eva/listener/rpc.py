@@ -63,4 +63,4 @@ class RPCListener(eva.base.listener.BaseListener):
                     )
                 )
         except re.error as e:
-            raise eva.exceptions.RPCInvalidRegexException("Invalid regular expression in event instance_id: %s" % unicode(e))
+            raise eva.exceptions.RPCInvalidRegexException("Invalid regular expression in event instance_id: %s" % str(e))

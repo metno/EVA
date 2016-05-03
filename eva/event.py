@@ -12,11 +12,11 @@ class Event(object):
         self.data = data
         self.kwargs = kwargs
 
-    def __unicode__(self):
-        return unicode(self.data)
+    def __str__(self):
+        return str(self.data)
 
     def __repr__(self):
-        return unicode(self)
+        return str(self)
 
     def id(self):
         """!
