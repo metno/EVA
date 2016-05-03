@@ -20,13 +20,16 @@ class RPCListener(eva.base.listener.BaseListener):
         @brief Instantiate listener objects. Avoid doing this in the constructor.
         """
         self.rpc_configuration = self.kwargs['productstatus_api'].get_event_listener_configuration()
-        self.event_listener = productstatus.event.Listener(
-            'eva.rpc',
-            bootstrap_servers=self.rpc_configuration.brokers,
-            client_id=self.kwargs['client_id'],
-            group_id=self.kwargs['group_id'],
-            consumer_timeout_ms=1000,
-        )
+        kwargs = {
+            'bootstrap_servers': self.rpc_configuration.brokers,
+            'consumer_timeout_ms': 1000,
+        }
+        if self.rpc_configuration.ssl:
+            kwargs['security_protocol'] = 'SSL'
+            kwargs['ssl_context'] = productstatus.event.Listener.create_security_context(
+                self.rpc_configuration.ssl_verify,
+            )
+        self.event_listener = productstatus.event.Listener('eva.rpc', **kwargs)
         self.logger.info('Instance ID for RPC calls: %s', self.kwargs['group_id'])
 
     def get_next_event(self):
