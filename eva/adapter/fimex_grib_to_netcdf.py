@@ -30,15 +30,15 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         'EVA_INPUT_DATA_FORMAT',
         'EVA_INPUT_PRODUCT',
         'EVA_INPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_BASE_URL',
         'EVA_OUTPUT_FILENAME_PATTERN',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
     OPTIONAL_CONFIG = [
         'EVA_INPUT_PARTIAL',
+        'EVA_OUTPUT_BASE_URL',
         'EVA_OUTPUT_LIFETIME',
+        'EVA_OUTPUT_PRODUCT',
+        'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
     def process_resource(self, message_id, resource):
@@ -54,8 +54,10 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         if job.status != eva.job.COMPLETE:
             raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % resource.url)
 
-        datainstance = self.register_output(job)
-        job.logger.info('Successfully filled the NetCDF file %s with data from %s', datainstance.url, resource.url)
+        if self.has_productstatus_credentials():
+            self.register_output(job)
+
+        job.logger.info('Successfully filled the NetCDF file %s with data from %s', job.data['filename'], resource.url)
 
     def create_job(self, message_id, resource):
         """!
@@ -74,12 +76,13 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         }
 
         job.command = """#!/bin/bash
-            {lib_fg2nc}/grib2nc \
-                --input "{gribfile}" \
-                --output "{destfile}" \
-                --reference_time "{reftime}" \
-                --template_directory "{templatedir}"
-        """.format(
+#$ -S /bin/bash
+{lib_fg2nc}/grib2nc \
+--input "{gribfile}" \
+--output "{destfile}" \
+--reference_time "{reftime}" \
+--template_directory "{templatedir}"
+""".format(
             gribfile=eva.url_to_filename(resource.url),
             reftime=reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
             lib_fg2nc=self.env['EVA_FG2NC_LIB'],

@@ -43,7 +43,7 @@ class TestFimexGRIB2NetCDFAdapter(unittest.TestCase):
         @brief Test that DownloadAdapter doesn't post to Productstatus when
         output configuration is not given.
         """
-        compare_command = '#!/bin/bash /eva-adapter-support/grib2nc --input "/path/to/source/grib" --output "/output/20160226T120000" --reference_time "2016-02-26T12:00:00+0000" --template_directory "/template"'
+        compare_command = '#!/bin/bash # -S /bin/bash /eva-adapter-support/grib2nc --input "/path/to/source/grib" --output "/output/20160226T120000" --reference_time "2016-02-26T12:00:00+0000" --template_directory "/template"'
         self.create_adapter()
         resource = mock.MagicMock()
         resource.data.productinstance.reference_time = datetime.datetime(2016, 02, 26, 12, 00, 00, tzinfo=dateutil.tz.tzutc())

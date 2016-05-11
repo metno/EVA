@@ -227,7 +227,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                        ]
 
             # Run jobs in a specified queue
-            if 'EVA_GRIDENGINE_QUEUE' in self.env:
+            if self.env['EVA_GRIDENGINE_QUEUE']:
                 command += ['-q', self.env['EVA_GRIDENGINE_QUEUE']]
 
             command += [job.submit_script_path]
