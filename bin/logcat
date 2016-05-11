@@ -18,6 +18,9 @@ class Message(object):
     def name(self):
         return self.json['marathon_app_id']
 
+    def host(self):
+        return self.json['host']
+
     def log_level(self):
         return self.json['log_level']
 
@@ -55,8 +58,9 @@ if __name__ == '__main__':
             message = consumer.next().value
             if not message.valid():
                 continue
-            output = u"%(timestamp)s %(name)s %(log_level)s: %(text)s\n" % {
+            output = u"%(timestamp)s %(host)s %(name)s %(log_level)s: %(text)s\n" % {
                 'timestamp': message.timestamp(),
+                'host': message.host(),
                 'name': message.name(),
                 'log_level': message.log_level(),
                 'text': message.text(),
