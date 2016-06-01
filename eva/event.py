@@ -71,14 +71,6 @@ class ProductstatusEvent(Event):
         """
         return self.kwargs['timestamp']
 
-    def get_processing_delay(self):
-        """!
-        @brief Productstatus events are sent before the object is completely
-        persisted in the database. This function adds a small delay to the
-        processing, so that we do not get 404 errors when processing the event.
-        """
-        return self.timestamp() - eva.now_with_timezone() + datetime.timedelta(seconds=2)
-
 
 class RPCEvent(Event):
     """!
