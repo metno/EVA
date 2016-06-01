@@ -244,4 +244,4 @@ def zookeeper_group_id(group_id):
         raise eva.exceptions.InvalidGroupIdException('The name "zookeeper" is reserved and cannot be used as a Zookeeper node name.')
     if len(g) == 0:
         raise eva.exceptions.InvalidGroupIdException('The group id "%s" translates to an empty string, which cannot be used as a Zookeeper node name.' % group_id)
-    return g
+    return g.decode('ascii')

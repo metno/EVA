@@ -56,7 +56,7 @@ class TestBase(unittest.TestCase):
         self.assertFalse(eva.parse_boolean_string('0'))
 
     def test_zookeeper_group_id(self):
-        self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), b'this.~isan..id')
+        self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), 'this.~isan..id')
         with self.assertRaises(eva.exceptions.InvalidGroupIdException):
             eva.zookeeper_group_id(u'áćé')
         with self.assertRaises(eva.exceptions.InvalidGroupIdException):

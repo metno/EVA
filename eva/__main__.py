@@ -148,9 +148,9 @@ if __name__ == "__main__":
         # Instantiate the Zookeeper client, if enabled
         if arg['zookeeper']:
             logger.info('Setting up Zookeeper connection to %s', arg['zookeeper'])
-            tokens = arg['zookeeper'].strip().split('/')
+            tokens = arg['zookeeper'].strip().split(u'/')
             server_string = tokens[0]
-            base_path = os.path.join('/', os.path.join(*tokens[1:]), eva.zookeeper_group_id(group_id))
+            base_path = os.path.join('/', os.path.join(*tokens[1:]), str(eva.zookeeper_group_id(group_id)))
             zookeeper = kazoo.client.KazooClient(
                 hosts=server_string,
                 randomize_hosts=True,
