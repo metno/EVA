@@ -6,13 +6,13 @@ RUN useradd -M --system --uid 12325 eventadapter
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive \
     apt-get -y --no-install-recommends install \
-        python-dev \
-        libzmq3-dev \
         build-essential \
-        python-pip \
         git \
-        wget \
+        libzmq3-dev \
+        python3-dev \
+        python3-pip \
         software-properties-common \
+        wget \
     && add-apt-repository --yes ppa:heiko-klein/fimex \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive \
