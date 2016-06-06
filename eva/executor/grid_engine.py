@@ -153,9 +153,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
 
         def recv_both(channel, stdout, stderr):
             if channel.recv_ready():
-                stdout += channel.recv(SSH_RECV_BUFFER)
+                stdout += channel.recv(SSH_RECV_BUFFER).decode('utf8')
             if channel.recv_stderr_ready():
-                stderr += channel.recv_stderr(SSH_RECV_BUFFER)
+                stderr += channel.recv_stderr(SSH_RECV_BUFFER).decode('utf8')
             return stdout, stderr
 
         while not channel.exit_status_ready():
