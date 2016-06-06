@@ -133,8 +133,12 @@ if __name__ == "__main__":
         # Test for Mesos + Marathon execution, and set appropriate configuration
         logger = logging.getLogger('root')
         if 'MARATHON_APP_ID' in environment_variables:
-            logger = eva.logger.MesosLogAdapter(logger, environment_variables)
             group_id = environment_variables['MARATHON_APP_ID']
+            log_filter = eva.logger.TaskIdLogFilter(
+                app_id=environment_variables['MARATHON_APP_ID'],
+                task_id=environment_variables['MESOS_TASK_ID'],
+            )
+            logger.addFilter(log_filter)
 
         # Log startup event
         logger.info('Starting EVA: the EVent Adapter.')

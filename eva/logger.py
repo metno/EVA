@@ -5,13 +5,17 @@
 import logging
 
 
-class MesosLogAdapter(logging.LoggerAdapter):
+class TaskIdLogFilter(logging.Filter):
     """
-    @brief This example adapter expects the passed in dict-like object to have
-    a 'connid' key, whose value in brackets is prepended to the log message.
+    @brief This log filter injects the application instance identifiers into
+    the log record.
     """
-    def process(self, msg, kwargs):
-        return u'%s %s %s' % (self.extra['MARATHON_APP_ID'], self.extra['MESOS_TASK_ID'], msg), kwargs
+    def __init__(self, **kwargs):
+        self.extra = kwargs
+
+    def filter(self, record):
+        [setattr(record, key, value) for key, value in self.extra.items()]
+        return True
 
 
 class JobLogAdapter(logging.LoggerAdapter):
