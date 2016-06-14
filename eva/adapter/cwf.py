@@ -100,6 +100,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         )
         output_directory = output_directory_template.render(
             reference_time=reference_time,
+            domain=self.env['EVA_CWF_DOMAIN'],
         )
 
         cmd = []
