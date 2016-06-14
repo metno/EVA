@@ -338,6 +338,13 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         return 'EVA_OUTPUT_LIFETIME' in self.env and self.env['EVA_OUTPUT_LIFETIME'] is not None
 
+    def expiry_from_hours(self, hours):
+        """!
+        @returns a DateTime object representing an absolute DataInstance expiry
+        time, calculated from the current time.
+        """
+        return eva.now_with_timezone() + datetime.timedelta(hours=hours)
+
     def expiry_from_lifetime(self):
         """!
         @returns a DateTime object representing an absolute DataInstance expiry
@@ -346,4 +353,4 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         if not self.has_output_lifetime():
             return None
-        return eva.now_with_timezone() + datetime.timedelta(hours=self.env['EVA_OUTPUT_LIFETIME'])
+        return self.expiry_from_hours(hours=self.env['EVA_OUTPUT_LIFETIME'])

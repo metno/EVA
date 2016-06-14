@@ -206,9 +206,9 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             data_instance.servicebackend = self.output_service_backend
             data_instance.format = self.output_data_format
             if lifetime_index < len(self.env['EVA_CWF_LIFETIME']):
-                data_instance.lifetime = self.env['EVA_CWF_LIFETIME'][lifetime_index]
+                data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][lifetime_index])
             else:
-                data_instance.lifetime = self.env['EVA_CWF_LIFETIME'][-1]
+                data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][-1])
 
             resources['datainstance'] += [data_instance]
 
