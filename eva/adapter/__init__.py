@@ -5,6 +5,7 @@ _DO NOT_ import anything from here when subclassing adapters!
 """
 
 from eva.base.adapter import BaseAdapter
+from eva.adapter.cwf import CWFAdapter
 from eva.adapter.delete import DeleteAdapter
 from eva.adapter.download import DownloadAdapter
 from eva.adapter.example import ExampleAdapter

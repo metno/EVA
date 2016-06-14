@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import unittest
+import datetime
 import logging
 
 import eva
@@ -61,3 +62,28 @@ class TestBase(unittest.TestCase):
             eva.zookeeper_group_id(u'áćé')
         with self.assertRaises(eva.exceptions.InvalidGroupIdException):
             eva.zookeeper_group_id('zookeeper')
+
+    def test_coerce_to_utc(self):
+        dt = datetime.datetime(year=2000, month=1, day=1, hour=12, minute=0, second=0)
+        dt_c = eva.coerce_to_utc(dt)
+        self.assertEqual(dt_c.tzinfo.tzname(None), 'UTC')
+
+    def test_netcdf_time_to_timestamp(self):
+        s = "2015-01-01"
+        dt = eva.netcdf_time_to_timestamp(s)
+        self.assertEqual(dt.year, 2015)
+        self.assertEqual(dt.month, 1)
+        self.assertEqual(dt.day, 1)
+        self.assertEqual(dt.hour, 0)
+        self.assertEqual(dt.minute, 0)
+        self.assertEqual(dt.second, 0)
+        self.assertEqual(dt.tzinfo.tzname(None), 'UTC')
+        s = "2016-06-13 06"
+        dt = eva.netcdf_time_to_timestamp(s)
+        self.assertEqual(dt.year, 2016)
+        self.assertEqual(dt.month, 6)
+        self.assertEqual(dt.day, 13)
+        self.assertEqual(dt.hour, 6)
+        self.assertEqual(dt.minute, 0)
+        self.assertEqual(dt.second, 0)
+        self.assertEqual(dt.tzinfo.tzname(None), 'UTC')

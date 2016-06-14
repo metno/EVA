@@ -153,7 +153,6 @@ class ConfigurableObject(object):
         self.env = env
 
 
-
 def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warning=1, error=3, give_up=5, logger=logging):
     """
     Call 'func' and, if it throws anything listed in 'exceptions', catch it and retry again
@@ -225,11 +224,29 @@ def strftime_iso8601(dt):
     return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
 
 
+def coerce_to_utc(dt):
+    """!
+    @brief Sets the time zone of a DateTime object to UTC.
+    """
+    return dt.replace(tzinfo=dateutil.tz.tzutc())
+
+
 def now_with_timezone():
     """!
     @returns a timezone-aware UTC datetime object representing the current timestamp.
     """
-    return datetime.datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc())
+    return coerce_to_utc(datetime.datetime.utcnow())
+
+
+def netcdf_time_to_timestamp(time_string):
+    """!
+    @brief Parses "ncdump -v -t time" time string output into a DateTime object.
+    """
+    if len(time_string.split()) == 2:
+        dt = datetime.datetime.strptime(time_string, '%Y-%m-%d %H')
+    else:
+        dt = datetime.datetime.strptime(time_string, '%Y-%m-%d')
+    return coerce_to_utc(dt)
 
 
 def zookeeper_group_id(group_id):
