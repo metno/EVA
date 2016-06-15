@@ -37,9 +37,9 @@ if __name__ == '__main__':
     helptext = "This utility concatenates EVA logs from a Kafka server, and outputs them to stdout."
 
     parser = argparse.ArgumentParser(description=helptext)
-    parser.add_argument('--broker', type=unicode, action='append', required=True,
+    parser.add_argument('--broker', type=str, action='append', required=True,
                         help='Which broker to publish the message to. Can be specified multiple times.')
-    parser.add_argument('--topic', type=unicode, default='mesos.logstash',
+    parser.add_argument('--topic', type=str, default='mesos.logstash',
                         help='The Kafka topic to which log events are published.')
     parser.add_argument('--from-beginning', default=False, action='store_true',
                         help='Replay all logs, starting from the beginning of Kafka\'s cache.')
@@ -47,15 +47,15 @@ if __name__ == '__main__':
 
     consumer = kafka.KafkaConsumer(args.topic,
                                    bootstrap_servers=args.broker,
-                                   client_id=unicode(uuid.uuid4()),
+                                   client_id=str(uuid.uuid4()),
                                    value_deserializer=lambda m: Message(m))
 
     if args.from_beginning:
         consumer.seek_to_beginning()
 
     try:
-        while True:
-            message = consumer.next().value
+        for msg in consumer:
+            message = msg.value
             if not message.valid():
                 continue
             output = u"%(timestamp)s %(host)s %(name)s %(log_level)s: %(text)s\n" % {
@@ -65,7 +65,9 @@ if __name__ == '__main__':
                 'log_level': message.log_level(),
                 'text': message.text(),
             }
-            sys.stdout.write(output.encode('utf-8'))
+            sys.stdout.write(output)
             sys.stdout.flush()
     except KeyboardInterrupt:
+        pass
+    except StopIteration:
         pass
