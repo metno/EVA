@@ -32,10 +32,8 @@ class TestCWFAdapter(unittest.TestCase):
         self.adapter = eva.adapter.CWFAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
 
     def test_parse_file_recognition_output(self):
-        stdout = """
-/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;
-/tmp/meteo20160606_01.nc  time = "2016-06-08" ;
-"""
+        stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;',
+                  '/tmp/meteo20160606_01.nc  time = "2016-06-08" ;']
         self.create_adapter()
         output = self.adapter.parse_file_recognition_output(stdout)
         self.assertEqual(len(output), 2)
@@ -57,9 +55,7 @@ class TestCWFAdapter(unittest.TestCase):
         self.adapter.output_service_backend = mock.MagicMock()
 
         job = eva.job.Job('foo', self.logger)
-        job.stdout = """
-/tmp/meteo20160606_00.nc  time = "2016-06-06 12", "2016-06-06 15", "2016-06-06 18", "2016-06-06 21", "2016-06-07" ;
-"""
+        job.stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12", "2016-06-06 15", "2016-06-06 18", "2016-06-06 21", "2016-06-07" ;']
         job.output_files = self.adapter.parse_file_recognition_output(job.stdout)
 
         resource = mock.MagicMock()

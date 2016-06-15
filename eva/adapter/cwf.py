@@ -141,7 +141,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             )
 
         try:
-            job.output_files = self.parse_file_recognition_output(job.stdout.splitlines())
+            job.output_files = self.parse_file_recognition_output(job.stdout)
         except:
             raise eva.exceptions.RetryException(
                 "Processing of %s did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output." % resource.url
@@ -155,14 +155,13 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         self.post_resources(resources)
         self.logger.info('Finished posting to Productstatus; job complete.')
 
-    def parse_file_recognition_output(self, output):
+    def parse_file_recognition_output(self, lines):
         """!
         @brief Parse standard output containing time dimensions from NetCDF
         files into a structured format.
         @returns A list of dictionaries with file and time dimension information.
         """
         result = []
-        lines = [x.strip() for x in output.splitlines()]
         for line in lines:
             # Each output line looks like this:
             # /tmp/meteo20160606_00.nc  time = "2016-06-06 12", "2016-06-06 15", "2016-06-06 18", "2016-06-06 21", "2016-06-07" ;
