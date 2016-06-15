@@ -144,7 +144,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             job.output_files = self.parse_file_recognition_output(job.stdout)
         except:
             raise eva.exceptions.RetryException(
-                "Processing of %s did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output.", resource.url
+                "Processing of %s did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output." % resource.url
             )
 
         if not self.post_to_productstatus():
