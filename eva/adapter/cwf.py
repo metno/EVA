@@ -105,6 +105,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
 
         cmd = []
         cmd += ['#/bin/bash']
+        cmd += ['#$ -S /bin/bash']
         if self.env['EVA_CWF_PARALLEL'] > 1:
             cmd += ['#$ -pe mpi-fn %d' % self.env['EVA_CWF_PARALLEL']]
         for module in self.env['EVA_CWF_MODULES']:
