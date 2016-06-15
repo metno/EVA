@@ -141,7 +141,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             )
 
         try:
-            job.output_files = self.parse_file_recognition_output(job.stdout)
+            job.output_files = self.parse_file_recognition_output(job.stdout.splitlines())
         except:
             raise eva.exceptions.RetryException(
                 "Processing of %s did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output." % resource.url
