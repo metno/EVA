@@ -2,7 +2,6 @@ import os
 import uuid
 import signal
 import sys
-import traceback
 import logging
 import logging.config
 import argparse

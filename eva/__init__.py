@@ -186,11 +186,11 @@ def print_exception_as_bug(exception, logger):
     label it as CRITICAL and a bug.
     """
     logger.critical("Fatal error: %s" % exception)
-    traceback = traceback.format_exc().split("\n")
+    backtrace = traceback.format_exc().split("\n")
     logger.critical("***********************************************************")
     logger.critical("Uncaught exception during program execution. THIS IS A BUG!")
     logger.critical("***********************************************************")
-    for line in traceback:
+    for line in backtrace:
         logger.critical(line)
 
 
