@@ -3,6 +3,7 @@ import re
 import time
 import datetime
 import dateutil.tz
+import traceback
 
 import eva.exceptions
 
@@ -177,6 +178,20 @@ def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warni
                 logfunc = logger.info
             logfunc('Action failed, retrying in %d seconds: %s' % (interval, e))
             time.sleep(interval)
+
+
+def print_exception_as_bug(exception, logger):
+    """!
+    @brief Print the stack trace of an exception to the logging framework, and
+    label it as CRITICAL and a bug.
+    """
+    logger.critical("Fatal error: %s" % exception)
+    traceback = traceback.format_exc().split("\n")
+    logger.critical("***********************************************************")
+    logger.critical("Uncaught exception during program execution. THIS IS A BUG!")
+    logger.critical("***********************************************************")
+    for line in traceback:
+        logger.critical(line)
 
 
 def in_array_or_empty(id, array):

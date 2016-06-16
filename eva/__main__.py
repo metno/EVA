@@ -215,6 +215,11 @@ if __name__ == "__main__":
         logger.info('Shutting down EVA due to missing or invalid configuration.')
         sys.exit(1)
 
+    except Exception as e:
+        eva.print_exception_as_bug(e, logger)
+        logger.critical('EVA initialization failed. Your code is broken, please fix it.')
+        sys.exit(255)
+
     try:
         evaloop = eva.eventloop.Eventloop(productstatus_api,
                                           listeners,
@@ -232,13 +237,7 @@ if __name__ == "__main__":
     except eva.exceptions.ShutdownException as e:
         logger.info(str(e))
     except Exception as e:
-        logger.critical("Fatal error: %s" % e)
-        exception = traceback.format_exc().split("\n")
-        logger.info("***********************************************************")
-        logger.info("Uncaught exception during program execution. THIS IS A BUG!")
-        logger.info("***********************************************************")
-        for line in exception:
-            logger.info(line)
+        eva.print_exception_as_bug(e, logger)
         sys.exit(255)
 
     if zookeeper:
