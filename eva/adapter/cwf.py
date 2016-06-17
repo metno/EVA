@@ -228,5 +228,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             for resource in resource_list:
                 eva.retry_n(resource.save,
                             exceptions=(productstatus.exceptions.ServiceUnavailableException,),
-                            give_up=0)
+                            give_up=0,
+                            logger=self.logger)
                 self.logger.info('Created resource: %s', resource)
