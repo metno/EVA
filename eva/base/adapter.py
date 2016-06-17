@@ -273,7 +273,10 @@ class BaseAdapter(eva.ConfigurableObject):
         """!
         @brief Print information about a DataInstance to the debug log.
         """
-        self.logger.debug('Product: %s', datainstance.data.productinstance.product.name)
+        self.logger.debug('Product: %s [%s]',
+                          datainstance.data.productinstance.product.name,
+                          datainstance.data.productinstance.product.slug)
+        self.logger.debug('ProductInstance: %s', datainstance.data.productinstance.id)
         self.logger.debug('Reference time: %s', eva.strftime_iso8601(datainstance.data.productinstance.reference_time))
         self.logger.debug('Time step: from %s to %s', eva.strftime_iso8601(datainstance.data.time_period_begin), eva.strftime_iso8601(datainstance.data.time_period_end))
         self.logger.debug('Data format: %s', datainstance.format.name)
