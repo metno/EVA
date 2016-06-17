@@ -223,31 +223,11 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         @brief Post information about a finished job to Productstatus. Takes a
         dictionary of resources.
         """
-        kw = {
-            'exceptions': (productstatus.exceptions.ServiceUnavailableException,),
-            'give_up': 0,
-            'logger': self.logger
-        }
-
-        for resource in resources['productinstance']:
-            resource = eva.retry_n(self.api.find_or_create,
-                        args=({
-                            'product': resource.product,
-                            'reference_time': resource.reference_time,
-                        },),
-                        **kw)
-            self.logger.info('ProductInstance: %s', resource)
-
-        for resource in resources['data']:
-            resource = eva.retry_n(self.api.find_or_create,
-                        args=({
-                            'productinstance': resource.productinstance,
-                            'time_period_begin': resource.time_period_begin,
-                            'time_period_end': resource.time_period_end,
-                        },),
-                        **kw)
-            self.logger.info('Data: %s', resource)
-
-        for resource in resources['datainstance']:
-            eva.retry_n(resource.save, **kw)
-            self.logger.info('Created DataInstance resource: %s', resource)
+        for resource_type in ['productinstance', 'data', 'datainstance']:
+            resource_list = resources[resource_type]
+            for resource in resource_list:
+                eva.retry_n(resource.save,
+                            exceptions=(productstatus.exceptions.ServiceUnavailableException,),
+                            give_up=0,
+                            logger=self.logger)
+                self.logger.info('Created resource: %s', resource)
