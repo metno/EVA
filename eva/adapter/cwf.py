@@ -125,7 +125,8 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         cmd += ['%s >&2' % self.env['EVA_CWF_SCRIPT_PATH']]
 
         # Run output recognition
-        cmd += ['for file in %s; do' % os.path.join(output_directory, '*.nc')]
+        datestamp_glob = reference_time.strftime('*%Y%m%d_*.nc')
+        cmd += ['for file in %s; do' % os.path.join(output_directory, datestamp_glob)]
         cmd += ['    echo -n "$file "']
         cmd += ["    ncdump -l 1000 -t -v time $file | grep -E '^ ?time\s*='"]
         cmd += ['done']
