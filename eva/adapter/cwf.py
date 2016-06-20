@@ -176,6 +176,21 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             result += [data]
         return result
 
+    def get_matching_data(self, data_list, data):
+        """!
+        @brief Return a Data resource if one matching the data variable is
+        found in data_list, else return the original object.
+        """
+        for m_data in data_list:
+            if data.productinstance != m_data.productinstance:
+                continue
+            if data.time_period_begin != m_data.time_period_begin:
+                continue
+            if data.time_period_end != m_data.time_period_end:
+                continue
+            return m_data
+        return data
+
     def generate_resources(self, resource, job):
         """!
         @brief Generate Productstatus resources based on finished job output.
@@ -200,6 +215,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             data.time_period_begin = output_file['time_steps'][0]
             data.time_period_end = output_file['time_steps'][-1]
 
+            data = self.get_matching_data(resources['data'], data)
             resources['data'] += [data]
 
             data_instance = self.api.datainstance.create()

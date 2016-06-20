@@ -80,3 +80,32 @@ class TestCWFAdapter(unittest.TestCase):
         self.adapter.post_resources(resources)
         for key, r in resources.items():
             r[0].save.assert_called_with()
+
+    def test_get_matching_data(self):
+        self.create_adapter()
+        self.adapter.api = mock.MagicMock()
+        pi = self.adapter.api.productinstance.create()
+        data = [
+            mock.MagicMock(),
+            mock.MagicMock(),
+        ]
+        data[0].productinstance = pi
+        data[0].time_period_begin = 'bar'
+        data[0].time_period_end = 'baz'
+        data[1].productinstance = 'foo2'
+        data[1].time_period_begin = 'bar2'
+        data[1].time_period_end = 'baz2'
+        data_check = mock.MagicMock()
+        data_check.productinstance = pi
+        data_check.time_period_begin = 'bar'
+        data_check.time_period_end = 'baz'
+        data_out = self.adapter.get_matching_data(data, data_check)
+        self.assertIs(data_out, data[0])
+
+        data_check = mock.MagicMock()
+        data_check.productinstance = pi
+        data_check.time_period_begin = 'not here'
+        data_check.time_period_end = 'baz'
+        data_out = self.adapter.get_matching_data(data, data_check)
+        self.assertIsNot(data_out, data[0])
+        self.assertIsNot(data_out, data[1])
