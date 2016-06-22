@@ -11,5 +11,6 @@ from eva.adapter.download import DownloadAdapter
 from eva.adapter.example import ExampleAdapter
 from eva.adapter.fimex import FimexAdapter
 from eva.adapter.fimex_grib_to_netcdf import FimexGRIB2NetCDFAdapter
+from eva.adapter.gridpp import GridPPAdapter
 from eva.adapter.null import NullAdapter
 from eva.adapter.test_executor import TestExecutorAdapter

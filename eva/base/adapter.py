@@ -357,3 +357,23 @@ class BaseAdapter(eva.ConfigurableObject):
         if not self.has_output_lifetime():
             return None
         return self.expiry_from_hours(hours=self.env['EVA_OUTPUT_LIFETIME'])
+
+    def generate_resources(self, resource, job):
+        """!
+        @brief Generate Productstatus resources based on finished job output.
+        """
+        raise NotImplementedError('Please override this method in order to post to Productstatus.')
+
+    def post_resources(self, resources):
+        """!
+        @brief Post information about a finished job to Productstatus. Takes a
+        dictionary of resources.
+        """
+        for resource_type in ['productinstance', 'data', 'datainstance']:
+            resource_list = resources[resource_type]
+            for resource in resource_list:
+                eva.retry_n(resource.save,
+                            exceptions=(productstatus.exceptions.ServiceUnavailableException,),
+                            give_up=0,
+                            logger=self.logger)
+                self.logger.info('Created resource: %s', resource)
