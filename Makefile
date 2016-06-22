@@ -1,6 +1,9 @@
 .PHONY: eva eva-base upload-eva upload-eva-base doc
 
-eva:
+pull-eva-base:
+	docker pull metno/eva-base
+
+eva: pull-eva-base
 	docker build --no-cache --tag metno/eva docker/eva
 
 eva-base:
