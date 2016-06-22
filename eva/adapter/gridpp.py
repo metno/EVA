@@ -136,7 +136,6 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         job.command = '\n'.join(command) + '\n'
         self.execute(job)
 
-        import pdb; pdb.set_trace()
         # Retry on failure
         if job.status != eva.job.COMPLETE:
             raise eva.exceptions.RetryException(
