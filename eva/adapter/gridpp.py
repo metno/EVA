@@ -172,7 +172,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
 
         data_instance = self.api.datainstance.create()
         data_instance.data = data
-        data_instance.url = 'file://' + job.gridpp_params['output_file']
+        data_instance.url = 'file://' + job.gridpp_params['output.file']
         data_instance.servicebackend = self.output_service_backend
         data_instance.format = self.output_data_format
         data_instance.expires = self.expiry_from_lifetime()
