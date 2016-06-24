@@ -11,6 +11,8 @@ import eva.executor
 
 BLANK_UUID = '00000000-0000-0000-0000-000000000000'
 RANDOM_UUID = 'f194279e-dfa8-45ff-ab62-1b03d89e9705'
+RANDOM_USERNAME = 'nonamewrongname'
+RANDOM_KEY = 'nokeywrongkey'
 
 
 class TestThreddsAdapter(unittest.TestCase):
@@ -20,6 +22,8 @@ class TestThreddsAdapter(unittest.TestCase):
             'EVA_INPUT_DATA_FORMAT': BLANK_UUID,
             'EVA_INPUT_PRODUCT': BLANK_UUID,
             'EVA_INPUT_SERVICE_BACKEND': BLANK_UUID,
+            'EVA_PRODUCTSTATUS_USERNAME': RANDOM_USERNAME,
+            'EVA_PRODUCTSTATUS_API_KEY': RANDOM_KEY,
         }
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
