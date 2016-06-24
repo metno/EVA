@@ -14,3 +14,4 @@ from eva.adapter.fimex_grib_to_netcdf import FimexGRIB2NetCDFAdapter
 from eva.adapter.gridpp import GridPPAdapter
 from eva.adapter.null import NullAdapter
 from eva.adapter.test_executor import TestExecutorAdapter
+from eva.adapter.thredds import ThreddsAdapter
