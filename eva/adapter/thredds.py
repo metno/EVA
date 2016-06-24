@@ -41,7 +41,6 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_OUTPUT_LIFETIME',
         'EVA_THREDDS_POLL_INTERVAL',
         'EVA_THREDDS_POLL_RETRIES',
         'EVA_THREDDS_BASE_URL',
@@ -68,7 +67,6 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         @return True if all optional output variables are configured, False otherwise.
         """
         return (
-            (self.env['EVA_OUTPUT_LIFETIME'] is not None) and
             (self.env['EVA_INPUT_PRODUCT'] is not None)
         )
 
