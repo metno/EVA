@@ -149,6 +149,29 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         resources = self.generate_resources(resource, job)
         self.post_resources(resources)
 
+    def get_or_post_productinstance_resource(self, resource):
+        """!
+        Return a matching ProductInstance resource according to Product, reference time and version.
+        """
+        product = self.output_product
+        parameters = {
+            'product': product,
+            'reference_time': resource.data.productinstance.reference_time,
+            'version': resource.data.productinstance.version,
+        }
+        return self.api.productinstance.find_or_create(parameters)
+
+    def get_or_post_data_resource(self, product_instance, resource):
+        """!
+        Return a matching Data resource according to Productinstance and data begin/end times.
+        """
+        parameters = {
+            'productinstance': product_instance,
+            'time_period_begin': resource.data.time_period_begin,
+            'time_period_end': resource.data.time_period_end
+        }
+        return self.api.data.find_or_create(parameters)
+
     def generate_resources(self, resource, job):
         """!
         @brief Generate Productstatus resources based on finished job output.
@@ -159,15 +182,10 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
             'datainstance': [],
         }
 
-        product_instance = self.api.productinstance.create()
-        product_instance.product = self.output_product
-        product_instance.reference_time = resource.data.productinstance.reference_time
+        product_instance = self.get_or_post_productinstance_resource(resource)
         resources['productinstance'] += [product_instance]
 
-        data = self.api.data.create()
-        data.productinstance = product_instance
-        data.time_period_begin = resource.data.time_period_begin
-        data.time_period_end = resource.data.time_period_end
+        data = self.get_or_post_data_resource(product_instance, resource)
         resources['data'] += [data]
 
         data_instance = self.api.datainstance.create()

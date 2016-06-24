@@ -12,7 +12,7 @@ config = {
     'version': '1.0',
     'install_requires': [
         'nose==1.3.7',
-        'python-dateutil==2.4.2',
+        'python-dateutil==2.5.0',
         'productstatus-client==6.0.3',
         'paramiko==1.16.0',
         'mock==1.3.0',
