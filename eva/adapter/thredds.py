@@ -38,6 +38,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
 
     REQUIRED_CONFIG = [
         'EVA_INPUT_PRODUCT',
+        'EVA_INPUT_SERVICE_BACKEND',
     ]
 
     OPTIONAL_CONFIG = [
