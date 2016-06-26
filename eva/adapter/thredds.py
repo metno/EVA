@@ -78,32 +78,33 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         url = resource.url
         basename = os.path.basename(url)
 
-        thredds_url = "{}{}.html".format(self.thredds_base_url, basename)
+        thredds_url = "{}{}".format(self.thredds_base_url, basename)
+        # Assuming that when the .html link is accessible so will be the dataset via OPeNDAP
+        thredds_html_url = thredds_url + ".html"
 
-        self.logger.info("Will check up to {} times if {} is reachable.".format(self.thredds_poll_retries, thredds_url))
+        self.logger.info("Will check up to {} times if {} is reachable.".format(self.thredds_poll_retries, thredds_html_url))
         for x in range(self.thredds_poll_retries):
             self.logger.info("Trial {}/{}".format(x + 1, self.thredds_poll_retries))
             try:
-                r = requests.head(thredds_url)
+                r = requests.head(thredds_html_url)
                 if r.status_code == requests.codes.ok:
-                    self.logger.info("The data is reachable at {0}". format(thredds_url))
+                    self.logger.info("The data is reachable at {0}". format(thredds_html_url))
                     if self.post_to_productstatus:
                         self.add_datainstance_to_productstatus(resource, thredds_url)
                     return
                 else:
                     self.logger.info("The data is not available at {0}, sleeping for {1} seconds...".format(
-                                    thredds_url, self.thredds_poll_interval))
+                                    thredds_html_url, self.thredds_poll_interval))
                     time.sleep(self.thredds_poll_interval)
             except requests.exceptions.RequestException as e:
                 self.logger.info("Problem with connection while trying to access {}, sleeping for {} seconds...".format(
-                                thredds_url, self.thredds_poll_interval))
+                                thredds_html_url, self.thredds_poll_interval))
                 self.logger.info("Error: {}".format(e))
                 time.sleep(self.thredds_poll_interval)
                 continue
 
     def add_datainstance_to_productstatus(self, resource, threddsurl):
-        self.logger.info("Creating a new DataInstance on the Productstatus server...")
-
+        self.logger.info("Adding URL to Productstatus server: {}".format(threddsurl))
         parameters = {
             'data': resource.data,
             'format': resource.format,
