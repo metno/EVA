@@ -21,6 +21,9 @@ class Message(object):
     def host(self):
         return self.json['host']
 
+    def container_id(self):
+        return self.json['container_id'][:8]
+
     def log_level(self):
         return self.json['log_level']
 
@@ -58,9 +61,10 @@ if __name__ == '__main__':
             message = msg.value
             if not message.valid():
                 continue
-            output = u"%(timestamp)s %(host)s %(name)s %(log_level)s: %(text)s\n" % {
+            output = u"%(timestamp)s %(host)s %(container_id)s %(name)s %(log_level)s: %(text)s\n" % {
                 'timestamp': message.timestamp(),
                 'host': message.host(),
+                'container_id': message.container_id(),
                 'name': message.name(),
                 'log_level': message.log_level(),
                 'text': message.text(),
