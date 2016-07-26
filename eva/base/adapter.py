@@ -233,38 +233,38 @@ class BaseAdapter(eva.ConfigurableObject):
         processing criteria.
         """
         if resource._collection._resource_name != 'datainstance':
-            self.logger.info('Resource is not of type DataInstance, ignoring.')
+            self.logger.debug('Resource is not of type DataInstance, ignoring.')
 
         elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'EVA_INPUT_PRODUCT'):
-            self.logger.info('DataInstance belongs to Product "%s", ignoring.',
+            self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
                              resource.data.productinstance.product.name)
 
         elif not self.in_array_or_empty(resource.servicebackend.slug, 'EVA_INPUT_SERVICE_BACKEND'):
-            self.logger.info('DataInstance is hosted on service backend %s, ignoring.',
+            self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
                              resource.servicebackend.name)
 
         elif not self.in_array_or_empty(resource.format.slug, 'EVA_INPUT_DATA_FORMAT'):
-            self.logger.info('DataInstance file type is %s, ignoring.',
+            self.logger.debug('DataInstance file type is %s, ignoring.',
                              resource.format.name)
         elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
-            self.logger.info('DataInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
+            self.logger.debug('DataInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
         elif resource.deleted:
-            self.logger.info('DataInstance is marked as deleted, ignoring.')
+            self.logger.debug('DataInstance is marked as deleted, ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
-            self.logger.info('DataInstance is not complete, ignoring.')
+            self.logger.debug('DataInstance is not complete, ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_ONLY and productstatus.datainstance_has_complete_file_count(resource):
-            self.logger.info('DataInstance is complete, ignoring.')
+            self.logger.debug('DataInstance is complete, ignoring.')
         elif self.is_blacklisted(resource.id):
-            self.logger.info('DataInstance %s is blacklisted, ignoring.', resource)
+            self.logger.debug('DataInstance %s is blacklisted, ignoring.', resource)
         elif self.is_blacklisted(resource.data.id):
-            self.logger.info('Data %s is blacklisted, ignoring.', resource.data)
+            self.logger.debug('Data %s is blacklisted, ignoring.', resource.data)
         elif self.is_blacklisted(resource.data.productinstance.id):
-            self.logger.info('ProductInstance %s is blacklisted, ignoring.', resource.data.productinstance)
+            self.logger.debug('ProductInstance %s is blacklisted, ignoring.', resource.data.productinstance)
         elif not self.datainstance_has_required_uuids(resource):
-            self.logger.info('DataInstance %s does not have any relationships to required UUIDs %s, ignoring.', resource.data.productinstance, list(self.required_uuids))
+            self.logger.debug('DataInstance %s does not have any relationships to required UUIDs %s, ignoring.', resource.data.productinstance, list(self.required_uuids))
         else:
             self.clear_required_uuids()
-            self.logger.info('DataInstance matches all configured criteria.')
+            self.logger.debug('DataInstance %s matches all configured criteria.', resource)
             return True
 
         return False
