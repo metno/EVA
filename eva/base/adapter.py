@@ -2,6 +2,7 @@ import re
 import os
 import uuid
 import datetime
+import logging
 import kazoo.exceptions
 
 import eva
@@ -269,30 +270,36 @@ class BaseAdapter(eva.ConfigurableObject):
 
         return False
 
-    def print_datainstance_info(self, datainstance):
+    def print_datainstance_info(self, datainstance, loglevel=logging.DEBUG):
         """!
         @brief Print information about a DataInstance to the debug log.
         """
-        self.logger.debug('Product: %s [%s]',
-                          datainstance.data.productinstance.product.name,
-                          datainstance.data.productinstance.product.slug)
-        self.logger.debug('ProductInstance: %s', datainstance.data.productinstance.id)
-        self.logger.debug('Reference time: %s', eva.strftime_iso8601(datainstance.data.productinstance.reference_time))
-        self.logger.debug('Time step: from %s to %s', eva.strftime_iso8601(datainstance.data.time_period_begin), eva.strftime_iso8601(datainstance.data.time_period_end))
-        self.logger.debug('Data format: %s', datainstance.format.name)
-        self.logger.debug('Service backend: %s', datainstance.servicebackend.name)
+        self.logger.log(loglevel,
+                        'Product: %s [%s]',
+                        datainstance.data.productinstance.product.name,
+                        datainstance.data.productinstance.product.slug)
+        self.logger.log(loglevel, 'ProductInstance: %s', datainstance.data.productinstance.id)
+        self.logger.log(loglevel, 'Reference time: %s', eva.strftime_iso8601(datainstance.data.productinstance.reference_time))
+        self.logger.log(loglevel, 'Time step: from %s to %s', eva.strftime_iso8601(datainstance.data.time_period_begin), eva.strftime_iso8601(datainstance.data.time_period_end))
+        self.logger.log(loglevel, 'Data format: %s', datainstance.format.name)
+        self.logger.log(loglevel, 'Service backend: %s', datainstance.servicebackend.name)
 
     def validate_and_process_resource(self, message_id, resource):
         """!
         @brief Check if the Resource fits this adapter, and send it to `process_resource`.
         @param resource A Productstatus resource.
         """
+        print_info = False
         if resource._collection._resource_name == 'datainstance':
-            self.print_datainstance_info(resource)
+            print_info = True
         if not self.resource_matches_input_config(resource):
+            if print_info:
+                self.print_datainstance_info(resource, logging.DEBUG)
             return
         self.message_id = message_id
         self.logger.info('Start processing resource: %s', resource)
+        if print_info:
+            self.print_datainstance_info(resource, logging.INFO)
         self.process_resource(message_id, resource)
         self.logger.info('Finish processing resource: %s', resource)
 

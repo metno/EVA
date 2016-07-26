@@ -114,9 +114,9 @@ class Eventloop(object):
         """!
         @brief Process a non-RPC event.
         """
-        self.logger.info('Start processing event: %s', str(event))
+        self.logger.debug('Start processing event: %s', str(event))
         self.adapter.validate_and_process_resource(event.id(), event.data)
-        self.logger.info('Finished processing event: %s', str(event))
+        self.logger.debug('Finished processing event: %s', str(event))
 
     def process_rpc_event(self, event):
         """!
