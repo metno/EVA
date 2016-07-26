@@ -289,9 +289,7 @@ class BaseAdapter(eva.ConfigurableObject):
         @brief Check if the Resource fits this adapter, and send it to `process_resource`.
         @param resource A Productstatus resource.
         """
-        print_info = False
-        if resource._collection._resource_name == 'datainstance':
-            print_info = True
+        print_info = bool(resource._collection._resource_name == 'datainstance')
         if not self.resource_matches_input_config(resource):
             if print_info:
                 self.print_datainstance_info(resource, logging.DEBUG)
