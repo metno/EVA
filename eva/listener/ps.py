@@ -39,7 +39,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         """
         try:
             event = self.event_listener.get_next_event()
-            self.logger.info('Productstatus message received: %s', event)
+            self.logger.debug('Productstatus message received: %s', event)
             return eva.event.ProductstatusEvent(
                 self.kwargs['productstatus_api'][event.uri],
                 id=event.message_id,
