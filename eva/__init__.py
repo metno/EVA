@@ -277,3 +277,12 @@ def zookeeper_group_id(group_id):
     if len(g) == 0:
         raise eva.exceptions.InvalidGroupIdException('The group id "%s" translates to an empty string, which cannot be used as a Zookeeper node name.' % group_id)
     return g.decode('ascii')
+
+
+def convert_to_bytes(value, notation):
+    notations = ['B', 'KB', 'MB', 'GB', 'TB']
+    for exp, suffix in enumerate(notations):
+        if notation.upper() != suffix:
+            continue
+        return int((1024**exp) * value)
+    raise ValueError('Invalid data size notation %s' % notation)
