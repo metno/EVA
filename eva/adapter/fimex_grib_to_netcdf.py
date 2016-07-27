@@ -49,7 +49,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         job = self.create_job(message_id, resource)
         job.logger.info('Job resource: %s', resource)
 
-        self.executor.execute(job)
+        self.execute(job)
 
         if job.status != eva.job.COMPLETE:
             raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % resource.url)
