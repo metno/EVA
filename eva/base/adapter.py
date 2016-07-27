@@ -297,9 +297,12 @@ class BaseAdapter(eva.ConfigurableObject):
             return
         self.message_id = message_id
         self.logger.info('Start processing resource: %s', resource)
+        timer = self.statsd.timer('processing_time')
+        timer.start()
         if print_info:
             self.print_datainstance_info(resource, logging.INFO)
         self.process_resource(message_id, resource)
+        timer.stop()
         self.logger.info('Finish processing resource: %s', resource)
 
     def process_resource(self, message_id, resource):
@@ -320,7 +323,11 @@ class BaseAdapter(eva.ConfigurableObject):
         """!
         @brief Execute a job with the assigned Executor.
         """
-        return self.executor.execute(job)
+        timer = self.statsd.timer('execution_time')
+        timer.start()
+        r = self.executor.execute(job)
+        timer.stop()
+        return r
 
     def has_productstatus_credentials(self):
         """!
