@@ -4,6 +4,8 @@ Multiple-endpoint StatsD client with Telegraf tag support.
 
 
 import socket
+import timeit
+import math
 
 
 class StatsDClient(object):
@@ -52,9 +54,53 @@ class StatsDClient(object):
             return ',' + t
         return t
 
+    def generate_message(self, metric, value, identifier, tags):
+        """!
+        @brief Generate a StatsD formatted message.
+        """
+        return '%s:%d%s|%s' % (metric, value, self.appended_tags(tags), identifier)
+
     def incr(self, metric, value=1, tags={}):
         """!
         @brief Increment a metric counter.
         """
-        message = '%s:%d%s|c' % (metric, value, self.appended_tags(tags))
+        message = self.generate_message(metric, value, 'c', tags)
         self.broadcast(message)
+
+    def timing(self, metric, value, tags={}):
+        """!
+        @brief Add a timing metric.
+        """
+        message = self.generate_message(metric, value, 'ms', tags)
+        self.broadcast(message)
+
+    def timer(self, metric, tags={}):
+        return StatsDTimer(self, metric, tags)
+
+
+
+class StatsDTimer(object):
+    def __init__(self, parent, metric, tags):
+        self.start_time = None
+        self.stop_time = None
+        self.parent = parent
+        self.metric = metric
+        self.tags = tags
+
+    def start(self):
+        if self.start_time is not None:
+            raise RuntimeError('Timer has already been started.')
+        self.start_time = timeit.default_timer()
+        return self
+
+    def stop(self):
+        if self.stop_time is not None:
+            raise RuntimeError('Timer has already been stopped.')
+        self.stop_time = timeit.default_timer()
+        self.send()
+
+    def send(self):
+        if self.start_time is None or self.stop_time is None:
+            raise RuntimeError('Timer has not completed successfully.')
+        ms = int(math.ceil((self.stop_time - self.start_time) * 1000))
+        return self.parent.timing(self.metric, ms, self.tags)
