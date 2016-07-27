@@ -1,4 +1,5 @@
 import os
+import re
 import datetime
 
 import eva
@@ -74,10 +75,22 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
             (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
         )
 
+    def parse_bytes_sec_from_lines(self, lines):
+        """!
+        @brief Return the number of bytes per second from a list of wget output lines.
+        """
+        rate_regex = re.compile('.+\(([\d\.]+) ([A-Z]B)/s\) .+saved.+')
+        for line in lines:
+            matches = rate_regex.match(line)
+            if matches:
+                return eva.convert_to_bytes(matches.group(1), matches.group(2))
+        return None
+
     def process_resource(self, message_id, resource):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
+        service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         filename = os.path.basename(resource.url)
         job = eva.job.Job(message_id, self.logger)
         job.logger.info('Job resource: %s', resource)
@@ -116,6 +129,10 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         if job.status != eva.job.COMPLETE:
             raise eva.exceptions.RetryException("Download of '%s' failed." % resource.url)
 
+        bytes_sec = self.parse_bytes_sec_from_lines(job.stderr)
+        if bytes_sec is not None:
+            self.statsd.gauge('download_rate', bytes_sec, {'service_backend': service_backend.slug})
+
         if not self.post_to_productstatus:
             return
 
@@ -124,7 +141,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         datainstance.data = resource.data
         datainstance.format = resource.format
         datainstance.expires = self.expiry_from_lifetime()
-        datainstance.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
+        datainstance.servicebackend = service_backend
         datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], filename)
         eva.retry_n(datainstance.save,
                     exceptions=(productstatus.exceptions.ServiceUnavailableException,),

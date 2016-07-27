@@ -70,3 +70,22 @@ class TestDownloadAdapter(unittest.TestCase):
         })
         with self.assertRaises(eva.exceptions.InvalidConfigurationException):
             self.create_adapter()
+
+    def test_parse_bytes_sec_from_lines(self):
+        """!
+        @brief Test that wget speeds can be parsed.
+        """
+        self.create_adapter()
+        self.assertEqual(
+            self.adapter.parse_bytes_sec_from_lines(
+                ['2016-07-27 14:03:45 (375.3 MB/s) - ‘foo.bar’ saved [3437/3437]']
+            ),
+            393530572
+        )
+        self.assertEqual(
+            self.adapter.parse_bytes_sec_from_lines(
+                ['2016-01-21 11:01:15 (22 KB/s) - ‘foo.bar’ saved [3987645988/3987645989]']
+            ),
+            22528
+        )
+                         
