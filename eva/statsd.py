@@ -67,6 +67,27 @@ class StatsDClient(object):
         message = self.generate_message(metric, value, 'c', tags)
         self.broadcast(message)
 
+    def gauge(self, metric, value, tags={}):
+        """!
+        @brief Set a gauge metric.
+        """
+        message = self.generate_message(metric, value, 'g', tags)
+        self.broadcast(message)
+
+    def set(self, metric, value, tags={}):
+        """!
+        @brief Add to a set metric.
+        """
+        message = self.generate_message(metric, value, 's', tags)
+        self.broadcast(message)
+
+    def histogram(self, metric, value, tags={}):
+        """!
+        @brief Add a histogram metric.
+        """
+        message = self.generate_message(metric, value, 'h', tags)
+        self.broadcast(message)
+
     def timing(self, metric, value, tags={}):
         """!
         @brief Add a timing metric.

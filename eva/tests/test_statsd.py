@@ -60,6 +60,21 @@ class TestStatsD(unittest.TestCase):
         func.assert_called_with('foo,a=1,b=2,c=3:1|c')
 
     @mock.patch('eva.statsd.StatsDClient.broadcast')
+    def test_gauge(self, func):
+        self.statsd.gauge('foo', 1, {'c': 3})
+        func.assert_called_with('foo,a=1,b=2,c=3:1|g')
+
+    @mock.patch('eva.statsd.StatsDClient.broadcast')
+    def test_set(self, func):
+        self.statsd.set('foo', 1, {'c': 3})
+        func.assert_called_with('foo,a=1,b=2,c=3:1|s')
+
+    @mock.patch('eva.statsd.StatsDClient.broadcast')
+    def test_histogram(self, func):
+        self.statsd.histogram('foo', 1, {'c': 3})
+        func.assert_called_with('foo,a=1,b=2,c=3:1|h')
+
+    @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_timing(self, func):
         self.statsd.timing('foo', 200, {'c': 3})
         func.assert_called_with('foo,a=1,b=2,c=3:200|ms')
