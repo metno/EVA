@@ -56,13 +56,13 @@ class TestStatsD(unittest.TestCase):
 
     @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_incr(self, func):
-        self.statsd.incr('foo', 1)
-        func.assert_called_with('foo:1,a=1,b=2|c')
+        self.statsd.incr('foo', 1, {'c': 3})
+        func.assert_called_with('foo:1,a=1,b=2,c=3|c')
 
     @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_timing(self, func):
-        self.statsd.timing('foo', 200)
-        func.assert_called_with('foo:200,a=1,b=2|ms')
+        self.statsd.timing('foo', 200, {'c': 3})
+        func.assert_called_with('foo:200,a=1,b=2,c=3|ms')
 
 
 
