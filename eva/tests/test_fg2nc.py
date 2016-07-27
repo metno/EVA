@@ -10,6 +10,7 @@ import productstatus
 import productstatus.api
 
 import eva.executor
+import eva.statsd
 import eva.adapter.fimex_grib_to_netcdf
 
 
@@ -33,10 +34,11 @@ class TestFimexGRIB2NetCDFAdapter(unittest.TestCase):
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging.getLogger('root')
         self.zookeeper = None
-        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper)
+        self.statsd = eva.statsd.StatsDClient()
+        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
 
     def create_adapter(self):
-        self.adapter = eva.adapter.FimexGRIB2NetCDFAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.adapter = eva.adapter.FimexGRIB2NetCDFAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
 
     def test_productstatus_read_only_default(self):
         """

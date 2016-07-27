@@ -8,6 +8,7 @@ import productstatus.api
 
 import eva.executor
 import eva.adapter.cwf
+import eva.statsd
 
 
 class TestCWFAdapter(unittest.TestCase):
@@ -26,10 +27,11 @@ class TestCWFAdapter(unittest.TestCase):
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging.getLogger('root')
         self.zookeeper = None
-        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper)
+        self.statsd = eva.statsd.StatsDClient()
+        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
 
     def create_adapter(self):
-        self.adapter = eva.adapter.CWFAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.adapter = eva.adapter.CWFAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
 
     def test_parse_file_recognition_output(self):
         stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;',

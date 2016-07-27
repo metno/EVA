@@ -16,8 +16,9 @@ class TestEventloop(unittest.TestCase):
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
         self.zookeeper = None
-        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper)
-        self.adapter = eva.adapter.NullAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper)
+        self.statsd = eva.statsd.StatsDClient()
+        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
+        self.adapter = eva.adapter.NullAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
         self.eventloop = eva.eventloop.Eventloop(self.productstatus_api,
                                                  [],
                                                  self.adapter,

@@ -12,6 +12,7 @@ import productstatus.api
 import productstatus.event
 
 import eva
+import eva.statsd
 import eva.logger
 import eva.eventloop
 import eva.adapter
@@ -64,6 +65,8 @@ def build_argument_list():
     arg['listeners'] = os.getenv('EVA_LISTENERS', 'eva.listener.RPCListener,eva.listener.ProductstatusListener')
     # ZooKeeper endpoints
     arg['zookeeper'] = os.getenv('EVA_ZOOKEEPER')
+    # StatsD endpoints
+    arg['statsd'] = os.getenv('EVA_STATSD', '')
 
     return arg
 
@@ -148,6 +151,14 @@ if __name__ == "__main__":
                 var = '****CENSORED****'
             logger.info('Environment: %s=%s' % (key, var))
 
+        # Set up StatsD client
+        dsn_list = [x for x in eva.split_comma_separated(arg['statsd']) if len(x) > 0]
+        statsd_client = eva.statsd.StatsDClient({'application': group_id}, dsn_list)
+        if len(dsn_list) > 0:
+            logger.info('StatsD client set up with application tag "%s", sending data to: %s', group_id, ', '.join(dsn_list))
+        else:
+            logger.warning('StatsD not configured, will not send metrics.')
+
         # Instantiate the Zookeeper client, if enabled
         if arg['zookeeper']:
             logger.info('Setting up Zookeeper connection to %s', arg['zookeeper'])
@@ -165,7 +176,7 @@ if __name__ == "__main__":
             zookeeper.ensure_path(zookeeper.EVA_BASE_PATH)
         else:
             zookeeper = None
-            logger.info('Not using Zookeeper.')
+            logger.warning('ZooKeeper not configured.')
 
         # Instantiate the Productstatus client
         productstatus_api = productstatus.api.Api(
@@ -187,6 +198,7 @@ if __name__ == "__main__":
                 group_id=group_id,
                 productstatus_api=productstatus_api,
                 zookeeper=zookeeper,
+                statsd=statsd_client,
             )
             listener.setup_listener()
             logger.info('Adding listener: %s' % listener.__class__)
@@ -197,6 +209,7 @@ if __name__ == "__main__":
             environment_variables,
             logger,
             zookeeper,
+            statsd_client,
         )
         logger.info('Using executor: %s' % executor.__class__)
 
@@ -206,6 +219,7 @@ if __name__ == "__main__":
             productstatus_api,
             logger,
             zookeeper,
+            statsd_client,
         )
         logger.info('Using adapter: %s' % adapter.__class__)
 
