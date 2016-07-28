@@ -197,10 +197,10 @@ if __name__ == "__main__":
             listener = import_module_class(listener_class)(
                 environment_variables,
                 logger,
+                zookeeper,
                 client_id=client_id,
                 group_id=group_id,
                 productstatus_api=productstatus_api,
-                zookeeper=zookeeper,
                 statsd=statsd_client,
             )
             listener.setup_listener()
