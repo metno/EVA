@@ -129,7 +129,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="stringliteral">        &quot;&quot;&quot;</span></div>
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        <span class="keywordflow">try</span>:</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;            event = self.event_listener.get_next_event()</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;            self.logger.info(<span class="stringliteral">&#39;Productstatus message received: %s&#39;</span>, event)</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;            self.logger.debug(<span class="stringliteral">&#39;Productstatus message received: %s&#39;</span>, event)</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;            <span class="keywordflow">return</span> <a class="code" href="classeva_1_1event_1_1ProductstatusEvent.html">eva.event.ProductstatusEvent</a>(</div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;                self.<a class="code" href="classeva_1_1base_1_1listener_1_1BaseListener.html#ae0e9241112a15528199c54a91421c26f">kwargs</a>[<span class="stringliteral">&#39;productstatus_api&#39;</span>][event.uri],</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;                id=event.message_id,</div>
@@ -152,7 +152,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jun 16 2016 09:43:16 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

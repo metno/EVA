@@ -157,6 +157,10 @@ Variables</h2></td></tr>
 <tr class="separator:a9326b829b7209550b45e1c50a8e033b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c5db5975d7fa6944600e4f58f9277b1"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a0c5db5975d7fa6944600e4f58f9277b1">eva.__main__.var</a> = '****CENSORED****'</td></tr>
 <tr class="separator:a0c5db5975d7fa6944600e4f58f9277b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5f9eef4e1821e3e761d02313393842b"><td class="memItemLeft" align="right" valign="top">list&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#ae5f9eef4e1821e3e761d02313393842b">eva.__main__.dsn_list</a> = [x for x in <a class="el" href="namespaceeva.html#a68cb3dc8e3f7ab12a302c95de0d007a0">eva.split_comma_separated</a>(arg['statsd']) if len(x) &gt; 0]</td></tr>
+<tr class="separator:ae5f9eef4e1821e3e761d02313393842b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86ccab81639a021220e37f0353bab3ba"><td class="memItemLeft" align="right" valign="top">tuple&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a86ccab81639a021220e37f0353bab3ba">eva.__main__.statsd_client</a> = <a class="el" href="classeva_1_1statsd_1_1StatsDClient.html">eva.statsd.StatsDClient</a>({'application': group_id}, dsn_list)</td></tr>
+<tr class="separator:a86ccab81639a021220e37f0353bab3ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3bee0edde4048797ae722fd5ac378a65"><td class="memItemLeft" align="right" valign="top">list&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a3bee0edde4048797ae722fd5ac378a65">eva.__main__.tokens</a> = arg['zookeeper']</td></tr>
 <tr class="separator:a3bee0edde4048797ae722fd5ac378a65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84fae2b933c8a81e9b46f59c9285548f"><td class="memItemLeft" align="right" valign="top">list&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a84fae2b933c8a81e9b46f59c9285548f">eva.__main__.server_string</a> = tokens[0]</td></tr>
@@ -171,19 +175,19 @@ Variables</h2></td></tr>
 <tr class="separator:a274eda5742e491d2e0b23ec6f6b9bd1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf155c4538371a5794ab96a5580df9d1"><td class="memItemLeft" align="right" valign="top">tuple&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#aaf155c4538371a5794ab96a5580df9d1">eva.__main__.listener</a> = import_module_class(listener_class)</td></tr>
 <tr class="separator:aaf155c4538371a5794ab96a5580df9d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af55cf0add80b1bf6b39a700d0b249a95"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#af55cf0add80b1bf6b39a700d0b249a95">eva.__main__.statsd</a> = statsd_client,</td></tr>
+<tr class="separator:af55cf0add80b1bf6b39a700d0b249a95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a3f9ab74a7e1d0429bb9584f7e3aaa4"><td class="memItemLeft" align="right" valign="top">tuple&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a2a3f9ab74a7e1d0429bb9584f7e3aaa4">eva.__main__.executor</a> = import_module_class(arg['executor'])</td></tr>
 <tr class="separator:a2a3f9ab74a7e1d0429bb9584f7e3aaa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a830bb34199851d86236f34f1fd5b2a"><td class="memItemLeft" align="right" valign="top">tuple&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a2a830bb34199851d86236f34f1fd5b2a">eva.__main__.evaloop</a></td></tr>
 <tr class="separator:a2a830bb34199851d86236f34f1fd5b2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a289ba80b9ca684918a39ef34c319aebe"><td class="memItemLeft" align="right" valign="top">list&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a289ba80b9ca684918a39ef34c319aebe">eva.__main__.product_instance</a> = productstatus_api.productinstance[args.process_all_in_product_instance]</td></tr>
 <tr class="separator:a289ba80b9ca684918a39ef34c319aebe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0196cb6bfddcba017d126b3f804b891f"><td class="memItemLeft" align="right" valign="top">tuple&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a0196cb6bfddcba017d126b3f804b891f">eva.__main__.exception</a> = traceback.format_exc()</td></tr>
-<tr class="separator:a0196cb6bfddcba017d126b3f804b891f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jun 16 2016 09:43:16 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

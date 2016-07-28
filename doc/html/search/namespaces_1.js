@@ -11,5 +11,7 @@ var searchData=
   ['test_5fgrid_5fengine',['test_grid_engine',['../namespacetest__grid__engine.html',1,'']]],
   ['test_5flog',['test_log',['../namespacetest__log.html',1,'']]],
   ['test_5frpc_5flistener',['test_rpc_listener',['../namespacetest__rpc__listener.html',1,'']]],
-  ['test_5ftemplate',['test_template',['../namespacetest__template.html',1,'']]]
+  ['test_5fstatsd',['test_statsd',['../namespacetest__statsd.html',1,'']]],
+  ['test_5ftemplate',['test_template',['../namespacetest__template.html',1,'']]],
+  ['test_5fthredds',['test_thredds',['../namespacetest__thredds.html',1,'']]]
 ];
