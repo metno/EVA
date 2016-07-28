@@ -1,5 +1,6 @@
 """
-Multiple-endpoint StatsD client with Telegraf tag support.
+StatsD module, providing functions for reporting metric data to a Telegraf
+StatsD implementation.
 """
 
 
@@ -9,6 +10,25 @@ import math
 
 
 class StatsDClient(object):
+    """!
+    @brief Multiple-endpoint StatsD client with Telegraf tag support.
+    @param tags A dictionary of tags to always send with reported data.
+    @param dsn_list A list of connection strings, in the form <host>:<port>.
+
+    Use this class to send metrics to several StatsD hosts at once, for
+    instance when a high-availability setup is required, and StatsD is running
+    on at least one of several known host/port configurations.
+
+    The following functions are available for metric reporting:
+
+        incr(): increment a counter
+        gauge(): set a gauge value
+        set(): add to a set value
+        histogram(): add to a histogram set
+        timing(): report a timing value
+        timer(): return a new timing object
+    """
+
     def __init__(self, tags={}, dsn_list=[]):
         self.connections = []
         self.tags = tags
@@ -90,17 +110,35 @@ class StatsDClient(object):
 
     def timing(self, metric, value, tags={}):
         """!
-        @brief Add a timing metric.
+        @brief Add a timing metric. Values are in milliseconds.
         """
         message = self.generate_message(metric, value, 'ms', tags)
         self.broadcast(message)
 
     def timer(self, metric, tags={}):
+        """!
+        @brief Return a new timer object.
+        """
         return StatsDTimer(self, metric, tags)
 
 
 
 class StatsDTimer(object):
+    """!
+    @brief StatsD timing class
+
+    This class can be instantiated using StatsDClient.timer(). The resulting
+    instance can be used to run timings in your code and automatically report
+    them to StatsD. Usage is:
+
+        timer = client.timer('metric_name')
+        timer.start()
+        # run some code
+        timer.stop()
+
+    Any other usage will result in a RuntimeError.
+    """
+
     def __init__(self, parent, metric, tags):
         self.start_time = None
         self.stop_time = None
@@ -109,18 +147,27 @@ class StatsDTimer(object):
         self.tags = tags
 
     def start(self):
+        """!
+        @brief Start the timer.
+        """
         if self.start_time is not None:
             raise RuntimeError('Timer has already been started.')
         self.start_time = timeit.default_timer()
         return self
 
     def stop(self):
+        """!
+        @brief Stop the timer, and report the data to StatsD.
+        """
         if self.stop_time is not None:
             raise RuntimeError('Timer has already been stopped.')
         self.stop_time = timeit.default_timer()
         self.send()
 
     def send(self):
+        """!
+        @brief Report the timer data to StatsD.
+        """
         if self.start_time is None or self.stop_time is None:
             raise RuntimeError('Timer has not completed successfully.')
         ms = int(math.ceil((self.stop_time - self.start_time) * 1000))
