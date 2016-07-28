@@ -141,6 +141,9 @@ if __name__ == "__main__":
                 task_id=environment_variables['MESOS_TASK_ID'],
             )
             logger.addFilter(log_filter)
+            # Try to hijack the Paramiko logger before it can be instantiated
+            # when doing "import paramiko" in the GridEngineExecutor module
+            logging.getLogger('paramiko').addFilter(log_filter)
 
         # Log startup event
         logger.info('Starting EVA: the EVent Adapter.')
