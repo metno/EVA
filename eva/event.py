@@ -63,7 +63,7 @@ class ProductstatusEvent(Event):
         """!
         @brief Store message position in Kafka.
         """
-        self.kwargs['parent'].delete_stored_event()
+        self.kwargs['parent'].delete_first_event()
 
     def timestamp(self):
         """!
