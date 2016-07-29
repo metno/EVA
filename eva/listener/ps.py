@@ -104,8 +104,9 @@ class ProductstatusListener(eva.base.listener.BaseListener):
             events += [event]
         except productstatus.exceptions.EventTimeoutException:
             pass
+        if len(events) == 0:
+            return
         events = old_events + events
-
         self.set_stored_events(events)
 
         # Commit position to Kafka
