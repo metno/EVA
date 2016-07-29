@@ -34,7 +34,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         self.event_listener = self.kwargs['productstatus_api'].get_event_listener(
             client_id=self.kwargs['client_id'],
             group_id=self.kwargs['group_id'],
-            consumer_timeout_ms=10000,
+            consumer_timeout_ms=100,
         )
 
     def event_path(self):
