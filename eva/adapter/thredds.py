@@ -65,37 +65,44 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         """
         job = eva.job.Job(message_id, self.logger)
 
-        url = resource.url
-        basename = os.path.basename(url)
-
-        thredds_url = "{}{}".format(self.thredds_base_url, basename)
         # Assuming that when the .html link is accessible so will be the dataset via OPeNDAP
-        thredds_html_url = thredds_url + ".html"
+        basename = os.path.basename(resource.url)
+        job.thredds_url = "{}{}".format(self.thredds_base_url, basename)
+        job.thredds_html_url = job.thredds_url + ".html"
 
-        self.logger.info("Will check up to {} times if {} is reachable.".format(self.thredds_poll_retries, thredds_html_url))
-        for x in range(self.thredds_poll_retries):
-            self.logger.info("Trial {}/{}".format(x + 1, self.thredds_poll_retries))
-            try:
-                r = requests.head(thredds_html_url)
-                if r.status_code == requests.codes.ok:
-                    self.logger.info("The data is reachable at {0}". format(thredds_html_url))
-                    self.add_datainstance_to_productstatus(resource, thredds_url)
-                    return
-                else:
-                    self.logger.info("The data is not available at {0}, sleeping for {1} seconds...".format(
-                                    thredds_html_url, self.thredds_poll_interval))
-                    time.sleep(self.thredds_poll_interval)
-            except requests.exceptions.RequestException as e:
-                self.logger.info("Problem with connection while trying to access {}, sleeping for {} seconds...".format(
-                                thredds_html_url, self.thredds_poll_interval))
-                self.logger.info("Error: {}".format(e))
-                time.sleep(self.thredds_poll_interval)
-                continue
+        job.command = \
+"""
+#!/bin/bash
+#$ -S /bin/bash
+for try in `seq 1 %(num_tries)d`; do
+    echo "[${try}/%(num_tries)d] Try to fetch %(url)s..."
+    wget --quiet --output-document=/dev/null %(url)s
+    if [ $? -eq 0 ]; then
+        exit 0
+    fi
+    if [ "$try" == "%(num_tries)d" ]; then
+        echo "Document is not available; giving up."
+        exit 1
+    fi
+    echo "Document is not available; sleeping %(sleep)d seconds..."
+    sleep %(sleep)d
+done
+exit 1
+"""
+        job.command = job.command % {
+            'num_tries': self.thredds_poll_retries + 1,  # correct usage of the word 'retry'
+            'url': job.thredds_html_url,
+            'sleep': self.thredds_poll_interval,
+        }
 
         return job
 
     def finish_job(self, job):
-        pass
+        if not job.complete():
+            self.logger.error('THREDDS document could not be found; ignoring error condition.')
+            return
+
+        self.add_datainstance_to_productstatus(job.resource, job.thredds_url)
 
     def add_datainstance_to_productstatus(self, resource, threddsurl):
         self.logger.info("Adding URL to Productstatus server: {}".format(threddsurl))

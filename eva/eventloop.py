@@ -143,7 +143,7 @@ class Eventloop(object):
         while not self.do_shutdown:
             self.poll_listeners()
             self.sort_queue()
-            self.process_events_once()
+            self.process_all_events_once()
         self.logger.info('Stop processing events and RPC calls.')
 
     def process_all_events_once(self):

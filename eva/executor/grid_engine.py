@@ -240,8 +240,8 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 exit_code, stdout, stderr = self.execute_ssh_command(command)
                 if exit_code != EXIT_OK:
                     raise eva.exceptions.RetryException(
-                        'Failed to submit the job to GridEngine, exit code %d',
-                        exit_code,
+                        'Failed to submit the job to GridEngine, exit code %d' %
+                        exit_code
                     )
                 job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
                 job.logger.info('Job has been submitted, JOB_ID = %d', job.pid)
