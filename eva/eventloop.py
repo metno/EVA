@@ -196,7 +196,7 @@ class Eventloop(object):
                     event.job.logger.info('Created Job object for event: %s', event)
 
         # Start job if it is not running
-        if event.job.initialized():
+        elif event.job.initialized():
             event.job.logger.info('Sending job to executor for asynchronous execution...')
             event.job.timer.start()
             self.executor.execute_async(event.job)
@@ -248,24 +248,24 @@ class Eventloop(object):
         """!
         @brief Process all child DataInstance objects of a ProductInstance.
         """
-        while not self.do_shutdown:
-            try:
-                self.logger.info('Fetching DataInstance resources descended from %s', product_instance)
-                instances = self.productstatus_api.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
-                index = 1
-                count = instances.count()
-                self.logger.info('Processing %d DataInstance resources...', count)
-                for resource in instances:
-                    self.logger.info('[%d/%d] Processing %s', index, count, resource)
-                    eva.retry_n(lambda: self.adapter.validate_and_process_resource(uuid.uuid4(), resource),
-                                exceptions=self.RECOVERABLE_EXCEPTIONS,
-                                give_up=0)
-                    index += 1
-            except self.RECOVERABLE_EXCEPTIONS as e:
-                self.logger.error('A recoverable error occurred: %s', e)
-                time.sleep(2.0)
-                continue
-            break
+        events = []
+        self.logger.info('Processing all DataInstance resources descended from %s', product_instance)
+        try:
+            instances = self.productstatus_api.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
+            index = 1
+            count = instances.count()
+            self.logger.info('Adding %d DataInstance resources to queue...', count)
+            for resource in instances:
+                self.logger.info('[%d/%d] Adding to queue: %s', index, count, resource)
+                events += [eva.event.ProductstatusLocalEvent(
+                    resource,
+                    timestamp=resource.modified,
+                )]
+                index += 1
+        except self.RECOVERABLE_EXCEPTIONS as e:
+            self.logger.error('An error occurred when retrieving Productstatus resources, aborting: %s', e)
+            return
+        [self.add_event_to_queue(x) for x in events]
 
     def process_data_instance(self, data_instance_uuid):
         """!
