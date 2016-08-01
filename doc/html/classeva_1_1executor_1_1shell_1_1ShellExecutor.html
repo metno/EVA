@@ -95,7 +95,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>Execute tasks in a thread.  
+<p>Execute tasks locally using a shell.  
  <a href="classeva_1_1executor_1_1shell_1_1ShellExecutor.html#details">More...</a></p>
 <div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
   <img id="dynsection-0-trigger" src="closed.png" alt="+"/> Inheritance diagram for eva.executor.shell.ShellExecutor:</div>
@@ -112,14 +112,20 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a5263d9a56103ea88c3984a5ba9b008b8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1executor_1_1shell_1_1ShellExecutor.html#a5263d9a56103ea88c3984a5ba9b008b8">execute</a></td></tr>
-<tr class="separator:a5263d9a56103ea88c3984a5ba9b008b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab458d7f7971aff93419ce43feadb5bac"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1executor_1_1shell_1_1ShellExecutor.html#ab458d7f7971aff93419ce43feadb5bac">execute_async</a></td></tr>
+<tr class="memdesc:ab458d7f7971aff93419ce43feadb5bac"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is not asynchronous! The job should ideally run in a thread or similar.  <a href="#ab458d7f7971aff93419ce43feadb5bac">More...</a><br/></td></tr>
+<tr class="separator:ab458d7f7971aff93419ce43feadb5bac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab22ed0071a2039b16584319157b1b66f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1executor_1_1shell_1_1ShellExecutor.html#ab22ed0071a2039b16584319157b1b66f">sync</a></td></tr>
+<tr class="separator:ab22ed0071a2039b16584319157b1b66f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html">eva.base.executor.BaseExecutor</a></td></tr>
 <tr class="memitem:ac025ad1af35f93f8ce91cfa387901fea inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#ac025ad1af35f93f8ce91cfa387901fea">__init__</a></td></tr>
 <tr class="separator:ac025ad1af35f93f8ce91cfa387901fea inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a887bad7d38c5c8f58f71ccc2ed5f93fb inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#a887bad7d38c5c8f58f71ccc2ed5f93fb">execute</a></td></tr>
-<tr class="memdesc:a887bad7d38c5c8f58f71ccc2ed5f93fb inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a job and populate members exit_code, stdout, stderr.  <a href="#a887bad7d38c5c8f58f71ccc2ed5f93fb">More...</a><br/></td></tr>
-<tr class="separator:a887bad7d38c5c8f58f71ccc2ed5f93fb inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac796fdf7898596b4f238191cd947cdde inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#ac796fdf7898596b4f238191cd947cdde">execute_async</a></td></tr>
+<tr class="memdesc:ac796fdf7898596b4f238191cd947cdde inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a job asynchronously.  <a href="#ac796fdf7898596b4f238191cd947cdde">More...</a><br/></td></tr>
+<tr class="separator:ac796fdf7898596b4f238191cd947cdde inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a220d4de1245578920f6b8ab0fca6a09a inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#a220d4de1245578920f6b8ab0fca6a09a">sync</a></td></tr>
+<tr class="memdesc:a220d4de1245578920f6b8ab0fca6a09a inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if a job has completed.  <a href="#a220d4de1245578920f6b8ab0fca6a09a">More...</a><br/></td></tr>
+<tr class="separator:a220d4de1245578920f6b8ab0fca6a09a inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ff8f6cfdf56b0c527fdcb2bfae846c0 inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#a4ff8f6cfdf56b0c527fdcb2bfae846c0">create_temporary_script</a></td></tr>
 <tr class="memdesc:a4ff8f6cfdf56b0c527fdcb2bfae846c0 inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a temporary file and fill it with the specified content.  <a href="#a4ff8f6cfdf56b0c527fdcb2bfae846c0">More...</a><br/></td></tr>
 <tr class="separator:a4ff8f6cfdf56b0c527fdcb2bfae846c0 inherit pub_methods_classeva_1_1base_1_1executor_1_1BaseExecutor"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -177,16 +183,16 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:a27b0f55c26239b433e67c07cf451d4e8 inherit pub_static_attribs_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Execute tasks in a thread. </p>
+<div class="textblock"><p>Execute tasks locally using a shell. </p>
 
 <p>Definition at line <a class="el" href="shell_8py_source.html#l00008">8</a> of file <a class="el" href="shell_8py_source.html">shell.py</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a5263d9a56103ea88c3984a5ba9b008b8"></a>
+<a class="anchor" id="ab458d7f7971aff93419ce43feadb5bac"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">def eva.executor.shell.ShellExecutor.execute </td>
+          <td class="memname">def eva.executor.shell.ShellExecutor.execute_async </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>self</em>, </td>
@@ -205,7 +211,37 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>This is not asynchronous! The job should ideally run in a thread or similar. </p>
+
 <p>Definition at line <a class="el" href="shell_8py_source.html#l00013">13</a> of file <a class="el" href="shell_8py_source.html">shell.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ab22ed0071a2039b16584319157b1b66f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.executor.shell.ShellExecutor.sync </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>job</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="shell_8py_source.html#l00036">36</a> of file <a class="el" href="shell_8py_source.html">shell.py</a>.</p>
 
 </div>
 </div>
@@ -215,7 +251,7 @@ Additional Inherited Members</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

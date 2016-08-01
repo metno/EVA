@@ -12,7 +12,7 @@ var indexSectionsWithContent =
   2: "et",
   3: "_acdefgjlnprst",
   4: "_abcdefghilmnpqrstuvz",
-  5: "abcdefghiklmopqrstvz"
+  5: "abcdefghijklmnopqrstvz"
 };
 
 var indexSectionNames =

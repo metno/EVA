@@ -138,7 +138,7 @@ Variables</h2></td></tr>
 <tr class="separator:a840da5cf2c1d6893e8e3e5958f9bda4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50b0465754fb4fdb8dac875596eb9623"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a50b0465754fb4fdb8dac875596eb9623">datefmt</a> = '%Y-%m-%dT%H:%M:%S%Z'</td></tr>
 <tr class="separator:a50b0465754fb4fdb8dac875596eb9623"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a00c1b3bdb32af454b59cb0ec14fd3535"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a00c1b3bdb32af454b59cb0ec14fd3535">level</a> = logging.INFO)</td></tr>
+<tr class="memitem:a00c1b3bdb32af454b59cb0ec14fd3535"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a00c1b3bdb32af454b59cb0ec14fd3535">level</a> = logging.INFOifnotargs.debugelselogging.DEBUG)</td></tr>
 <tr class="separator:a00c1b3bdb32af454b59cb0ec14fd3535"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ebf7b38c377f0c1db0227e80a3fac8b"><td class="memItemLeft" align="right" valign="top">tuple&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeva_1_1____main____.html#a1ebf7b38c377f0c1db0227e80a3fac8b">client_id</a> = str(uuid.uuid4())</td></tr>
 <tr class="separator:a1ebf7b38c377f0c1db0227e80a3fac8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -326,7 +326,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00167">167</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00170">170</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -382,7 +382,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00155">155</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00158">158</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -412,12 +412,14 @@ Variables</h2></td></tr>
 <b>Initial value:</b><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html">    1</a></span>&#160;= <a class="code" href="classeva_1_1eventloop_1_1Eventloop.html">eva.eventloop.Eventloop</a>(productstatus_api,</div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;                                          listeners,</div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;                                          adapter,</div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;                                          environment_variables,</div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;                                          logger,</div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;                                          )</div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;                                          executor,</div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;                                          statsd_client,</div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;                                          environment_variables,</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;                                          logger,</div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;                                          )</div>
 <div class="ttc" id="classeva_1_1eventloop_1_1Eventloop_html"><div class="ttname"><a href="classeva_1_1eventloop_1_1Eventloop.html">eva.eventloop.Eventloop</a></div><div class="ttdoc">The main loop. </div><div class="ttdef"><b>Definition:</b> <a href="eventloop_8py_source.html#l00014">eventloop.py:14</a></div></div>
 </div><!-- fragment -->
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00237">237</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00240">240</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -445,7 +447,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00207">207</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00210">210</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -482,7 +484,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">eva.__main__.level = logging.INFO)</td>
+          <td class="memname">eva.__main__.level = logging.INFOifnotargs.debugelselogging.DEBUG)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -501,7 +503,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00194">194</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00197">197</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -515,7 +517,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00192">192</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00195">195</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -529,7 +531,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00191">191</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00194">194</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -618,7 +620,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00244">244</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00249">249</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -677,7 +679,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00166">166</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00169">169</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -691,7 +693,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00201">201</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00204">204</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -705,7 +707,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00156">156</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00159">159</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -719,7 +721,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00165">165</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00168">168</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -747,7 +749,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00151">151</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00154">154</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
@@ -766,14 +768,14 @@ Variables</h2></td></tr>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;                logger=logger,</div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;            )</div>
 </div><!-- fragment -->
-<p>Definition at line <a class="el" href="____main_____8py_source.html#l00168">168</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
+<p>Definition at line <a class="el" href="____main_____8py_source.html#l00171">171</a> of file <a class="el" href="____main_____8py_source.html">__main__.py</a>.</p>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

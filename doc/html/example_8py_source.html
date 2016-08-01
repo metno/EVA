@@ -154,129 +154,138 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <span class="comment"># is received by EVA, and matches all input configuration defined in</span></div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    <span class="comment"># REQUIRED_CONFIG.</span></div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    <span class="comment">#</span></div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <span class="comment"># You may exit this function in three ways:</span></div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <span class="comment"># The function must either:</span></div>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    <span class="comment">#</span></div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    <span class="comment"># * Return normally. Return values are ignored. Returning from the function</span></div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    <span class="comment">#   signifies completed and successful processing of the input data, and</span></div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    <span class="comment">#   guarantees that the output data has been successfully created.</span></div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    <span class="comment">#</span></div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    <span class="comment"># * Throw `eva.exceptions.RetryException` with an error message. The error</span></div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="comment">#   message will appear in the log. In production, this log will be</span></div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    <span class="comment">#   recorded and is searchable. Processing will be delayed by a short time,</span></div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    <span class="comment">#   then retried.</span></div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    <span class="comment"># * Return normally with a Job object, which defines what should be run in the Executor.</span></div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    <span class="comment">#</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    <span class="comment"># * Throw `eva.exceptions.RetryException` with an error message. The error</span></div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    <span class="comment">#   message will appear in the log. In production, this log will be</span></div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    <span class="comment">#   recorded and is searchable. Processing will be delayed by a short time,</span></div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="comment">#   then retried.</span></div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    <span class="comment">#</span></div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    <span class="comment"># * Any other exception will result in a termination of EVA.</span></div>
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="comment">#</span></div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    <span class="comment"># * Any other exception will result in a termination of EVA.</span></div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <span class="comment">#</span></div>
-<div class="line"><a name="l00080"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a20381d7d4ee288e5d960a885fc82d915">   80</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a20381d7d4ee288e5d960a885fc82d915">process_resource</a>(self, message_id, resource):</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        <span class="comment"># Don&#39;t write any data to Productstatus.</span></div>
-<div class="line"><a name="l00083"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">   83</a></span>&#160;        self.<a class="code" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">post_to_productstatus</a> = <span class="keyword">False</span></div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        <span class="comment"># Create a string template based on the EVA_OUTPUT_FILENAME_PATTERN</span></div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        <span class="comment"># environment variable. This allows us to do string substitution and</span></div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        <span class="comment"># filtering later on.</span></div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;        output_filename_template = self.template.from_string(</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;            self.<a class="code" href="classeva_1_1ConfigurableObject.html#a642355d0480bf6013c2f1d13c5858ed4">env</a>[<span class="stringliteral">&#39;EVA_OUTPUT_FILENAME_PATTERN&#39;</span>]</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        )</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="comment"># Run string substitution and filtering. The template language is</span></div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        <span class="comment"># Jinja2, and available filters can be found in the module</span></div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        <span class="comment"># `eva.template`.</span></div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        <span class="comment">#</span></div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        <span class="comment"># E.g.</span></div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        <span class="comment">#  {{reference_time|timedelta(hours=6)|iso8601_compact}}</span></div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;        <span class="comment"># when reference_time is April 14th, 2016, 06:00:00 UTC, will yield</span></div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        <span class="comment">#  20160414T120000Z</span></div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;        output_filename = output_filename_template.render(</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;            reference_time=resource.data.productinstance.reference_time,</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        )</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;        <span class="comment"># Instantiate a Job object, required if you are going to run an</span></div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;        <span class="comment"># external process, e.g. on GridEngine.</span></div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        job = <a class="code" href="classeva_1_1job_1_1Job.html">eva.job.Job</a>(message_id, self.<a class="code" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a6ed7ab581c1eb2641b9104d1a241d9d1">logger</a>)</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;        <span class="comment"># The Job object contains a logger object, which you can use to print</span></div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;        <span class="comment"># status or debugging information. DO NOT USE &quot;print&quot;, the output will</span></div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;        <span class="comment"># not be recorded in the production environment.</span></div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;        <span class="comment">#</span></div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;        <span class="comment"># Please read the Python logging tutorial:</span></div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;        <span class="comment"># https://docs.python.org/2/howto/logging.html#logging-basic-tutorial</span></div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;        job.logger.info(<span class="stringliteral">&#39;Job resource: %s&#39;</span>, resource)</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;        <span class="comment"># Here, you write your processing script. There are no environment</span></div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;        <span class="comment"># variables; you must insert your variables using string interpolation.</span></div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;        job.command = <span class="stringliteral">&quot;&quot;&quot;</span></div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;<span class="stringliteral">#!/bin/bash</span></div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<span class="stringliteral">#-S /bin/bash</span></div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;<span class="stringliteral">echo convert_my_data \</span></div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;<span class="stringliteral">    --input &#39;%(input)s&#39; \</span></div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;<span class="stringliteral">    --output &#39;%(output)s&#39; \</span></div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;<span class="stringliteral">    --date &#39;%(date)s&#39; \</span></div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;<span class="stringliteral">    --backend &#39;%(backend)s&#39;</span></div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;<span class="stringliteral">&quot;&quot;&quot;</span></div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;</div>
-<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;        <span class="comment"># Interpolate variables into the processing script.</span></div>
-<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;        job.command = job.command % {</div>
-<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;            <span class="comment"># The input filename always comes from Productstatus, and is always</span></div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;            <span class="comment"># an URL. Use `url_to_filename` to strip away the protocol.</span></div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;            <span class="stringliteral">&#39;input&#39;</span>: <a class="code" href="namespaceeva.html#a1d984f8203f0efe6210076f6867f4949">eva.url_to_filename</a>(resource.url),</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;            <span class="comment"># The output filename has already been put into a variable, now we</span></div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;            <span class="comment"># just supply it to the string interpolation hash.</span></div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;            <span class="stringliteral">&#39;output&#39;</span>: output_filename,</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;</div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;            <span class="comment"># Our script requires the date and reference hour of the product</span></div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;            <span class="comment"># instance. This information is available from Productstatus. To</span></div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;            <span class="comment"># access it, we traverse the objects until we find the required</span></div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;            <span class="comment"># DateTime object, and then format it using strftime.</span></div>
-<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;            <span class="stringliteral">&#39;date&#39;</span>: resource.data.productinstance.reference_time.strftime(<span class="stringliteral">&#39;%Y-%m-%dT%H&#39;</span>),</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;            <span class="comment"># For example purposes, we include more metadata information here.</span></div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;            <span class="comment"># In this example, we include the name of our storage backend.</span></div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;            <span class="stringliteral">&#39;backend&#39;</span>: resource.servicebackend.name,</div>
+<div class="line"><a name="l00078"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#ac1218938c90f883fb939a9fffd1c3706">   78</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#ac1218938c90f883fb939a9fffd1c3706">create_job</a>(self, message_id, resource):</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;        <span class="comment"># Don&#39;t write any data to Productstatus.</span></div>
+<div class="line"><a name="l00081"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">   81</a></span>&#160;        self.<a class="code" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">post_to_productstatus</a> = <span class="keyword">False</span></div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;        <span class="comment"># Create a string template based on the EVA_OUTPUT_FILENAME_PATTERN</span></div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;        <span class="comment"># environment variable. This allows us to do string substitution and</span></div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        <span class="comment"># filtering later on.</span></div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        output_filename_template = self.template.from_string(</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;            self.<a class="code" href="classeva_1_1ConfigurableObject.html#a642355d0480bf6013c2f1d13c5858ed4">env</a>[<span class="stringliteral">&#39;EVA_OUTPUT_FILENAME_PATTERN&#39;</span>]</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;        )</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        <span class="comment"># Run string substitution and filtering. The template language is</span></div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;        <span class="comment"># Jinja2, and available filters can be found in the module</span></div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="comment"># `eva.template`.</span></div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        <span class="comment">#</span></div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        <span class="comment"># E.g.</span></div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        <span class="comment">#  {{reference_time|timedelta(hours=6)|iso8601_compact}}</span></div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        <span class="comment"># when reference_time is April 14th, 2016, 06:00:00 UTC, will yield</span></div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        <span class="comment">#  20160414T120000Z</span></div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;        output_filename = output_filename_template.render(</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;            reference_time=resource.data.productinstance.reference_time,</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;        )</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        <span class="comment"># Instantiate a Job object, required if you are going to run an</span></div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        <span class="comment"># external process, e.g. on GridEngine.</span></div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;        job = <a class="code" href="classeva_1_1job_1_1Job.html">eva.job.Job</a>(message_id, self.<a class="code" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a6ed7ab581c1eb2641b9104d1a241d9d1">logger</a>)</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        <span class="comment"># The Job object contains a logger object, which you can use to print</span></div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;        <span class="comment"># status or debugging information. DO NOT USE &quot;print&quot;, the output will</span></div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;        <span class="comment"># not be recorded in the production environment.</span></div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;        <span class="comment">#</span></div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;        <span class="comment"># Please read the Python logging tutorial:</span></div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;        <span class="comment"># https://docs.python.org/2/howto/logging.html#logging-basic-tutorial</span></div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;        job.logger.info(<span class="stringliteral">&#39;Job resource: %s&#39;</span>, resource)</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;        <span class="comment"># Here, you write your processing script. There are no environment</span></div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;        <span class="comment"># variables; you must insert your variables using string interpolation.</span></div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;        job.command = <span class="stringliteral">&quot;&quot;&quot;</span></div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="stringliteral">#!/bin/bash</span></div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;<span class="stringliteral">#-S /bin/bash</span></div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;<span class="stringliteral">echo convert_my_data \</span></div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<span class="stringliteral">    --input &#39;%(input)s&#39; \</span></div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;<span class="stringliteral">    --output &#39;%(output)s&#39; \</span></div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;<span class="stringliteral">    --date &#39;%(date)s&#39; \</span></div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;<span class="stringliteral">    --backend &#39;%(backend)s&#39;</span></div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;<span class="stringliteral">&quot;&quot;&quot;</span></div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;        <span class="comment"># Interpolate variables into the processing script.</span></div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;        job.command = job.command % {</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;            <span class="comment"># The input filename always comes from Productstatus, and is always</span></div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;            <span class="comment"># an URL. Use `url_to_filename` to strip away the protocol.</span></div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;            <span class="stringliteral">&#39;input&#39;</span>: <a class="code" href="namespaceeva.html#a1d984f8203f0efe6210076f6867f4949">eva.url_to_filename</a>(resource.url),</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;            <span class="comment"># The output filename has already been put into a variable, now we</span></div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;            <span class="comment"># just supply it to the string interpolation hash.</span></div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;            <span class="stringliteral">&#39;output&#39;</span>: output_filename,</div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;</div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;            <span class="comment"># Our script requires the date and reference hour of the product</span></div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;            <span class="comment"># instance. This information is available from Productstatus. To</span></div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;            <span class="comment"># access it, we traverse the objects until we find the required</span></div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;            <span class="comment"># DateTime object, and then format it using strftime.</span></div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;            <span class="stringliteral">&#39;date&#39;</span>: resource.data.productinstance.reference_time.strftime(<span class="stringliteral">&#39;%Y-%m-%dT%H&#39;</span>),</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;            <span class="comment"># For example purposes, we include more metadata information here.</span></div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;            <span class="comment"># In this example, we include the name of our storage backend.</span></div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;            <span class="stringliteral">&#39;backend&#39;</span>: resource.servicebackend.name,</div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;</div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;        }</div>
 <div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;</div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;        }</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;        <span class="comment"># Our job is ready for execution. This command will run the job on an</span></div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        <span class="comment"># Executor object, defined in the environment variable EVA_EXECUTOR. To</span></div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;        <span class="comment"># run jobs on GridEngine, use EVA_EXECUTOR=eva.executor.GridEngineExecutor.</span></div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;        self.<a class="code" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a196259af4a46b01fff97a26249db20dd">execute</a>(job)</div>
-<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;</div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;        <span class="comment"># Running the job populated `job.status`. You should always check this variable.</span></div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;        <span class="comment"># Throwing a RetryException will ensure that processing is retried.</span></div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;        <span class="keywordflow">if</span> job.status != eva.job.COMPLETE:</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;            <span class="keywordflow">raise</span> <a class="code" href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a>(</div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;                <span class="stringliteral">&quot;Processing of &#39;%s&#39; failed.&quot;</span> % output_filename</div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;            )</div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;</div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;        <span class="comment"># We might want to register our completed data instance with Productstatus.</span></div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;        <span class="comment"># It is, however, not required. We can skip this step for now.</span></div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;        <span class="keywordflow">if</span> <span class="keywordflow">not</span> self.<a class="code" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">post_to_productstatus</a>:</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;            <span class="keywordflow">return</span></div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;        <span class="comment"># Here ends your responsibility. The code for registering new products</span></div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;        <span class="comment"># with Productstatus is added by IT-GEO.</span></div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;        self.<a class="code" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">require_productstatus_credentials</a>()</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;        <span class="comment"># You may assign variables to the Job object that can be accessed from finish_job().</span></div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;        job.output_filename = output_filename</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        <span class="comment"># Our job is ready for execution. This command will run the job on an</span></div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;        <span class="comment"># Executor object, defined in the environment variable EVA_EXECUTOR. To</span></div>
+<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;        <span class="comment"># run jobs on GridEngine, use EVA_EXECUTOR=eva.executor.GridEngineExecutor.</span></div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;        <span class="keywordflow">return</span> job</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    <span class="comment"># This function will be called after the Executor has run the job generated</span></div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;    <span class="comment"># by create_job(). The job will have either &quot;COMPLETE&quot; or &quot;FAILED&quot; status.</span></div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;    <span class="comment"># Returning from this function signifies completed and successful processing</span></div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;    <span class="comment"># of the input data, and guarantees that the output data has been</span></div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;    <span class="comment"># successfully created. If you want to reprocess the data, you must throw an</span></div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;    <span class="comment"># `eva.exceptions.RetryException` exception with an error message.</span></div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;    <span class="comment">#</span></div>
+<div class="line"><a name="l00164"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a73ba6e262e84307d574d00ba48a93cbb">  164</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a73ba6e262e84307d574d00ba48a93cbb">finish_job</a>(self, job):</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;        <span class="comment"># Running the job populated `job.status`. You should always check this variable.</span></div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;        <span class="comment"># Throwing a RetryException will ensure that processing is retried.</span></div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;        <span class="keywordflow">if</span> <span class="keywordflow">not</span> job.complete():</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;            <span class="keywordflow">raise</span> <a class="code" href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a>(</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;                <span class="stringliteral">&quot;Processing of &#39;%s&#39; failed.&quot;</span> % job.output_filename</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;            )</div>
 <div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;</div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;        <span class="comment"># ...</span></div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;        <span class="comment"># We might want to register our completed data instance with Productstatus.</span></div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;        <span class="comment"># It is, however, not required. We can skip this step for now.</span></div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;        <span class="keywordflow">if</span> <span class="keywordflow">not</span> self.<a class="code" href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">post_to_productstatus</a>:</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;            <span class="keywordflow">return</span></div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;        <span class="comment"># Here ends your responsibility. The code for registering new products</span></div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;        <span class="comment"># with Productstatus is added by IT-GEO.</span></div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;        self.<a class="code" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">require_productstatus_credentials</a>()</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;        <span class="comment"># ...</span></div>
 <div class="ttc" id="namespaceeva_1_1base_1_1adapter_html"><div class="ttname"><a href="namespaceeva_1_1base_1_1adapter.html">eva.base.adapter</a></div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00001">adapter.py:1</a></div></div>
-<div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a02e8d94e20f64712ec560a1db78063df"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">eva.base.adapter.BaseAdapter.require_productstatus_credentials</a></div><div class="ttdeci">def require_productstatus_credentials</div><div class="ttdoc">Raise an exception if Productstatus credentials are not configured. </div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00342">adapter.py:342</a></div></div>
+<div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a02e8d94e20f64712ec560a1db78063df"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">eva.base.adapter.BaseAdapter.require_productstatus_credentials</a></div><div class="ttdeci">def require_productstatus_credentials</div><div class="ttdoc">Raise an exception if Productstatus credentials are not configured. </div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00334">adapter.py:334</a></div></div>
 <div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html">eva.base.adapter.BaseAdapter</a></div><div class="ttdoc">Adapters contain all the information and configuration needed to translate a Productstatus resource i...</div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00016">adapter.py:16</a></div></div>
 <div class="ttc" id="classeva_1_1adapter_1_1example_1_1ExampleAdapter_html"><div class="ttname"><a href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html">eva.adapter.example.ExampleAdapter</a></div><div class="ttdoc">An adapter that is good for demonstration purposes. </div><div class="ttdef"><b>Definition:</b> <a href="example_8py_source.html#l00030">example.py:30</a></div></div>
+<div class="ttc" id="classeva_1_1adapter_1_1example_1_1ExampleAdapter_html_a73ba6e262e84307d574d00ba48a93cbb"><div class="ttname"><a href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a73ba6e262e84307d574d00ba48a93cbb">eva.adapter.example.ExampleAdapter.finish_job</a></div><div class="ttdeci">def finish_job</div><div class="ttdef"><b>Definition:</b> <a href="example_8py_source.html#l00164">example.py:164</a></div></div>
 <div class="ttc" id="classeva_1_1exceptions_1_1RetryException_html"><div class="ttname"><a href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a></div><div class="ttdoc">Thrown when a step cannot be completed due to a transient error on an underlying resource, typically a network or service outage. </div><div class="ttdef"><b>Definition:</b> <a href="exceptions_8py_source.html#l00026">exceptions.py:26</a></div></div>
-<div class="ttc" id="classeva_1_1job_1_1Job_html"><div class="ttname"><a href="classeva_1_1job_1_1Job.html">eva.job.Job</a></div><div class="ttdoc">The Job object holds information about which commands to execute, the job&#39;s state, exit status, standard output, and standard error. </div><div class="ttdef"><b>Definition:</b> <a href="job_8py_source.html#l00010">job.py:10</a></div></div>
+<div class="ttc" id="classeva_1_1job_1_1Job_html"><div class="ttname"><a href="classeva_1_1job_1_1Job.html">eva.job.Job</a></div><div class="ttdoc">The Job object holds information about which commands to execute, the job&#39;s state, exit status, standard output, and standard error. </div><div class="ttdef"><b>Definition:</b> <a href="job_8py_source.html#l00013">job.py:13</a></div></div>
 <div class="ttc" id="namespaceeva_html_a1d984f8203f0efe6210076f6867f4949"><div class="ttname"><a href="namespaceeva.html#a1d984f8203f0efe6210076f6867f4949">eva.url_to_filename</a></div><div class="ttdeci">def url_to_filename</div><div class="ttdoc">Convert a file://... </div><div class="ttdef"><b>Definition:</b> <a href="____init_____8py_source.html#l00212">__init__.py:212</a></div></div>
+<div class="ttc" id="classeva_1_1adapter_1_1example_1_1ExampleAdapter_html_ac1218938c90f883fb939a9fffd1c3706"><div class="ttname"><a href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#ac1218938c90f883fb939a9fffd1c3706">eva.adapter.example.ExampleAdapter.create_job</a></div><div class="ttdeci">def create_job</div><div class="ttdef"><b>Definition:</b> <a href="example_8py_source.html#l00078">example.py:78</a></div></div>
 <div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a6ed7ab581c1eb2641b9104d1a241d9d1"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a6ed7ab581c1eb2641b9104d1a241d9d1">eva.base.adapter.BaseAdapter.logger</a></div><div class="ttdeci">logger</div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00115">adapter.py:115</a></div></div>
-<div class="ttc" id="classeva_1_1adapter_1_1example_1_1ExampleAdapter_html_a9a78d744309476fd354939c947957d47"><div class="ttname"><a href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">eva.adapter.example.ExampleAdapter.post_to_productstatus</a></div><div class="ttdeci">post_to_productstatus</div><div class="ttdef"><b>Definition:</b> <a href="example_8py_source.html#l00083">example.py:83</a></div></div>
+<div class="ttc" id="classeva_1_1adapter_1_1example_1_1ExampleAdapter_html_a9a78d744309476fd354939c947957d47"><div class="ttname"><a href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a9a78d744309476fd354939c947957d47">eva.adapter.example.ExampleAdapter.post_to_productstatus</a></div><div class="ttdeci">post_to_productstatus</div><div class="ttdef"><b>Definition:</b> <a href="example_8py_source.html#l00081">example.py:81</a></div></div>
 <div class="ttc" id="namespaceeva_1_1job_html"><div class="ttname"><a href="namespaceeva_1_1job.html">eva.job</a></div><div class="ttdef"><b>Definition:</b> <a href="job_8py_source.html#l00001">job.py:1</a></div></div>
-<div class="ttc" id="classeva_1_1adapter_1_1example_1_1ExampleAdapter_html_a20381d7d4ee288e5d960a885fc82d915"><div class="ttname"><a href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html#a20381d7d4ee288e5d960a885fc82d915">eva.adapter.example.ExampleAdapter.process_resource</a></div><div class="ttdeci">def process_resource</div><div class="ttdef"><b>Definition:</b> <a href="example_8py_source.html#l00080">example.py:80</a></div></div>
-<div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a196259af4a46b01fff97a26249db20dd"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a196259af4a46b01fff97a26249db20dd">eva.base.adapter.BaseAdapter.execute</a></div><div class="ttdeci">def execute</div><div class="ttdoc">Execute a job with the assigned Executor. </div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00322">adapter.py:322</a></div></div>
 <div class="ttc" id="classeva_1_1ConfigurableObject_html_a642355d0480bf6013c2f1d13c5858ed4"><div class="ttname"><a href="classeva_1_1ConfigurableObject.html#a642355d0480bf6013c2f1d13c5858ed4">eva.ConfigurableObject.env</a></div><div class="ttdeci">env</div><div class="ttdef"><b>Definition:</b> <a href="____init_____8py_source.html#l00154">__init__.py:154</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

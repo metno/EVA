@@ -187,10 +187,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        help=<span class="stringliteral">&#39;Process a single DataInstance resource&#39;</span>,</div>
 <div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    )</div>
 <div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    parser.add_argument(</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;        <span class="stringliteral">&#39;--mesos-log&#39;</span>,</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;        <span class="stringliteral">&#39;--debug&#39;</span>,</div>
 <div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;        action=<span class="stringliteral">&#39;store_true&#39;</span>,</div>
 <div class="line"><a name="l00102"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#ad2f32fa45ecb650079a3cd58fb85d607">  102</a></span>&#160;        default=<span class="keyword">False</span>,</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        help=<span class="stringliteral">&#39;Use this flag if running inside a Mesos Docker container for extra logging output&#39;</span>,</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        help=<span class="stringliteral">&#39;Print DEBUG log statements by default&#39;</span>,</div>
 <div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    )</div>
 <div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    parser.add_argument(</div>
 <div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        <span class="stringliteral">&#39;--group-id&#39;</span>,</div>
@@ -213,7 +213,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;        <span class="keywordflow">else</span>:</div>
 <div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;            logging.basicConfig(format=<span class="stringliteral">&#39;%(asctime)s: (%(levelname)s) %(message)s&#39;</span>,</div>
 <div class="line"><a name="l00125"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a50b0465754fb4fdb8dac875596eb9623">  125</a></span>&#160;                                datefmt=<span class="stringliteral">&#39;%Y-%m-%dT%H:%M:%S%Z&#39;</span>,</div>
-<div class="line"><a name="l00126"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a00c1b3bdb32af454b59cb0ec14fd3535">  126</a></span>&#160;                                level=logging.INFO)</div>
+<div class="line"><a name="l00126"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a00c1b3bdb32af454b59cb0ec14fd3535">  126</a></span>&#160;                                level=logging.INFO <span class="keywordflow">if</span> <span class="keywordflow">not</span> args.debug <span class="keywordflow">else</span> logging.DEBUG)</div>
 <div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;</div>
 <div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;        <span class="comment"># Randomly generated message queue client and group ID&#39;s</span></div>
 <div class="line"><a name="l00129"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a1ebf7b38c377f0c1db0227e80a3fac8b">  129</a></span>&#160;        client_id = str(uuid.uuid4())</div>
@@ -231,121 +231,130 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;                task_id=environment_variables[<span class="stringliteral">&#39;MESOS_TASK_ID&#39;</span>],</div>
 <div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;            )</div>
 <div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;            logger.addFilter(log_filter)</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;        <span class="comment"># Log startup event</span></div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;        logger.info(<span class="stringliteral">&#39;Starting EVA: the EVent Adapter.&#39;</span>)</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;            <span class="comment"># Try to hijack the Paramiko logger before it can be instantiated</span></div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;            <span class="comment"># when doing &quot;import paramiko&quot; in the GridEngineExecutor module</span></div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;            logging.getLogger(<span class="stringliteral">&#39;paramiko&#39;</span>).addFilter(log_filter)</div>
 <div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;</div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;        <span class="comment"># Print environment variables</span></div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;        <span class="keywordflow">for</span> key, var <span class="keywordflow">in</span> sorted(environment_variables.items()):</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;            <span class="keywordflow">if</span> key <span class="keywordflow">in</span> SECRET_ENVIRONMENT_VARIABLES:</div>
-<div class="line"><a name="l00151"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a0c5db5975d7fa6944600e4f58f9277b1">  151</a></span>&#160;                var = <span class="stringliteral">&#39;****CENSORED****&#39;</span></div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;            logger.info(<span class="stringliteral">&#39;Environment: %s=%s&#39;</span> % (key, var))</div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;</div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;        <span class="comment"># Set up StatsD client</span></div>
-<div class="line"><a name="l00155"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#ae5f9eef4e1821e3e761d02313393842b">  155</a></span>&#160;        dsn_list = [x <span class="keywordflow">for</span> x <span class="keywordflow">in</span> <a class="code" href="namespaceeva.html#a68cb3dc8e3f7ab12a302c95de0d007a0">eva.split_comma_separated</a>(arg[<span class="stringliteral">&#39;statsd&#39;</span>]) <span class="keywordflow">if</span> len(x) &gt; 0]</div>
-<div class="line"><a name="l00156"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a86ccab81639a021220e37f0353bab3ba">  156</a></span>&#160;        statsd_client = <a class="code" href="classeva_1_1statsd_1_1StatsDClient.html">eva.statsd.StatsDClient</a>({<span class="stringliteral">&#39;application&#39;</span>: group_id}, dsn_list)</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;        <span class="keywordflow">if</span> len(dsn_list) &gt; 0:</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;            logger.info(<span class="stringliteral">&#39;StatsD client set up with application tag &quot;%s&quot;, sending data to: %s&#39;</span>, group_id, <span class="stringliteral">&#39;, &#39;</span>.join(dsn_list))</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;        <span class="keywordflow">else</span>:</div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;            logger.warning(<span class="stringliteral">&#39;StatsD not configured, will not send metrics.&#39;</span>)</div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;</div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;        <span class="comment"># Instantiate the Zookeeper client, if enabled</span></div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;        <span class="keywordflow">if</span> arg[<span class="stringliteral">&#39;zookeeper&#39;</span>]:</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;            logger.info(<span class="stringliteral">&#39;Setting up Zookeeper connection to %s&#39;</span>, arg[<span class="stringliteral">&#39;zookeeper&#39;</span>])</div>
-<div class="line"><a name="l00165"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a3bee0edde4048797ae722fd5ac378a65">  165</a></span>&#160;            tokens = arg[<span class="stringliteral">&#39;zookeeper&#39;</span>].strip().split(<span class="stringliteral">u&#39;/&#39;</span>)</div>
-<div class="line"><a name="l00166"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a84fae2b933c8a81e9b46f59c9285548f">  166</a></span>&#160;            server_string = tokens[0]</div>
-<div class="line"><a name="l00167"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#abf3487c63ff040aa3e83d33818b36ae9">  167</a></span>&#160;            base_path = os.path.join(<span class="stringliteral">&#39;/&#39;</span>, os.path.join(*tokens[1:]), str(<a class="code" href="namespaceeva.html#a4427203578a54faf4972ab9db9927d22">eva.zookeeper_group_id</a>(group_id)))</div>
-<div class="line"><a name="l00168"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#ac0420415e9a295b0c4043c261eb3377f">  168</a></span>&#160;            zookeeper = kazoo.client.KazooClient(</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;                hosts=server_string,</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;                randomize_hosts=<span class="keyword">True</span>,</div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;                logger=logger,</div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;            )</div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;            logger.info(<span class="stringliteral">&#39;Using ZooKeeper, base path &quot;%s&quot;&#39;</span>, base_path)</div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;            zookeeper.start()</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;            zookeeper.EVA_BASE_PATH = base_path</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;            zookeeper.ensure_path(zookeeper.EVA_BASE_PATH)</div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;        <span class="keywordflow">else</span>:</div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;            zookeeper = <span class="keywordtype">None</span></div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;            logger.warning(<span class="stringliteral">&#39;ZooKeeper not configured.&#39;</span>)</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;        <span class="comment"># Instantiate the Productstatus client</span></div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;        productstatus_api = productstatus.api.Api(</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;            arg[<span class="stringliteral">&#39;productstatus_url&#39;</span>],</div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;            username=arg[<span class="stringliteral">&#39;productstatus_username&#39;</span>],</div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;            api_key=arg[<span class="stringliteral">&#39;productstatus_api_key&#39;</span>],</div>
-<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;            verify_ssl=arg[<span class="stringliteral">&#39;productstatus_verify_ssl&#39;</span>],</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;            timeout=10,</div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;        )</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;</div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;        <span class="comment"># Instantiate and configure all message listeners</span></div>
-<div class="line"><a name="l00191"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a263ff1a4546b8ab958913c7c7c0a4609">  191</a></span>&#160;        listeners = []</div>
-<div class="line"><a name="l00192"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a274eda5742e491d2e0b23ec6f6b9bd1e">  192</a></span>&#160;        listener_classes = <a class="code" href="namespaceeva.html#a68cb3dc8e3f7ab12a302c95de0d007a0">eva.split_comma_separated</a>(arg[<span class="stringliteral">&#39;listeners&#39;</span>])</div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;        <span class="keywordflow">for</span> listener_class <span class="keywordflow">in</span> listener_classes:</div>
-<div class="line"><a name="l00194"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#aaf155c4538371a5794ab96a5580df9d1">  194</a></span>&#160;            listener = <a class="code" href="namespaceeva_1_1____main____.html#a70d959eea7c8db5bd40ef5a12e8b7292">import_module_class</a>(listener_class)(</div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;                environment_variables,</div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;                logger,</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;                client_id=client_id,</div>
-<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;                group_id=group_id,</div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;                productstatus_api=productstatus_api,</div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;                zookeeper=zookeeper,</div>
-<div class="line"><a name="l00201"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#af55cf0add80b1bf6b39a700d0b249a95">  201</a></span>&#160;                statsd=statsd_client,</div>
-<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;            )</div>
-<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;            listener.setup_listener()</div>
-<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;            logger.info(<span class="stringliteral">&#39;Adding listener: %s&#39;</span> % listener.__class__)</div>
-<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;            listeners += [listener]</div>
-<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;</div>
-<div class="line"><a name="l00207"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a2a3f9ab74a7e1d0429bb9584f7e3aaa4">  207</a></span>&#160;        executor = <a class="code" href="namespaceeva_1_1____main____.html#a70d959eea7c8db5bd40ef5a12e8b7292">import_module_class</a>(arg[<span class="stringliteral">&#39;executor&#39;</span>])(</div>
-<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;            group_id,</div>
-<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;            environment_variables,</div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;            logger,</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;            zookeeper,</div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;            statsd_client,</div>
-<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;        )</div>
-<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;        logger.info(<span class="stringliteral">&#39;Using executor: %s&#39;</span> % executor.__class__)</div>
-<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;</div>
-<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;        adapter = <a class="code" href="namespaceeva_1_1____main____.html#a70d959eea7c8db5bd40ef5a12e8b7292">import_module_class</a>(arg[<span class="stringliteral">&#39;adapter&#39;</span>])(</div>
-<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;            environment_variables,</div>
-<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;            executor,</div>
-<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;            productstatus_api,</div>
-<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;            logger,</div>
-<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;            zookeeper,</div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;            statsd_client,</div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;        )</div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;        logger.info(<span class="stringliteral">&#39;Using adapter: %s&#39;</span> % adapter.__class__)</div>
-<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;</div>
-<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;    <span class="keywordflow">except</span> <a class="code" href="classeva_1_1exceptions_1_1EvaException.html">eva.exceptions.EvaException</a> <span class="keyword">as</span> e:</div>
-<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;        logger.critical(str(e))</div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;        logger.info(<span class="stringliteral">&#39;Shutting down EVA due to missing or invalid configuration.&#39;</span>)</div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;        sys.exit(1)</div>
-<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;</div>
-<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;    <span class="keywordflow">except</span> Exception <span class="keyword">as</span> e:</div>
-<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;        <a class="code" href="namespaceeva.html#ae083a324e7dd50bbde2e69181dbe8c5d">eva.print_exception_as_bug</a>(e, logger)</div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;        logger.critical(<span class="stringliteral">&#39;EVA initialization failed. Your code is broken, please fix it.&#39;</span>)</div>
-<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;        sys.exit(255)</div>
-<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;</div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;    <span class="keywordflow">try</span>:</div>
-<div class="line"><a name="l00237"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a2a830bb34199851d86236f34f1fd5b2a">  237</a></span>&#160;        evaloop = <a class="code" href="classeva_1_1eventloop_1_1Eventloop.html">eva.eventloop.Eventloop</a>(productstatus_api,</div>
-<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;                                          listeners,</div>
-<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;                                          adapter,</div>
-<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;                                          environment_variables,</div>
-<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                                          logger,</div>
-<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;                                          )</div>
-<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;        <span class="keywordflow">if</span> args.process_all_in_product_instance:</div>
-<div class="line"><a name="l00244"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a289ba80b9ca684918a39ef34c319aebe">  244</a></span>&#160;            product_instance = productstatus_api.productinstance[args.process_all_in_product_instance]</div>
-<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;            evaloop.process_all_in_product_instance(product_instance)</div>
-<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;        <span class="keywordflow">elif</span> args.process_data_instance:</div>
-<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;            evaloop.process_data_instance(args.process_data_instance)</div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;        <span class="keywordflow">else</span>:</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;            <a class="code" href="namespaceeva_1_1____main____.html#a2a830bb34199851d86236f34f1fd5b2a">evaloop</a>()</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;    <span class="keywordflow">except</span> <a class="code" href="classeva_1_1exceptions_1_1ShutdownException.html">eva.exceptions.ShutdownException</a> <span class="keyword">as</span> e:</div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;        logger.info(str(e))</div>
-<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;    <span class="keywordflow">except</span> Exception <span class="keyword">as</span> e:</div>
-<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;        <a class="code" href="namespaceeva.html#ae083a324e7dd50bbde2e69181dbe8c5d">eva.print_exception_as_bug</a>(e, logger)</div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;        sys.exit(255)</div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;</div>
-<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;    <span class="keywordflow">if</span> zookeeper:</div>
-<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;        zookeeper.stop()</div>
-<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;    logger.info(<span class="stringliteral">&#39;Shutting down EVA.&#39;</span>)</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;        <span class="comment"># Log startup event</span></div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;        logger.info(<span class="stringliteral">&#39;Starting EVA: the EVent Adapter.&#39;</span>)</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;        <span class="comment"># Print environment variables</span></div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        <span class="keywordflow">for</span> key, var <span class="keywordflow">in</span> sorted(environment_variables.items()):</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;            <span class="keywordflow">if</span> key <span class="keywordflow">in</span> SECRET_ENVIRONMENT_VARIABLES:</div>
+<div class="line"><a name="l00154"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a0c5db5975d7fa6944600e4f58f9277b1">  154</a></span>&#160;                var = <span class="stringliteral">&#39;****CENSORED****&#39;</span></div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;            logger.info(<span class="stringliteral">&#39;Environment: %s=%s&#39;</span> % (key, var))</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;        <span class="comment"># Set up StatsD client</span></div>
+<div class="line"><a name="l00158"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#ae5f9eef4e1821e3e761d02313393842b">  158</a></span>&#160;        dsn_list = [x <span class="keywordflow">for</span> x <span class="keywordflow">in</span> <a class="code" href="namespaceeva.html#a68cb3dc8e3f7ab12a302c95de0d007a0">eva.split_comma_separated</a>(arg[<span class="stringliteral">&#39;statsd&#39;</span>]) <span class="keywordflow">if</span> len(x) &gt; 0]</div>
+<div class="line"><a name="l00159"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a86ccab81639a021220e37f0353bab3ba">  159</a></span>&#160;        statsd_client = <a class="code" href="classeva_1_1statsd_1_1StatsDClient.html">eva.statsd.StatsDClient</a>({<span class="stringliteral">&#39;application&#39;</span>: group_id}, dsn_list)</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;        <span class="keywordflow">if</span> len(dsn_list) &gt; 0:</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;            logger.info(<span class="stringliteral">&#39;StatsD client set up with application tag &quot;%s&quot;, sending data to: %s&#39;</span>, group_id, <span class="stringliteral">&#39;, &#39;</span>.join(dsn_list))</div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;        <span class="keywordflow">else</span>:</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;            logger.warning(<span class="stringliteral">&#39;StatsD not configured, will not send metrics.&#39;</span>)</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;        <span class="comment"># Instantiate the Zookeeper client, if enabled</span></div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;        <span class="keywordflow">if</span> arg[<span class="stringliteral">&#39;zookeeper&#39;</span>]:</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;            logger.info(<span class="stringliteral">&#39;Setting up Zookeeper connection to %s&#39;</span>, arg[<span class="stringliteral">&#39;zookeeper&#39;</span>])</div>
+<div class="line"><a name="l00168"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a3bee0edde4048797ae722fd5ac378a65">  168</a></span>&#160;            tokens = arg[<span class="stringliteral">&#39;zookeeper&#39;</span>].strip().split(<span class="stringliteral">u&#39;/&#39;</span>)</div>
+<div class="line"><a name="l00169"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a84fae2b933c8a81e9b46f59c9285548f">  169</a></span>&#160;            server_string = tokens[0]</div>
+<div class="line"><a name="l00170"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#abf3487c63ff040aa3e83d33818b36ae9">  170</a></span>&#160;            base_path = os.path.join(<span class="stringliteral">&#39;/&#39;</span>, os.path.join(*tokens[1:]), str(<a class="code" href="namespaceeva.html#a4427203578a54faf4972ab9db9927d22">eva.zookeeper_group_id</a>(group_id)))</div>
+<div class="line"><a name="l00171"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#ac0420415e9a295b0c4043c261eb3377f">  171</a></span>&#160;            zookeeper = kazoo.client.KazooClient(</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;                hosts=server_string,</div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;                randomize_hosts=<span class="keyword">True</span>,</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;                logger=logger,</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;            )</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;            logger.info(<span class="stringliteral">&#39;Using ZooKeeper, base path &quot;%s&quot;&#39;</span>, base_path)</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;            zookeeper.start()</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;            zookeeper.EVA_BASE_PATH = base_path</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;            zookeeper.ensure_path(zookeeper.EVA_BASE_PATH)</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;        <span class="keywordflow">else</span>:</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;            zookeeper = <span class="keywordtype">None</span></div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;            logger.warning(<span class="stringliteral">&#39;ZooKeeper not configured.&#39;</span>)</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;</div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;        <span class="comment"># Instantiate the Productstatus client</span></div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;        productstatus_api = productstatus.api.Api(</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;            arg[<span class="stringliteral">&#39;productstatus_url&#39;</span>],</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;            username=arg[<span class="stringliteral">&#39;productstatus_username&#39;</span>],</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;            api_key=arg[<span class="stringliteral">&#39;productstatus_api_key&#39;</span>],</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;            verify_ssl=arg[<span class="stringliteral">&#39;productstatus_verify_ssl&#39;</span>],</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;            timeout=10,</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        )</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;        <span class="comment"># Instantiate and configure all message listeners</span></div>
+<div class="line"><a name="l00194"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a263ff1a4546b8ab958913c7c7c0a4609">  194</a></span>&#160;        listeners = []</div>
+<div class="line"><a name="l00195"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a274eda5742e491d2e0b23ec6f6b9bd1e">  195</a></span>&#160;        listener_classes = <a class="code" href="namespaceeva.html#a68cb3dc8e3f7ab12a302c95de0d007a0">eva.split_comma_separated</a>(arg[<span class="stringliteral">&#39;listeners&#39;</span>])</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;        <span class="keywordflow">for</span> listener_class <span class="keywordflow">in</span> listener_classes:</div>
+<div class="line"><a name="l00197"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#aaf155c4538371a5794ab96a5580df9d1">  197</a></span>&#160;            listener = <a class="code" href="namespaceeva_1_1____main____.html#a70d959eea7c8db5bd40ef5a12e8b7292">import_module_class</a>(listener_class)(</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;                environment_variables,</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;                logger,</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;                zookeeper,</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;                client_id=client_id,</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;                group_id=group_id,</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;                productstatus_api=productstatus_api,</div>
+<div class="line"><a name="l00204"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#af55cf0add80b1bf6b39a700d0b249a95">  204</a></span>&#160;                statsd=statsd_client,</div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;            )</div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;            listener.setup_listener()</div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;            logger.info(<span class="stringliteral">&#39;Adding listener: %s&#39;</span> % listener.__class__)</div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;            listeners += [listener]</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;</div>
+<div class="line"><a name="l00210"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a2a3f9ab74a7e1d0429bb9584f7e3aaa4">  210</a></span>&#160;        executor = <a class="code" href="namespaceeva_1_1____main____.html#a70d959eea7c8db5bd40ef5a12e8b7292">import_module_class</a>(arg[<span class="stringliteral">&#39;executor&#39;</span>])(</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;            group_id,</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;            environment_variables,</div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;            logger,</div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;            zookeeper,</div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;            statsd_client,</div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;        )</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;        logger.info(<span class="stringliteral">&#39;Using executor: %s&#39;</span> % executor.__class__)</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;        adapter = <a class="code" href="namespaceeva_1_1____main____.html#a70d959eea7c8db5bd40ef5a12e8b7292">import_module_class</a>(arg[<span class="stringliteral">&#39;adapter&#39;</span>])(</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;            environment_variables,</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;            executor,</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;            productstatus_api,</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;            logger,</div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;            zookeeper,</div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;            statsd_client,</div>
+<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;        )</div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;        logger.info(<span class="stringliteral">&#39;Using adapter: %s&#39;</span> % adapter.__class__)</div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;</div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;    <span class="keywordflow">except</span> <a class="code" href="classeva_1_1exceptions_1_1EvaException.html">eva.exceptions.EvaException</a> <span class="keyword">as</span> e:</div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;        logger.critical(str(e))</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;        logger.info(<span class="stringliteral">&#39;Shutting down EVA due to missing or invalid configuration.&#39;</span>)</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;        sys.exit(1)</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;    <span class="keywordflow">except</span> Exception <span class="keyword">as</span> e:</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;        <a class="code" href="namespaceeva.html#ae083a324e7dd50bbde2e69181dbe8c5d">eva.print_exception_as_bug</a>(e, logger)</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;        logger.critical(<span class="stringliteral">&#39;EVA initialization failed. Your code is broken, please fix it.&#39;</span>)</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;        sys.exit(255)</div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;</div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;    <span class="keywordflow">try</span>:</div>
+<div class="line"><a name="l00240"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a2a830bb34199851d86236f34f1fd5b2a">  240</a></span>&#160;        evaloop = <a class="code" href="classeva_1_1eventloop_1_1Eventloop.html">eva.eventloop.Eventloop</a>(productstatus_api,</div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                                          listeners,</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;                                          adapter,</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;                                          executor,</div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;                                          statsd_client,</div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;                                          environment_variables,</div>
+<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;                                          logger,</div>
+<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;                                          )</div>
+<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;        <span class="keywordflow">if</span> args.process_all_in_product_instance:</div>
+<div class="line"><a name="l00249"></a><span class="lineno"><a class="line" href="namespaceeva_1_1____main____.html#a289ba80b9ca684918a39ef34c319aebe">  249</a></span>&#160;            product_instance = productstatus_api.productinstance[args.process_all_in_product_instance]</div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;            evaloop.process_all_in_product_instance(product_instance)</div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;            <span class="keywordflow">while</span> evaloop.process_all_events_once():</div>
+<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;                <span class="keywordflow">continue</span></div>
+<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;        <span class="keywordflow">elif</span> args.process_data_instance:</div>
+<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;            evaloop.process_data_instance(args.process_data_instance)</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;            <span class="keywordflow">while</span> evaloop.process_all_events_once():</div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;                <span class="keywordflow">continue</span></div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;        <span class="keywordflow">else</span>:</div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;            <a class="code" href="namespaceeva_1_1____main____.html#a2a830bb34199851d86236f34f1fd5b2a">evaloop</a>()</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;    <span class="keywordflow">except</span> <a class="code" href="classeva_1_1exceptions_1_1ShutdownException.html">eva.exceptions.ShutdownException</a> <span class="keyword">as</span> e:</div>
+<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;        logger.info(str(e))</div>
+<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;    <span class="keywordflow">except</span> Exception <span class="keyword">as</span> e:</div>
+<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;        <a class="code" href="namespaceeva.html#ae083a324e7dd50bbde2e69181dbe8c5d">eva.print_exception_as_bug</a>(e, logger)</div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;        sys.exit(255)</div>
+<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;</div>
+<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;    <span class="keywordflow">if</span> zookeeper:</div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;        zookeeper.stop()</div>
+<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;    logger.info(<span class="stringliteral">&#39;Shutting down EVA.&#39;</span>)</div>
 <div class="ttc" id="namespaceeva_html_ae083a324e7dd50bbde2e69181dbe8c5d"><div class="ttname"><a href="namespaceeva.html#ae083a324e7dd50bbde2e69181dbe8c5d">eva.print_exception_as_bug</a></div><div class="ttdeci">def print_exception_as_bug</div><div class="ttdoc">Print the stack trace of an exception to the logging framework, and label it as CRITICAL and a bug...</div><div class="ttdef"><b>Definition:</b> <a href="____init_____8py_source.html#l00183">__init__.py:183</a></div></div>
 <div class="ttc" id="namespaceeva_1_1____main_____html_a62aa0624e491958e6e5afc8e1d2f0904"><div class="ttname"><a href="namespaceeva_1_1____main____.html#a62aa0624e491958e6e5afc8e1d2f0904">eva.__main__.parse_bool</a></div><div class="ttdeci">def parse_bool</div><div class="ttdef"><b>Definition:</b> <a href="____main_____8py_source.html#l00038">__main__.py:38</a></div></div>
 <div class="ttc" id="namespaceeva_1_1executor_html"><div class="ttname"><a href="namespaceeva_1_1executor.html">eva.executor</a></div><div class="ttdoc">Collection of all executors, for easy access when configuring EVA. </div><div class="ttdef"><b>Definition:</b> <a href="executor_2____init_____8py_source.html#l00001">__init__.py:1</a></div></div>
@@ -359,7 +368,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="ttc" id="namespaceeva_1_1____main_____html_a8226e11c4f9695c8a1a24ae16f43df2b"><div class="ttname"><a href="namespaceeva_1_1____main____.html#a8226e11c4f9695c8a1a24ae16f43df2b">eva.__main__.build_argument_list</a></div><div class="ttdeci">def build_argument_list</div><div class="ttdef"><b>Definition:</b> <a href="____main_____8py_source.html#l00047">__main__.py:47</a></div></div>
 <div class="ttc" id="namespaceeva_html_a68cb3dc8e3f7ab12a302c95de0d007a0"><div class="ttname"><a href="namespaceeva.html#a68cb3dc8e3f7ab12a302c95de0d007a0">eva.split_comma_separated</a></div><div class="ttdeci">def split_comma_separated</div><div class="ttdoc">Given a comma-separated string, return a list of components. </div><div class="ttdef"><b>Definition:</b> <a href="____init_____8py_source.html#l00204">__init__.py:204</a></div></div>
 <div class="ttc" id="namespaceeva_1_1statsd_html"><div class="ttname"><a href="namespaceeva_1_1statsd.html">eva.statsd</a></div><div class="ttdef"><b>Definition:</b> <a href="statsd_8py_source.html#l00001">statsd.py:1</a></div></div>
-<div class="ttc" id="namespaceeva_1_1____main_____html_a2a830bb34199851d86236f34f1fd5b2a"><div class="ttname"><a href="namespaceeva_1_1____main____.html#a2a830bb34199851d86236f34f1fd5b2a">eva.__main__.evaloop</a></div><div class="ttdeci">tuple evaloop</div><div class="ttdef"><b>Definition:</b> <a href="____main_____8py_source.html#l00237">__main__.py:237</a></div></div>
+<div class="ttc" id="namespaceeva_1_1____main_____html_a2a830bb34199851d86236f34f1fd5b2a"><div class="ttname"><a href="namespaceeva_1_1____main____.html#a2a830bb34199851d86236f34f1fd5b2a">eva.__main__.evaloop</a></div><div class="ttdeci">tuple evaloop</div><div class="ttdef"><b>Definition:</b> <a href="____main_____8py_source.html#l00240">__main__.py:240</a></div></div>
 <div class="ttc" id="classeva_1_1eventloop_1_1Eventloop_html"><div class="ttname"><a href="classeva_1_1eventloop_1_1Eventloop.html">eva.eventloop.Eventloop</a></div><div class="ttdoc">The main loop. </div><div class="ttdef"><b>Definition:</b> <a href="eventloop_8py_source.html#l00014">eventloop.py:14</a></div></div>
 <div class="ttc" id="namespaceeva_1_1logger_html"><div class="ttname"><a href="namespaceeva_1_1logger.html">eva.logger</a></div><div class="ttdoc">This module provides custom logging adapters for specially formatted output. </div><div class="ttdef"><b>Definition:</b> <a href="logger_8py_source.html#l00001">logger.py:1</a></div></div>
 <div class="ttc" id="classeva_1_1exceptions_1_1ShutdownException_html"><div class="ttname"><a href="classeva_1_1exceptions_1_1ShutdownException.html">eva.exceptions.ShutdownException</a></div><div class="ttdoc">Thrown when EVA is sent a SIGINT or SIGTERM signal. </div><div class="ttdef"><b>Definition:</b> <a href="exceptions_8py_source.html#l00005">exceptions.py:5</a></div></div>
@@ -368,7 +377,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

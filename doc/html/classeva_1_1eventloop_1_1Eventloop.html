@@ -119,9 +119,21 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2c1253a638d301a1b8315d1b7d6e9faf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee4d6db423e9d1bb9b5d4511876b7142"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#aee4d6db423e9d1bb9b5d4511876b7142">queue_empty</a></td></tr>
 <tr class="separator:aee4d6db423e9d1bb9b5d4511876b7142"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a773b6fb8385278568e0f6f6ef7b5115d"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a773b6fb8385278568e0f6f6ef7b5115d">process_first_in_queue</a></td></tr>
-<tr class="memdesc:a773b6fb8385278568e0f6f6ef7b5115d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process the first event in the event queue.  <a href="#a773b6fb8385278568e0f6f6ef7b5115d">More...</a><br/></td></tr>
-<tr class="separator:a773b6fb8385278568e0f6f6ef7b5115d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7dc92d48a582517a8075fa7466f46afd"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a7dc92d48a582517a8075fa7466f46afd">add_event_to_queue</a></td></tr>
+<tr class="memdesc:a7dc92d48a582517a8075fa7466f46afd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add an event to the event queue.  <a href="#a7dc92d48a582517a8075fa7466f46afd">More...</a><br/></td></tr>
+<tr class="separator:a7dc92d48a582517a8075fa7466f46afd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5186c2faba059bd15bdc6887d9a9bd9a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a5186c2faba059bd15bdc6887d9a9bd9a">has_current_event</a></td></tr>
+<tr class="memdesc:a5186c2faba059bd15bdc6887d9a9bd9a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns True if there is an event being processed at the moment.  <a href="#a5186c2faba059bd15bdc6887d9a9bd9a">More...</a><br/></td></tr>
+<tr class="separator:a5186c2faba059bd15bdc6887d9a9bd9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ca03e3511eaed4fe285d7de2784e6c2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a5ca03e3511eaed4fe285d7de2784e6c2">set_current_event</a></td></tr>
+<tr class="memdesc:a5ca03e3511eaed4fe285d7de2784e6c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define that an event should be processed.  <a href="#a5ca03e3511eaed4fe285d7de2784e6c2">More...</a><br/></td></tr>
+<tr class="separator:a5ca03e3511eaed4fe285d7de2784e6c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc7180c791279bcc1fe79940725a4d2f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#afc7180c791279bcc1fe79940725a4d2f">set_finished_current_event</a></td></tr>
+<tr class="memdesc:afc7180c791279bcc1fe79940725a4d2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set that the currently processed event has finished.  <a href="#afc7180c791279bcc1fe79940725a4d2f">More...</a><br/></td></tr>
+<tr class="separator:afc7180c791279bcc1fe79940725a4d2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae95830d65c8c3cf44d1c0baa91437649"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ae95830d65c8c3cf44d1c0baa91437649">add_first_in_queue_to_processing</a></td></tr>
+<tr class="memdesc:ae95830d65c8c3cf44d1c0baa91437649"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define that the first queued event should be processed.  <a href="#ae95830d65c8c3cf44d1c0baa91437649">More...</a><br/></td></tr>
+<tr class="separator:ae95830d65c8c3cf44d1c0baa91437649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafecc9600a283260334eb8a6c00cdce8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#aafecc9600a283260334eb8a6c00cdce8">sort_queue</a></td></tr>
 <tr class="memdesc:aafecc9600a283260334eb8a6c00cdce8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ensure that RPC requests are moved to the top of the queue.  <a href="#aafecc9600a283260334eb8a6c00cdce8">More...</a><br/></td></tr>
 <tr class="separator:aafecc9600a283260334eb8a6c00cdce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -131,9 +143,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a528a469041410f9725fb68c668a75131"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a528a469041410f9725fb68c668a75131">__call__</a></td></tr>
 <tr class="memdesc:a528a469041410f9725fb68c668a75131"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop.  <a href="#a528a469041410f9725fb68c668a75131">More...</a><br/></td></tr>
 <tr class="separator:a528a469041410f9725fb68c668a75131"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a057acb2402b52c2f971d6f2b45a5521a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a057acb2402b52c2f971d6f2b45a5521a">process_normal_event</a></td></tr>
-<tr class="memdesc:a057acb2402b52c2f971d6f2b45a5521a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process a non-RPC event.  <a href="#a057acb2402b52c2f971d6f2b45a5521a">More...</a><br/></td></tr>
-<tr class="separator:a057acb2402b52c2f971d6f2b45a5521a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7a872d945f9c65ba1afd318821d48c2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ad7a872d945f9c65ba1afd318821d48c2">process_all_events_once</a></td></tr>
+<tr class="memdesc:ad7a872d945f9c65ba1afd318821d48c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iteration of the main loop.  <a href="#ad7a872d945f9c65ba1afd318821d48c2">More...</a><br/></td></tr>
+<tr class="separator:ad7a872d945f9c65ba1afd318821d48c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad92b7d3bbeb80131efe9d9b1ade06888"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ad92b7d3bbeb80131efe9d9b1ade06888">process_current_event</a></td></tr>
+<tr class="memdesc:ad92b7d3bbeb80131efe9d9b1ade06888"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run asynchronous processing of the current event.  <a href="#ad92b7d3bbeb80131efe9d9b1ade06888">More...</a><br/></td></tr>
+<tr class="separator:ad92b7d3bbeb80131efe9d9b1ade06888"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade691e2a1ce7de81c24a1a085ba43dde"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ade691e2a1ce7de81c24a1a085ba43dde">process_rpc_event</a></td></tr>
 <tr class="memdesc:ade691e2a1ce7de81c24a1a085ba43dde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process the latest RPC message in the RPC queue.  <a href="#ade691e2a1ce7de81c24a1a085ba43dde">More...</a><br/></td></tr>
 <tr class="separator:ade691e2a1ce7de81c24a1a085ba43dde"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,12 +179,20 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a04fc71db5c41bcdbb7a1b3d14dac2a82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6f8f309975fe6aee9066d0c911f773b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#aa6f8f309975fe6aee9066d0c911f773b">adapter</a></td></tr>
 <tr class="separator:aa6f8f309975fe6aee9066d0c911f773b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9df3223802a15e7879a57461a075ca39"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a9df3223802a15e7879a57461a075ca39">executor</a></td></tr>
+<tr class="separator:a9df3223802a15e7879a57461a075ca39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00c2334c967f8f9b597eab09486dfec0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a00c2334c967f8f9b597eab09486dfec0">statsd</a></td></tr>
+<tr class="separator:a00c2334c967f8f9b597eab09486dfec0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74f08857e16bd9fadf2770f0c0bea8b5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a74f08857e16bd9fadf2770f0c0bea8b5">env</a></td></tr>
 <tr class="separator:a74f08857e16bd9fadf2770f0c0bea8b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac96a21da2b5b6b4b3f9597eccd2a2d18"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ac96a21da2b5b6b4b3f9597eccd2a2d18">logger</a></td></tr>
 <tr class="separator:ac96a21da2b5b6b4b3f9597eccd2a2d18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d1eff6071155c86aa864c91a9de0cb2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a1d1eff6071155c86aa864c91a9de0cb2">current_event</a></td></tr>
+<tr class="separator:a1d1eff6071155c86aa864c91a9de0cb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae60285f28df638841e922e0a52ba9399"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ae60285f28df638841e922e0a52ba9399">event_queue</a></td></tr>
 <tr class="separator:ae60285f28df638841e922e0a52ba9399"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbae8cfdff6deda342cf28dced36ef0f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#acbae8cfdff6deda342cf28dced36ef0f">job_queue</a></td></tr>
+<tr class="separator:acbae8cfdff6deda342cf28dced36ef0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36c75a162997dc25a14a0ec73779dc64"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a36c75a162997dc25a14a0ec73779dc64">do_shutdown</a></td></tr>
 <tr class="separator:a36c75a162997dc25a14a0ec73779dc64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9046439137f2b36e9704d37ecd31c058"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a9046439137f2b36e9704d37ecd31c058">message_timestamp_threshold</a></td></tr>
@@ -217,6 +240,18 @@ Static Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>executor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>statsd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
           <td class="paramname"><em>environment_variables</em>, </td>
         </tr>
         <tr>
@@ -233,7 +268,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00027">27</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00029">29</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -255,7 +290,57 @@ Static Public Attributes</h2></td></tr>
 <p>Main loop. </p>
 <p>Checks for Productstatus events and dispatchs them to the adapter. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00096">96</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00138">138</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a7dc92d48a582517a8075fa7466f46afd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.eventloop.Eventloop.add_event_to_queue </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>event</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Add an event to the event queue. </p>
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00069">69</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ae95830d65c8c3cf44d1c0baa91437649"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.eventloop.Eventloop.add_first_in_queue_to_processing </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Define that the first queued event should be processed. </p>
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00097">97</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -285,7 +370,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Omit processing a specific DataInstance for the lifetime of this EVA process. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00175">175</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00282">282</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -316,7 +401,27 @@ Static Public Attributes</h2></td></tr>
 <p>Skip all Productstatus messages where parents or children do not contain the specified UUID. </p>
 <p>That includes Product, ProductInstance, Data, DataInstance, ServiceBackend and Format resources. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00181">181</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00288">288</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a5186c2faba059bd15bdc6887d9a9bd9a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.eventloop.Eventloop.has_current_event </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns True if there is an event being processed at the moment. </p>
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00076">76</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -336,7 +441,28 @@ Static Public Attributes</h2></td></tr>
 
 <p>Poll for new messages from all message listeners. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00037">37</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00043">43</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ad7a872d945f9c65ba1afd318821d48c2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.eventloop.Eventloop.process_all_events_once </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Iteration of the main loop. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if there are more events ready for processing right away, False otherwise. </dd></dl>
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00149">149</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -366,7 +492,33 @@ Static Public Attributes</h2></td></tr>
 
 <p>Process all child DataInstance objects of a ProductInstance. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00143">143</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00247">247</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ad92b7d3bbeb80131efe9d9b1ade06888"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.eventloop.Eventloop.process_current_event </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Run asynchronous processing of the current event. </p>
+<p>This function will, based on the status of the event:</p>
+<ul>
+<li>Ask the Adapter to initialize the Job</li>
+<li>Send the Job for execution to the Executor</li>
+<li>Send a finish message to the Adapter </li>
+</ul>
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00165">165</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -396,57 +548,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Process a single DataInstance resource. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00166">166</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a773b6fb8385278568e0f6f6ef7b5115d"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">def eva.eventloop.Eventloop.process_first_in_queue </td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>self</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Process the first event in the event queue. </p>
-
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00058">58</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a057acb2402b52c2f971d6f2b45a5521a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">def eva.eventloop.Eventloop.process_normal_event </td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>self</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>event</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Process a non-RPC event. </p>
-
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00113">113</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00270">270</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -476,7 +578,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Process the latest RPC message in the RPC queue. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00121">121</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00224">224</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -495,7 +597,57 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>True if the event queue is empty, False otherwise. </dd></dl>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00052">52</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00063">63</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a5ca03e3511eaed4fe285d7de2784e6c2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.eventloop.Eventloop.set_current_event </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>event</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Define that an event should be processed. </p>
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00082">82</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="afc7180c791279bcc1fe79940725a4d2f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.eventloop.Eventloop.set_finished_current_event </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set that the currently processed event has finished. </p>
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00089">89</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -525,7 +677,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Fast-forward the message queue to a specific time. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00132">132</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00236">236</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -545,7 +697,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Delete the first event in the event queue. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00089">89</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00131">131</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -565,7 +717,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Shutdown EVA after the current resource has been processed. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00189">189</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00296">296</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -585,7 +737,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Ensure that RPC requests are moved to the top of the queue. </p>
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00083">83</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00125">125</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -600,7 +752,21 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00030">30</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00032">32</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a1d1eff6071155c86aa864c91a9de0cb2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">eva.eventloop.Eventloop.current_event</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00037">37</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -614,7 +780,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00034">34</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00040">40</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -628,7 +794,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00031">31</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00035">35</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -642,7 +808,35 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00038">38</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a9df3223802a15e7879a57461a075ca39"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">eva.eventloop.Eventloop.executor</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
 <p>Definition at line <a class="el" href="eventloop_8py_source.html#l00033">33</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="acbae8cfdff6deda342cf28dced36ef0f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">eva.eventloop.Eventloop.job_queue</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00039">39</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -656,7 +850,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00028">28</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00030">30</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -670,7 +864,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00032">32</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00036">36</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -684,7 +878,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00035">35</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00041">41</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -698,7 +892,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00029">29</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00031">31</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
 
 </div>
 </div>
@@ -724,13 +918,27 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a00c2334c967f8f9b597eab09486dfec0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">eva.eventloop.Eventloop.statsd</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="eventloop_8py_source.html#l00034">34</a> of file <a class="el" href="eventloop_8py_source.html">eventloop.py</a>.</p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>eva/<a class="el" href="eventloop_8py_source.html">eventloop.py</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

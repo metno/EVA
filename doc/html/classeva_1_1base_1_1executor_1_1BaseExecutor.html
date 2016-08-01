@@ -109,7 +109,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <area href="classeva_1_1ConfigurableObject.html" alt="eva.ConfigurableObject" shape="rect" coords="284,56,558,80"/>
 <area href="classeva_1_1executor_1_1grid__engine_1_1GridEngineExecutor.html" title="Execute programs on Sun OpenGridEngine via an SSH connection to a submit host. " alt="eva.executor.grid_engine.GridEngineExecutor" shape="rect" coords="0,168,274,192"/>
 <area href="classeva_1_1executor_1_1null_1_1NullExecutor.html" title="Pretend to execute tasks, but don&#39;t actually do it. " alt="eva.executor.null.NullExecutor" shape="rect" coords="284,168,558,192"/>
-<area href="classeva_1_1executor_1_1shell_1_1ShellExecutor.html" title="Execute tasks in a thread. " alt="eva.executor.shell.ShellExecutor" shape="rect" coords="568,168,842,192"/>
+<area href="classeva_1_1executor_1_1shell_1_1ShellExecutor.html" title="Execute tasks locally using a shell. " alt="eva.executor.shell.ShellExecutor" shape="rect" coords="568,168,842,192"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -117,9 +117,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ac025ad1af35f93f8ce91cfa387901fea"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#ac025ad1af35f93f8ce91cfa387901fea">__init__</a></td></tr>
 <tr class="separator:ac025ad1af35f93f8ce91cfa387901fea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a887bad7d38c5c8f58f71ccc2ed5f93fb"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#a887bad7d38c5c8f58f71ccc2ed5f93fb">execute</a></td></tr>
-<tr class="memdesc:a887bad7d38c5c8f58f71ccc2ed5f93fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a job and populate members exit_code, stdout, stderr.  <a href="#a887bad7d38c5c8f58f71ccc2ed5f93fb">More...</a><br/></td></tr>
-<tr class="separator:a887bad7d38c5c8f58f71ccc2ed5f93fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac796fdf7898596b4f238191cd947cdde"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#ac796fdf7898596b4f238191cd947cdde">execute_async</a></td></tr>
+<tr class="memdesc:ac796fdf7898596b4f238191cd947cdde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a job asynchronously.  <a href="#ac796fdf7898596b4f238191cd947cdde">More...</a><br/></td></tr>
+<tr class="separator:ac796fdf7898596b4f238191cd947cdde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a220d4de1245578920f6b8ab0fca6a09a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#a220d4de1245578920f6b8ab0fca6a09a">sync</a></td></tr>
+<tr class="memdesc:a220d4de1245578920f6b8ab0fca6a09a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if a job has completed.  <a href="#a220d4de1245578920f6b8ab0fca6a09a">More...</a><br/></td></tr>
+<tr class="separator:a220d4de1245578920f6b8ab0fca6a09a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ff8f6cfdf56b0c527fdcb2bfae846c0"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#a4ff8f6cfdf56b0c527fdcb2bfae846c0">create_temporary_script</a></td></tr>
 <tr class="memdesc:a4ff8f6cfdf56b0c527fdcb2bfae846c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a temporary file and fill it with the specified content.  <a href="#a4ff8f6cfdf56b0c527fdcb2bfae846c0">More...</a><br/></td></tr>
 <tr class="separator:a4ff8f6cfdf56b0c527fdcb2bfae846c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -269,7 +272,7 @@ Additional Inherited Members</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The full path of the temporary file. </dd></dl>
 
-<p>Definition at line <a class="el" href="executor_8py_source.html#l00026">26</a> of file <a class="el" href="executor_8py_source.html">executor.py</a>.</p>
+<p>Definition at line <a class="el" href="executor_8py_source.html#l00034">34</a> of file <a class="el" href="executor_8py_source.html">executor.py</a>.</p>
 
 </div>
 </div>
@@ -299,16 +302,16 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Remove a temporary script. </p>
 
-<p>Definition at line <a class="el" href="executor_8py_source.html#l00038">38</a> of file <a class="el" href="executor_8py_source.html">executor.py</a>.</p>
+<p>Definition at line <a class="el" href="executor_8py_source.html#l00046">46</a> of file <a class="el" href="executor_8py_source.html">executor.py</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a887bad7d38c5c8f58f71ccc2ed5f93fb"></a>
+<a class="anchor" id="ac796fdf7898596b4f238191cd947cdde"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">def eva.base.executor.BaseExecutor.execute </td>
+          <td class="memname">def eva.base.executor.BaseExecutor.execute_async </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>self</em>, </td>
@@ -327,9 +330,41 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Execute a job and populate members exit_code, stdout, stderr. </p>
+<p>Execute a job asynchronously. </p>
+<p>Should return immediately after starting the job. </p>
 
 <p>Definition at line <a class="el" href="executor_8py_source.html#l00020">20</a> of file <a class="el" href="executor_8py_source.html">executor.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a220d4de1245578920f6b8ab0fca6a09a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.base.executor.BaseExecutor.sync </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>job</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check if a job has completed. </p>
+<p>Check the Job.status variable afterwards to get the Job state. </p>
+
+<p>Definition at line <a class="el" href="executor_8py_source.html#l00027">27</a> of file <a class="el" href="executor_8py_source.html">executor.py</a>.</p>
 
 </div>
 </div>
@@ -410,7 +445,7 @@ Additional Inherited Members</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

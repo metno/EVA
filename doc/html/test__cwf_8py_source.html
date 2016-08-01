@@ -150,10 +150,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        job.stdout = [<span class="stringliteral">&#39;/tmp/meteo20160606_00.nc  time = &quot;2016-06-06 12&quot;, &quot;2016-06-06 15&quot;, &quot;2016-06-06 18&quot;, &quot;2016-06-06 21&quot;, &quot;2016-06-07&quot; ;&#39;</span>]</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        job.output_files = self.adapter.parse_file_recognition_output(job.stdout)</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;        resource = mock.MagicMock()</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        resource.data.productinstance.reference_time = <a class="code" href="namespaceeva.html#a5c633751d93c3fbcc7748f2108a3c48f">eva.coerce_to_utc</a>(datetime.datetime(2016, 6, 6, 12))</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;        job.resource = mock.MagicMock()</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        job.resource.data.productinstance.reference_time = <a class="code" href="namespaceeva.html#a5c633751d93c3fbcc7748f2108a3c48f">eva.coerce_to_utc</a>(datetime.datetime(2016, 6, 6, 12))</div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        resources = self.adapter.generate_resources(resource, job)</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        resources = self.adapter.generate_resources(job)</div>
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        self.assertEqual(resources[<span class="stringliteral">&#39;productinstance&#39;</span>][0].product, self.adapter.output_product)</div>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;        self.assertEqual(resources[<span class="stringliteral">&#39;datainstance&#39;</span>][0].url, <span class="stringliteral">&#39;file:///tmp/meteo20160606_00.nc&#39;</span>)</div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        self.assertEqual(resources[<span class="stringliteral">&#39;data&#39;</span>][0].time_period_begin,</div>
@@ -216,7 +216,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="ttc" id="classtest__cwf_1_1TestCWFAdapter_html_a699d71fe4992a4da225fd3c696b482c1"><div class="ttname"><a href="classtest__cwf_1_1TestCWFAdapter.html#a699d71fe4992a4da225fd3c696b482c1">test_cwf.TestCWFAdapter.executor</a></div><div class="ttdeci">executor</div><div class="ttdef"><b>Definition:</b> <a href="test__cwf_8py_source.html#l00031">test_cwf.py:31</a></div></div>
 <div class="ttc" id="namespaceeva_1_1statsd_html"><div class="ttname"><a href="namespaceeva_1_1statsd.html">eva.statsd</a></div><div class="ttdef"><b>Definition:</b> <a href="statsd_8py_source.html#l00001">statsd.py:1</a></div></div>
 <div class="ttc" id="classeva_1_1executor_1_1null_1_1NullExecutor_html"><div class="ttname"><a href="classeva_1_1executor_1_1null_1_1NullExecutor.html">eva.executor.null.NullExecutor</a></div><div class="ttdoc">Pretend to execute tasks, but don&#39;t actually do it. </div><div class="ttdef"><b>Definition:</b> <a href="executor_2null_8py_source.html#l00004">null.py:4</a></div></div>
-<div class="ttc" id="classeva_1_1job_1_1Job_html"><div class="ttname"><a href="classeva_1_1job_1_1Job.html">eva.job.Job</a></div><div class="ttdoc">The Job object holds information about which commands to execute, the job&#39;s state, exit status, standard output, and standard error. </div><div class="ttdef"><b>Definition:</b> <a href="job_8py_source.html#l00010">job.py:10</a></div></div>
+<div class="ttc" id="classeva_1_1job_1_1Job_html"><div class="ttname"><a href="classeva_1_1job_1_1Job.html">eva.job.Job</a></div><div class="ttdoc">The Job object holds information about which commands to execute, the job&#39;s state, exit status, standard output, and standard error. </div><div class="ttdef"><b>Definition:</b> <a href="job_8py_source.html#l00013">job.py:13</a></div></div>
 <div class="ttc" id="classtest__cwf_1_1TestCWFAdapter_html_acefbf7a196627591f74789707898d62f"><div class="ttname"><a href="classtest__cwf_1_1TestCWFAdapter.html#acefbf7a196627591f74789707898d62f">test_cwf.TestCWFAdapter.logger</a></div><div class="ttdeci">logger</div><div class="ttdef"><b>Definition:</b> <a href="test__cwf_8py_source.html#l00028">test_cwf.py:28</a></div></div>
 <div class="ttc" id="classtest__cwf_1_1TestCWFAdapter_html_a3d8ded58f4328b010dd2af00205b467c"><div class="ttname"><a href="classtest__cwf_1_1TestCWFAdapter.html#a3d8ded58f4328b010dd2af00205b467c">test_cwf.TestCWFAdapter.zookeeper</a></div><div class="ttdeci">zookeeper</div><div class="ttdef"><b>Definition:</b> <a href="test__cwf_8py_source.html#l00029">test_cwf.py:29</a></div></div>
 <div class="ttc" id="classtest__cwf_1_1TestCWFAdapter_html_a5d355058df111ada29544d19582db4e6"><div class="ttname"><a href="classtest__cwf_1_1TestCWFAdapter.html#a5d355058df111ada29544d19582db4e6">test_cwf.TestCWFAdapter.test_parse_file_recognition_output</a></div><div class="ttdeci">def test_parse_file_recognition_output</div><div class="ttdef"><b>Definition:</b> <a href="test__cwf_8py_source.html#l00036">test_cwf.py:36</a></div></div>
@@ -226,7 +226,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

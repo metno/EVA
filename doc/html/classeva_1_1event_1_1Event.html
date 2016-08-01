@@ -106,8 +106,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
  <div class="center">
   <img src="classeva_1_1event_1_1Event.png" usemap="#eva.event.Event_map" alt=""/>
   <map id="eva.event.Event_map" name="eva.event.Event_map">
-<area href="classeva_1_1event_1_1ProductstatusEvent.html" title="Productstatus events. " alt="eva.event.ProductstatusEvent" shape="rect" coords="0,112,180,136"/>
-<area href="classeva_1_1event_1_1RPCEvent.html" title="RPC events. " alt="eva.event.RPCEvent" shape="rect" coords="190,112,370,136"/>
+<area href="classeva_1_1event_1_1ProductstatusEvent.html" title="Productstatus events. " alt="eva.event.ProductstatusEvent" shape="rect" coords="0,112,211,136"/>
+<area href="classeva_1_1event_1_1RPCEvent.html" title="RPC events. " alt="eva.event.RPCEvent" shape="rect" coords="221,112,432,136"/>
+<area href="classeva_1_1event_1_1ProductstatusLocalEvent.html" title="Productstatus events, generated locally and not on the Kafka message queue. " alt="eva.event.ProductstatusLocalEvent" shape="rect" coords="0,168,211,192"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -193,7 +194,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00018">18</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00019">19</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -211,7 +212,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00015">15</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00016">16</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -232,7 +233,7 @@ Public Attributes</h2></td></tr>
 <p>This function is called from the event loop when an event has been successfully processed. </p>
 <p>This method MUST be implemented by subclasses. </p>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00036">36</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00037">37</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -252,7 +253,7 @@ Public Attributes</h2></td></tr>
 
 <p>Returns a timedelta representing the time delay until the event can be processed. </p>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00043">43</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00044">44</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -273,7 +274,7 @@ Public Attributes</h2></td></tr>
 <p>Return a unique ID that represents this event. </p>
 <p>This method SHOULD be implemented by subclasses. </p>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00021">21</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00022">22</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -295,7 +296,7 @@ Public Attributes</h2></td></tr>
 <p>This method MUST be implemented by subclasses. </p>
 <dl class="section return"><dt>Returns</dt><dd>DateTime object </dd></dl>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00028">28</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00029">29</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -310,7 +311,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00012">12</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00013">13</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -324,7 +325,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00013">13</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00014">14</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -334,7 +335,7 @@ Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

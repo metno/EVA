@@ -96,21 +96,25 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="stringliteral">    @brief Pretend to execute tasks, but don&#39;t actually do it.</span></div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="stringliteral">    &quot;&quot;&quot;</span></div>
 <div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;</div>
-<div class="line"><a name="l00009"></a><span class="lineno"><a class="line" href="classeva_1_1executor_1_1null_1_1NullExecutor.html#a4b37c1686713a4a39072148236fa04a0">    9</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1executor_1_1null_1_1NullExecutor.html#a4b37c1686713a4a39072148236fa04a0">execute</a>(self, job):</div>
+<div class="line"><a name="l00009"></a><span class="lineno"><a class="line" href="classeva_1_1executor_1_1null_1_1NullExecutor.html#aabd69ae050c0d4b1f90da9b28b796a72">    9</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1executor_1_1null_1_1NullExecutor.html#aabd69ae050c0d4b1f90da9b28b796a72">execute_async</a>(self, job):</div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;        job.logger.info(<span class="stringliteral">&quot;Faking job execution and setting exit code to zero.&quot;</span>)</div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;        job.set_status(job.INITIALIZED)</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;        job.set_status(job.COMPLETE)</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;        job.exit_code = 0</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;        job.stdout = []</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;        job.stderr = []</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;        job.set_status(job.STARTED)</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;</div>
+<div class="line"><a name="l00014"></a><span class="lineno"><a class="line" href="classeva_1_1executor_1_1null_1_1NullExecutor.html#a3f196e137dd359037237db83511e492e">   14</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1executor_1_1null_1_1NullExecutor.html#a3f196e137dd359037237db83511e492e">sync</a>(self, job):</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;        job.set_status(job.COMPLETE)</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;        job.exit_code = 0</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;        job.stdout = []</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;        job.stderr = []</div>
+<div class="ttc" id="classeva_1_1executor_1_1null_1_1NullExecutor_html_aabd69ae050c0d4b1f90da9b28b796a72"><div class="ttname"><a href="classeva_1_1executor_1_1null_1_1NullExecutor.html#aabd69ae050c0d4b1f90da9b28b796a72">eva.executor.null.NullExecutor.execute_async</a></div><div class="ttdeci">def execute_async</div><div class="ttdef"><b>Definition:</b> <a href="executor_2null_8py_source.html#l00009">null.py:9</a></div></div>
 <div class="ttc" id="classeva_1_1base_1_1executor_1_1BaseExecutor_html"><div class="ttname"><a href="classeva_1_1base_1_1executor_1_1BaseExecutor.html">eva.base.executor.BaseExecutor</a></div><div class="ttdoc">Abstract base class for execution engines. </div><div class="ttdef"><b>Definition:</b> <a href="executor_8py_source.html#l00007">executor.py:7</a></div></div>
 <div class="ttc" id="namespaceeva_1_1base_1_1executor_html"><div class="ttname"><a href="namespaceeva_1_1base_1_1executor.html">eva.base.executor</a></div><div class="ttdef"><b>Definition:</b> <a href="executor_8py_source.html#l00001">executor.py:1</a></div></div>
-<div class="ttc" id="classeva_1_1executor_1_1null_1_1NullExecutor_html_a4b37c1686713a4a39072148236fa04a0"><div class="ttname"><a href="classeva_1_1executor_1_1null_1_1NullExecutor.html#a4b37c1686713a4a39072148236fa04a0">eva.executor.null.NullExecutor.execute</a></div><div class="ttdeci">def execute</div><div class="ttdef"><b>Definition:</b> <a href="executor_2null_8py_source.html#l00009">null.py:9</a></div></div>
+<div class="ttc" id="classeva_1_1executor_1_1null_1_1NullExecutor_html_a3f196e137dd359037237db83511e492e"><div class="ttname"><a href="classeva_1_1executor_1_1null_1_1NullExecutor.html#a3f196e137dd359037237db83511e492e">eva.executor.null.NullExecutor.sync</a></div><div class="ttdeci">def sync</div><div class="ttdef"><b>Definition:</b> <a href="executor_2null_8py_source.html#l00014">null.py:14</a></div></div>
 <div class="ttc" id="classeva_1_1executor_1_1null_1_1NullExecutor_html"><div class="ttname"><a href="classeva_1_1executor_1_1null_1_1NullExecutor.html">eva.executor.null.NullExecutor</a></div><div class="ttdoc">Pretend to execute tasks, but don&#39;t actually do it. </div><div class="ttdef"><b>Definition:</b> <a href="executor_2null_8py_source.html#l00004">null.py:4</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 28 2016 09:52:03 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
