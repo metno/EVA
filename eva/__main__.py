@@ -248,8 +248,12 @@ if __name__ == "__main__":
         if args.process_all_in_product_instance:
             product_instance = productstatus_api.productinstance[args.process_all_in_product_instance]
             evaloop.process_all_in_product_instance(product_instance)
+            while evaloop.process_all_events_once():
+                continue
         elif args.process_data_instance:
             evaloop.process_data_instance(args.process_data_instance)
+            while evaloop.process_all_events_once():
+                continue
         else:
             evaloop()
     except eva.exceptions.ShutdownException as e:

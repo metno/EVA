@@ -51,30 +51,20 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Check that optional configuration is consistent.
         """
-        if self.has_valid_output_config():
-            self.post_to_productstatus = True
-            self.require_productstatus_credentials()
-        else:
-            self.post_to_productstatus = False
-            self.logger.warning('Will not post any data to Productstatus.')
+        self.require_productstatus_credentials()
 
         self.eva_input_product = self.env['EVA_INPUT_PRODUCT']
         self.thredds_poll_interval = self.env['EVA_THREDDS_POLL_INTERVAL']
         self.thredds_poll_retries = self.env['EVA_THREDDS_POLL_RETRIES']
         self.thredds_base_url = self.env['EVA_THREDDS_BASE_URL']
 
-    def has_valid_output_config(self):
-        """!
-        @return True if all optional output variables are configured, False otherwise.
-        """
-        return (
-            (self.env['EVA_INPUT_PRODUCT'] is not None)
-        )
-
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         """!
         @brief Check if the resource is reachable via the provided URL if not, sleep and try again
+        @fixme This job does not run on an executor, and is thus at least partially broken at the moment.
         """
+        job = eva.job.Job(message_id, self.logger)
+
         url = resource.url
         basename = os.path.basename(url)
 
@@ -89,8 +79,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
                 r = requests.head(thredds_html_url)
                 if r.status_code == requests.codes.ok:
                     self.logger.info("The data is reachable at {0}". format(thredds_html_url))
-                    if self.post_to_productstatus:
-                        self.add_datainstance_to_productstatus(resource, thredds_url)
+                    self.add_datainstance_to_productstatus(resource, thredds_url)
                     return
                 else:
                     self.logger.info("The data is not available at {0}, sleeping for {1} seconds...".format(
@@ -102,6 +91,11 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
                 self.logger.info("Error: {}".format(e))
                 time.sleep(self.thredds_poll_interval)
                 continue
+
+        return job
+
+    def finish_job(self, job):
+        pass
 
     def add_datainstance_to_productstatus(self, resource, threddsurl):
         self.logger.info("Adding URL to Productstatus server: {}".format(threddsurl))

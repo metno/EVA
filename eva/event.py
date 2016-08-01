@@ -9,6 +9,7 @@ class Event(object):
     @brief Base class for received events.
     """
     def __init__(self, data, **kwargs):
+        self._id = uuid.uuid4()
         self.data = data
         self.kwargs = kwargs
 
@@ -23,7 +24,7 @@ class Event(object):
         @brief Return a unique ID that represents this event. This method
         SHOULD be implemented by subclasses.
         """
-        return uuid.uuid4()
+        return str(self._id)
 
     def timestamp(self):
         """!
@@ -70,6 +71,21 @@ class ProductstatusEvent(Event):
         @brief Return the modified timestamp of the Productstatus resource.
         """
         return self.kwargs['timestamp']
+
+
+class ProductstatusLocalEvent(ProductstatusEvent):
+    """!
+    @brief Productstatus events, generated locally and not on the Kafka message queue.
+    """
+
+    def id(self):
+        return str(self._id)
+
+    def acknowledge(self):
+        """!
+        @brief Fake message acknowledgement.
+        """
+        pass
 
 
 class RPCEvent(Event):

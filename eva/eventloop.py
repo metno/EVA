@@ -58,15 +58,20 @@ class Eventloop(object):
                 continue
             if self.has_current_event() and event.id() == self.current_event.id():
                 continue
-            # Add event to queue
-            self.event_queue += [event]
-            self.logger.info('Added event to queue: %s', event)
+            self.add_event_to_queue(event)
 
     def queue_empty(self):
         """!
         @returns True if the event queue is empty, False otherwise.
         """
         return len(self.event_queue) == 0
+
+    def add_event_to_queue(self, event):
+        """!
+        @brief Add an event to the event queue.
+        """
+        self.event_queue += [event]
+        self.logger.debug('Added event to queue: %s', event)
 
     def has_current_event(self):
         """!
@@ -79,7 +84,7 @@ class Eventloop(object):
         @brief Define that an event should be processed.
         """
         self.current_event = event
-        self.logger.info('Defining event to be processed: %s', self.current_event)
+        self.logger.debug('Defining event to be processed: %s', self.current_event)
 
     def set_finished_current_event(self):
         """!
@@ -87,7 +92,7 @@ class Eventloop(object):
         """
         self.current_event.acknowledge()
         self.current_event = None
-        self.logger.info('Removed currently processed event.')
+        self.logger.debug('Removed currently processed event.')
 
     def add_first_in_queue_to_processing(self):
         """!
@@ -95,7 +100,7 @@ class Eventloop(object):
         """
         assert not self.has_current_event()
 
-        self.logger.info('Event queue has %d pending events, adding the first one to processing...', len(self.event_queue))
+        self.logger.debug('Event queue has %d pending events, adding the first one to processing...', len(self.event_queue))
         event = self.event_queue[0]
         self.shift_queue()
 
@@ -138,60 +143,80 @@ class Eventloop(object):
         while not self.do_shutdown:
             self.poll_listeners()
             self.sort_queue()
-            if self.has_current_event():
-                try:
-                    self.process_current_event()
-                except self.RECOVERABLE_EXCEPTIONS as e:
-                    self.logger.error('Restarting processing of event in 2 seconds due to error: %s', e)
-                    time.sleep(2.0)
-                    continue
-            elif not self.queue_empty():
-                self.add_first_in_queue_to_processing()
+            self.process_events_once()
         self.logger.info('Stop processing events and RPC calls.')
 
+    def process_all_events_once(self):
+        """!
+        @brief Iteration of the main loop.
+        @returns True if there are more events ready for processing right away, False otherwise.
+        """
+        if self.has_current_event():
+            try:
+                self.process_current_event()
+            except self.RECOVERABLE_EXCEPTIONS as e:
+                del self.current_event.job
+                self.logger.error('Restarting processing of event in 2 seconds due to error: %s', e)
+                time.sleep(2.0)
+        elif not self.queue_empty():
+            self.add_first_in_queue_to_processing()
+        return self.has_current_event() or not self.queue_empty()
+
     def process_current_event(self):
-        self.logger.debug('Processing current event.')
+        """!
+        @brief Run asynchronous processing of the current event.
+
+        This function will, based on the status of the event:
+
+        * Ask the Adapter to initialize the Job
+        * Send the Job for execution to the Executor
+        * Send a finish message to the Adapter
+        """
         if not self.has_current_event():
-            self.logger.debug('There is no current event, skipping.')
             return
 
         event = self.current_event
-        self.logger.info('Start processing event: %s', current_event)
+        self.logger.debug('Start processing event: %s', event)
 
         # Create event job if it has not been created yet
         if not hasattr(event, 'job'):
-            self.logger.info('Creating a Job object for the current event...')
             resource = event.data
             if not self.adapter.validate_resource(resource):
-                self.logger.info('Adapter did not validate the current event, skipping.')
+                self.logger.debug('Adapter did not validate the current event, skipping.')
                 self.set_finished_current_event()
-                return
-            event.job = self.adapter.create_job(event.id(), event.data)
-            event.job.timer = self.statsd.timer('execution_time')
-            self.logger.info('Created Job object for the current event: %s', event.job)
+            else:
+                self.logger.debug('Creating a Job object for the current event...')
+                event.job = self.adapter.create_job(event.id(), event.data)
+                if not event.job:
+                    self.logger.debug('No Job object was returned by the adapter; assuming no-op.')
+                    self.set_finished_current_event()
+                else:
+                    event.job.resource = resource
+                    event.job.timer = self.statsd.timer('execution_time')
+                    event.job.logger.info('Created Job object for event: %s', event)
 
         # Start job if it is not running
         if event.job.initialized():
-            self.logger.info('Job has been initialized, sending to executor for asynchronous execution...')
+            event.job.logger.info('Sending job to executor for asynchronous execution...')
             event.job.timer.start()
             self.executor.execute_async(event.job)
-            self.logger.info('Job has been sent to the executor.')
+            event.job.logger.info('Job has been sent successfully to the executor.')
 
         # Check status of the job
         elif event.job.started():
             if event.job.poll_time_reached():
-                self.logger.info('Job is running, polling executor for job status...')
+                event.job.logger.debug('Job is running, polling executor for job status...')
                 self.executor.sync(event.job)
-                self.logger.info('Finished polling executor for job status.')
+                event.job.logger.debug('Finished polling executor for job status.')
             else:
-                self.logger.info('Will not poll job for status until %s.', eva.strftime_iso8601(event.job.next_poll_time))
+                event.job.logger.debug('Will not poll job for status until %s.', eva.strftime_iso8601(event.job.next_poll_time))
 
         # Tell adapter that the job has finished
         elif event.job.complete() or event.job.failed():
-            self.logger.info('Current job has finished; stopping timing and sending to adapter for finishing.')
             event.job.timer.stop()
+            event.job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', event.job.timer.total_time_msec() / 1000.0)
             self.adapter.finish_job(event.job)
-            self.logger.info('Adapter has finished processing the job.')
+            event.job.logger.info('Adapter has finished processing the job.')
             self.set_finished_current_event()
 
         self.logger.debug('Finished processing event: %s', event)
@@ -247,9 +272,12 @@ class Eventloop(object):
         @brief Process a single DataInstance resource.
         """
         resource = self.productstatus_api.datainstance[data_instance_uuid]
-        self.logger.info('Processing DataInstance %s', resource)
-        self.adapter.validate_and_process_resource(uuid.uuid4(), resource)
-        self.logger.info('Finished processing DataInstance %s', resource)
+        event = eva.event.ProductstatusLocalEvent(
+            resource,
+            timestamp=resource.modified,
+        )
+        self.logger.info('Adding event with DataInstance %s to queue', resource)
+        self.add_event_to_queue(event)
 
     def blacklist_uuid(self, uuid):
         """!

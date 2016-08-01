@@ -27,6 +27,9 @@ class Job(object):
         self.next_poll_time = datetime.datetime.now()
 
     def set_status(self, status):
+        """!
+        @brief Verify and set a new Job.status variable, and log the event.
+        """
         assert status in [INITIALIZED, STARTED, COMPLETE, FAILED]
         self.status = status
         self.logger.info('Setting job status to %s', self.status)
@@ -37,7 +40,7 @@ class Job(object):
         the status of this job again.
         """
         self.next_poll_time = eva.now_with_timezone() + datetime.timedelta(milliseconds=msecs)
-        self.logger.info('Next poll for this job: %s', eva.strftime_iso8601(self.next_poll_time))
+        self.logger.debug('Next poll for this job: %s', eva.strftime_iso8601(self.next_poll_time))
 
     def poll_time_reached(self):
         """!
@@ -47,15 +50,27 @@ class Job(object):
         return eva.now_with_timezone() >= self.next_poll_time
 
     def initialized(self):
+        """!
+        @brief Returns True if Job.status equals Job.INITIALIZED.
+        """
         return self.status == INITIALIZED
 
     def started(self):
+        """!
+        @brief Returns True if Job.status equals Job.STARTED.
+        """
         return self.status == STARTED
 
     def complete(self):
+        """!
+        @brief Returns True if Job.status equals Job.COMPLETE.
+        """
         return self.status == COMPLETE
 
     def failed(self):
+        """!
+        @brief Returns True if Job.status equals Job.FAILED.
+        """
         return self.status == FAILED
 
     def create_logger(self, logger):

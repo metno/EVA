@@ -164,11 +164,18 @@ class StatsDTimer(object):
         self.stop_time = timeit.default_timer()
         self.send()
 
+    def total_time_msec(self):
+        """!
+        @brief Return the total time elapsed in milliseconds.
+        """
+        if self.start_time is None or self.stop_time is None:
+            raise RuntimeError('Timer has not been started and stopped.')
+        return int(math.ceil((self.stop_time - self.start_time) * 1000))
+
     def send(self):
         """!
         @brief Report the timer data to StatsD.
         """
         if self.start_time is None or self.stop_time is None:
             raise RuntimeError('Timer has not completed successfully.')
-        ms = int(math.ceil((self.stop_time - self.start_time) * 1000))
-        return self.parent.timing(self.metric, ms, self.tags)
+        return self.parent.timing(self.metric, self.total_time_msec(), self.tags)

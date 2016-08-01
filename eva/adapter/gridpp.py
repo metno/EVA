@@ -99,7 +99,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
             (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
         )
 
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
@@ -134,8 +134,10 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         command += ["export OMP_NUM_THREADS=%d" % self.env['EVA_GRIDPP_THREADS']]
         command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % params]
         job.command = '\n'.join(command) + '\n'
-        self.execute(job)
 
+        return job
+
+    def finish_job(self, job):
         # Retry on failure
         if job.status != eva.job.COMPLETE:
             raise eva.exceptions.RetryException(

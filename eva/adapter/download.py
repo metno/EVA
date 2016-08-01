@@ -86,14 +86,12 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
                 return eva.convert_to_bytes(matches.group(1), matches.group(2))
         return None
 
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
-        service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         filename = os.path.basename(resource.url)
         job = eva.job.Job(message_id, self.logger)
-        job.logger.info('Job resource: %s', resource)
 
         lines = [
             "#!/bin/bash",
@@ -124,22 +122,31 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
 
         job.command = "\n".join(lines) + "\n"
         job.command = job.command % values
-        self.execute(job)
+        return job
 
-        if job.status != eva.job.COMPLETE:
-            raise eva.exceptions.RetryException("Download of '%s' failed." % resource.url)
+    def finish_job(self, job):
+        if not job.complete():
+            raise eva.exceptions.RetryException("Download of '%s' failed." % job.resource.url)
+
+        if self.env['EVA_OUTPUT_SERVICE_BACKEND']:
+            service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
+        else:
+            service_backend = None
 
         bytes_sec = self.parse_bytes_sec_from_lines(job.stderr)
         if bytes_sec is not None:
-            self.statsd.gauge('download_rate', bytes_sec, {'service_backend': service_backend.slug})
+            if service_backend is not None:
+                self.statsd.gauge('download_rate', bytes_sec, {'service_backend': service_backend.slug})
+            else:
+                self.statsd.gauge('download_rate', bytes_sec)
 
         if not self.post_to_productstatus:
             return
 
         job.logger.info('Creating a new DataInstance on the Productstatus server...')
         datainstance = self.api.datainstance.create()
-        datainstance.data = resource.data
-        datainstance.format = resource.format
+        datainstance.data = job.resource.data
+        datainstance.format = job.resource.format
         datainstance.expires = self.expiry_from_lifetime()
         datainstance.servicebackend = service_backend
         datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], filename)
@@ -147,4 +154,4 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
                     exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                     give_up=0)
         job.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
-        job.logger.info('The file %s has been successfully copied to %s', resource.url, datainstance.url)
+        job.logger.info('The file %s has been successfully copied to %s', job.resource.url, datainstance.url)

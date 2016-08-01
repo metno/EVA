@@ -7,10 +7,13 @@ import eva.executor
 
 class ShellExecutor(eva.base.executor.BaseExecutor):
     """!
-    @brief Execute tasks in a thread.
+    @brief Execute tasks locally using a shell.
     """
 
-    def execute(self, job):
+    def execute_async(self, job):
+        """!
+        @fixme This is not asynchronous! The job should ideally run in a thread or similar.
+        """
         # Generate a temporary script file
         script = self.create_temporary_script(job.command)
 
@@ -30,6 +33,7 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         job.set_status(eva.job.STARTED)
         stdout, stderr = proc.communicate()
 
+    def sync(self, job):
         # Log script status, stdout and stderr
         job.exit_code = proc.returncode
         job.stdout = eva.executor.get_std_lines(stdout)

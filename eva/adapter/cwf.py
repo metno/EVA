@@ -93,7 +93,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                 len(self.env['EVA_OUTPUT_SERVICE_BACKEND']) > 0 and
                 len(self.env['EVA_OUTPUT_DATA_FORMAT']) > 0)
 
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         reference_time = resource.data.productinstance.reference_time
         output_directory_template = self.template.from_string(
             self.env['EVA_CWF_OUTPUT_DIRECTORY_PATTERN']
@@ -133,26 +133,27 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
 
         job = eva.job.Job(message_id, self.logger)
         job.command = "\n".join(cmd) + "\n"
-        job.resource = resource
-        self.execute(job)
 
-        if job.status != eva.job.COMPLETE:
+        return job
+
+    def finish_job(self, job):
+        if not job.complete():
             raise eva.exceptions.RetryException(
-                "Processing of %s to output directory %s failed." % (resource.url, output_directory)
+                "Processing of %s to output directory %s failed." % (job.resource.url, output_directory)
             )
 
         try:
             job.output_files = self.parse_file_recognition_output(job.stdout)
         except:
             raise eva.exceptions.RetryException(
-                "Processing of %s did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output." % resource.url
+                "Processing of %s did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output." % job.resource.url
             )
 
         if not self.post_to_productstatus():
             self.logger.info('NOT posting to Productstatus because of absent configuration.')
 
         self.logger.info('Posting information about new dataset to Productstatus.')
-        resources = self.generate_resources(resource, job)
+        resources = self.generate_resources(job)
         self.post_resources(resources)
         self.logger.info('Finished posting to Productstatus; job complete.')
 
@@ -192,7 +193,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             return m_data
         return data
 
-    def generate_resources(self, resource, job):
+    def generate_resources(self, job):
         """!
         @brief Generate Productstatus resources based on finished job output.
         """
@@ -204,7 +205,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
 
         product_instance = self.api.productinstance.create()
         product_instance.product = self.output_product
-        product_instance.reference_time = resource.data.productinstance.reference_time
+        product_instance.reference_time = job.resource.data.productinstance.reference_time
 
         resources['productinstance'] += [product_instance]
 

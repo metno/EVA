@@ -79,7 +79,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
         )
 
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
@@ -106,10 +106,12 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             'output.file': output_filename,
             'params': params,
         }
-        self.execute(job)
 
+        return job
+
+    def finish_job(self, job):
         # Retry on failure
-        if job.status != eva.job.COMPLETE:
+        if not job.complete():
             raise eva.exceptions.RetryException(
                 "Fimex conversion of '%s' failed." % filename
             )

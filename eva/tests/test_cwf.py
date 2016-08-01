@@ -60,10 +60,10 @@ class TestCWFAdapter(unittest.TestCase):
         job.stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12", "2016-06-06 15", "2016-06-06 18", "2016-06-06 21", "2016-06-07" ;']
         job.output_files = self.adapter.parse_file_recognition_output(job.stdout)
 
-        resource = mock.MagicMock()
-        resource.data.productinstance.reference_time = eva.coerce_to_utc(datetime.datetime(2016, 6, 6, 12))
+        job.resource = mock.MagicMock()
+        job.resource.data.productinstance.reference_time = eva.coerce_to_utc(datetime.datetime(2016, 6, 6, 12))
 
-        resources = self.adapter.generate_resources(resource, job)
+        resources = self.adapter.generate_resources(job)
         self.assertEqual(resources['productinstance'][0].product, self.adapter.output_product)
         self.assertEqual(resources['datainstance'][0].url, 'file:///tmp/meteo20160606_00.nc')
         self.assertEqual(resources['data'][0].time_period_begin,

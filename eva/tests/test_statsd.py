@@ -111,3 +111,17 @@ class TestStatsDTimer(unittest.TestCase):
         self.timer.stop()
         with self.assertRaises(RuntimeError):
             self.timer.stop()
+
+    def test_total_time_msec(self):
+        self.timer.start()
+        self.timer.stop()
+        self.assertGreaterEqual(self.timer.total_time_msec(), 0)
+
+    def test_total_time_msec_unstarted(self):
+        with self.assertRaises(RuntimeError):
+            self.timer.total_time_msec()
+
+    def test_total_time_msec_unstopped(self):
+        self.timer.start()
+        with self.assertRaises(RuntimeError):
+            self.timer.total_time_msec()

@@ -41,27 +41,10 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         """!
         @brief Generate a Job which converts GRIB to NetCDF using the
         eva-adapter-support library.
-        """
-        job = self.create_job(message_id, resource)
-        job.logger.info('Job resource: %s', resource)
-
-        self.execute(job)
-
-        if job.status != eva.job.COMPLETE:
-            raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % resource.url)
-
-        if self.has_productstatus_credentials():
-            self.register_output(job)
-
-        job.logger.info('Successfully filled the NetCDF file %s with data from %s', job.data['filename'], resource.url)
-
-    def create_job(self, message_id, resource):
-        """!
-        @brief Generate a Job object from a Productstatus Resource.
         """
         job = eva.job.Job(message_id, self.logger)
 
@@ -91,6 +74,15 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         )
 
         return job
+
+    def finish_job(self, job):
+        if job.status != eva.job.COMPLETE:
+            raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % job.resource.url)
+
+        if self.has_productstatus_credentials():
+            self.register_output(job)
+
+        job.logger.info('Successfully filled the NetCDF file %s with data from %s', job.data['filename'], job.resource.url)
 
     def register_output(self, job):
         """!

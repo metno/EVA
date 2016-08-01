@@ -27,7 +27,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
     def init(self, *args, **kwargs):
         self.require_productstatus_credentials()
 
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         """
         @brief Look up and remove expired files.
         """
@@ -49,7 +49,6 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
 
         # Create Job object and log startup info
         job = eva.job.Job(message_id, self.logger)
-        job.logger.info('Job resource: %s', resource)
         job.logger.info("Found %d expired data instances", count)
 
         job.command = "#!/bin/bash\n"
@@ -66,10 +65,12 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
 
         job.command += "exit 0\n"
         job.logger.info(job.command)
-        self.execute(job)
 
-        if job.status != eva.job.COMPLETE:
-            raise eva.exceptions.RetryException("%s: deleting files failed." % resource)
+        return job
+
+    def finish_job(self, job):
+        if not job.complete():
+            raise eva.exceptions.RetryException("%s: deleting files failed." % job.resource)
 
         for datainstance in instance_list:
             datainstance.deleted = True

@@ -64,11 +64,9 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
     # is received by EVA, and matches all input configuration defined in
     # REQUIRED_CONFIG.
     #
-    # You may exit this function in three ways:
+    # The function must either:
     #
-    # * Return normally. Return values are ignored. Returning from the function
-    #   signifies completed and successful processing of the input data, and
-    #   guarantees that the output data has been successfully created.
+    # * Return normally with a Job object, which defines what should be run in the Executor.
     #
     # * Throw `eva.exceptions.RetryException` with an error message. The error
     #   message will appear in the log. In production, this log will be
@@ -77,7 +75,7 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
     #
     # * Any other exception will result in a termination of EVA.
     #
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
 
         # Don't write any data to Productstatus.
         self.post_to_productstatus = False
@@ -148,16 +146,27 @@ echo convert_my_data \
 
         }
 
+        # You may assign variables to the Job object that can be accessed from finish_job().
+        job.output_filename = output_filename
+
         # Our job is ready for execution. This command will run the job on an
         # Executor object, defined in the environment variable EVA_EXECUTOR. To
         # run jobs on GridEngine, use EVA_EXECUTOR=eva.executor.GridEngineExecutor.
-        self.execute(job)
+        return job
 
+    # This function will be called after the Executor has run the job generated
+    # by create_job(). The job will have either "COMPLETE" or "FAILED" status.
+    # Returning from this function signifies completed and successful processing
+    # of the input data, and guarantees that the output data has been
+    # successfully created. If you want to reprocess the data, you must throw an
+    # `eva.exceptions.RetryException` exception with an error message.
+    #
+    def finish_job(self, job):
         # Running the job populated `job.status`. You should always check this variable.
         # Throwing a RetryException will ensure that processing is retried.
-        if job.status != eva.job.COMPLETE:
+        if not job.complete():
             raise eva.exceptions.RetryException(
-                "Processing of '%s' failed." % output_filename
+                "Processing of '%s' failed." % job.output_filename
             )
 
         # We might want to register our completed data instance with Productstatus.
