@@ -22,6 +22,8 @@ class TestEventloop(unittest.TestCase):
         self.eventloop = eva.eventloop.Eventloop(self.productstatus_api,
                                                  [],
                                                  self.adapter,
+                                                 self.executor,
+                                                 self.statsd,
                                                  self.env,
                                                  self.logger,
                                                  )

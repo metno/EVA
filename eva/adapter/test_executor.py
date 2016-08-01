@@ -1,5 +1,6 @@
 import eva.base.adapter
 import eva.job
+import eva.exceptions
 
 
 class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
@@ -7,9 +8,9 @@ class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
     An adapter that echoes the URL of the received DataInstance.
     """
 
-    def process_resource(self, message_id, resource):
+    def create_job(self, message_id, resource):
         """!
-        @brief Execute a Job that echoes the URI of the received resource.
+        @brief Create a Job that echoes the URI of the received resource.
         """
         job = eva.job.Job(message_id, self.logger)
         job.logger.info('Job resource: %s', resource)
@@ -18,4 +19,10 @@ class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
         """ % {
             'url': resource.url,
         }
-        self.execute(job)
+        return job
+
+    def finish_job(self, job):
+        if job.complete():
+            job.logger.info('Job has finished.')
+        else:
+            raise eva.exceptions.RetryException('Job did not finish successfully.')

@@ -10,7 +10,7 @@ import eva.base.executor
 import eva.job
 
 
-QACCT_CHECK_INTERVAL_SECS = 10
+QACCT_CHECK_INTERVAL_MSECS = 10000
 
 SSH_RECV_BUFFER = 4096
 SSH_TIMEOUT = 5
@@ -169,7 +169,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
 
         return exit_status, stdout, stderr
 
-    def execute(self, job):
+    def execute_async(self, job):
         """!
         @brief Execute a job on Grid Engine.
         """
@@ -246,23 +246,35 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
                 job.logger.info('Job has been submitted, JOB_ID = %d', job.pid)
                 job.set_status(eva.job.STARTED)
+                job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             except SSH_RETRY_EXCEPTIONS as e:
                 raise eva.exceptions.RetryException(e)
 
-        # Poll continuously for job completion
+        # Close the SSH connection
+        self.destroy_ssh_connection()
+
+    def sync(self, job):
+        """!
+        @brief Poll Grid Engine for job completion.
+        """
+
+        # Create SSH connection
+        try:
+            self.create_ssh_connection(job)
+        except SSH_RETRY_EXCEPTIONS as e:
+            raise eva.exceptions.RetryException(e)
+
+        # Poll for job completion
         check_command = 'qacct -j %d' % job.pid
-        while True:
-            try:
-                exit_code, stdout, stderr = self.execute_ssh_command(check_command)
-            except SSH_RETRY_EXCEPTIONS as e:
-                raise eva.exceptions.RetryException(e)
-            if exit_code != EXIT_OK:
-                job.logger.debug('Job has not completed yet, sleeping for %d seconds...',
-                                 QACCT_CHECK_INTERVAL_SECS)
-                time.sleep(QACCT_CHECK_INTERVAL_SECS)
-                continue
-            job.exit_code = get_exit_code_from_qacct_output(stdout)
-            break
+        try:
+            exit_code, stdout, stderr = self.execute_ssh_command(check_command)
+        except SSH_RETRY_EXCEPTIONS as e:
+            raise eva.exceptions.RetryException(e)
+        if exit_code != EXIT_OK:
+            job.logger.debug('Job has not completed yet.')
+            job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
+            return False
+        job.exit_code = get_exit_code_from_qacct_output(stdout)
 
         # Retrieve stdout and stderr
         try:

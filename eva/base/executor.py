@@ -17,9 +17,17 @@ class BaseExecutor(eva.ConfigurableObject):
         self.statsd = statsd
         self.read_configuration()
 
-    def execute(self, job):
+    def execute_async(self, job):
         """!
-        @brief Execute a job and populate members exit_code, stdout, stderr.
+        @brief Execute a job asynchronously. Should return immediately after
+        starting the job.
+        """
+        raise NotImplementedError()
+
+    def sync(self, job):
+        """!
+        @brief Check if a job has completed. Check the Job.status variable
+        afterwards to get the Job state.
         """
         raise NotImplementedError()
 

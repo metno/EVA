@@ -87,6 +87,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         @brief Delete a cached event from the ZooKeeper cache.
         """
         events = self.get_stored_events()
+        assert len(events) > 0
         self.logger.debug('Deleting first event from event cache: %s', events[0])
         self.set_stored_events(events[1:])
 

@@ -1,3 +1,6 @@
+import datetime
+
+import eva
 import eva.logger
 
 
@@ -21,11 +24,39 @@ class Job(object):
         self.stdout = []  # multi-line standard output
         self.stderr = []  # multi-line standard error
         self.set_status(INITIALIZED)  # what state the job is in
+        self.next_poll_time = datetime.datetime.now()
 
     def set_status(self, status):
         assert status in [INITIALIZED, STARTED, COMPLETE, FAILED]
         self.status = status
         self.logger.info('Setting job status to %s', self.status)
+
+    def set_next_poll_time(self, msecs):
+        """!
+        @brief Specify how long time the Eventloop should wait before polling
+        the status of this job again.
+        """
+        self.next_poll_time = eva.now_with_timezone() + datetime.timedelta(milliseconds=msecs)
+        self.logger.info('Next poll for this job: %s', eva.strftime_iso8601(self.next_poll_time))
+
+    def poll_time_reached(self):
+        """!
+        @brief Returns True if the Job object can be polled according to
+        Job.next_poll_time.
+        """
+        return eva.now_with_timezone() >= self.next_poll_time
+
+    def initialized(self):
+        return self.status == INITIALIZED
+
+    def started(self):
+        return self.status == STARTED
+
+    def complete(self):
+        return self.status == COMPLETE
+
+    def failed(self):
+        return self.status == FAILED
 
     def create_logger(self, logger):
         """!

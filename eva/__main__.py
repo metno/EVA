@@ -97,10 +97,10 @@ if __name__ == "__main__":
         help='Process a single DataInstance resource',
     )
     parser.add_argument(
-        '--mesos-log',
+        '--debug',
         action='store_true',
         default=False,
-        help='Use this flag if running inside a Mesos Docker container for extra logging output',
+        help='Print DEBUG log statements by default',
     )
     parser.add_argument(
         '--group-id',
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         else:
             logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
                                 datefmt='%Y-%m-%dT%H:%M:%S%Z',
-                                level=logging.INFO)
+                                level=logging.INFO if not args.debug else logging.DEBUG)
 
         # Randomly generated message queue client and group ID's
         client_id = str(uuid.uuid4())
@@ -240,6 +240,8 @@ if __name__ == "__main__":
         evaloop = eva.eventloop.Eventloop(productstatus_api,
                                           listeners,
                                           adapter,
+                                          executor,
+                                          statsd_client,
                                           environment_variables,
                                           logger,
                                           )
