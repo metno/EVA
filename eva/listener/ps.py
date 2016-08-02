@@ -65,7 +65,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
 
         serialized = json.dumps(events).encode('ascii')
         path = self.event_path()
-        self.logger.debug('Setting stored event list: %s', events)
+        self.logger.debug('Setting stored event list, number of items: %d', len(events))
 
         if not self.zookeeper.exists(path):
             self.zookeeper.create(path, serialized)
