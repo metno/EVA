@@ -25,6 +25,20 @@ SECRET_ENVIRONMENT_VARIABLES = [
     'EVA_PRODUCTSTATUS_API_KEY',
 ]
 
+# Some modules are producing way too much DEBUG log, define them here.
+NOISY_LOGGERS = [
+    'kafka.client',
+    'kafka.conn',
+    'kafka.consumer',
+    'kafka.consumer.subscription_state',
+    'kafka.coordinator',
+    'kafka.producer',
+    'kazoo',
+    'kazoo.client',
+    'kazoo.protocol.connection',
+    'paramiko',
+]
+
 
 def import_module_class(name):
     components = name.split('.')
@@ -145,6 +159,10 @@ if __name__ == "__main__":
             # when doing "import paramiko" in the GridEngineExecutor module
             logging.getLogger('paramiko').addFilter(log_filter)
 
+        # Disable DEBUG logging on some noisy loggers
+        for noisy_logger in NOISY_LOGGERS:
+            logging.getLogger(noisy_logger).setLevel(logging.INFO)
+
         # Log startup event
         logger.info('Starting EVA: the EVent Adapter.')
 
@@ -171,7 +189,6 @@ if __name__ == "__main__":
             zookeeper = kazoo.client.KazooClient(
                 hosts=server_string,
                 randomize_hosts=True,
-                logger=logger,
             )
             logger.info('Using ZooKeeper, base path "%s"', base_path)
             zookeeper.start()
