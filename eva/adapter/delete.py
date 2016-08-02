@@ -54,9 +54,9 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         job.command = "#!/bin/bash\n"
 
         # One line in delete script per data instance
-        instance_list = []
+        job.instance_list = []
         for datainstance in datainstances:
-            instance_list.append(datainstance)
+            job.instance_list.append(datainstance)
             path = datainstance.url
             if path.startswith('file://'):
                 path = path[7:]
@@ -72,7 +72,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         if not job.complete():
             raise eva.exceptions.RetryException("%s: deleting files failed." % job.resource)
 
-        for datainstance in instance_list:
+        for datainstance in job.instance_list:
             datainstance.deleted = True
             datainstance.save()
             job.logger.info('%s: marked DataInstance as deleted in Productstatus', datainstance)
