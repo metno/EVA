@@ -90,7 +90,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
-        filename = os.path.basename(resource.url)
+        job.base_filename = os.path.basename(resource.url)
         job = eva.job.Job(message_id, self.logger)
 
         lines = [
@@ -100,7 +100,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         ]
         values = {
             'url': resource.url,
-            'destination': os.path.join(self.env['EVA_DOWNLOAD_DESTINATION'], filename),
+            'destination': os.path.join(self.env['EVA_DOWNLOAD_DESTINATION'], job.base_filename),
         }
 
         if resource.hash:
@@ -149,7 +149,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         datainstance.format = job.resource.format
         datainstance.expires = self.expiry_from_lifetime()
         datainstance.servicebackend = service_backend
-        datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], filename)
+        datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], job.base_filename)
         eva.retry_n(datainstance.save,
                     exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                     give_up=0)
