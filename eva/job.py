@@ -24,7 +24,7 @@ class Job(object):
         self.stdout = []  # multi-line standard output
         self.stderr = []  # multi-line standard error
         self.set_status(INITIALIZED)  # what state the job is in
-        self.next_poll_time = datetime.datetime.now()
+        self.next_poll_time = eva.now_with_timezone()
 
     def set_status(self, status):
         """!
