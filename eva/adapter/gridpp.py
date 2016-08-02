@@ -148,7 +148,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         if not self.post_to_productstatus:
             return
 
-        resources = self.generate_resources(resource, job)
+        resources = self.generate_resources(job)
         self.post_resources(resources)
 
     def get_or_post_productinstance_resource(self, resource):
@@ -174,7 +174,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         }
         return self.api.data.find_or_create(parameters)
 
-    def generate_resources(self, resource, job):
+    def generate_resources(self, job):
         """!
         @brief Generate Productstatus resources based on finished job output.
         """
@@ -184,10 +184,10 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
             'datainstance': [],
         }
 
-        product_instance = self.get_or_post_productinstance_resource(resource)
+        product_instance = self.get_or_post_productinstance_resource(job.resource)
         resources['productinstance'] += [product_instance]
 
-        data = self.get_or_post_data_resource(product_instance, resource)
+        data = self.get_or_post_data_resource(product_instance, job.resource)
         resources['data'] += [data]
 
         data_instance = self.api.datainstance.create()
