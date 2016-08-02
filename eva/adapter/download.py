@@ -90,8 +90,8 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
-        job.base_filename = os.path.basename(resource.url)
         job = eva.job.Job(message_id, self.logger)
+        job.base_filename = os.path.basename(resource.url)
 
         lines = [
             "#!/bin/bash",
