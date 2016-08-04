@@ -184,10 +184,10 @@ class Eventloop(object):
             return
 
         event = self.current_event
-        self.logger.debug('Start processing event: %s', event)
 
         # Create event job if it has not been created yet
         if not hasattr(event, 'job'):
+            self.logger.debug('Start processing event: %s', event)
             resource = event.data
             if not self.adapter.validate_resource(resource):
                 self.logger.debug('Adapter did not validate the current event, skipping.')
@@ -216,8 +216,6 @@ class Eventloop(object):
                 event.job.logger.debug('Job is running, polling executor for job status...')
                 self.executor.sync(event.job)
                 event.job.logger.debug('Finished polling executor for job status.')
-            else:
-                event.job.logger.debug('Will not poll job for status until %s.', eva.strftime_iso8601(event.job.next_poll_time))
 
         # Tell adapter that the job has finished
         elif event.job.complete() or event.job.failed():
@@ -226,8 +224,7 @@ class Eventloop(object):
             self.adapter.finish_job(event.job)
             event.job.logger.info('Adapter has finished processing the job.')
             self.set_finished_current_event()
-
-        self.logger.debug('Finished processing event: %s', event)
+            self.logger.debug('Finished processing event: %s', event)
 
     def process_rpc_event(self, event):
         """!
