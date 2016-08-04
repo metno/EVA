@@ -117,6 +117,21 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         """
         return '.'.join(list(args))
 
+    def ensure_ssh_connection(self, job):
+        """!
+        @brief Ensure that a working SSH connection exists. Throws any of
+        SSH_RETRY_EXCEPTIONS if a working connection could not be established.
+        """
+        if hasattr(self, 'ssh_client'):
+            try:
+                job.logger.debug('Checking if SSH connection is usable.')
+                self.ssh_client.exec_command('true')
+                job.logger.debug('SSH connection seems usable, proceeding.')
+                return
+            except SSH_RETRY_EXCEPTIONS as e:
+                job.logger.debug('SSH connection not working, trying to establish a working connection.')
+        self.create_ssh_connection(job)
+
     def create_ssh_connection(self, job):
         """!
         @brief Open an SSH connection to the submit host, and open an SFTP channel.
@@ -178,7 +193,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
 
         # Create SSH connection
         try:
-            self.create_ssh_connection(job)
+            self.ensure_ssh_connection(job)
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
 
@@ -250,9 +265,6 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             except SSH_RETRY_EXCEPTIONS as e:
                 raise eva.exceptions.RetryException(e)
 
-        # Close the SSH connection
-        self.destroy_ssh_connection()
-
     def sync(self, job):
         """!
         @brief Poll Grid Engine for job completion.
@@ -260,7 +272,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
 
         # Create SSH connection
         try:
-            self.create_ssh_connection(job)
+            self.ensure_ssh_connection(job)
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
 
@@ -303,6 +315,3 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             self.sftp_client.unlink(job.stderr_path)
         except SSH_RETRY_EXCEPTIONS + (IOError,) as e:
             job.logger.warning('Could not remove script file, stdout and stderr')
-
-        # Close the SSH connection
-        self.destroy_ssh_connection()
