@@ -78,7 +78,7 @@ class StatsDClient(object):
         """!
         @brief Generate a StatsD formatted message.
         """
-        return '%s%s:%d|%s\n' % (metric, self.appended_tags(tags), value, identifier)
+        return '%s%s:%d|%s' % (metric, self.appended_tags(tags), value, identifier)
 
     def incr(self, metric, value=1, tags={}):
         """!

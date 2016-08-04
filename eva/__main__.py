@@ -221,10 +221,6 @@ if __name__ == "__main__":
                 statsd=statsd_client,
             )
             listener.setup_listener()
-
-            #listener.event_listener.json_consumer.poll()
-            #listener.event_listener.json_consumer.seek_to_beginning()
-
             logger.info('Adding listener: %s' % listener.__class__)
             listeners += [listener]
 
