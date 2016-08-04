@@ -34,7 +34,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         self.event_listener = self.kwargs['productstatus_api'].get_event_listener(
             client_id=self.kwargs['client_id'],
             group_id=self.kwargs['group_id'],
-            consumer_timeout_ms=100,
+            consumer_timeout_ms=10,
         )
 
     def event_path(self):
@@ -101,9 +101,10 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         old_events = self.get_stored_events()
         events = []
         try:
-            event = self.event_listener.get_next_event()
-            self.logger.debug('Productstatus message received: %s', event)
-            events += [event]
+            while True:
+                event = self.event_listener.get_next_event()
+                self.logger.debug('Productstatus message received: %s', event)
+                events += [event]
         except productstatus.exceptions.EventTimeoutException:
             pass
         if len(events) == 0:

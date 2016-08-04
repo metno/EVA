@@ -90,7 +90,11 @@ class Eventloop(object):
         """!
         @brief Set that the currently processed event has finished.
         """
+        timer = self.statsd.timer('kafka_commit_time')
+        timer.start()
         self.current_event.acknowledge()
+        timer.stop()
+        self.logger.debug('Acknowledging currently processed event took %d ms', timer.total_time_msec())
         self.current_event = None
         self.logger.debug('Removed currently processed event.')
 
@@ -142,7 +146,12 @@ class Eventloop(object):
         """
         self.logger.info('Start processing events and RPC calls.')
         while not self.do_shutdown:
+            timer = self.statsd.timer('poll_listeners')
+            timer.start()
             self.poll_listeners()
+            timer.stop()
+            self.logger.debug('Polling for events took %d ms', timer.total_time_msec())
+
             self.sort_queue()
             self.process_all_events_once()
         self.logger.info('Stop processing events and RPC calls.')

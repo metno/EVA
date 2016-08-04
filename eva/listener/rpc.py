@@ -22,7 +22,7 @@ class RPCListener(eva.base.listener.BaseListener):
         self.rpc_configuration = self.kwargs['productstatus_api'].get_event_listener_configuration()
         kwargs = {
             'bootstrap_servers': self.rpc_configuration.brokers,
-            'consumer_timeout_ms': 1000,
+            'consumer_timeout_ms': 10,
         }
         if self.rpc_configuration.ssl:
             kwargs['security_protocol'] = 'SSL'
