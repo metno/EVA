@@ -6,6 +6,7 @@ hindering imports of the exception classes.
 
 import os
 import time
+import timeit
 import json
 import kazoo.exceptions
 import dateutil.parser

@@ -51,7 +51,6 @@ if __name__ == '__main__':
     consumer = kafka.KafkaConsumer(args.topic,
                                    bootstrap_servers=args.broker,
                                    group_id=str(uuid.uuid4()),
-                                   consumer_timeout_ms=10,
                                    value_deserializer=lambda m: Message(m))
 
     if args.from_beginning:
