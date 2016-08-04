@@ -207,6 +207,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             if exit_code == 0:
                 job.pid = get_job_id_from_qstat_output(stdout)
                 job.logger.warning('Job is already running with JOB_ID %d, will not submit a new job.', job.pid)
+                job.set_status(eva.job.STARTED)
                 skip_submit = True
             else:
                 job.logger.info('Job is not running, continuing with submission.')
