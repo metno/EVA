@@ -24,18 +24,18 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         eva.executor.log_job_script(job)
 
         # Run the script
-        proc = subprocess.Popen(
+        job.proc = subprocess.Popen(
             ['sh', script],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        job.logger.info("Script started with pid %d, waiting for process to finish...", proc.pid)
+        job.logger.info("Script started with pid %d, waiting for process to finish...", job.proc.pid)
         job.set_status(eva.job.STARTED)
-        stdout, stderr = proc.communicate()
+        stdout, stderr = job.proc.communicate()
 
     def sync(self, job):
         # Log script status, stdout and stderr
-        job.exit_code = proc.returncode
+        job.exit_code = job.proc.returncode
         job.stdout = eva.executor.get_std_lines(stdout)
         job.stderr = eva.executor.get_std_lines(stderr)
         job.logger.info("Script finished, exit code: %d", job.exit_code)
