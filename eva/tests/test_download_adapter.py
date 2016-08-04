@@ -78,14 +78,14 @@ class TestDownloadAdapter(unittest.TestCase):
         self.create_adapter()
         self.assertEqual(
             self.adapter.parse_bytes_sec_from_lines(
-                ['2016-07-27 14:03:45 (375.3 MB/s) - ‘foo.bar’ saved [3437/3437]']
+                ['100  285M  100  285M    0     0   562M      0 --:--:-- --:--:-- --:--:--  562M    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0']
             ),
-            393530572
+            589299712
         )
         self.assertEqual(
             self.adapter.parse_bytes_sec_from_lines(
-                ['2016-01-21 11:01:15 (22 KB/s) - ‘foo.bar’ saved [3987645988/3987645989]']
+                ['100  285M  100  22K    0     0   22K      0 --:--:-- --:--:-- --:--:--  22K    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0']
             ),
             22528
         )
-                         
+

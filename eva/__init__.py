@@ -280,7 +280,7 @@ def zookeeper_group_id(group_id):
 
 
 def convert_to_bytes(value, notation):
-    notations = ['B', 'KB', 'MB', 'GB', 'TB']
+    notations = ['B', 'K', 'M', 'G', 'T']
     for exp, suffix in enumerate(notations):
         if notation.upper() != suffix:
             continue

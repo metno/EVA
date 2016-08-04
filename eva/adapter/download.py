@@ -79,7 +79,8 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Return the number of bytes per second from a list of wget output lines.
         """
-        rate_regex = re.compile('.+\(([\d\.]+) ([A-Z]B)/s\) .+saved.+')
+        # 100  285M  100  285M    0     0   431M      0 --:--:-- --:--:-- --:--:--  431M
+        rate_regex = re.compile('^\d+\s+\w+\s+\d+\s+\w+\s+\d+\s+\d+\s+(\d+)([A-Z]).+$')
         for line in lines:
             matches = rate_regex.match(line)
             if matches:
@@ -96,7 +97,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         lines = [
             "#!/bin/bash",
             "#$ -S /bin/bash",  # for GridEngine compatibility
-            "wget --no-verbose --output-document='%(destination)s' %(url)s",
+            "curl --fail --output '%(destination)s' %(url)s",
         ]
         values = {
             'url': resource.url,
@@ -133,12 +134,14 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         else:
             service_backend = None
 
+        import pdb; pdb.set_trace()
         bytes_sec = self.parse_bytes_sec_from_lines(job.stderr)
         if bytes_sec is not None:
             if service_backend is not None:
                 self.statsd.gauge('download_rate', bytes_sec, {'service_backend': service_backend.slug})
             else:
                 self.statsd.gauge('download_rate', bytes_sec)
+            job.logger.info('Download speed is %d bytes/sec', bytes_sec)
 
         if not self.post_to_productstatus:
             return

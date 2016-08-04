@@ -90,12 +90,12 @@ class TestBase(unittest.TestCase):
 
     def test_convert_to_bytes(self):
         self.assertEqual(eva.convert_to_bytes(1, 'B'), 1)
-        self.assertEqual(eva.convert_to_bytes(1, 'KB'), 1024)
-        self.assertEqual(eva.convert_to_bytes(1, 'MB'), 1048576)
-        self.assertEqual(eva.convert_to_bytes(1, 'GB'), 1073741824)
-        self.assertEqual(eva.convert_to_bytes(1, 'TB'), 1099511627776)  # futureproofing
-        self.assertEqual(eva.convert_to_bytes(1.5, 'KB'), 1536)
-        self.assertEqual(eva.convert_to_bytes(1.5, 'kB'), 1536)  # case difference
-        self.assertEqual(eva.convert_to_bytes('1.5', 'kB'), 1536)
+        self.assertEqual(eva.convert_to_bytes(1, 'K'), 1024)
+        self.assertEqual(eva.convert_to_bytes(1, 'M'), 1048576)
+        self.assertEqual(eva.convert_to_bytes(1, 'G'), 1073741824)
+        self.assertEqual(eva.convert_to_bytes(1, 'T'), 1099511627776)  # futureproofing
+        self.assertEqual(eva.convert_to_bytes(1.5, 'K'), 1536)
+        self.assertEqual(eva.convert_to_bytes(1.5, 'k'), 1536)  # case difference
+        self.assertEqual(eva.convert_to_bytes('1.5', 'k'), 1536)
         with self.assertRaises(ValueError):
             eva.convert_to_bytes(1.5, 'xB')
