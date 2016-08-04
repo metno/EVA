@@ -82,6 +82,7 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         # 100  285M  100  285M    0     0   431M      0 --:--:-- --:--:-- --:--:--  431M
         rate_regex = re.compile('^\d+\s+\w+\s+\d+\s+\w+\s+\d+\s+\d+\s+(\d+)([A-Z]).+$')
         for line in lines:
+            line = line.split('\r')[-1]
             matches = rate_regex.match(line)
             if matches:
                 return eva.convert_to_bytes(matches.group(1), matches.group(2))
@@ -134,7 +135,6 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         else:
             service_backend = None
 
-        import pdb; pdb.set_trace()
         bytes_sec = self.parse_bytes_sec_from_lines(job.stderr)
         if bytes_sec is not None:
             if service_backend is not None:

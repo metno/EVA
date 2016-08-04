@@ -78,7 +78,7 @@ class TestDownloadAdapter(unittest.TestCase):
         self.create_adapter()
         self.assertEqual(
             self.adapter.parse_bytes_sec_from_lines(
-                ['100  285M  100  285M    0     0   562M      0 --:--:-- --:--:-- --:--:--  562M    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0']
+                ['foo\r100  285M  100  285M    0     0   562M      0 --:--:-- --:--:-- --:--:--  562M    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0']
             ),
             589299712
         )
