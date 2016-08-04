@@ -109,6 +109,7 @@ class Eventloop(object):
             self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
                                 event.timestamp(),
                                 self.message_timestamp_threshold)
+            event.acknowledge()
             return
 
         if isinstance(event, eva.event.RPCEvent):
