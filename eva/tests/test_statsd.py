@@ -37,7 +37,7 @@ class TestStatsD(unittest.TestCase):
         self.assertEqual(self.statsd.appended_tags({'foo': 'bar'}), ',foo=bar')
 
     def test_generate_message(self):
-        self.assertEqual(self.statsd.generate_message('foo', 13, 'x', {}), 'foo,a=1,b=2:13|x')
+        self.assertEqual(self.statsd.generate_message('foo', 13, 'x', {}), 'foo,a=1,b=2:13|x\n')
 
     def test_timer(self):
         timer = self.statsd.timer('foo', {'bar': 'baz'})
@@ -57,27 +57,27 @@ class TestStatsD(unittest.TestCase):
     @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_incr(self, func):
         self.statsd.incr('foo', 1, {'c': 3})
-        func.assert_called_with('foo,a=1,b=2,c=3:1|c')
+        func.assert_called_with('foo,a=1,b=2,c=3:1|c\n')
 
     @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_gauge(self, func):
         self.statsd.gauge('foo', 1, {'c': 3})
-        func.assert_called_with('foo,a=1,b=2,c=3:1|g')
+        func.assert_called_with('foo,a=1,b=2,c=3:1|g\n')
 
     @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_set(self, func):
         self.statsd.set('foo', 1, {'c': 3})
-        func.assert_called_with('foo,a=1,b=2,c=3:1|s')
+        func.assert_called_with('foo,a=1,b=2,c=3:1|s\n')
 
     @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_histogram(self, func):
         self.statsd.histogram('foo', 1, {'c': 3})
-        func.assert_called_with('foo,a=1,b=2,c=3:1|h')
+        func.assert_called_with('foo,a=1,b=2,c=3:1|h\n')
 
     @mock.patch('eva.statsd.StatsDClient.broadcast')
     def test_timing(self, func):
         self.statsd.timing('foo', 200, {'c': 3})
-        func.assert_called_with('foo,a=1,b=2,c=3:200|ms')
+        func.assert_called_with('foo,a=1,b=2,c=3:200|ms\n')
 
 
 
