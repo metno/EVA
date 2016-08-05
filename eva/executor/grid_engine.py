@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import dateutil.parser
 
 import paramiko
 import paramiko.ssh_exception
@@ -63,6 +64,50 @@ def get_exit_code_from_qacct_output(output):
         if matches:
             return int(matches.group(1))
     raise RuntimeError('Could not parse exit_code from qacct output, perhaps the format changed?')
+
+
+def parse_qacct_metrics(stdout_lines):
+    """!
+    @brief Given a list of qacct standard output, return a dictionary of
+    metric numbers and tags.
+    """
+    metrics = {}
+    tags = {}
+    parsed = {}
+
+    base_regex = re.compile('^([\w_]+)\s+(.+)$')
+
+    for line in stdout_lines:
+        matches = base_regex.match(line)
+        if not matches:
+            continue
+        parsed[matches.group(1)] = matches.group(2).strip()
+
+    for key in ['qsub_time', 'start_time', 'end_time']:
+        if key in parsed:
+            try:
+                parsed[key] = dateutil.parser.parse(parsed[key])
+            except:
+                pass
+
+    if 'start_time' in parsed:
+        if 'end_time' in parsed:
+            metrics['grid_engine_run_time'] = (parsed['end_time'] - parsed['start_time']).total_seconds() * 1000
+        if 'qsub_time' in parsed:
+            metrics['grid_engine_qsub_delay'] = (parsed['start_time'] - parsed['qsub_time']).total_seconds() * 1000
+
+    for key in ['ru_utime', 'ru_stime']:
+        if key in parsed:
+            metrics['grid_engine_' + key] = int(float(parsed[key]) * 1000)
+
+    for key in ['qname', 'hostname']:
+        if key in parsed:
+            tags['grid_engine_' + key] = parsed[key]
+
+    return {
+        'metrics': metrics,
+        'tags': tags,
+    }
 
 
 class GridEngineExecutor(eva.base.executor.BaseExecutor):
@@ -288,6 +333,11 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             return False
         job.exit_code = get_exit_code_from_qacct_output(stdout)
+
+        # Submit job metrics
+        stats = parse_qacct_metrics(stdout.splitlines())
+        for metric, value in stats['metrics'].items():
+            self.statsd.timing(metric, value, stats['tags'])
 
         # Retrieve stdout and stderr
         try:
