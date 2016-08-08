@@ -101,7 +101,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         old_events = self.get_stored_events()
         events = []
         try:
-            while True:
+            for i in range(20):
                 event = self.event_listener.get_next_event()
                 self.logger.debug('Productstatus message received: %s', event)
                 if validation_callback(self.kwargs['productstatus_api'][event.uri]):
