@@ -97,7 +97,6 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         @brief Consume all pending messages on the Kafka queue, and store them in
         ZooKeeper for later processing.
         """
-        # Merge new events into old events
         old_events = self.get_stored_events()
 
         event = self.event_listener.get_next_event()
@@ -105,12 +104,12 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         if validation_callback(self.kwargs['productstatus_api'][event.uri]):
             self.kwargs['statsd'].incr('productstatus_accepted_events')
             self.logger.debug('Event was validated by adapter and will be added to the event queue.')
-            events += [event]
+            # Merge new events into old events
+            events = old_events + [event]
+            self.set_stored_events(events)
         else:
             self.kwargs['statsd'].incr('productstatus_rejected_events')
             self.logger.debug('Event was not validated by adapter; skipping add to event queue.')
-        events = old_events + [event]
-        self.set_stored_events(events)
 
         # Commit position to Kafka
         try:
