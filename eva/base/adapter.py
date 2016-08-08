@@ -229,33 +229,6 @@ class BaseAdapter(eva.ConfigurableObject):
             return True
         return False
 
-    def resource_matches_type(self, resource):
-        """!
-        @brief Check that a Productstatus resource matches the configured types. This is the first step in validation.
-        """
-        if resource._collection._resource_name != 'datainstance':
-            self.logger.debug('Resource is not of type DataInstance, ignoring.')
-
-        elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'EVA_INPUT_PRODUCT'):
-            self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
-                             resource.data.productinstance.product.name)
-
-        elif not self.in_array_or_empty(resource.servicebackend.slug, 'EVA_INPUT_SERVICE_BACKEND'):
-            self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
-                             resource.servicebackend.name)
-
-        elif not self.in_array_or_empty(resource.format.slug, 'EVA_INPUT_DATA_FORMAT'):
-            self.logger.debug('DataInstance file type is %s, ignoring.',
-                             resource.format.name)
-
-        elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
-            self.logger.debug('DataInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
-
-        else:
-            return True
-
-        return False
-
     def resource_matches_input_config(self, resource):
         """!
         @brief Check that a Productstatus resource matches the configured
@@ -263,6 +236,17 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         if resource._collection._resource_name != 'datainstance':
             self.logger.debug('Resource is not of type DataInstance, ignoring.')
+        elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'EVA_INPUT_PRODUCT'):
+            self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
+                             resource.data.productinstance.product.name)
+        elif not self.in_array_or_empty(resource.servicebackend.slug, 'EVA_INPUT_SERVICE_BACKEND'):
+            self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
+                             resource.servicebackend.name)
+        elif not self.in_array_or_empty(resource.format.slug, 'EVA_INPUT_DATA_FORMAT'):
+            self.logger.debug('DataInstance file type is %s, ignoring.',
+                             resource.format.name)
+        elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
+            self.logger.debug('DataInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
         elif resource.deleted:
             self.logger.debug('DataInstance is marked as deleted, ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
