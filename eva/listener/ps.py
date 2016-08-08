@@ -99,23 +99,17 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         """
         # Merge new events into old events
         old_events = self.get_stored_events()
-        events = []
-        try:
-            for i in range(20):
-                event = self.event_listener.get_next_event()
-                self.logger.debug('Productstatus message received: %s', event)
-                if validation_callback(self.kwargs['productstatus_api'][event.uri]):
-                    self.kwargs['statsd'].incr('productstatus_accepted_events')
-                    self.logger.debug('Event was validated by adapter and will be added to the event queue.')
-                    events += [event]
-                else:
-                    self.kwargs['statsd'].incr('productstatus_rejected_events')
-                    self.logger.debug('Event was not validated by adapter; skipping add to event queue.')
-        except productstatus.exceptions.EventTimeoutException:
-            pass
-        if len(events) == 0:
-            return
-        events = old_events + events
+
+        event = self.event_listener.get_next_event()
+        self.logger.debug('Productstatus message received: %s', event)
+        if validation_callback(self.kwargs['productstatus_api'][event.uri]):
+            self.kwargs['statsd'].incr('productstatus_accepted_events')
+            self.logger.debug('Event was validated by adapter and will be added to the event queue.')
+            events += [event]
+        else:
+            self.kwargs['statsd'].incr('productstatus_rejected_events')
+            self.logger.debug('Event was not validated by adapter; skipping add to event queue.')
+        events = old_events + [event]
         self.set_stored_events(events)
 
         # Commit position to Kafka

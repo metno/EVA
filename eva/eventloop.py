@@ -53,6 +53,9 @@ class Eventloop(object):
             except eva.exceptions.InvalidEventException as e:
                 self.logger.warning('Received invalid event: %s', e)
                 continue
+            except self.RECOVERABLE_EXCEPTIONS as e:
+                self.logger.warning('Exception while receiving event: %s', e)
+                continue
             # Ignore events already in queue
             if event.id() in [x.id() for x in self.event_queue]:
                 continue
