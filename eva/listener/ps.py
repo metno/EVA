@@ -113,6 +113,8 @@ class ProductstatusListener(eva.base.listener.BaseListener):
                     self.logger.debug('Event was not validated by adapter; skipping add to event queue.')
         except productstatus.exceptions.EventTimeoutException:
             pass
+        if len(events) == 0:
+            return
         events = old_events + events
         self.set_stored_events(events)
 
