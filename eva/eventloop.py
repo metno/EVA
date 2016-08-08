@@ -46,7 +46,7 @@ class Eventloop(object):
         """
         for listener in self.listeners:
             try:
-                event = listener.get_next_event()
+                event = listener.get_next_event(self.adapter.resource_matches_type)
                 assert isinstance(event, eva.event.Event)
             except eva.exceptions.EventTimeoutException:
                 continue
@@ -262,10 +262,11 @@ class Eventloop(object):
             self.logger.info('Adding %d DataInstance resources to queue...', count)
             for resource in instances:
                 self.logger.info('[%d/%d] Adding to queue: %s', index, count, resource)
-                events += [eva.event.ProductstatusLocalEvent(
-                    resource,
-                    timestamp=resource.modified,
-                )]
+                if self.adapter.resource_matches_type(resource):
+                    events += [eva.event.ProductstatusLocalEvent(
+                        resource,
+                        timestamp=resource.modified,
+                    )]
                 index += 1
         except self.RECOVERABLE_EXCEPTIONS as e:
             self.logger.error('An error occurred when retrieving Productstatus resources, aborting: %s', e)
@@ -277,6 +278,8 @@ class Eventloop(object):
         @brief Process a single DataInstance resource.
         """
         resource = self.productstatus_api.datainstance[data_instance_uuid]
+        if not self.adapter.resource_matches_type(resource):
+            return
         event = eva.event.ProductstatusLocalEvent(
             resource,
             timestamp=resource.modified,

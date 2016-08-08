@@ -32,7 +32,7 @@ class RPCListener(eva.base.listener.BaseListener):
         self.event_listener = productstatus.event.Listener('eva.rpc', **kwargs)
         self.logger.info('Instance ID for RPC calls: %s', self.kwargs['group_id'])
 
-    def get_next_event(self):
+    def get_next_event(self, *args):
         """!
         @brief Block until a message is received, or a timeout is reached, and
         return the message object. Raises an exception if a timeout is reached

@@ -92,7 +92,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         self.logger.debug('Deleting first event from event cache: %s', events[0])
         self.set_stored_events(events[1:])
 
-    def cache_queued_events(self):
+    def cache_queued_events(self, validation_callback):
         """!
         @brief Consume all pending messages on the Kafka queue, and store them in
         ZooKeeper for later processing.
@@ -104,7 +104,13 @@ class ProductstatusListener(eva.base.listener.BaseListener):
             while True:
                 event = self.event_listener.get_next_event()
                 self.logger.debug('Productstatus message received: %s', event)
-                events += [event]
+                if validation_callback(self.kwargs['productstatus_api'][event.uri]):
+                    self.kwargs['statsd'].incr('productstatus_accepted_events')
+                    self.logger.debug('Event was validated by adapter and will be added to the event queue.')
+                    events += [event]
+                else:
+                    self.kwargs['statsd'].incr('productstatus_rejected_events')
+                    self.logger.debug('Event was not validated by adapter; skipping add to event queue.')
         except productstatus.exceptions.EventTimeoutException:
             pass
         if len(events) == 0:
@@ -126,12 +132,12 @@ class ProductstatusListener(eva.base.listener.BaseListener):
                 self.logger.critical('Old message cache could NOT be restored to ZooKeeper. This will result in duplicate message processing!')
             raise
 
-    def get_next_event(self):
+    def get_next_event(self, validation_callback):
         """!
         @brief Return the next message on the Kafka topic sent by Productstatus.
         """
         try:
-            self.cache_queued_events()
+            self.cache_queued_events(validation_callback)
             event = self.get_next_stored_event()
             if not event:
                 raise eva.exceptions.EventTimeoutException('No events in the event queue.')

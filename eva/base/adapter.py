@@ -229,10 +229,9 @@ class BaseAdapter(eva.ConfigurableObject):
             return True
         return False
 
-    def resource_matches_input_config(self, resource):
+    def resource_matches_type(self, resource):
         """!
-        @brief Check that a Productstatus resource matches the configured
-        processing criteria.
+        @brief Check that a Productstatus resource matches the configured types. This is the first step in validation.
         """
         if resource._collection._resource_name != 'datainstance':
             self.logger.debug('Resource is not of type DataInstance, ignoring.')
@@ -248,8 +247,22 @@ class BaseAdapter(eva.ConfigurableObject):
         elif not self.in_array_or_empty(resource.format.slug, 'EVA_INPUT_DATA_FORMAT'):
             self.logger.debug('DataInstance file type is %s, ignoring.',
                              resource.format.name)
+
         elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
             self.logger.debug('DataInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
+
+        else:
+            return True
+
+        return False
+
+    def resource_matches_input_config(self, resource):
+        """!
+        @brief Check that a Productstatus resource matches the configured
+        processing criteria.
+        """
+        if resource._collection._resource_name != 'datainstance':
+            self.logger.debug('Resource is not of type DataInstance, ignoring.')
         elif resource.deleted:
             self.logger.debug('DataInstance is marked as deleted, ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
