@@ -144,9 +144,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        job.command = <span class="stringliteral">&quot;#!/bin/bash\n&quot;</span></div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;</div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        <span class="comment"># One line in delete script per data instance</span></div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        instance_list = []</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        job.instance_list = []</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;        <span class="keywordflow">for</span> datainstance <span class="keywordflow">in</span> datainstances:</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;            instance_list.append(datainstance)</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;            job.instance_list.append(datainstance)</div>
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;            path = datainstance.url</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;            <span class="keywordflow">if</span> path.startswith(<span class="stringliteral">&#39;file://&#39;</span>):</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;                path = path[7:]</div>
@@ -162,7 +162,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        <span class="keywordflow">if</span> <span class="keywordflow">not</span> job.complete():</div>
 <div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;            <span class="keywordflow">raise</span> <a class="code" href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a>(<span class="stringliteral">&quot;%s: deleting files failed.&quot;</span> % job.resource)</div>
 <div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="keywordflow">for</span> datainstance <span class="keywordflow">in</span> instance_list:</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="keywordflow">for</span> datainstance <span class="keywordflow">in</span> job.instance_list:</div>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;            datainstance.deleted = <span class="keyword">True</span></div>
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;            datainstance.save()</div>
 <div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;            job.logger.info(<span class="stringliteral">&#39;%s: marked DataInstance as deleted in Productstatus&#39;</span>, datainstance)</div>
@@ -170,7 +170,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;        job.logger.info(<span class="stringliteral">&quot;All expired data instances successfully processed.&quot;</span>)</div>
 <div class="ttc" id="namespaceeva_1_1base_1_1adapter_html"><div class="ttname"><a href="namespaceeva_1_1base_1_1adapter.html">eva.base.adapter</a></div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00001">adapter.py:1</a></div></div>
 <div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html_aece72a9c530e0dfd49fe9389d6acb36f"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#aece72a9c530e0dfd49fe9389d6acb36f">eva.adapter.delete.DeleteAdapter.create_job</a></div><div class="ttdeci">def create_job</div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00030">delete.py:30</a></div></div>
-<div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a02e8d94e20f64712ec560a1db78063df"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">eva.base.adapter.BaseAdapter.require_productstatus_credentials</a></div><div class="ttdeci">def require_productstatus_credentials</div><div class="ttdoc">Raise an exception if Productstatus credentials are not configured. </div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00334">adapter.py:334</a></div></div>
+<div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a02e8d94e20f64712ec560a1db78063df"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">eva.base.adapter.BaseAdapter.require_productstatus_credentials</a></div><div class="ttdeci">def require_productstatus_credentials</div><div class="ttdoc">Raise an exception if Productstatus credentials are not configured. </div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00331">adapter.py:331</a></div></div>
 <div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html">eva.base.adapter.BaseAdapter</a></div><div class="ttdoc">Adapters contain all the information and configuration needed to translate a Productstatus resource i...</div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00016">adapter.py:16</a></div></div>
 <div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html_afb42d5ac490e36edb9d9197ceab44c16"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#afb42d5ac490e36edb9d9197ceab44c16">eva.adapter.delete.DeleteAdapter.init</a></div><div class="ttdeci">def init</div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00027">delete.py:27</a></div></div>
 <div class="ttc" id="classeva_1_1exceptions_1_1RetryException_html"><div class="ttname"><a href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a></div><div class="ttdoc">Thrown when a step cannot be completed due to a transient error on an underlying resource, typically a network or service outage. </div><div class="ttdef"><b>Definition:</b> <a href="exceptions_8py_source.html#l00026">exceptions.py:26</a></div></div>
@@ -183,7 +183,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 10 2016 14:50:31 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

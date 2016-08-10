@@ -127,7 +127,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;        self.assertEqual(self.statsd.appended_tags({<span class="stringliteral">&#39;foo&#39;</span>: <span class="stringliteral">&#39;bar&#39;</span>}), <span class="stringliteral">&#39;,foo=bar&#39;</span>)</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
 <div class="line"><a name="l00039"></a><span class="lineno"><a class="line" href="classtest__statsd_1_1TestStatsD.html#a2295596719905be2eec06a3bb491d926">   39</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classtest__statsd_1_1TestStatsD.html#a2295596719905be2eec06a3bb491d926">test_generate_message</a>(self):</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        self.assertEqual(self.statsd.generate_message(<span class="stringliteral">&#39;foo&#39;</span>, 13, <span class="stringliteral">&#39;x&#39;</span>, {}), <span class="stringliteral">&#39;foo,a=1,b=2:13|x&#39;</span>)</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        self.assertEqual(self.statsd.generate_message(<span class="stringliteral">&#39;foo&#39;</span>, 13, <span class="stringliteral">&#39;x&#39;</span>, {}), <span class="stringliteral">&#39;foo,a=1,b=2:13|x\n&#39;</span>)</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
 <div class="line"><a name="l00042"></a><span class="lineno"><a class="line" href="classtest__statsd_1_1TestStatsD.html#a07754f65a371b9aef5fd6abfec200e4f">   42</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classtest__statsd_1_1TestStatsD.html#a07754f65a371b9aef5fd6abfec200e4f">test_timer</a>(self):</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;        timer = self.statsd.timer(<span class="stringliteral">&#39;foo&#39;</span>, {<span class="stringliteral">&#39;bar&#39;</span>: <span class="stringliteral">&#39;baz&#39;</span>})</div>
@@ -147,27 +147,27 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    @mock.patch(<span class="stringliteral">&#39;eva.statsd.StatsDClient.broadcast&#39;</span>)</div>
 <div class="line"><a name="l00058"></a><span class="lineno"><a class="line" href="classtest__statsd_1_1TestStatsD.html#ae0334a0823aaffd105b869f40b0c6f67">   58</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classtest__statsd_1_1TestStatsD.html#ae0334a0823aaffd105b869f40b0c6f67">test_incr</a>(self, func):</div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        self.statsd.incr(<span class="stringliteral">&#39;foo&#39;</span>, 1, {<span class="stringliteral">&#39;c&#39;</span>: 3})</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|c&#39;</span>)</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|c\n&#39;</span>)</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    @mock.patch(<span class="stringliteral">&#39;eva.statsd.StatsDClient.broadcast&#39;</span>)</div>
 <div class="line"><a name="l00063"></a><span class="lineno"><a class="line" href="classtest__statsd_1_1TestStatsD.html#ac6363a334b51d5ed0b216cfc0612efb4">   63</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classtest__statsd_1_1TestStatsD.html#ac6363a334b51d5ed0b216cfc0612efb4">test_gauge</a>(self, func):</div>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        self.statsd.gauge(<span class="stringliteral">&#39;foo&#39;</span>, 1, {<span class="stringliteral">&#39;c&#39;</span>: 3})</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|g&#39;</span>)</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|g\n&#39;</span>)</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    @mock.patch(<span class="stringliteral">&#39;eva.statsd.StatsDClient.broadcast&#39;</span>)</div>
 <div class="line"><a name="l00068"></a><span class="lineno"><a class="line" href="classtest__statsd_1_1TestStatsD.html#a885201d545fd7932566d8b6d583e13c0">   68</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classtest__statsd_1_1TestStatsD.html#a885201d545fd7932566d8b6d583e13c0">test_set</a>(self, func):</div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        self.statsd.set(<span class="stringliteral">&#39;foo&#39;</span>, 1, {<span class="stringliteral">&#39;c&#39;</span>: 3})</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|s&#39;</span>)</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|s\n&#39;</span>)</div>
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    @mock.patch(<span class="stringliteral">&#39;eva.statsd.StatsDClient.broadcast&#39;</span>)</div>
 <div class="line"><a name="l00073"></a><span class="lineno"><a class="line" href="classtest__statsd_1_1TestStatsD.html#ab46159e8ee25a3e9b80e08aaeb6eb08c">   73</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classtest__statsd_1_1TestStatsD.html#ab46159e8ee25a3e9b80e08aaeb6eb08c">test_histogram</a>(self, func):</div>
 <div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;        self.statsd.histogram(<span class="stringliteral">&#39;foo&#39;</span>, 1, {<span class="stringliteral">&#39;c&#39;</span>: 3})</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|h&#39;</span>)</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:1|h\n&#39;</span>)</div>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    @mock.patch(<span class="stringliteral">&#39;eva.statsd.StatsDClient.broadcast&#39;</span>)</div>
 <div class="line"><a name="l00078"></a><span class="lineno"><a class="line" href="classtest__statsd_1_1TestStatsD.html#acb05e30847cd6bf2ffe779a91fac7852">   78</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classtest__statsd_1_1TestStatsD.html#acb05e30847cd6bf2ffe779a91fac7852">test_timing</a>(self, func):</div>
 <div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;        self.statsd.timing(<span class="stringliteral">&#39;foo&#39;</span>, 200, {<span class="stringliteral">&#39;c&#39;</span>: 3})</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:200|ms&#39;</span>)</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;        func.assert_called_with(<span class="stringliteral">&#39;foo,a=1,b=2,c=3:200|ms\n&#39;</span>)</div>
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
 <div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
 <div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;</div>
@@ -249,7 +249,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 10 2016 14:50:31 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

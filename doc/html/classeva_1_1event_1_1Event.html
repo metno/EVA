@@ -89,6 +89,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classeva_1_1event_1_1Event-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -96,7 +97,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>Base class for received events.  
+<p>Base class for events, based on messages from the Kafka message queue.  
  <a href="classeva_1_1event_1_1Event.html#details">More...</a></p>
 <div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
   <img id="dynsection-0-trigger" src="closed.png" alt="+"/> Inheritance diagram for eva.event.Event:</div>
@@ -120,30 +121,38 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a06c8c842ac140a56cce6a34d3610b874"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a619dab6dbde1bebe1a76c25060ce3efe"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#a619dab6dbde1bebe1a76c25060ce3efe">__repr__</a></td></tr>
 <tr class="separator:a619dab6dbde1bebe1a76c25060ce3efe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24691025c7c579d7575c691b27a320c2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#a24691025c7c579d7575c691b27a320c2">raw_message</a></td></tr>
+<tr class="memdesc:a24691025c7c579d7575c691b27a320c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the raw message that generated this <a class="el" href="classeva_1_1event_1_1Event.html" title="Base class for events, based on messages from the Kafka message queue. ">Event</a>.  <a href="#a24691025c7c579d7575c691b27a320c2">More...</a><br/></td></tr>
+<tr class="separator:a24691025c7c579d7575c691b27a320c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49f437d363a20982885116a83295e92a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#a49f437d363a20982885116a83295e92a">id</a></td></tr>
 <tr class="memdesc:a49f437d363a20982885116a83295e92a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a unique ID that represents this event.  <a href="#a49f437d363a20982885116a83295e92a">More...</a><br/></td></tr>
 <tr class="separator:a49f437d363a20982885116a83295e92a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ab629f813843ecda9b8ad72556f3f7b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#a1ab629f813843ecda9b8ad72556f3f7b">timestamp</a></td></tr>
 <tr class="memdesc:a1ab629f813843ecda9b8ad72556f3f7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the timestamp of the event.  <a href="#a1ab629f813843ecda9b8ad72556f3f7b">More...</a><br/></td></tr>
 <tr class="separator:a1ab629f813843ecda9b8ad72556f3f7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace2fb6209b4a7314ece60659e1e67507"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#ace2fb6209b4a7314ece60659e1e67507">acknowledge</a></td></tr>
-<tr class="memdesc:ace2fb6209b4a7314ece60659e1e67507"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function is called from the event loop when an event has been successfully processed.  <a href="#ace2fb6209b4a7314ece60659e1e67507">More...</a><br/></td></tr>
-<tr class="separator:ace2fb6209b4a7314ece60659e1e67507"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5be96bb083a219ea12ad74c200b51c91"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#a5be96bb083a219ea12ad74c200b51c91">get_processing_delay</a></td></tr>
 <tr class="memdesc:a5be96bb083a219ea12ad74c200b51c91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a timedelta representing the time delay until the event can be processed.  <a href="#a5be96bb083a219ea12ad74c200b51c91">More...</a><br/></td></tr>
 <tr class="separator:a5be96bb083a219ea12ad74c200b51c91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a994e440b3c87054a5865bdc6494e2b1c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#a994e440b3c87054a5865bdc6494e2b1c">factory</a></td></tr>
+<tr class="memdesc:a994e440b3c87054a5865bdc6494e2b1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new object based on the serialized data.  <a href="#a994e440b3c87054a5865bdc6494e2b1c">More...</a><br/></td></tr>
+<tr class="separator:a994e440b3c87054a5865bdc6494e2b1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
+<tr class="memitem:adce46332f3a074d1b7c15837192c9833"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#adce46332f3a074d1b7c15837192c9833">message</a></td></tr>
+<tr class="separator:adce46332f3a074d1b7c15837192c9833"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e01fb01ca3907bd2c2fbcc00249c68f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#a7e01fb01ca3907bd2c2fbcc00249c68f">data</a></td></tr>
 <tr class="separator:a7e01fb01ca3907bd2c2fbcc00249c68f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af83cbde8e7e518f087ebb5858c907137"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1event_1_1Event.html#af83cbde8e7e518f087ebb5858c907137">kwargs</a></td></tr>
 <tr class="separator:af83cbde8e7e518f087ebb5858c907137"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Base class for received events. </p>
+<div class="textblock"><p>Base class for events, based on messages from the Kafka message queue. </p>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00007">7</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00008">8</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ac3cc9432f857291322bc73c7a9ca34e9"></a>
 <div class="memitem">
@@ -154,6 +163,12 @@ Public Attributes</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>message</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -175,7 +190,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00011">11</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00012">12</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -194,7 +209,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00019">19</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00021">21</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -212,28 +227,45 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00016">16</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00018">18</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="ace2fb6209b4a7314ece60659e1e67507"></a>
+<a class="anchor" id="a994e440b3c87054a5865bdc6494e2b1c"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">def eva.event.Event.acknowledge </td>
+          <td class="memname">def eva.event.Event.factory </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>self</em></td><td>)</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>serialized</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>This function is called from the event loop when an event has been successfully processed. </p>
-<p>This method MUST be implemented by subclasses. </p>
+<p>Return a new object based on the serialized data. </p>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00037">37</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00031">31</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -253,7 +285,7 @@ Public Attributes</h2></td></tr>
 
 <p>Returns a timedelta representing the time delay until the event can be processed. </p>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00044">44</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00052">52</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -274,7 +306,27 @@ Public Attributes</h2></td></tr>
 <p>Return a unique ID that represents this event. </p>
 <p>This method SHOULD be implemented by subclasses. </p>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00022">22</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00037">37</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a24691025c7c579d7575c691b27a320c2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.event.Event.raw_message </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return the raw message that generated this <a class="el" href="classeva_1_1event_1_1Event.html" title="Base class for events, based on messages from the Kafka message queue. ">Event</a>. </p>
+
+<p>Definition at line <a class="el" href="event_8py_source.html#l00024">24</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -296,7 +348,7 @@ Public Attributes</h2></td></tr>
 <p>This method MUST be implemented by subclasses. </p>
 <dl class="section return"><dt>Returns</dt><dd>DateTime object </dd></dl>
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00029">29</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00044">44</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -311,7 +363,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="event_8py_source.html#l00013">13</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+<p>Definition at line <a class="el" href="event_8py_source.html#l00015">15</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
 
 </div>
 </div>
@@ -321,6 +373,20 @@ Public Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">eva.event.Event.kwargs</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="event_8py_source.html#l00016">16</a> of file <a class="el" href="event_8py_source.html">event.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="adce46332f3a074d1b7c15837192c9833"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">eva.event.Event.message</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -335,7 +401,7 @@ Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 10 2016 14:50:31 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

@@ -120,6 +120,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2b5de2ebbd5ad06a40b1ffde1c68dbfb"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1executor_1_1grid__engine_1_1GridEngineExecutor.html#a2b5de2ebbd5ad06a40b1ffde1c68dbfb">create_job_filename</a></td></tr>
 <tr class="memdesc:a2b5de2ebbd5ad06a40b1ffde1c68dbfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a unique job name that can be used as a filename.  <a href="#a2b5de2ebbd5ad06a40b1ffde1c68dbfb">More...</a><br/></td></tr>
 <tr class="separator:a2b5de2ebbd5ad06a40b1ffde1c68dbfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa332f9115fc6542d27b637a75570373e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1executor_1_1grid__engine_1_1GridEngineExecutor.html#aa332f9115fc6542d27b637a75570373e">ensure_ssh_connection</a></td></tr>
+<tr class="memdesc:aa332f9115fc6542d27b637a75570373e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ensure that a working SSH connection exists.  <a href="#aa332f9115fc6542d27b637a75570373e">More...</a><br/></td></tr>
+<tr class="separator:aa332f9115fc6542d27b637a75570373e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a813965f62cb3964b6b8096f8d4d9f6f2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1executor_1_1grid__engine_1_1GridEngineExecutor.html#a813965f62cb3964b6b8096f8d4d9f6f2">create_ssh_connection</a></td></tr>
 <tr class="memdesc:a813965f62cb3964b6b8096f8d4d9f6f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open an SSH connection to the submit host, and open an SFTP channel.  <a href="#a813965f62cb3964b6b8096f8d4d9f6f2">More...</a><br/></td></tr>
 <tr class="separator:a813965f62cb3964b6b8096f8d4d9f6f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -216,7 +219,7 @@ Static Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Execute programs on Sun OpenGridEngine via an SSH connection to a submit host. </p>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00068">68</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00113">113</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a2b5de2ebbd5ad06a40b1ffde1c68dbfb"></a>
 <div class="memitem">
@@ -244,7 +247,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Generate a unique job name that can be used as a filename. </p>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00114">114</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00159">159</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -274,7 +277,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Open an SSH connection to the submit host, and open an SFTP channel. </p>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00120">120</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00180">180</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -294,7 +297,38 @@ Static Public Attributes</h2></td></tr>
 
 <p>Tear down the SSH connection. </p>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00134">134</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00194">194</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="aa332f9115fc6542d27b637a75570373e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.executor.grid_engine.GridEngineExecutor.ensure_ssh_connection </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>job</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Ensure that a working SSH connection exists. </p>
+<p>Throws any of SSH_RETRY_EXCEPTIONS if a working connection could not be established. </p>
+
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00165">165</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -324,7 +358,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Execute a job on Grid Engine. </p>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00172">172</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00232">232</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -355,7 +389,7 @@ Static Public Attributes</h2></td></tr>
 <p>Execute a command remotely using a new SSH channel. </p>
 <dl class="section return"><dt>Returns</dt><dd>A tuple of (exit_status, stdout, stderr). </dd></dl>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00142">142</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00202">202</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -385,7 +419,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Poll Grid Engine for job completion. </p>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00256">256</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00314">314</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -421,7 +455,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Make sure that the SSH key file exists. </p>
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00106">106</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00151">151</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -466,7 +500,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;        },</div>
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    }</div>
 </div><!-- fragment -->
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00073">73</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00118">118</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -491,7 +525,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;        <span class="stringliteral">&#39;EVA_GRIDENGINE_QUEUE&#39;</span>,</div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;    ]</div>
 </div><!-- fragment -->
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00096">96</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00141">141</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -518,7 +552,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;        <span class="stringliteral">&#39;EVA_GRIDENGINE_SSH_KEY_FILE&#39;</span>,</div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;    ]</div>
 </div><!-- fragment -->
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00100">100</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00145">145</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -532,7 +566,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00131">131</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00191">191</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -546,7 +580,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00125">125</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
+<p>Definition at line <a class="el" href="grid__engine_8py_source.html#l00185">185</a> of file <a class="el" href="grid__engine_8py_source.html">grid_engine.py</a>.</p>
 
 </div>
 </div>
@@ -556,7 +590,7 @@ Static Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Aug 1 2016 17:23:49 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 10 2016 14:50:31 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
