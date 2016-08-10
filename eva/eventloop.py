@@ -361,7 +361,7 @@ class Eventloop(object):
             else:
                 self.logger.debug('Creating a Job object for the current event...')
                 self.statsd.incr('productstatus_accepted_events')
-                event.job = self.adapter.create_job(event.id(), event.data)
+                event.job = self.adapter.create_job(event.id(), resource)
                 if not event.job:
                     self.logger.debug('No Job object was returned by the adapter; assuming no-op.')
                     self.remove_event_from_queues(event)
