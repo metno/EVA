@@ -40,15 +40,6 @@ NOISY_LOGGERS = [
 ]
 
 
-def import_module_class(name):
-    components = name.split('.')
-    modname = ('.').join(components[0:-1])
-    mod = __import__(modname)
-    for c in components[1:-1]:
-        mod = getattr(mod, c)
-    return getattr(mod, components[-1])
-
-
 def parse_bool(value):
     value = str(value).lower()
     if value == 'yes' or value == 'true' or value == '1':
@@ -81,6 +72,8 @@ def build_argument_list():
     arg['zookeeper'] = os.getenv('EVA_ZOOKEEPER')
     # StatsD endpoints
     arg['statsd'] = os.getenv('EVA_STATSD', '')
+    # Number of jobs to run at a time
+    arg['concurrency'] = os.getenv('EVA_CONCURRENCY', '1')
 
     return arg
 
@@ -198,6 +191,15 @@ if __name__ == "__main__":
             zookeeper = None
             logger.warning('ZooKeeper not configured.')
 
+        # Set number of events processed at a single time
+        try:
+            concurrency = int(arg['concurrency'])
+            assert concurrency > 0
+        except:
+            raise eva.exceptions.InvalidConfigurationException(
+                'EVA_CONCURRENCY must be a positive integer.'
+            )
+
         # Instantiate the Productstatus client
         productstatus_api = productstatus.api.Api(
             arg['productstatus_url'],
@@ -211,7 +213,7 @@ if __name__ == "__main__":
         listeners = []
         listener_classes = eva.split_comma_separated(arg['listeners'])
         for listener_class in listener_classes:
-            listener = import_module_class(listener_class)(
+            listener = eva.import_module_class(listener_class)(
                 environment_variables,
                 logger,
                 zookeeper,
@@ -224,7 +226,7 @@ if __name__ == "__main__":
             logger.info('Adding listener: %s' % listener.__class__)
             listeners += [listener]
 
-        executor = import_module_class(arg['executor'])(
+        executor = eva.import_module_class(arg['executor'])(
             group_id,
             environment_variables,
             logger,
@@ -233,7 +235,7 @@ if __name__ == "__main__":
         )
         logger.info('Using executor: %s' % executor.__class__)
 
-        adapter = import_module_class(arg['adapter'])(
+        adapter = eva.import_module_class(arg['adapter'])(
             environment_variables,
             executor,
             productstatus_api,
@@ -259,6 +261,8 @@ if __name__ == "__main__":
                                           adapter,
                                           executor,
                                           statsd_client,
+                                          zookeeper,
+                                          concurrency,
                                           environment_variables,
                                           logger,
                                           )

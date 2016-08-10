@@ -1,3 +1,5 @@
+import os
+import json
 import datetime
 import dateutil.tz
 import copy
@@ -9,6 +11,10 @@ import eva.rpc
 import eva.event
 
 import productstatus.exceptions
+
+
+# Max message size in ZooKeeper can be safely assumed to be 1MB.
+ZOOKEEPER_MSG_LIMIT = 1024**2
 
 
 class Eventloop(object):
@@ -24,6 +30,8 @@ class Eventloop(object):
                  adapter,
                  executor,
                  statsd,
+                 zookeeper,
+                 concurrency,
                  environment_variables,
                  logger,
                  ):
@@ -32,11 +40,14 @@ class Eventloop(object):
         self.adapter = adapter
         self.executor = executor
         self.statsd = statsd
+        self.zookeeper = zookeeper
+        self.concurrency = concurrency
         self.env = environment_variables
         self.logger = logger
-        self.current_event = None
+
+        self.drain = False
         self.event_queue = []
-        self.job_queue = []
+        self.process_list = []
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
@@ -56,78 +67,199 @@ class Eventloop(object):
             except self.RECOVERABLE_EXCEPTIONS as e:
                 self.logger.warning('Exception while receiving event: %s', e)
                 continue
-            # Ignore events already in queue
-            if event.id() in [x.id() for x in self.event_queue]:
-                continue
-            if self.has_current_event() and event.id() == self.current_event.id():
-                continue
-            self.add_event_to_queue(event)
 
-    def queue_empty(self):
+            # Duplicate events in queue should not happen
+            if event.id() in [x.id() for x in self.event_queue]:
+                self.logger.warning('Event with id %s is already in the event queue. This is most probably due to a previous Kafka commit error. The message has been discarded.')
+                continue
+            if event.id() in [x.id() for x in self.process_list]:
+                self.logger.warning('Event with id %s is already in the process list. This is most probably due to a previous Kafka commit error. The message has been discarded.')
+                continue
+
+            if self.add_event_to_queue(event):
+                listener.acknowledge()
+
+    def event_queue_empty(self):
         """!
         @returns True if the event queue is empty, False otherwise.
         """
         return len(self.event_queue) == 0
 
+    def process_list_empty(self):
+        """!
+        @returns True if the process list is empty, False otherwise.
+        """
+        return len(self.process_list) == 0
+
+    def both_queues_empty(self):
+        """!
+        @returns True if the event queue and process lists are both empty, False otherwise.
+        """
+        return self.event_queue_empty() and self.process_list_empty()
+
+    def set_drain(self):
+        """!
+        @brief Define that new events from queues will not be accepted for processing.
+        """
+        self.drain = True
+        self.logger.warning('Drain enabled! Will NOT process any more events from message listeners until event queue is empty!')
+        for listener in self.listeners:
+            listener.close_listener()
+
+    def set_no_drain(self):
+        """!
+        @brief Define that new events from queues will again be accepted for
+        processing. This will restart the message queue listener.
+        """
+        self.drain = False
+        self.logger.info('Drain disabled. Will restart message listeners and start accepting new events.')
+        for listener in self.listeners:
+            listener.setup_listener()
+
+    def draining(self):
+        """!
+        @brief Returns True if event queue draining is enabled, False otherwise.
+        """
+        return self.drain is True
+
+    def drained(self):
+        """!
+        @returns True if EVA is draining queues for messages AND both process queues are empty.
+        """
+        return self.draining() and self.both_queues_empty()
+
+    def process_list_full(self):
+        """!
+        @returns True if the process list is empty, False otherwise.
+        """
+        return len(self.process_list) >= self.concurrency
+
     def add_event_to_queue(self, event):
         """!
         @brief Add an event to the event queue.
+        @returns True if the event was successfully added, False otherwise.
         """
+        assert isinstance(event, eva.event.Event)
         self.event_queue += [event]
-        self.logger.debug('Added event to queue: %s', event)
-
-    def has_current_event(self):
-        """!
-        @brief Returns True if there is an event being processed at the moment.
-        """
-        return bool(self.current_event)
-
-    def set_current_event(self, event):
-        """!
-        @brief Define that an event should be processed.
-        """
-        self.current_event = event
-        self.logger.debug('Defining event to be processed: %s', self.current_event)
-
-    def set_finished_current_event(self):
-        """!
-        @brief Set that the currently processed event has finished.
-        """
-        timer = self.statsd.timer('kafka_commit_time')
-        timer.start()
-        self.current_event.acknowledge()
-        timer.stop()
-        self.current_event = None
-        self.logger.debug('Removed currently processed event.')
-
-    def add_first_in_queue_to_processing(self):
-        """!
-        @brief Define that the first queued event should be processed.
-        """
-        assert not self.has_current_event()
-
-        self.logger.debug('Event queue has %d pending events, adding the first one to processing...', len(self.event_queue))
-        event = self.event_queue[0]
-        self.shift_queue()
-
-        # Discard message if below timestamp threshold
-        if event.timestamp() < self.message_timestamp_threshold:
-            self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
-                                event.timestamp(),
-                                self.message_timestamp_threshold)
-            event.acknowledge()
-            return
-
-        if isinstance(event, eva.event.RPCEvent):
-            event.data.set_executor_instance(self)
-            self.process_rpc_event(event)
+        self.logger.debug('Adding event to queue: %s', event)
+        if self.store_event_queue():
+            self.logger.debug('Event added to queue: %s', event)
+            return True
         else:
-            delay = event.get_processing_delay().total_seconds()
-            if delay > 0:
-                self.logger.info('Sleeping %.1f seconds before processing next event due to event delay',
-                                 delay)
-                time.sleep(delay)
-            self.set_current_event(event)
+            self.logger.debug('Event could not be added to queue: %s', event)
+            self.set_drain()
+            self.event_queue = self.event_queue[:-1]
+            return False
+
+    def zookeeper_path(self, *args):
+        """!
+        @brief Return a ZooKeeper path.
+        """
+        return os.path.join(self.zookeeper.EVA_BASE_PATH, *args)
+
+    def zookeeper_event_queue_path(self):
+        """!
+        @brief Return the ZooKeeper path to the store of cached event queue messages.
+        """
+        return self.zookeeper_path('event_queue')
+
+    def zookeeper_process_list_path(self):
+        """!
+        @brief Return the ZooKeeper path to the store of process list messages.
+        """
+        return self.zookeeper_path('process_list')
+
+    def store_serialized_data(self, path, data, metric_base, log_name):
+        """!
+        @brief Store structured data in ZooKeeper.
+        @returns True if the data could be stored in ZooKeeper, False otherwise.
+        @throws kazoo.exceptions.ZooKeeperError on failure
+        """
+        if not self.zookeeper:
+            return True
+        raw = [x.raw_message() for x in data if x is not None]
+        serialized = json.dumps(raw).encode('ascii')
+        serialized_byte_size = len(serialized)
+        self.logger.debug('Storing %s in ZooKeeper, number of items: %d, size in bytes: %d', log_name, len(raw), serialized_byte_size)
+        if serialized_byte_size > ZOOKEEPER_MSG_LIMIT:
+            self.logger.warning('Cannot store %s in ZooKeeper since it exceeds the message limit of %d bytes.', log_name, ZOOKEEPER_MSG_LIMIT)
+            return False
+        if not self.zookeeper.exists(path):
+            self.zookeeper.create(path, serialized)
+        else:
+            self.zookeeper.set(path, serialized)
+        self.statsd.gauge(metric_base + '_count', len(raw))
+        self.statsd.gauge(metric_base + '_size', serialized_byte_size)
+        return True
+
+    def store_event_queue(self):
+        """!
+        @brief Store the event queue in ZooKeeper.
+        @returns True if the data could be stored in ZooKeeper, False otherwise.
+        @throws kazoo.exceptions.ZooKeeperError on failure
+        """
+        if not self.zookeeper:
+            return True
+        return self.store_serialized_data(self.zookeeper_event_queue_path(), self.event_queue, 'event_queue', 'event queue')
+
+    def store_process_list(self):
+        """!
+        @brief Store the event processing list in ZooKeeper.
+        @returns True if the data could be stored in ZooKeeper, False otherwise.
+        @throws kazoo.exceptions.ZooKeeperError on failure
+        """
+        if not self.zookeeper:
+            return True
+        return self.store_serialized_data(self.zookeeper_process_list_path(), self.process_list, 'process_list', 'process list')
+
+    def load_serialized_data(self, path):
+        """!
+        @brief Load the stored event queue from ZooKeeper.
+        @returns The loaded data.
+        """
+        if not self.zookeeper:
+            return []
+        if self.zookeeper.exists(path):
+            serialized = self.zookeeper.get(path)
+            return [eva.event.ProductstatusEvent.factory(productstatus.event.Message(x)) for x in json.loads(serialized[0].decode('ascii'))]
+        return []
+
+    def load_event_queue(self):
+        """!
+        @brief Load the event queue from ZooKeeper.
+        """
+        self.logger.info('Loading event queue from ZooKeeper.')
+        self.event_queue = self.load_serialized_data(self.zookeeper_event_queue_path())
+
+    def load_process_list(self):
+        """!
+        @brief Load the process list from ZooKeeper.
+        """
+        self.logger.info('Loading process list from ZooKeeper.')
+        self.process_list = self.load_serialized_data(self.zookeeper_process_list_path())
+
+    def move_to_process_list(self, event):
+        """!
+        @brief Move an event from the event queue to the process list.
+        @returns True if the event was moved, False otherwise.
+        """
+        if not event in self.event_queue:
+            return False
+        self.process_list += [event]
+        self.event_queue.remove(event)
+        self.store_process_list()
+        self.store_event_queue()
+
+    def remove_event_from_queues(self, event):
+        """!
+        @brief Remove an event from the event queue and the process list.
+        """
+        if event in self.event_queue:
+            self.event_queue.remove(event)
+            self.store_event_queue()
+        if event in self.process_list:
+            self.process_list.remove(event)
+            self.store_process_list()
 
     def sort_queue(self):
         """!
@@ -135,47 +267,78 @@ class Eventloop(object):
         """
         self.event_queue.sort(key=lambda event: not isinstance(event, eva.event.RPCEvent))
 
-    def shift_queue(self):
-        """!
-        @brief Delete the first event in the event queue.
-        """
-        if not self.queue_empty():
-            del self.event_queue[0]
-
     def __call__(self):
         """!
         @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
         """
         self.logger.info('Start processing events and RPC calls.')
+        self.load_process_list()
+        self.load_event_queue()
         while not self.do_shutdown:
-            timer = self.statsd.timer('poll_listeners')
-            timer.start()
-            self.poll_listeners()
-            timer.stop()
-
+            if self.drained():
+                self.set_no_drain()
+            if not self.draining():
+                timer = self.statsd.timer('poll_listeners')
+                timer.start()
+                self.poll_listeners()
+                timer.stop()
             self.sort_queue()
             self.process_all_events_once()
         self.logger.info('Stop processing events and RPC calls.')
 
+    def fill_process_list(self):
+        """!
+        @brief Iteration of the main loop. Fills the processing list with events from the event queue.
+        @returns True if some events were moved into the other queue, False otherwise.
+        """
+        added = False
+        while not self.event_queue_empty():
+            if self.process_list_full():
+                return added
+            for event in self.event_queue:
+                # Discard message if below timestamp threshold
+                if event.timestamp() < self.message_timestamp_threshold:
+                    self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
+                                        event.timestamp(),
+                                        self.message_timestamp_threshold)
+                    self.remove_event_from_queues(event)
+                    self.statsd.incr('productstatus_rejected_events')
+                else:
+                    self.move_to_process_list(event)
+                    added = True
+                break
+        return added
+
     def process_all_events_once(self):
         """!
-        @brief Iteration of the main loop.
-        @returns True if there are more events ready for processing right away, False otherwise.
+        @brief Process any events in the process list once.
+        @returns True if there is anything left to process, false otherwise.
         """
-        if self.has_current_event():
+        self.fill_process_list()
+        for event in self.process_list:
+            if isinstance(event, eva.event.RPCEvent):
+                event.data.set_executor_instance(self)
+                self.process_rpc_event(event)
+                continue
+
+                delay = event.get_processing_delay().total_seconds()
+                if delay > 0:
+                    self.logger.info('Postponing processing of event due to %.1f seconds event delay', delay)
+                    continue
+
             try:
-                self.process_current_event()
+                self.process_event(event)
             except self.RECOVERABLE_EXCEPTIONS as e:
                 del self.current_event.job
-                self.logger.error('Restarting processing of event in 2 seconds due to error: %s', e)
-                time.sleep(2.0)
-        elif not self.queue_empty():
-            self.add_first_in_queue_to_processing()
-        return self.has_current_event() or not self.queue_empty()
+                self.logger.error('Re-queueing failed event %s due to error: %s', (event, e))
+                self.statsd.incr('requeued_jobs')
+                continue
 
-    def process_current_event(self):
+        return not self.both_queues_empty()
+
+    def process_event(self, event):
         """!
-        @brief Run asynchronous processing of the current event.
+        @brief Run asynchronous processing of an current event.
 
         This function will, based on the status of the event:
 
@@ -183,24 +346,25 @@ class Eventloop(object):
         * Send the Job for execution to the Executor
         * Send a finish message to the Adapter
         """
-        if not self.has_current_event():
-            return
-
-        event = self.current_event
 
         # Create event job if it has not been created yet
         if not hasattr(event, 'job'):
             self.logger.debug('Start processing event: %s', event)
-            resource = event.data
+            if isinstance(event.data, productstatus.api.Resource):
+                resource = event.data
+            else:
+                resource = self.productstatus_api[event.data]
             if not self.adapter.validate_resource(resource):
                 self.logger.debug('Adapter did not validate the current event, skipping.')
-                self.set_finished_current_event()
+                self.statsd.incr('productstatus_rejected_events')
+                self.remove_event_from_queues(event)
             else:
                 self.logger.debug('Creating a Job object for the current event...')
+                self.statsd.incr('productstatus_accepted_events')
                 event.job = self.adapter.create_job(event.id(), event.data)
                 if not event.job:
                     self.logger.debug('No Job object was returned by the adapter; assuming no-op.')
-                    self.set_finished_current_event()
+                    self.remove_event_from_queues(event)
                 else:
                     event.job.resource = resource
                     event.job.timer = self.statsd.timer('execution_time')
@@ -226,7 +390,7 @@ class Eventloop(object):
             event.job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', event.job.timer.total_time_msec() / 1000.0)
             self.adapter.finish_job(event.job)
             event.job.logger.info('Adapter has finished processing the job.')
-            self.set_finished_current_event()
+            self.remove_event_from_queues(event)
             self.logger.debug('Finished processing event: %s', event)
 
     def process_rpc_event(self, event):
@@ -238,7 +402,6 @@ class Eventloop(object):
             event.data()
         except eva.exceptions.RPCFailedException as e:
             self.logger.error('Error while executing RPC request: %s', e)
-        event.acknowledge()
         self.logger.info('Finished processing RPC request: %s', str(event))
 
     def set_message_timestamp_threshold(self, timestamp):
@@ -266,6 +429,7 @@ class Eventloop(object):
             for resource in instances:
                 self.logger.info('[%d/%d] Adding to queue: %s', index, count, resource)
                 events += [eva.event.ProductstatusLocalEvent(
+                    {},
                     resource,
                     timestamp=resource.modified,
                 )]
@@ -281,6 +445,7 @@ class Eventloop(object):
         """
         resource = self.productstatus_api.datainstance[data_instance_uuid]
         event = eva.event.ProductstatusLocalEvent(
+            {},
             resource,
             timestamp=resource.modified,
         )

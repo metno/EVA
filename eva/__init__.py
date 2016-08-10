@@ -180,6 +180,15 @@ def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warni
             time.sleep(interval)
 
 
+def import_module_class(name):
+    components = name.split('.')
+    modname = ('.').join(components[0:-1])
+    mod = __import__(modname)
+    for c in components[1:-1]:
+        mod = getattr(mod, c)
+    return getattr(mod, components[-1])
+
+
 def print_exception_as_bug(exception, logger):
     """!
     @brief Print the stack trace of an exception to the logging framework, and

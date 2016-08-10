@@ -1,15 +1,17 @@
 import uuid
 import datetime
+import dateutil.parser
 
 import eva
 
 
 class Event(object):
     """!
-    @brief Base class for received events.
+    @brief Base class for events, based on messages from the Kafka message queue.
     """
-    def __init__(self, data, **kwargs):
+    def __init__(self, message, data, **kwargs):
         self._id = uuid.uuid4()
+        self.message = message
         self.data = data
         self.kwargs = kwargs
 
@@ -18,6 +20,19 @@ class Event(object):
 
     def __repr__(self):
         return str(self)
+
+    def raw_message(self):
+        """!
+        @brief Return the raw message that generated this Event.
+        """
+        return self.message
+
+    @staticmethod
+    def factory(self, serialized):
+        """!
+        @brief Return a new object based on the serialized data.
+        """
+        return NotImplementedError()
 
     def id(self):
         """!
@@ -31,13 +46,6 @@ class Event(object):
         @brief Return the timestamp of the event. This method MUST be
         implemented by subclasses.
         @returns DateTime object
-        """
-        raise NotImplementedError()
-
-    def acknowledge(self):
-        """!
-        @brief This function is called from the event loop when an event has
-        been successfully processed. This method MUST be implemented by subclasses.
         """
         raise NotImplementedError()
 
@@ -60,17 +68,23 @@ class ProductstatusEvent(Event):
         """
         return self.kwargs['id']
 
-    def acknowledge(self):
-        """!
-        @brief Store message position in Kafka.
-        """
-        self.kwargs['parent'].delete_first_event()
-
     def timestamp(self):
         """!
         @brief Return the modified timestamp of the Productstatus resource.
         """
         return self.kwargs['timestamp']
+
+    @staticmethod
+    def factory(message):
+        """!
+        @brief Given a Kafka message object, return an Event instance.
+        """
+        return ProductstatusEvent(
+            message,
+            message.uri,
+            id=message.message_id,
+            timestamp=dateutil.parser.parse(message.message_timestamp),
+        )
 
 
 class ProductstatusLocalEvent(ProductstatusEvent):
@@ -81,23 +95,11 @@ class ProductstatusLocalEvent(ProductstatusEvent):
     def id(self):
         return str(self._id)
 
-    def acknowledge(self):
-        """!
-        @brief Fake message acknowledgement.
-        """
-        pass
-
 
 class RPCEvent(Event):
     """!
     @brief RPC events.
     """
-
-    def acknowledge(self):
-        """!
-        @brief RPC messages are not acknowledged.
-        """
-        pass
 
     def timestamp(self):
         """!

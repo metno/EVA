@@ -32,6 +32,12 @@ class RPCListener(eva.base.listener.BaseListener):
         self.event_listener = productstatus.event.Listener('eva.rpc', **kwargs)
         self.logger.info('Instance ID for RPC calls: %s', self.kwargs['group_id'])
 
+    def close_listener(self):
+        """!
+        @brief Drop the connection to Kafka.
+        """
+        self.event_listener.json_consumer.close()
+
     def get_next_event(self, *args):
         """!
         @brief Block until a message is received, or a timeout is reached, and
@@ -67,3 +73,9 @@ class RPCListener(eva.base.listener.BaseListener):
                 )
         except re.error as e:
             raise eva.exceptions.RPCInvalidRegexException("Invalid regular expression in event instance_id: %s" % str(e))
+
+    def acknowledge(self):
+        """!
+        @brief Events are already acknowledged through auto-commit.
+        """
+        pass

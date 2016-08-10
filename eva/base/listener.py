@@ -19,8 +19,21 @@ class BaseListener(eva.ConfigurableObject):
         """
         raise NotImplementedError()
 
+    def close_listener(self):
+        """!
+        @brief Close any connections to the event listener.
+        """
+        raise NotImplementedError()
+
     def get_next_event(self):
         """!
         @brief Get the next event that should be processed.
+        """
+        raise NotImplementedError()
+
+    def acknowledge(self):
+        """!
+        @brief Acknowledge that the most recent event has been taken
+        responsibility for.
         """
         raise NotImplementedError()
