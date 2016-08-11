@@ -329,7 +329,7 @@ class Eventloop(object):
             try:
                 self.process_event(event)
             except self.RECOVERABLE_EXCEPTIONS as e:
-                del self.current_event.job
+                del event.job
                 self.logger.error('Re-queueing failed event %s due to error: %s', (event, e))
                 self.statsd.incr('requeued_jobs')
                 continue
