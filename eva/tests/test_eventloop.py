@@ -1,5 +1,6 @@
 import unittest
 import logging
+import datetime
 
 import eva
 import eva.event
@@ -109,26 +110,36 @@ class TestEventloop(unittest.TestCase):
         self.assertFalse(self.eventloop.draining())
 
     def test_sort_queue(self):
+        """!
+        @brief Test that the event queue is sorted according to specs.
+
+        * RPC events go first in queue
+        * Events are sorted by their timestamps in chronological or reverse
+          chronological order, according to EVA_QUEUE_ORDER being either FIFO
+          or LIFO
+        """
+        timestamp = eva.now_with_timezone()
+        future = timestamp + datetime.timedelta(seconds=26)
         self.eventloop.event_queue = [
-            eva.event.ProductstatusEvent(None, 1),
-            eva.event.ProductstatusEvent(None, 2),
-            eva.event.RPCEvent(None, 3),
-            eva.event.ProductstatusEvent(None, 4),
-            eva.event.RPCEvent(None, 5),
-            eva.event.ProductstatusEvent(None, 6),
-            eva.event.ProductstatusEvent(None, 7),
-            eva.event.RPCEvent(None, 8),
+            eva.event.ProductstatusLocalEvent(None, 1, timestamp=future),
+            eva.event.ProductstatusLocalEvent(None, 2, timestamp=timestamp),
+            eva.event.RPCEvent(None, 3, timestamp=timestamp),
+            eva.event.ProductstatusLocalEvent(None, 4, timestamp=timestamp),
+            eva.event.RPCEvent(None, 5, timestamp=future),
+            eva.event.ProductstatusLocalEvent(None, 6, timestamp=future),
+            eva.event.ProductstatusLocalEvent(None, 7, timestamp=timestamp),
+            eva.event.RPCEvent(None, 8, timestamp=timestamp),
         ]
         self.eventloop.sort_queue()
-        self.assertEqual(len(self.eventloop.event_queue), 8)
-        self.assertEqual(self.eventloop.event_queue[0].data, 3)
-        self.assertEqual(self.eventloop.event_queue[1].data, 5)
-        self.assertEqual(self.eventloop.event_queue[2].data, 8)
-        self.assertEqual(self.eventloop.event_queue[3].data, 1)
-        self.assertEqual(self.eventloop.event_queue[4].data, 2)
-        self.assertEqual(self.eventloop.event_queue[5].data, 4)
-        self.assertEqual(self.eventloop.event_queue[6].data, 6)
-        self.assertEqual(self.eventloop.event_queue[7].data, 7)
+        order = [3, 8, 5, 2, 4, 7, 1, 6,]
+        self.assertEqual(len(self.eventloop.event_queue), len(order))
+        for i, n in enumerate(order):
+            self.assertEqual(self.eventloop.event_queue[i].data, n)
+        self.eventloop.queue_order = self.eventloop.QUEUE_ORDER_LIFO
+        self.eventloop.sort_queue()
+        order = [5, 3, 8, 1, 6, 2, 4, 7,]
+        for i, n in enumerate(order):
+            self.assertEqual(self.eventloop.event_queue[i].data, n)
 
     def test_parse_queue_order(self):
         for key, value in self.eventloop.QUEUE_ORDERS.items():

@@ -42,6 +42,7 @@ class Eventloop(eva.ConfigurableObject):
 
     RECOVERABLE_EXCEPTIONS = (eva.exceptions.RetryException, productstatus.exceptions.ServiceUnavailableException,)
 
+    # Queue orders, used in Eventloop.sort_queue()
     QUEUE_ORDER_FIFO = 0
     QUEUE_ORDER_LIFO = 1
 
@@ -304,6 +305,7 @@ class Eventloop(eva.ConfigurableObject):
         """!
         @brief Ensure that RPC requests are moved to the top of the queue.
         """
+        self.event_queue.sort(key=lambda event: event.timestamp(), reverse=bool(self.queue_order == self.QUEUE_ORDER_LIFO))
         self.event_queue.sort(key=lambda event: not isinstance(event, eva.event.RPCEvent))
 
     def __call__(self):
