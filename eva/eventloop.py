@@ -17,12 +17,38 @@ import productstatus.exceptions
 ZOOKEEPER_MSG_LIMIT = 1024**2
 
 
-class Eventloop(object):
+class Eventloop(eva.ConfigurableObject):
     """!
     The main loop.
     """
 
+    CONFIG = {
+        'EVA_CONCURRENCY': {
+            'type': 'positive_int',
+            'help': 'How many Executor tasks to run at the same time',
+            'default': '1',
+        },
+        'EVA_QUEUE_ORDER': {
+            'type': 'string',
+            'help': 'Specify how to process incoming events; one of FIFO, LIFO',
+            'default': 'FIFO',
+        },
+    }
+
+    OPTIONAL_CONFIG = [
+        'EVA_CONCURRENCY',
+        'EVA_QUEUE_ORDER',
+    ]
+
     RECOVERABLE_EXCEPTIONS = (eva.exceptions.RetryException, productstatus.exceptions.ServiceUnavailableException,)
+
+    QUEUE_ORDER_FIFO = 0
+    QUEUE_ORDER_LIFO = 1
+
+    QUEUE_ORDERS = {
+        'FIFO': QUEUE_ORDER_FIFO,
+        'LIFO': QUEUE_ORDER_LIFO,
+    }
 
     def __init__(self,
                  productstatus_api,
@@ -31,7 +57,6 @@ class Eventloop(object):
                  executor,
                  statsd,
                  zookeeper,
-                 concurrency,
                  environment_variables,
                  logger,
                  ):
@@ -41,15 +66,29 @@ class Eventloop(object):
         self.executor = executor
         self.statsd = statsd
         self.zookeeper = zookeeper
-        self.concurrency = concurrency
         self.env = environment_variables
         self.logger = logger
 
+        self.read_configuration()
+        self.concurrency = self.env['EVA_CONCURRENCY']
+        self.queue_order = self.parse_queue_order(self.env['EVA_QUEUE_ORDER'])
         self.drain = False
         self.event_queue = []
         self.process_list = []
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
+
+    def parse_queue_order(self, s):
+        """!
+        @brief Parse a configuration string into a queue order.
+        """
+        s = s.upper()
+        if s not in self.QUEUE_ORDERS:
+            raise eva.exceptions.InvalidConfigurationException(
+                'EVA_QUEUE_ORDER order must be one of: %s' %
+                ', '.join(sorted(self.QUEUE_ORDERS.keys()))
+            )
+        return self.QUEUE_ORDERS[s]
 
     def poll_listeners(self):
         """!

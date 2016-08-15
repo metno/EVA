@@ -72,8 +72,6 @@ def build_argument_list():
     arg['zookeeper'] = os.getenv('EVA_ZOOKEEPER')
     # StatsD endpoints
     arg['statsd'] = os.getenv('EVA_STATSD', '')
-    # Number of jobs to run at a time
-    arg['concurrency'] = os.getenv('EVA_CONCURRENCY', '1')
 
     return arg
 
@@ -191,15 +189,6 @@ if __name__ == "__main__":
             zookeeper = None
             logger.warning('ZooKeeper not configured.')
 
-        # Set number of events processed at a single time
-        try:
-            concurrency = int(arg['concurrency'])
-            assert concurrency > 0
-        except:
-            raise eva.exceptions.InvalidConfigurationException(
-                'EVA_CONCURRENCY must be a positive integer.'
-            )
-
         # Instantiate the Productstatus client
         productstatus_api = productstatus.api.Api(
             arg['productstatus_url'],
@@ -262,7 +251,6 @@ if __name__ == "__main__":
                                           executor,
                                           statsd_client,
                                           zookeeper,
-                                          concurrency,
                                           environment_variables,
                                           logger,
                                           )

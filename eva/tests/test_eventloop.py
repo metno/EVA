@@ -17,7 +17,6 @@ class TestEventloop(unittest.TestCase):
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
         self.zookeeper = None
-        self.concurrency = 1
         self.statsd = eva.statsd.StatsDClient()
         self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
         self.adapter = eva.adapter.NullAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
@@ -27,7 +26,6 @@ class TestEventloop(unittest.TestCase):
                                                  self.executor,
                                                  self.statsd,
                                                  self.zookeeper,
-                                                 self.concurrency,
                                                  self.env,
                                                  self.logger,
                                                  )
@@ -110,17 +108,16 @@ class TestEventloop(unittest.TestCase):
         self.eventloop.drain = False
         self.assertFalse(self.eventloop.draining())
 
-    @unittest.skip
     def test_sort_queue(self):
         self.eventloop.event_queue = [
-            eva.event.ProductstatusEvent(1),
-            eva.event.ProductstatusEvent(2),
-            eva.event.RPCEvent(3),
-            eva.event.ProductstatusEvent(4),
-            eva.event.RPCEvent(5),
-            eva.event.ProductstatusEvent(6),
-            eva.event.ProductstatusEvent(7),
-            eva.event.RPCEvent(8),
+            eva.event.ProductstatusEvent(None, 1),
+            eva.event.ProductstatusEvent(None, 2),
+            eva.event.RPCEvent(None, 3),
+            eva.event.ProductstatusEvent(None, 4),
+            eva.event.RPCEvent(None, 5),
+            eva.event.ProductstatusEvent(None, 6),
+            eva.event.ProductstatusEvent(None, 7),
+            eva.event.RPCEvent(None, 8),
         ]
         self.eventloop.sort_queue()
         self.assertEqual(len(self.eventloop.event_queue), 8)
@@ -132,3 +129,9 @@ class TestEventloop(unittest.TestCase):
         self.assertEqual(self.eventloop.event_queue[5].data, 4)
         self.assertEqual(self.eventloop.event_queue[6].data, 6)
         self.assertEqual(self.eventloop.event_queue[7].data, 7)
+
+    def test_parse_queue_order(self):
+        for key, value in self.eventloop.QUEUE_ORDERS.items():
+            self.assertEqual(self.eventloop.parse_queue_order(key.lower()), value)
+        with self.assertRaises(eva.exceptions.InvalidConfigurationException):
+            self.eventloop.parse_queue_order('foobar')

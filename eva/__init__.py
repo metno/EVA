@@ -58,6 +58,15 @@ class ConfigurableObject(object):
             return None
         return int(value)
 
+    def normalize_config_positive_int(self, value):
+        """!
+        Coerce a type into an integer.
+        """
+        value = self.normalize_config_int(value)
+        if value <= 0:
+            raise eva.exceptions.InvalidConfigurationException('Invalid non-positive integer: %d' % value)
+        return value
+
     def normalize_config_null_bool(self, value):
         """!
         Coerce a type into a unicode string.
