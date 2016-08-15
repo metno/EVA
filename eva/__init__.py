@@ -266,9 +266,16 @@ def coerce_to_utc(dt):
 
 def now_with_timezone():
     """!
-    @returns a timezone-aware UTC datetime object representing the current timestamp.
+    @brief Return a timezone-aware UTC datetime object representing the current timestamp.
     """
     return coerce_to_utc(datetime.datetime.utcnow())
+
+
+def epoch_with_timezone():
+    """!
+    @brief Return a timezone-aware datetime object with timestamp zero.
+    """
+    return eva.coerce_to_utc(datetime.datetime.utcfromtimestamp(0))
 
 
 def netcdf_time_to_timestamp(time_string):

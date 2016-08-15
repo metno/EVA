@@ -45,6 +45,7 @@ class TestBaseAdapter(unittest.TestCase):
             'EVA_OUTPUT_SERVICE_BACKEND',
             'EVA_PRODUCTSTATUS_API_KEY',
             'EVA_PRODUCTSTATUS_USERNAME',
+            'EVA_REFERENCE_TIME_THRESHOLD',
             'EVA_SINGLE_INSTANCE',
         ])
 
@@ -232,3 +233,17 @@ class TestBaseAdapter(unittest.TestCase):
         self.zookeeper.create = mock.MagicMock()
         self.create_adapter()
         self.zookeeper.create.assert_called_once_with('/foo/single_instance_lock', None, ephemeral=True)
+
+    def test_reference_time_threshold(self):
+        self.env['EVA_REFERENCE_TIME_THRESHOLD'] = '420'
+        self.create_adapter()
+        now = eva.now_with_timezone() - datetime.timedelta(seconds=420)
+        then = self.adapter.reference_time_threshold()
+        diff = now - then
+        self.assertEqual(int(diff.total_seconds()), 0)
+
+    def test_reference_time_threshold_zero_default(self):
+        self.create_adapter()
+        now = eva.now_with_timezone() - datetime.timedelta(days=420)
+        then = self.adapter.reference_time_threshold()
+        self.assertGreater(now, then)

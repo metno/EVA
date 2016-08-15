@@ -68,6 +68,11 @@ class TestBase(unittest.TestCase):
         dt_c = eva.coerce_to_utc(dt)
         self.assertEqual(dt_c.tzinfo.tzname(None), 'UTC')
 
+    def test_epoch_with_timezone(self):
+        dt = eva.epoch_with_timezone()
+        self.assertEqual(dt.tzinfo.tzname(None), 'UTC')
+        self.assertEqual(dt.timestamp(), 0)
+
     def test_netcdf_time_to_timestamp(self):
         s = "2015-01-01"
         dt = eva.netcdf_time_to_timestamp(s)

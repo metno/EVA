@@ -86,6 +86,11 @@ class BaseAdapter(eva.ConfigurableObject):
             'help': 'Productstatus user name',
             'default': '',
         },
+        'EVA_REFERENCE_TIME_THRESHOLD': {
+            'type': 'int',
+            'help': 'If non-zero, EVA will never process DataInstance resources that belong to a ProductInstance with a reference time older than N seconds.',
+            'default': '0',
+        },
         'EVA_SINGLE_INSTANCE': {
             'type': 'bool',
             'help': 'Allow only one EVA instance with the same group id running at the same time',
@@ -96,6 +101,7 @@ class BaseAdapter(eva.ConfigurableObject):
     _OPTIONAL_CONFIG = [
         'EVA_PRODUCTSTATUS_API_KEY',
         'EVA_PRODUCTSTATUS_USERNAME',
+        'EVA_REFERENCE_TIME_THRESHOLD',
         'EVA_SINGLE_INSTANCE',
     ]
 
@@ -120,10 +126,12 @@ class BaseAdapter(eva.ConfigurableObject):
         self.env = environment_variables
         self.blacklist = set()
         self.required_uuids = set()
+        self.reference_time_threshold_delta = None
         self.template = eva.template.Environment()
         self.read_configuration()
         self.setup_process_partial()
         self.setup_single_instance()
+        self.setup_reference_time_threshold()
         self.init()
 
     def setup_process_partial(self):
@@ -156,6 +164,16 @@ class BaseAdapter(eva.ConfigurableObject):
             self.zookeeper.create(lock_path, None, ephemeral=True)
         except kazoo.exceptions.NodeExistsError:
             raise eva.exceptions.AlreadyRunningException('EVA is already running with the same group id, aborting!')
+
+    def setup_reference_time_threshold(self):
+        """!
+        @brief Define the BaseAdapter.reference_time_threshold variable, which
+        is either a datetime.timedelta object representing the difference from
+        current time, or None. The variable is used to determine whether or not
+        to process a specific dataset.
+        """
+        if self.env['EVA_REFERENCE_TIME_THRESHOLD'] != 0:
+            self.reference_time_threshold_delta = datetime.timedelta(seconds=self.env['EVA_REFERENCE_TIME_THRESHOLD'])
 
     def in_array_or_empty(self, data, env):
         """!
@@ -229,6 +247,14 @@ class BaseAdapter(eva.ConfigurableObject):
             return True
         return False
 
+    def reference_time_threshold(self):
+        """!
+        @brief Return a DateTime object which represent the oldest reference time that will be processed.
+        """
+        if self.reference_time_threshold_delta is not None:
+            return eva.now_with_timezone() - self.reference_time_threshold_delta
+        return eva.epoch_with_timezone()
+
     def resource_matches_input_config(self, resource):
         """!
         @brief Check that a Productstatus resource matches the configured
@@ -246,7 +272,9 @@ class BaseAdapter(eva.ConfigurableObject):
             self.logger.debug('DataInstance file type is %s, ignoring.',
                              resource.format.name)
         elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
-            self.logger.debug('DataInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
+            self.logger.debug('ProductInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
+        elif self.reference_time_threshold() > resource.data.productinstance.reference_time:
+            self.logger.debug('ProductInstance reference time is older than threshold of %s, ignoring.', self.reference_time_threshold())
         elif resource.deleted:
             self.logger.debug('DataInstance is marked as deleted, ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
