@@ -13,8 +13,9 @@ import eva.event
 import productstatus.exceptions
 
 
-# Max message size in ZooKeeper can be safely assumed to be 1MB.
-ZOOKEEPER_MSG_LIMIT = 1024**2
+# Try to keep message cache in ZooKeeper to a minimum; we use 1/4 of the max
+# message size in ZooKeeper, which amounts to 250kB.
+ZOOKEEPER_MSG_LIMIT = (1024**2)/4
 
 
 class Eventloop(eva.ConfigurableObject):
