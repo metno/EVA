@@ -24,7 +24,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.send_response(204)
-        self.flush_headers()
+        self.end_headers()
 
 
 class HealthCheckServer(object):
