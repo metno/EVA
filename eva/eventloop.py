@@ -1,5 +1,6 @@
 import os
 import json
+import mock
 import datetime
 import dateutil.tz
 import copy
@@ -62,6 +63,7 @@ class Eventloop(eva.ConfigurableObject):
                  statsd,
                  zookeeper,
                  environment_variables,
+                 health_check_server,
                  logger,
                  ):
         self.listeners = listeners
@@ -71,6 +73,7 @@ class Eventloop(eva.ConfigurableObject):
         self.statsd = statsd
         self.zookeeper = zookeeper
         self.env = environment_variables
+        self.health_check_server = health_check_server
         self.logger = logger
 
         self.read_configuration()
@@ -308,6 +311,8 @@ class Eventloop(eva.ConfigurableObject):
         """!
         @brief Make sure a ProductstatusEvent has a Productstatus resource in Event.data.
         """
+        if isinstance(event.data, mock.Mock):
+            return
         if not isinstance(event.data, productstatus.api.Resource):
             event.data = self.productstatus_api[event.data]
 
@@ -395,6 +400,11 @@ class Eventloop(eva.ConfigurableObject):
         """
         self.fill_process_list()
         for event in self.process_list:
+
+            # respond to health checks quickly
+            if self.health_check_server:
+                self.health_check_server.respond_to_next_request()
+
             if isinstance(event, eva.event.RPCEvent):
                 event.data.set_executor_instance(self)
                 self.process_rpc_event(event)

@@ -20,6 +20,7 @@ class TestEventloop(unittest.TestCase):
         self.logger = logging
         self.zookeeper = None
         self.statsd = eva.statsd.StatsDClient()
+        self.health_check_server = None
         self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
         self.adapter = eva.adapter.NullAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
         self.eventloop = eva.eventloop.Eventloop(self.productstatus_api,
@@ -29,6 +30,7 @@ class TestEventloop(unittest.TestCase):
                                                  self.statsd,
                                                  self.zookeeper,
                                                  self.env,
+                                                 self.health_check_server,
                                                  self.logger,
                                                  )
 

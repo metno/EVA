@@ -12,6 +12,7 @@ import productstatus.api
 import productstatus.event
 
 import eva
+import eva.health
 import eva.statsd
 import eva.logger
 import eva.eventloop
@@ -112,6 +113,12 @@ if __name__ == "__main__":
         action='store',
         help='Manually set the EVA group id (DANGEROUS!)',
     )
+    parser.add_argument(
+        '--health-check-port',
+        action='store',
+        type=int,
+        help='Run a HTTP health check server on all interfaces at the specified port',
+    )
     args = parser.parse_args()
 
     try:
@@ -156,6 +163,14 @@ if __name__ == "__main__":
 
         # Log startup event
         logger.info('Starting EVA: the EVent Adapter.')
+
+        # Set up health check server
+        if args.health_check_port:
+            health_check_server = eva.health.HealthCheckServer('0.0.0.0', args.health_check_port)
+            logger.info('Started health check server on 0.0.0.0:%d', args.health_check_port)
+        else:
+            health_check_server = None
+            logger.warning('Not running health check server!')
 
         # Print environment variables
         for key, var in sorted(environment_variables.items()):
@@ -252,6 +267,7 @@ if __name__ == "__main__":
                                           statsd_client,
                                           zookeeper,
                                           environment_variables,
+                                          health_check_server,
                                           logger,
                                           )
         if args.process_all_in_product_instance:
