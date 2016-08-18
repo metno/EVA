@@ -304,6 +304,13 @@ class Eventloop(eva.ConfigurableObject):
             self.process_list.remove(event)
             self.store_process_list()
 
+    def instantiate_productstatus_data(self, event):
+        """!
+        @brief Make sure a ProductstatusEvent has a Productstatus resource in Event.data.
+        """
+        if not isinstance(event.data, productstatus.api.Resource):
+            event.data = self.productstatus_api[event.data]
+
     def sort_queue(self):
         """!
         @brief Sort queue according to EVA_QUEUE_ORDER.
@@ -325,6 +332,7 @@ class Eventloop(eva.ConfigurableObject):
         def sort_reference_time(event):
             if not isinstance(event, eva.event.ProductstatusEvent):
                 return event.timestamp()
+            self.instantiate_productstatus_data(event)
             if event.data._collection._resource_name != 'datainstance':
                 return event.timestamp()
             return event.data.data.productinstance.reference_time
@@ -421,10 +429,8 @@ class Eventloop(eva.ConfigurableObject):
         # Create event job if it has not been created yet
         if not hasattr(event, 'job'):
             self.logger.debug('Start processing event: %s', event)
-            if isinstance(event.data, productstatus.api.Resource):
-                resource = event.data
-            else:
-                resource = self.productstatus_api[event.data]
+            self.instantiate_productstatus_data(event)
+            resource = event.data
             if not self.adapter.validate_resource(resource):
                 self.logger.debug('Adapter did not validate the current event, skipping.')
                 self.statsd.incr('productstatus_rejected_events')
