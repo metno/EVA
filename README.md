@@ -11,6 +11,26 @@ source deps/bin/activate
 pip install -e .
 ```
 
+## Configuration
+
+Configuration of EVA is done via environment variables. See below for a detailed description of configuration variables.
+
+### EVA_QUEUE_ORDER
+
+Specify in which order to process incoming events.
+
+#### FIFO
+```export EVA_QUEUE_ORDER=FIFO```
+FIFO is a first-in, first-out queue. The messages will be processed in chronological order. If messages appear out of order, they are sorted before processing. Note that if messages are severely delayed, they will be processed out of order anyway, because EVA does not know whether or not there are older messages on the queue. This is the default behavior.
+
+#### LIFO
+```export EVA_QUEUE_ORDER=LIFO```
+LIFO is a last-in, first-out queue. It functions exactly as FIFO, but with reverse chronological order.
+
+#### ADAPTIVE
+```export EVA_QUEUE_ORDER=ADAPTIVE```
+Messages will be processed in chronological order as with FIFO, but messages belonging to a ProductInstance will be checked for their reference time, and those with the most recent reference time will be processed first. This results in faster delivery of newer models in case of a service outage.
+
 ## Writing adapters
 
 See the file [eva/adapter/example.py] for an example.

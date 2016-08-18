@@ -1,6 +1,7 @@
 import unittest
 import logging
 import datetime
+import mock
 
 import eva
 import eva.event
@@ -135,11 +136,42 @@ class TestEventloop(unittest.TestCase):
         self.assertEqual(len(self.eventloop.event_queue), len(order))
         for i, n in enumerate(order):
             self.assertEqual(self.eventloop.event_queue[i].data, n)
+
         self.eventloop.queue_order = self.eventloop.QUEUE_ORDER_LIFO
         self.eventloop.sort_queue()
         order = [5, 3, 8, 1, 6, 2, 4, 7,]
         for i, n in enumerate(order):
             self.assertEqual(self.eventloop.event_queue[i].data, n)
+
+    def test_sort_queue_adaptive(self):
+        now = eva.now_with_timezone()
+        # create mock objects
+        mocks = [mock.MagicMock() for x in range(6)]
+        # set type to 'datainstance' for the first four objects, and set reference time to now
+        for x in range(4):
+            mocks[x]._collection._resource_name = 'datainstance'
+            mocks[x].data.productinstance.reference_time = now
+        # set future reference time for the mid two objects
+        for x in range(2, 4):
+            mocks[x].data.productinstance.reference_time = eva.coerce_to_utc(datetime.datetime(2100, 1, 1, 12, 0, 0))
+        # set event queue contents two five ProductstatusLocalEvents, data
+        # pointing to the mock objects, with increasing timestamps
+        self.eventloop.event_queue = [
+            eva.event.ProductstatusLocalEvent(None, mocks[x], timestamp=now + datetime.timedelta(hours=x+1))
+            for x in range(5)
+        ]
+        # add an rpc event to the event queue
+        self.eventloop.event_queue += [eva.event.RPCEvent(None, mocks[-1], timestamp=now)]
+        # set queue sort order
+        self.eventloop.queue_order = self.eventloop.QUEUE_ORDER_ADAPTIVE
+        # sort queue
+        self.eventloop.sort_queue()
+        # test expected order: rpc first, then future reftimes, then objects
+        # without reference time, then the other objects
+        order = [5, 2, 3, 4, 0, 1]
+        for i, n in enumerate(order):
+            self.assertEqual(self.eventloop.event_queue[i].data, mocks[n],
+                             msg='Queue was sorted incorrectly. Expected item %d at index %d' % (n, i))
 
     def test_parse_queue_order(self):
         for key, value in self.eventloop.QUEUE_ORDERS.items():

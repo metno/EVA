@@ -31,7 +31,7 @@ class Eventloop(eva.ConfigurableObject):
         },
         'EVA_QUEUE_ORDER': {
             'type': 'string',
-            'help': 'Specify how to process incoming events; one of FIFO, LIFO',
+            'help': 'Specify how to process incoming events; one of FIFO, LIFO, ADAPTIVE. See the documentation for implementation details',
             'default': 'FIFO',
         },
     }
@@ -46,10 +46,12 @@ class Eventloop(eva.ConfigurableObject):
     # Queue orders, used in Eventloop.sort_queue()
     QUEUE_ORDER_FIFO = 0
     QUEUE_ORDER_LIFO = 1
+    QUEUE_ORDER_ADAPTIVE = 2
 
     QUEUE_ORDERS = {
         'FIFO': QUEUE_ORDER_FIFO,
         'LIFO': QUEUE_ORDER_LIFO,
+        'ADAPTIVE': QUEUE_ORDER_ADAPTIVE,
     }
 
     def __init__(self,
@@ -304,10 +306,37 @@ class Eventloop(eva.ConfigurableObject):
 
     def sort_queue(self):
         """!
-        @brief Ensure that RPC requests are moved to the top of the queue.
+        @brief Sort queue according to EVA_QUEUE_ORDER.
+
+        This function guarantees that:
+
+        * RPC requests are put first in the queue in FIFO order
+        * If using the FIFO order, messages are put in chronological order
+        * If using the LIFO order, messages are put in reverse chronological order
+        * If using the ADAPTIVE order, messages are put in chronological order,
+          but messages with a more recent reference time are put first in the queue.
         """
-        self.event_queue.sort(key=lambda event: event.timestamp(), reverse=bool(self.queue_order == self.QUEUE_ORDER_LIFO))
-        self.event_queue.sort(key=lambda event: not isinstance(event, eva.event.RPCEvent))
+        def sort_timestamp(event):
+            return event.timestamp()
+
+        def sort_rpc(event):
+            return not isinstance(event, eva.event.RPCEvent)
+
+        def sort_reference_time(event):
+            if not isinstance(event, eva.event.ProductstatusEvent):
+                return event.timestamp()
+            if event.data._collection._resource_name != 'datainstance':
+                return event.timestamp()
+            return event.data.data.productinstance.reference_time
+
+        if self.queue_order == self.QUEUE_ORDER_FIFO:
+            self.event_queue.sort(key=sort_timestamp)
+        elif self.queue_order == self.QUEUE_ORDER_LIFO:
+            self.event_queue.sort(key=sort_timestamp, reverse=True)
+        elif self.queue_order == self.QUEUE_ORDER_ADAPTIVE:
+            self.event_queue.sort(key=sort_timestamp)
+            self.event_queue.sort(key=sort_reference_time, reverse=True)
+        self.event_queue.sort(key=sort_rpc)
 
     def __call__(self):
         """!
