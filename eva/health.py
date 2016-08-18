@@ -10,9 +10,9 @@ import http.server
 
 class HTTPServer(http.server.HTTPServer):
     """!
-    @brief HTTP server which blocks for 100 ms while waiting for the next request.
+    @brief HTTP server which blocks for 1ms while waiting for the next request.
     """
-    timeout = 0.1
+    timeout = 0.001
 
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):

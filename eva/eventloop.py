@@ -316,6 +316,13 @@ class Eventloop(eva.ConfigurableObject):
         if not isinstance(event.data, productstatus.api.Resource):
             event.data = self.productstatus_api[event.data]
 
+    def process_health_check(self):
+        """!
+        @brief Make sure health check requests are processed.
+        """
+        if self.health_check_server:
+            self.health_check_server.respond_to_next_request()
+
     def sort_queue(self):
         """!
         @brief Sort queue according to EVA_QUEUE_ORDER.
@@ -398,12 +405,11 @@ class Eventloop(eva.ConfigurableObject):
         @brief Process any events in the process list once.
         @returns True if there is anything left to process, false otherwise.
         """
+        self.process_health_check()
         self.fill_process_list()
-        for event in self.process_list:
 
-            # respond to health checks quickly
-            if self.health_check_server:
-                self.health_check_server.respond_to_next_request()
+        for event in self.process_list:
+            self.process_health_check()
 
             if isinstance(event, eva.event.RPCEvent):
                 event.data.set_executor_instance(self)
