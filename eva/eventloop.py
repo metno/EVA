@@ -1,6 +1,5 @@
 import os
 import json
-import mock
 import datetime
 import dateutil.tz
 import copy
@@ -311,9 +310,7 @@ class Eventloop(eva.ConfigurableObject):
         """!
         @brief Make sure a ProductstatusEvent has a Productstatus resource in Event.data.
         """
-        if isinstance(event.data, mock.Mock):
-            return
-        if not isinstance(event.data, productstatus.api.Resource):
+        if isinstance(event.data, str):
             event.data = self.productstatus_api[event.data]
 
     def process_health_check(self):
