@@ -46,6 +46,11 @@ class BaseAdapter(eva.ConfigurableObject):
             'help': 'Comma-separated reference hours to process data for',
             'default': '',
         },
+        'EVA_INPUT_WITH_HASH': {
+            'type': 'null_bool',
+            'help': 'Whether or not to process DataInstance resources containing a hash',
+            'default': '',
+        },
         'EVA_OUTPUT_BASE_URL': {
             'type': 'string',
             'help': 'Base URL for DataInstances posted to Productstatus',
@@ -277,6 +282,8 @@ class BaseAdapter(eva.ConfigurableObject):
             self.logger.debug('ProductInstance reference time is older than threshold of %s, ignoring.', self.reference_time_threshold())
         elif resource.deleted:
             self.logger.debug('DataInstance is marked as deleted, ignoring.')
+        elif not self.resource_matches_hash_config(resource):
+            self.logger.debug('DataInstance has hash and adapter is configured to not process instances with hashes, or vice versa. Ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
             self.logger.debug('DataInstance is not complete, ignoring.')
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_ONLY and productstatus.datainstance_has_complete_file_count(resource):
@@ -345,6 +352,22 @@ class BaseAdapter(eva.ConfigurableObject):
         @brief This function provides a place for subclasses to initialize itself before accepting jobs.
         """
         pass
+
+    def resource_matches_hash_config(self, resource):
+        """!
+        Returns true if one of the following criteria matches:
+
+        * DataInstance.hash is NULL, and EVA_INPUT_WITH_HASH is set to NO
+        * DataInstance.hash populated, and EVA_INPUT_WITH_HASH is set to YES
+        * EVA_INPUT_WITH_HASH is unset
+        """
+        if self.env['EVA_INPUT_WITH_HASH'] is None:
+            return True
+        if resource.hash is None and self.env['EVA_INPUT_WITH_HASH'] is False:
+            return True
+        if resource.hash is not None and self.env['EVA_INPUT_WITH_HASH'] is True:
+            return True
+        return False
 
     def has_productstatus_credentials(self):
         """!

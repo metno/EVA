@@ -31,6 +31,19 @@ LIFO is a last-in, first-out queue. It functions exactly as FIFO, but with rever
 ```export EVA_QUEUE_ORDER=ADAPTIVE```
 Messages will be processed in chronological order as with FIFO, but messages belonging to a ProductInstance will be checked for their reference time, and those with the most recent reference time will be processed first. This results in faster delivery of newer models in case of a service outage.
 
+### EVA_INPUT_WITH_HASH
+
+This variable controls whether an Adapter will process DataInstance resources containing a hash.
+                
+#### (null)
+All resources will be processed. This is the default behavior.
+
+#### YES
+Only resources with a hash will be processed.
+
+#### NO
+Only resources lacking a hash will be processed.
+
 ## Writing adapters
 
 See the file [eva/adapter/example.py] for an example.

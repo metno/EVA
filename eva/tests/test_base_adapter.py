@@ -37,6 +37,7 @@ class TestBaseAdapter(unittest.TestCase):
             'EVA_INPUT_PRODUCT',
             'EVA_INPUT_REFERENCE_HOURS',
             'EVA_INPUT_SERVICE_BACKEND',
+            'EVA_INPUT_WITH_HASH',
             'EVA_OUTPUT_BASE_URL',
             'EVA_OUTPUT_DATA_FORMAT',
             'EVA_OUTPUT_FILENAME_PATTERN',
