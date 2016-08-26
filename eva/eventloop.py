@@ -273,6 +273,8 @@ class Eventloop(eva.ConfigurableObject):
         """!
         @brief Load the event queue from ZooKeeper.
         """
+        if not self.zookeeper:
+            return True
         self.logger.info('Loading event queue from ZooKeeper.')
         self.event_queue = self.load_serialized_data(self.zookeeper_event_queue_path())
 
@@ -280,6 +282,8 @@ class Eventloop(eva.ConfigurableObject):
         """!
         @brief Load the process list from ZooKeeper.
         """
+        if not self.zookeeper:
+            return True
         self.logger.info('Loading process list from ZooKeeper.')
         self.process_list = self.load_serialized_data(self.zookeeper_process_list_path())
 
