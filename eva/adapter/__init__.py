@@ -8,6 +8,7 @@ from eva.base.adapter import BaseAdapter
 from eva.adapter.checksum import ChecksumVerificationAdapter
 from eva.adapter.cwf import CWFAdapter
 from eva.adapter.delete import DeleteAdapter
+from eva.adapter.distribution import DistributionAdapter
 from eva.adapter.download import DownloadAdapter
 from eva.adapter.example import ExampleAdapter
 from eva.adapter.fimex import FimexAdapter
