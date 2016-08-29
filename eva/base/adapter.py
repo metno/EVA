@@ -104,6 +104,7 @@ class BaseAdapter(eva.ConfigurableObject):
     }
 
     _OPTIONAL_CONFIG = [
+        'EVA_INPUT_WITH_HASH',
         'EVA_PRODUCTSTATUS_API_KEY',
         'EVA_PRODUCTSTATUS_USERNAME',
         'EVA_REFERENCE_TIME_THRESHOLD',

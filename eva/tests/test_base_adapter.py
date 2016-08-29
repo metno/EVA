@@ -248,3 +248,34 @@ class TestBaseAdapter(unittest.TestCase):
         now = eva.now_with_timezone() - datetime.timedelta(days=420)
         then = self.adapter.reference_time_threshold()
         self.assertGreater(now, then)
+
+    def test_resource_matches_hash_config(self):
+        """!
+        @brief Test that the EVA_INPUT_WITH_HASH properly filters a
+        DataInstance by its `hash` field.
+        """
+        resource = mock.MagicMock()
+
+        # default is None
+        self.create_adapter()
+        self.assertEqual(self.adapter.env['EVA_INPUT_WITH_HASH'], None)
+        resource.hash = None
+        self.assertTrue(self.adapter.resource_matches_hash_config(resource))
+        resource.hash = 'd3b07384d113edec49eaa6238ad5ff00'
+        self.assertTrue(self.adapter.resource_matches_hash_config(resource))
+
+        # filter out resources without hash
+        self.env['EVA_INPUT_WITH_HASH'] = 'YES'
+        self.create_adapter()
+        resource.hash = None
+        self.assertFalse(self.adapter.resource_matches_hash_config(resource))
+        resource.hash = 'd3b07384d113edec49eaa6238ad5ff00'
+        self.assertTrue(self.adapter.resource_matches_hash_config(resource))
+
+        # filter out resources with hash
+        self.env['EVA_INPUT_WITH_HASH'] = 'NO'
+        self.create_adapter()
+        resource.hash = None
+        self.assertTrue(self.adapter.resource_matches_hash_config(resource))
+        resource.hash = 'd3b07384d113edec49eaa6238ad5ff00'
+        self.assertFalse(self.adapter.resource_matches_hash_config(resource))
