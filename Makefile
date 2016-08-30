@@ -4,6 +4,7 @@ pull-eva-base:
 	docker pull metno/eva-base
 
 eva: pull-eva-base
+	nosetests
 	docker build --no-cache --tag metno/eva docker/eva
 
 eva-base:
