@@ -104,3 +104,13 @@ class TestBase(unittest.TestCase):
         self.assertEqual(eva.convert_to_bytes('1.5', 'k'), 1536)
         with self.assertRaises(ValueError):
             eva.convert_to_bytes(1.5, 'xB')
+
+    def test_get_std_lines(self):
+        """!
+        @brief Test that the executor can deal with both input in bytes and strings
+        as those two can appear depending on the executor instance.
+        """
+        std_string = "Situation normal all fantastic über!\nNo Errors."
+        std_bytes = std_string.encode(encoding='utf8')
+        self.assertEqual(eva.executor.get_std_lines(std_string), ['Situation normal all fantastic über!', 'No Errors.'])
+        self.assertEqual(eva.executor.get_std_lines(std_bytes), ['Situation normal all fantastic über!', 'No Errors.'])
