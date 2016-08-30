@@ -93,7 +93,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
             self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
             self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
-            self.nml_data_format = self.api.dataformat['nml']
+            self.nml_data_format = self.api.dataformat[self.env['EVA_CWF_NML_DATA_FORMAT']]
 
     def post_to_productstatus(self):
         return (len(self.env['EVA_OUTPUT_PRODUCT']) > 0 and
