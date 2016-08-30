@@ -177,10 +177,11 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         if not self.post_to_productstatus():
             self.logger.info('NOT posting to Productstatus because of absent configuration.')
 
-        self.logger.info('Posting information about new dataset to Productstatus.')
+        job.logger.info('Generating Productstatus resources...')
         resources = self.generate_resources(job)
+        job.logger.info('Posting %d new resources to Productstatus.', len(resources))
         self.post_resources(resources)
-        self.logger.info('Finished posting to Productstatus; job complete.')
+        job.logger.info('Finished posting to Productstatus; all complete.')
 
     def parse_file_recognition_output(self, lines):
         """!
