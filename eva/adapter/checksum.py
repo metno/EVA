@@ -46,6 +46,7 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
         job = eva.job.Job(message_id, self.logger)
         job.dataset_filename = eva.url_to_filename(resource.url)
         job.md5_filename = job.dataset_filename + '.md5'
+        job.logger.info("Starting verification of file '%s' against md5sum file '%s'.", job.dataset_filename, job.md5_filename)
 
         lines = [
             '#!/bin/bash',
@@ -66,7 +67,7 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
 
     def finish_job(self, job):
         if not job.complete():
-            self.logger.error("md5sum checking of '%s' failed, skipping further processing!", job.resource.url)
+            job.logger.error("md5sum checking of '%s' failed, skipping further processing!", job.resource.url)
             self.statsd.incr('md5sum_fail')
             return
 
