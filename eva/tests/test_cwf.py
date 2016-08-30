@@ -35,26 +35,33 @@ class TestCWFAdapter(unittest.TestCase):
 
     def test_parse_file_recognition_output(self):
         stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;',
-                  '/tmp/meteo20160606_01.nc  time = "2016-06-08" ;']
+                  '/tmp/meteo20160606_01.nc  time = "2016-06-08" ;',
+                  '/tmp/meteo20160606_00.nml',
+                  ]
         self.create_adapter()
         output = self.adapter.parse_file_recognition_output(stdout)
-        self.assertEqual(len(output), 2)
+        self.assertEqual(len(output), 3)
         self.assertEqual(output[0]['path'], '/tmp/meteo20160606_00.nc')
         self.assertEqual(output[1]['path'], '/tmp/meteo20160606_01.nc')
+        self.assertEqual(output[2]['path'], '/tmp/meteo20160606_00.nml')
         timestamps = [
             eva.coerce_to_utc(datetime.datetime(2016, 6, 6, 12)),
             eva.coerce_to_utc(datetime.datetime(2016, 6, 8)),
         ]
         self.assertListEqual(output[0]['time_steps'], [timestamps[0]])
         self.assertListEqual(output[1]['time_steps'], [timestamps[1]])
+        self.assertEqual(output[0]['extension'], '.nc')
+        self.assertEqual(output[1]['extension'], '.nc')
+        self.assertEqual(output[2]['extension'], '.nml')
 
-    def test_generate_resources(self):
+    def test_generate_resources_nc(self):
         self.create_adapter()
         self.adapter.api = mock.MagicMock()
 
         self.adapter.output_product = mock.MagicMock()
         self.adapter.output_data_format = mock.MagicMock()
         self.adapter.output_service_backend = mock.MagicMock()
+        self.adapter.nml_data_format = mock.MagicMock()
 
         job = eva.job.Job('foo', self.logger)
         job.stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12", "2016-06-06 15", "2016-06-06 18", "2016-06-06 21", "2016-06-07" ;']
@@ -64,12 +71,38 @@ class TestCWFAdapter(unittest.TestCase):
         job.resource.data.productinstance.reference_time = eva.coerce_to_utc(datetime.datetime(2016, 6, 6, 12))
 
         resources = self.adapter.generate_resources(job)
+
         self.assertEqual(resources['productinstance'][0].product, self.adapter.output_product)
         self.assertEqual(resources['datainstance'][0].url, 'file:///tmp/meteo20160606_00.nc')
+        self.assertEqual(resources['datainstance'][0].format, self.adapter.output_data_format)
         self.assertEqual(resources['data'][0].time_period_begin,
                          eva.coerce_to_utc(datetime.datetime(2016, 6, 6, 12)))
         self.assertEqual(resources['data'][0].time_period_end,
                          eva.coerce_to_utc(datetime.datetime(2016, 6, 7)))
+
+    def test_generate_resources_nml(self):
+        self.create_adapter()
+        self.adapter.api = mock.MagicMock()
+
+        self.adapter.output_product = mock.MagicMock()
+        self.adapter.output_data_format = mock.MagicMock()
+        self.adapter.output_service_backend = mock.MagicMock()
+        self.adapter.nml_data_format = mock.MagicMock()
+
+        job = eva.job.Job('foo', self.logger)
+        job.stdout = ['/tmp/meteo20160606_00.nml']
+        job.output_files = self.adapter.parse_file_recognition_output(job.stdout)
+
+        job.resource = mock.MagicMock()
+
+        resources = self.adapter.generate_resources(job)
+
+        self.assertEqual(resources['productinstance'][0].product, self.adapter.output_product)
+
+        self.assertEqual(resources['datainstance'][0].url, 'file:///tmp/meteo20160606_00.nml')
+        self.assertEqual(resources['datainstance'][0].format, self.adapter.nml_data_format)
+        self.assertEqual(resources['data'][0].time_period_begin, None)
+        self.assertEqual(resources['data'][0].time_period_end, None)
 
     def test_post_resources(self):
         resources = {

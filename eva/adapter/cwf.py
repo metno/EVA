@@ -56,6 +56,11 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             'help': 'Comma-separated list of modules to load before running.',
             'default': '',
         },
+        'EVA_CWF_NML_DATA_FORMAT': {
+            'type': 'string',
+            'help': 'Which Productstatus data format to use for NML files',
+            'default': 'nml',
+        },
     }
 
     REQUIRED_CONFIG = [
@@ -71,6 +76,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         'EVA_CWF_INPUT_MIN_DAYS',
         'EVA_CWF_LIFETIME',
         'EVA_CWF_MODULES',
+        'EVA_CWF_NML_DATA_FORMAT',
         'EVA_CWF_OUTPUT_DAYS',
         'EVA_CWF_PARALLEL',
         'EVA_OUTPUT_PRODUCT',
@@ -87,11 +93,26 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
             self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
             self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
+            self.nml_data_format = self.api.dataformat['nml']
 
     def post_to_productstatus(self):
         return (len(self.env['EVA_OUTPUT_PRODUCT']) > 0 and
                 len(self.env['EVA_OUTPUT_SERVICE_BACKEND']) > 0 and
                 len(self.env['EVA_OUTPUT_DATA_FORMAT']) > 0)
+
+    def is_netcdf_data_output(self, data):
+        """!
+        @brief Return True if the data entry parsed from a command line by
+        CWFAdapter.parse_file_recognition_output is of type NetCDF, False otherwise.
+        """
+        return data['extension'] == '.nc'
+
+    def is_nml_data_output(self, data):
+        """!
+        @brief Return True if the data entry parsed from a command line by
+        CWFAdapter.parse_file_recognition_output is of type NML, False otherwise.
+        """
+        return data['extension'] == '.nml'
 
     def create_job(self, message_id, resource):
         reference_time = resource.data.productinstance.reference_time
@@ -125,10 +146,14 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         cmd += ['%s >&2' % self.env['EVA_CWF_SCRIPT_PATH']]
 
         # Run output recognition
-        datestamp_glob = reference_time.strftime('*%Y%m%d_*.nc')
+        datestamp_glob = reference_time.strftime('*%Y%m%d_*.*')
         cmd += ['for file in %s; do' % os.path.join(output_directory, datestamp_glob)]
-        cmd += ['    echo -n "$file "']
-        cmd += ["    ncdump -l 1000 -t -v time $file | grep -E '^ ?time\s*='"]
+        cmd += ['    if [ $file == *.nc ]; then']
+        cmd += ['        echo -n "$file "']
+        cmd += ["        ncdump -l 1000 -t -v time $file | grep -E '^ ?time\s*='"]
+        cmd += ['    elif [ $file == *.nml ]; then']
+        cmd += ['        echo "$file"']
+        cmd += ['    fi']
         cmd += ['done']
 
         job = eva.job.Job(message_id, self.logger)
@@ -172,9 +197,11 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             data = {}
             tokens = line.split()
             data['path'] = tokens[0]
-            time_str = ' '.join(tokens[3:-1])
-            times = sorted([eva.netcdf_time_to_timestamp(x.strip(' "')) for x in time_str.split(',')])
-            data['time_steps'] = times
+            data['extension'] = os.path.splitext(data['path'])[1]
+            if self.is_netcdf_data_output(data):
+                time_str = ' '.join(tokens[3:-1])
+                times = sorted([eva.netcdf_time_to_timestamp(x.strip(' "')) for x in time_str.split(',')])
+                data['time_steps'] = times
             result += [data]
         return result
 
@@ -214,8 +241,13 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         for output_file in job.output_files:
             data = self.api.data.create()
             data.productinstance = product_instance
-            data.time_period_begin = output_file['time_steps'][0]
-            data.time_period_end = output_file['time_steps'][-1]
+
+            if self.is_netcdf_data_output(output_file):
+                data.time_period_begin = output_file['time_steps'][0]
+                data.time_period_end = output_file['time_steps'][-1]
+            else:
+                data.time_period_begin = None
+                data.time_period_end = None
 
             data = self.get_matching_data(resources['data'], data)
             resources['data'] += [data]
@@ -224,11 +256,19 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             data_instance.data = data
             data_instance.url = 'file://' + output_file['path']
             data_instance.servicebackend = self.output_service_backend
-            data_instance.format = self.output_data_format
-            if lifetime_index < len(self.env['EVA_CWF_LIFETIME']):
-                data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][lifetime_index])
+
+            if self.is_netcdf_data_output(output_file):
+                data_instance.format = self.output_data_format
+                if lifetime_index < len(self.env['EVA_CWF_LIFETIME']):
+                    data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][lifetime_index])
+                else:
+                    data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][-1])
+            elif self.is_nml_data_output(output_file):
+                data_instance.format = self.nml_data_format
+                # let the NML file live as long as the longest dataset
+                data_instance.expires = self.expiry_from_hours(max(self.env['EVA_CWF_LIFETIME']))
             else:
-                data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][-1])
+                raise RuntimeError('Unsupported data format in job output: %s' % data['extension'])
 
             resources['datainstance'] += [data_instance]
 
