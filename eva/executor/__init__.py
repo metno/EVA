@@ -14,7 +14,10 @@ def get_std_lines(std):
     """!
     Return a list of lines from stderr or stdout
     """
-    return [x.decode('utf-8') for x in std.splitlines()] if std is not None else []
+    if type(std) is str:
+        return [x for x in std.splitlines()] if std is not None else []
+    else:
+        return [x.decode('utf-8') for x in std.splitlines()] if std is not None else []
 
 
 def log_job_script(job):
