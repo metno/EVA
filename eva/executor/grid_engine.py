@@ -329,7 +329,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
         if exit_code != EXIT_OK:
-            job.logger.debug('Job has not completed yet.')
+            job.logger.debug('Job %d has not completed yet.', job.pid)
             job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             return False
         job.exit_code = get_exit_code_from_qacct_output(stdout)
