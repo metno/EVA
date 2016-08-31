@@ -250,11 +250,15 @@ def parse_boolean_string(string):
     return None
 
 
-def strftime_iso8601(dt):
+def strftime_iso8601(dt, null_string=False):
     """!
     @brief Given a DateTime object, return an ISO8601 formatted string.
+    @param null_string Print "NULL" instead of timestamp if not passed a DateTime object
     """
-    return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+    try:
+        return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+    except ValueError:
+        return 'NULL'
 
 
 def coerce_to_utc(dt):

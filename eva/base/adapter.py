@@ -313,8 +313,8 @@ class BaseAdapter(eva.ConfigurableObject):
                         datainstance.data.productinstance.product.name,
                         datainstance.data.productinstance.product.slug)
         self.logger.log(loglevel, 'ProductInstance: %s', datainstance.data.productinstance.id)
-        self.logger.log(loglevel, 'Reference time: %s', eva.strftime_iso8601(datainstance.data.productinstance.reference_time))
-        self.logger.log(loglevel, 'Time step: from %s to %s', eva.strftime_iso8601(datainstance.data.time_period_begin), eva.strftime_iso8601(datainstance.data.time_period_end))
+        self.logger.log(loglevel, 'Reference time: %s', eva.strftime_iso8601(datainstance.data.productinstance.reference_time, null_string=True))
+        self.logger.log(loglevel, 'Time step: from %s to %s', eva.strftime_iso8601(datainstance.data.time_period_begin, null_string=True), eva.strftime_iso8601(datainstance.data.time_period_end, null_string=True))
         self.logger.log(loglevel, 'Data format: %s', datainstance.format.name)
         self.logger.log(loglevel, 'Service backend: %s', datainstance.servicebackend.name)
 
@@ -328,8 +328,7 @@ class BaseAdapter(eva.ConfigurableObject):
             if print_info:
                 self.print_datainstance_info(resource, logging.DEBUG)
             return False
-        if print_info:
-            self.print_datainstance_info(resource, logging.INFO)
+        self.print_datainstance_info(resource, logging.INFO)
         return True
 
     def create_job(self, message_id, resource):
