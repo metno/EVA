@@ -133,7 +133,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         job.output_directory_template = self.template.from_string(
             self.env['EVA_CWF_OUTPUT_DIRECTORY_PATTERN']
         )
-        job.output_directory = output_directory_template.render(
+        job.output_directory = job.output_directory_template.render(
             reference_time=reference_time,
             domain=self.env['EVA_CWF_DOMAIN'],
         )
