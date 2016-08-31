@@ -129,10 +129,10 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                 self.logger.warning("Destination data set already exists in Productstatus, skipping processing.")
                 return
 
-        output_directory_template = self.template.from_string(
+        outjob.put_directory_template = self.template.from_string(
             self.env['EVA_CWF_OUTPUT_DIRECTORY_PATTERN']
         )
-        output_directory = output_directory_template.render(
+        job.output_directory = output_directory_template.render(
             reference_time=reference_time,
             domain=self.env['EVA_CWF_DOMAIN'],
         )
@@ -151,16 +151,16 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         cmd += ['export DATE=%s' % reference_time.strftime('%Y%m%d')]
         cmd += ['export DOMAIN=%s' % self.env['EVA_CWF_DOMAIN']]
         cmd += ['export ECDIS=%s' % eva.url_to_filename(resource.url)]
-        cmd += ['export ECDIS_TMPDIR=%s' % os.path.join(output_directory, 'work')]
+        cmd += ['export ECDIS_TMPDIR=%s' % os.path.join(job.output_directory, 'work')]
         cmd += ['export NDAYS_MAX=%d' % self.env['EVA_CWF_OUTPUT_DAYS']]
         cmd += ['export NREC_DAY_MIN=%d' % self.env['EVA_CWF_INPUT_MIN_DAYS']]
-        cmd += ['export OUTDIR=%s' % output_directory]
+        cmd += ['export OUTDIR=%s' % job.output_directory]
         cmd += ['export UTC=%s' % reference_time.strftime('%H')]
         cmd += ['%s >&2' % self.env['EVA_CWF_SCRIPT_PATH']]
 
         # Run output recognition
         datestamp_glob = reference_time.strftime('*%Y%m%d_*.*')
-        cmd += ['for file in %s; do' % os.path.join(output_directory, datestamp_glob)]
+        cmd += ['for file in %s; do' % os.path.join(job.output_directory, datestamp_glob)]
         cmd += ['    if [ $file == *.nc ]; then']
         cmd += ['        echo -n "$file "']
         cmd += ["        ncdump -l 1000 -t -v time $file | grep -E '^ ?time\s*='"]
@@ -177,7 +177,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
     def finish_job(self, job):
         if not job.complete():
             raise eva.exceptions.RetryException(
-                "Processing of %s to output directory %s failed." % (job.resource.url, output_directory)
+                "Processing of %s to output directory %s failed." % (job.resource.url, job.output_directory)
             )
 
         try:
