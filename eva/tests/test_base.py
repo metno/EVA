@@ -63,6 +63,17 @@ class TestBase(unittest.TestCase):
         with self.assertRaises(eva.exceptions.InvalidGroupIdException):
             eva.zookeeper_group_id('zookeeper')
 
+    def test_strftime_iso8601(self):
+        dt = datetime.datetime(year=2000, month=1, day=1, hour=12, minute=0, second=0)
+        dt = eva.coerce_to_utc(dt)
+        s = eva.strftime_iso8601(dt)
+        self.assertEqual(s, '2000-01-01T12:00:00+0000')
+        dt = 'foo'
+        with self.assertRaises(AttributeError):
+            eva.strftime_iso8601(dt)
+        s = eva.strftime_iso8601(dt, null_string=True)
+        self.assertEqual(s, 'NULL')
+
     def test_coerce_to_utc(self):
         dt = datetime.datetime(year=2000, month=1, day=1, hour=12, minute=0, second=0)
         dt_c = eva.coerce_to_utc(dt)

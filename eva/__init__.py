@@ -257,8 +257,10 @@ def strftime_iso8601(dt, null_string=False):
     """
     try:
         return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
-    except ValueError:
-        return 'NULL'
+    except (AttributeError, ValueError):
+        if null_string:
+            return 'NULL'
+        raise
 
 
 def coerce_to_utc(dt):
