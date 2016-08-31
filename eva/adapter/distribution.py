@@ -58,7 +58,8 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
 
     def create_job(self, message_id, resource):
         """!
-        @brief Download a file, and optionally post the result to Productstatus.
+        @brief Create a Job object that will copy a file to another
+        destination, and optionally post the result to Productstatus.
         """
         job = eva.job.Job(message_id, self.logger)
         job.base_filename = os.path.basename(resource.url)
@@ -68,6 +69,14 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
 
         if self.post_to_productstatus:
             job.service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
+            # check if the destination file already exists
+            qs = self.api.datainstance.objects.filter(url=job.output_url,
+                                                      servicebackend=job.service_backend,
+                                                      data=resource.data,
+                                                      format=resource.format)
+            if qs.count() != 0:
+                job.logger.warning("Destination URL '%s' already exists in Productstatus; this file has already been distributed.", job.output_url)
+                return
 
         lines = [
             "#!/bin/bash",

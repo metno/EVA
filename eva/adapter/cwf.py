@@ -116,6 +116,19 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
 
     def create_job(self, message_id, resource):
         reference_time = resource.data.productinstance.reference_time
+
+        # Skip processing if the destination data set already exists. This
+        # disables re-runs and duplicates unless the DataInstance objects are
+        # marked as deleted.
+        if self.post_to_productstatus():
+            qs = self.api.datainstance.objects.filter(data__productinstance__product=self.output_product,
+                                                      data__productinstance__reference_time=reference_time,
+                                                      servicebackend=self.output_service_backend,
+                                                      deleted=False)
+            if qs.count() != 0:
+                self.logger.warning("Destination data set already exists in Productstatus, skipping processing.")
+                return
+
         output_directory_template = self.template.from_string(
             self.env['EVA_CWF_OUTPUT_DIRECTORY_PATTERN']
         )
