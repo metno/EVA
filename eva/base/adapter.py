@@ -328,7 +328,8 @@ class BaseAdapter(eva.ConfigurableObject):
             if print_info:
                 self.print_datainstance_info(resource, logging.DEBUG)
             return False
-        self.print_datainstance_info(resource, logging.INFO)
+        if print_info:
+            self.print_datainstance_info(resource, logging.INFO)
         return True
 
     def create_job(self, message_id, resource):
