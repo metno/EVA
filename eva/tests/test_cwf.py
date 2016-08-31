@@ -112,7 +112,8 @@ class TestCWFAdapter(unittest.TestCase):
         }
         self.create_adapter()
         self.adapter.api = mock.MagicMock()
-        self.adapter.post_resources(resources)
+        job = eva.job.Job('foo', self.logger)
+        self.adapter.post_resources(resources, job)
         for key, r in resources.items():
             r[0].save.assert_called_with()
 

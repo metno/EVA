@@ -149,7 +149,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
             return
 
         resources = self.generate_resources(job)
-        self.post_resources(resources)
+        self.post_resources(resources, job)
 
     def get_or_post_productinstance_resource(self, resource):
         """!

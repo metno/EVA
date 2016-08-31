@@ -193,7 +193,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         job.logger.info('Generating Productstatus resources...')
         resources = self.generate_resources(job)
         job.logger.info('Posting %d new resources to Productstatus.', len(resources))
-        self.post_resources(resources)
+        self.post_resources(resources, job)
         job.logger.info('Finished posting to Productstatus; all complete.')
 
     def parse_file_recognition_output(self, lines):

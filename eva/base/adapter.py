@@ -418,7 +418,7 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         raise NotImplementedError('Please override this method in order to post to Productstatus.')
 
-    def post_resources(self, resources):
+    def post_resources(self, resources, job):
         """!
         @brief Post information about a finished job to Productstatus. Takes a
         dictionary of resources.
@@ -429,5 +429,5 @@ class BaseAdapter(eva.ConfigurableObject):
                 eva.retry_n(resource.save,
                             exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                             give_up=0,
-                            logger=self.logger)
-                self.logger.info('Created resource: %s', resource)
+                            logger=job.logger)
+                job.logger.info('Created resource: %s', resource)
