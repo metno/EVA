@@ -161,10 +161,10 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         # Run output recognition
         datestamp_glob = reference_time.strftime('*%Y%m%d_*.*')
         cmd += ['for file in %s; do' % os.path.join(job.output_directory, datestamp_glob)]
-        cmd += ['    if [ $file == *.nc ]; then']
+        cmd += ['    if [[ $file =~ \.nc$ ]]; then']
         cmd += ['        echo -n "$file "']
         cmd += ["        ncdump -l 1000 -t -v time $file | grep -E '^ ?time\s*='"]
-        cmd += ['    elif [ $file == *.nml ]; then']
+        cmd += ['    elif [[ $file =~ \.nml$ ]]; then']
         cmd += ['        echo "$file"']
         cmd += ['    fi']
         cmd += ['done']
