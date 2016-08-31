@@ -129,6 +129,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                 self.logger.warning("Destination data set already exists in Productstatus, skipping processing.")
                 return
 
+        job = eva.job.Job(message_id, self.logger)
         job.output_directory_template = self.template.from_string(
             self.env['EVA_CWF_OUTPUT_DIRECTORY_PATTERN']
         )
@@ -169,7 +170,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         cmd += ['    fi']
         cmd += ['done']
 
-        job = eva.job.Job(message_id, self.logger)
         job.command = "\n".join(cmd) + "\n"
 
         return job
