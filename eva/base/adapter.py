@@ -423,6 +423,7 @@ class BaseAdapter(eva.ConfigurableObject):
         @brief Post information about a finished job to Productstatus. Takes a
         dictionary of resources.
         """
+        job.logger.info('Posting %d new resources to Productstatus.', sum(len(x) for x in resources.items()))
         for resource_type in ['productinstance', 'data', 'datainstance']:
             resource_list = resources[resource_type]
             for resource in resource_list:
