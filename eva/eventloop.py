@@ -423,6 +423,15 @@ class Eventloop(eva.ConfigurableObject):
 
         return not self.both_queues_empty()
 
+    def event_matches_object_version(self, event):
+        """!
+        @brief Return True if Event.object_version() equals Resource.object_version, False otherwise.
+        """
+        if not isinstance(event, eva.event.ProductstatusEvent):
+            return False
+        self.instantiate_productstatus_data(event)
+        return event.object_version() == event.data.object_version
+
     def process_event(self, event):
         """!
         @brief Run asynchronous processing of an current event.
@@ -433,6 +442,20 @@ class Eventloop(eva.ConfigurableObject):
         * Send the Job for execution to the Executor
         * Send a finish message to the Adapter
         """
+
+        if isinstance(event, eva.event.ProductstatusEvent):
+
+            # Only process messages with the correct version
+            if event.protocol_version()[0] != 1:
+                self.logger.warning('Event version is %s, but I am only accepting major version 1. Discarding message.', '.'.join(event.protocol_version()))
+                self.remove_event_from_queues(event)
+                return
+
+            # Discard messages that date from an earlier Resource version
+            if not self.event_matches_object_version(event):
+                self.logger.warning('Resource object version is %d, expecting it to be equal to the Event object version %d. The message is too old, discarding.', event.data.object_version, event.object_version())
+                self.remove_event_from_queues(event)
+                return
 
         # Create event job if it has not been created yet
         if not hasattr(event, 'job'):

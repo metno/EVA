@@ -74,6 +74,20 @@ class ProductstatusEvent(Event):
         """
         return self.kwargs['timestamp']
 
+    def protocol_version(self):
+        """!
+        @brief Return the Kafka/Productstatus message protocol version.
+        """
+        return self.kwargs['protocol_version']
+
+    def object_version(self):
+        """!
+        @brief Return the Productstatus Resource object version.
+        """
+        if self.protocol_version() >= [1, 5, 0]:
+            return self.message.object_version
+        return 1
+
     @staticmethod
     def factory(message):
         """!
@@ -84,6 +98,7 @@ class ProductstatusEvent(Event):
             message.uri,
             id=message.message_id,
             timestamp=dateutil.parser.parse(message.message_timestamp),
+            protocol_version=message.version,
         )
 
 
