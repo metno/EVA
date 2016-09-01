@@ -7,15 +7,11 @@ import time
 import uuid
 
 import eva
+import eva.zk
 import eva.rpc
 import eva.event
 
 import productstatus.exceptions
-
-
-# Try to keep message cache in ZooKeeper to a minimum; we use 1/4 of the max
-# message size in ZooKeeper, which amounts to 250kB.
-ZOOKEEPER_MSG_LIMIT = (1024**2)/4
 
 
 class Eventloop(eva.ConfigurableObject):
@@ -223,18 +219,15 @@ class Eventloop(eva.ConfigurableObject):
         if not self.zookeeper:
             return True
         raw = [x.raw_message() for x in data if x is not None]
-        serialized = json.dumps(raw).encode('ascii')
-        serialized_byte_size = len(serialized)
-        self.logger.debug('Storing %s in ZooKeeper, number of items: %d, size in bytes: %d', log_name, len(raw), serialized_byte_size)
-        if serialized_byte_size > ZOOKEEPER_MSG_LIMIT:
-            self.logger.warning('Cannot store %s in ZooKeeper since it exceeds the message limit of %d bytes.', log_name, ZOOKEEPER_MSG_LIMIT)
+        self.logger.debug('Storing %s in ZooKeeper, number of items: %d', log_name, len(raw))
+        try:
+            count, size = eva.zk.store_serialized_data(self.zookeeper, path, raw)
+        except eva.exceptions.ZooKeeperDataTooLargeException as e:
+            self.logger.warning(str(e))
             return False
-        if not self.zookeeper.exists(path):
-            self.zookeeper.create(path, serialized)
-        else:
-            self.zookeeper.set(path, serialized)
-        self.statsd.gauge(metric_base + '_count', len(raw))
-        self.statsd.gauge(metric_base + '_size', serialized_byte_size)
+        self.logger.debug('Successfully stored %d items with size %d', count, size)
+        self.statsd.gauge(metric_base + '_count', count)
+        self.statsd.gauge(metric_base + '_size', size)
         return True
 
     def store_event_queue(self):
@@ -264,10 +257,8 @@ class Eventloop(eva.ConfigurableObject):
         """
         if not self.zookeeper:
             return []
-        if self.zookeeper.exists(path):
-            serialized = self.zookeeper.get(path)
-            return [eva.event.ProductstatusEvent.factory(productstatus.event.Message(x)) for x in json.loads(serialized[0].decode('ascii'))]
-        return []
+        data = eva.zk.load_serialized_data(self.zookeeper, path)
+        return [eva.event.ProductstatusEvent.factory(productstatus.event.Message(x)) for x in data]
 
     def load_event_queue(self):
         """!

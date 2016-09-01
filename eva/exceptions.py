@@ -92,3 +92,10 @@ class AlreadyRunningException(EvaException):
     already running according to Zookeeper.
     """
     pass
+
+
+class ZooKeeperDataTooLargeException(EvaException):
+    """!
+    @brief Thrown when trying to store a message in ZooKeeper that is too big.
+    """
+    pass
