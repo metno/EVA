@@ -46,7 +46,6 @@ class TestStatsD(unittest.TestCase):
         self.assertEqual(timer.metric, 'foo')
         self.assertDictEqual(timer.tags, {'bar': 'baz'})
 
-
     @mock.patch('socket.socket.sendto')
     def test_broadcast(self, func):
         self.statsd.broadcast('foo')
@@ -78,7 +77,6 @@ class TestStatsD(unittest.TestCase):
     def test_timing(self, func):
         self.statsd.timing('foo', 200, {'c': 3})
         func.assert_called_with('foo,a=1,b=2,c=3:200|ms\n')
-
 
 
 class TestStatsDTimer(unittest.TestCase):

@@ -315,5 +315,5 @@ def convert_to_bytes(value, notation):
     for exp, suffix in enumerate(notations):
         if notation.upper() != suffix:
             continue
-        return int((1024**exp) * float(value))
+        return int((1024 ** exp) * float(value))
     raise ValueError('Invalid data size notation %s' % notation)

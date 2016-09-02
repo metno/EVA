@@ -1,6 +1,4 @@
-import re
 import os
-import uuid
 import datetime
 import logging
 import kazoo.exceptions
@@ -270,13 +268,13 @@ class BaseAdapter(eva.ConfigurableObject):
             self.logger.debug('Resource is not of type DataInstance, ignoring.')
         elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'EVA_INPUT_PRODUCT'):
             self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
-                             resource.data.productinstance.product.name)
+                              resource.data.productinstance.product.name)
         elif not self.in_array_or_empty(resource.servicebackend.slug, 'EVA_INPUT_SERVICE_BACKEND'):
             self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
-                             resource.servicebackend.name)
+                              resource.servicebackend.name)
         elif not self.in_array_or_empty(resource.format.slug, 'EVA_INPUT_DATA_FORMAT'):
             self.logger.debug('DataInstance file type is %s, ignoring.',
-                             resource.format.name)
+                              resource.format.name)
         elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
             self.logger.debug('ProductInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
         elif self.reference_time_threshold() > resource.data.productinstance.reference_time:

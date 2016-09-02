@@ -4,12 +4,6 @@ of this module's potential collision with the real productstatus module,
 hindering imports of the exception classes.
 """
 
-import os
-import time
-import json
-import kazoo.exceptions
-import dateutil.parser
-
 import eva.event
 import eva.base.listener
 

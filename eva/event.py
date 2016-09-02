@@ -2,8 +2,6 @@ import uuid
 import datetime
 import dateutil.parser
 
-import eva
-
 
 class Event(object):
     """!

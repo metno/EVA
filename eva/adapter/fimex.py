@@ -83,27 +83,28 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
-        filename = eva.url_to_filename(resource.url)
-        reference_time = resource.data.productinstance.reference_time
+        job = eva.job.Job(message_id, self.logger)
+
+        job.input_filename = eva.url_to_filename(resource.url)
+        job.reference_time = resource.data.productinstance.reference_time
         template_variables = {
-            'reference_time': reference_time,
+            'reference_time': job.reference_time,
             'datainstance': resource,
         }
 
         # Render the Jinja2 templates and report any errors
         try:
             params = self.fimex_parameters.render(**template_variables)
-            output_filename = self.output_filename.render(**template_variables)
+            job.output_filename = self.output_filename.render(**template_variables)
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
 
         # Generate and execute Fimex job
-        job = eva.job.Job(message_id, self.logger)
         job.command = """#!/bin/bash
         time fimex --input.file '%(input.file)s' --output.file '%(output.file)s' %(params)s
         """ % {
-            'input.file': filename,
-            'output.file': output_filename,
+            'input.file': job.input_filename,
+            'output.file': job.output_filename,
             'params': params,
         }
 
@@ -113,7 +114,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         # Retry on failure
         if not job.complete():
             raise eva.exceptions.RetryException(
-                "Fimex conversion of '%s' failed." % filename
+                "Fimex conversion of '%s' to '%s' failed." % (job.input_filename, job.output_filename)
             )
 
         # Succeed at this point if not posting to Productstatus
@@ -124,7 +125,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         self.logger.info('Creating a new ProductInstance resource on the Productstatus server...')
         productinstance = eva.retry_n(
             self.post_productinstance_resource,
-            args=(self.output_product, reference_time),
+            args=(self.output_product, job.reference_time),
             exceptions=(productstatus.exceptions.ServiceUnavailableException,),
             give_up=30,
         )
@@ -142,7 +143,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
 
         # Post a new DataInstance resource
         self.logger.info('Creating a new DataInstance resource on the Productstatus server...')
-        url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(filename))
+        url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.output_filename))
         datainstance = eva.retry_n(
             self.post_datainstance_resource,
             args=(
@@ -158,7 +159,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
 
         # All records written, log success
         self.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
-        self.logger.info('The file %s has been successfully generated', resource.url)
+        self.logger.info('The file %s has been successfully generated', datainstance.url)
 
     def post_productinstance_resource(self, product, reference_time):
         """!

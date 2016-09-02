@@ -1,6 +1,5 @@
 import os
 import re
-import datetime
 
 import eva
 import eva.base.adapter

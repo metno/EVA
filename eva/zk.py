@@ -9,7 +9,7 @@ import eva.exceptions
 
 # Try to keep message cache in ZooKeeper to a minimum; we use 1/4 of the max
 # message size in ZooKeeper, which amounts to 250kB.
-ZOOKEEPER_MSG_LIMIT = (1024**2)/4
+ZOOKEEPER_MSG_LIMIT = (1024 ** 2) / 4
 
 
 def load_serialized_data(zookeeper, path, default=[]):
@@ -38,4 +38,3 @@ def store_serialized_data(zookeeper, path, data):
     else:
         zookeeper.set(path, serialized)
     return (len(data), serialized_byte_size,)
-

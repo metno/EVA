@@ -1,6 +1,4 @@
 import os.path
-import requests
-import time
 
 import eva
 import eva.base.adapter
@@ -70,8 +68,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         job.thredds_url = "{}{}".format(self.thredds_base_url, basename)
         job.thredds_html_url = job.thredds_url + ".html"
 
-        job.command = \
-"""
+        job.command = """
 #!/bin/bash
 #$ -S /bin/bash
 for try in `seq 1 %(num_tries)d`; do

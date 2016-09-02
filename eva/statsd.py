@@ -122,7 +122,6 @@ class StatsDClient(object):
         return StatsDTimer(self, metric, tags)
 
 
-
 class StatsDTimer(object):
     """!
     @brief StatsD timing class

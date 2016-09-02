@@ -174,7 +174,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 job.logger.debug('SSH connection seems usable, proceeding.')
                 return
             except SSH_RETRY_EXCEPTIONS as e:
-                job.logger.debug('SSH connection not working, trying to establish a working connection.')
+                job.logger.debug('SSH connection not working, trying to establish a working connection: %s', e)
         self.create_ssh_connection(job)
 
     def create_ssh_connection(self, job):

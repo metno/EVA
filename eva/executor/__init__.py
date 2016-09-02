@@ -5,9 +5,9 @@ includes some useful function for writing executors.
 _DO NOT_ import anything from here when subclassing executors!
 """
 
-from eva.executor.null import NullExecutor
-from eva.executor.shell import ShellExecutor
-from eva.executor.grid_engine import GridEngineExecutor
+from eva.executor.null import NullExecutor  # NOQA
+from eva.executor.shell import ShellExecutor  # NOQA
+from eva.executor.grid_engine import GridEngineExecutor  # NOQA
 
 
 def get_std_lines(std):

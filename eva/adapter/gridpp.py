@@ -1,13 +1,8 @@
-import os
-import datetime
-
 import eva
 import eva.base.adapter
 import eva.job
 import eva.exceptions
 import eva.template
-
-import productstatus
 
 
 class GridPPAdapter(eva.base.adapter.BaseAdapter):
@@ -110,9 +105,11 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
             'datainstance': resource,
         }
 
+        job = eva.job.Job(message_id, self.logger)
+
         # Render the Jinja2 templates and report any errors
         try:
-            params = {
+            job.gridpp_params = {
                 'input.file': filename,
                 'input.options': self.in_opts.render(**template_variables),
                 'output.file': self.output_filename.render(**template_variables),
@@ -122,17 +119,14 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
 
-        # Generate and execute GridPP job
-        job = eva.job.Job(message_id, self.logger)
-        job.gridpp_params = params
         command = ["#!/bin/bash"]
         command += ["#$ -S /bin/bash"]
         command += ["set -e"]
         for module in self.env['EVA_GRIDPP_MODULES']:
             command += ["module load %s" % module]
-        command += ["cp -v %(input.file)s %(output.file)s" % params]
+        command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
         command += ["export OMP_NUM_THREADS=%d" % self.env['EVA_GRIDPP_THREADS']]
-        command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % params]
+        command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % job.gridpp_params]
         job.command = '\n'.join(command) + '\n'
 
         return job
@@ -141,7 +135,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         # Retry on failure
         if job.status != eva.job.COMPLETE:
             raise eva.exceptions.RetryException(
-                "GridPP post-processing of '%(input.file)s' to '%(output.file)s' failed." % params
+                "GridPP post-processing of '%(input.file)s' to '%(output.file)s' failed." % job.gridpp_params
             )
 
         # Succeed at this point if not posting to Productstatus

@@ -134,14 +134,14 @@ class TestEventloop(unittest.TestCase):
             eva.event.RPCEvent(None, 8, timestamp=timestamp),
         ]
         self.eventloop.sort_queue()
-        order = [3, 8, 5, 2, 4, 7, 1, 6,]
+        order = [3, 8, 5, 2, 4, 7, 1, 6, ]
         self.assertEqual(len(self.eventloop.event_queue), len(order))
         for i, n in enumerate(order):
             self.assertEqual(self.eventloop.event_queue[i].data, n)
 
         self.eventloop.queue_order = self.eventloop.QUEUE_ORDER_LIFO
         self.eventloop.sort_queue()
-        order = [5, 3, 8, 1, 6, 2, 4, 7,]
+        order = [5, 3, 8, 1, 6, 2, 4, 7, ]
         for i, n in enumerate(order):
             self.assertEqual(self.eventloop.event_queue[i].data, n)
 
@@ -159,7 +159,7 @@ class TestEventloop(unittest.TestCase):
         # set event queue contents two five ProductstatusLocalEvents, data
         # pointing to the mock objects, with increasing timestamps
         self.eventloop.event_queue = [
-            eva.event.ProductstatusLocalEvent(None, mocks[x], timestamp=now + datetime.timedelta(hours=x+1))
+            eva.event.ProductstatusLocalEvent(None, mocks[x], timestamp=now + datetime.timedelta(hours=x + 1))
             for x in range(5)
         ]
         # add an rpc event to the event queue

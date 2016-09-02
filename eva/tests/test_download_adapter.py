@@ -1,5 +1,4 @@
 import unittest
-import datetime
 import logging
 
 import productstatus
@@ -88,4 +87,3 @@ class TestDownloadAdapter(unittest.TestCase):
             ),
             22528
         )
-

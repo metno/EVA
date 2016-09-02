@@ -1,5 +1,4 @@
 import unittest
-import logging
 import datetime
 
 import eva
