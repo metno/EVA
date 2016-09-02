@@ -511,6 +511,7 @@ class Eventloop(eva.ConfigurableObject):
         except eva.exceptions.RPCFailedException as e:
             self.logger.error('Error while executing RPC request: %s', e)
         self.logger.info('Finished processing RPC request: %s', str(event))
+        self.remove_event_from_queues(event)
 
     def set_message_timestamp_threshold(self, timestamp):
         """!

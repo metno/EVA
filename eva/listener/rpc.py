@@ -54,6 +54,7 @@ class RPCListener(eva.base.listener.BaseListener):
         except productstatus.exceptions.EventTimeoutException as e:
             raise eva.exceptions.EventTimeoutException(e)
         return eva.event.RPCEvent(
+            event,
             rpc,
             timestamp=datetime.datetime.now().replace(tzinfo=dateutil.tz.tzutc())
         )
