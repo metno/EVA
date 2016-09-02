@@ -41,12 +41,9 @@ NOISY_LOGGERS = [
 
 
 def parse_bool(value):
-    value = str(value).lower()
-    if value == 'yes' or value == 'true' or value == '1':
-        return True
-    if value == 'no' or value == 'false' or value == '0' or value == 'None':
-        return False
-    raise ValueError('Invalid boolean value: %s' % value)
+    value = eva.parse_boolean_string(str(value))
+    if value is None:
+        raise ValueError('Invalid boolean value: %s' % value)
 
 
 def build_argument_list():
@@ -61,7 +58,7 @@ def build_argument_list():
     # Productstatus API key matching the username
     arg['productstatus_api_key'] = os.getenv('EVA_PRODUCTSTATUS_API_KEY')
     # Set this option to skip Productstatus SSL certificate verification
-    arg['productstatus_verify_ssl'] = parse_bool(os.getenv('EVA_PRODUCTSTATUS_VERIFY_SSL', True))
+    arg['productstatus_verify_ssl'] = parse_bool(os.getenv('EVA_PRODUCTSTATUS_VERIFY_SSL', '1'))
     # Python class name of adapters that should be run
     arg['adapter'] = os.getenv('EVA_ADAPTER', 'eva.adapter.NullAdapter')
     # Python class name of executor that should be used
