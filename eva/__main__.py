@@ -18,7 +18,6 @@ import eva.logger
 import eva.eventloop
 import eva.adapter
 import eva.executor
-import eva.rpc_listener
 
 
 # Environment variables in this list will be censored in the log output.
