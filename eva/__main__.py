@@ -1,4 +1,5 @@
 import os
+import copy
 import uuid
 import signal
 import sys
@@ -20,11 +21,6 @@ import eva.adapter
 import eva.executor
 
 
-# Environment variables in this list will be censored in the log output.
-SECRET_ENVIRONMENT_VARIABLES = [
-    'EVA_PRODUCTSTATUS_API_KEY',
-]
-
 # Some modules are producing way too much DEBUG log, define them here.
 NOISY_LOGGERS = [
     'kafka.client',
@@ -39,116 +35,184 @@ NOISY_LOGGERS = [
     'paramiko',
 ]
 
-
-def parse_bool(value):
-    value = eva.parse_boolean_string(str(value))
-    if value is None:
-        raise ValueError('Invalid boolean value: %s' % value)
+EXIT_OK = 0
+EXIT_INVALID_CONFIG = 1
+EXIT_BUG = 255
 
 
-def build_argument_list():
-    arg = {}
+class Main(eva.ConfigurableObject):
 
-    # Path to logging configuration file
-    arg['log_config'] = os.getenv('EVA_LOG_CONFIG')
-    # URL to Productstatus service
-    arg['productstatus_url'] = os.getenv('EVA_PRODUCTSTATUS_URL', 'https://productstatus.met.no')
-    # Productstatus username for authentication
-    arg['productstatus_username'] = os.getenv('EVA_PRODUCTSTATUS_USERNAME')
-    # Productstatus API key matching the username
-    arg['productstatus_api_key'] = os.getenv('EVA_PRODUCTSTATUS_API_KEY')
-    # Set this option to skip Productstatus SSL certificate verification
-    arg['productstatus_verify_ssl'] = parse_bool(os.getenv('EVA_PRODUCTSTATUS_VERIFY_SSL', '1'))
-    # Python class name of adapters that should be run
-    arg['adapter'] = os.getenv('EVA_ADAPTER', 'eva.adapter.NullAdapter')
-    # Python class name of executor that should be used
-    arg['executor'] = os.getenv('EVA_EXECUTOR', 'eva.executor.ShellExecutor')
-    # Comma separated Python class names of listeners that should be run
-    arg['listeners'] = os.getenv('EVA_LISTENERS', 'eva.listener.RPCListener,eva.listener.ProductstatusListener')
-    # ZooKeeper endpoints
-    arg['zookeeper'] = os.getenv('EVA_ZOOKEEPER')
-    # StatsD endpoints
-    arg['statsd'] = os.getenv('EVA_STATSD', '')
+    CONFIG = {
+        'EVA_LOG_CONFIG': {
+            'type': 'string',
+            'help': 'Path to logging configuration file',
+            'default': '',
+        },
+        'EVA_PRODUCTSTATUS_URL': {
+            'type': 'string',
+            'help': 'URL to Productstatus service',
+            'default': 'https://productstatus.met.no',
+        },
+        'EVA_PRODUCTSTATUS_USERNAME': {
+            'type': 'string',
+            'help': 'Productstatus username for authentication',
+            'default': '',
+        },
+        'EVA_PRODUCTSTATUS_API_KEY': {
+            'type': 'string',
+            'help': 'Productstatus API key matching the username',
+            'default': '',
+        },
+        'EVA_PRODUCTSTATUS_VERIFY_SSL': {
+            'type': 'bool',
+            'help': 'Set this option to skip Productstatus SSL certificate verification',
+            'default': 'YES',
+        },
+        'EVA_ADAPTER': {
+            'type': 'string',
+            'help': 'Python class name of adapters that should be run',
+            'default': 'eva.adapter.NullAdapter',
+        },
+        'EVA_EXECUTOR': {
+            'type': 'string',
+            'help': 'Python class name of executor that should be used',
+            'default': 'eva.executor.ShellExecutor',
+        },
+        'EVA_LISTENERS': {
+            'type': 'list_string',
+            'help': 'Comma separated Python class names of listeners that should be run',
+            'default': 'eva.listener.RPCListener,eva.listener.ProductstatusListener',
+        },
+        'EVA_ZOOKEEPER': {
+            'type': 'string',
+            'help': 'ZooKeeper endpoints in the form <host>:<port>[,<host>:<port>,[...]]/<path>',
+            'default': '',
+        },
+        'EVA_STATSD': {
+            'type': 'list_string',
+            'help': 'Comma-separated list of StatsD endpoints in the form <host>:<port>',
+            'default': '',
+        },
+        'MARATHON_APP_ID': {
+            'type': 'string',
+            'help': 'Set by Marathon, and used for Kafka group ID. DO NOT SET THIS VARIABLE MANUALLY!',
+            'default': '',
+            'hidden': True,
+        },
+        'MESOS_TASK_ID': {
+            'type': 'string',
+            'help': 'Set by Marathon, and used for logging purposes. DO NOT SET THIS VARIABLE MANUALLY!',
+            'default': '',
+            'hidden': True,
+        },
+    }
 
-    return arg
+    OPTIONAL_CONFIG = [
+        'EVA_ADAPTER',
+        'EVA_EXECUTOR',
+        'EVA_LISTENERS',
+        'EVA_LOG_CONFIG',
+        'EVA_PRODUCTSTATUS_API_KEY',
+        'EVA_PRODUCTSTATUS_URL',
+        'EVA_PRODUCTSTATUS_USERNAME',
+        'EVA_PRODUCTSTATUS_VERIFY_SSL',
+        'EVA_STATSD',
+        'EVA_ZOOKEEPER',
+        'MARATHON_APP_ID',
+        'MESOS_TASK_ID',
+    ]
 
+    def __init__(self):
+        self.args = None
+        self.adapter = None
+        self.productstatus_api = None
+        self.event_listener = None
+        self.env = {}
+        self.logger = logging.getLogger('root')
+        self.zookeeper = None
+        self.listeners = []
+        self.adapter = None
+        self.executor = None
 
-if __name__ == "__main__":
+    def parse_args(self):
+        parser = argparse.ArgumentParser()
+        parser_rpc_group = parser.add_mutually_exclusive_group()
+        parser_rpc_group.add_argument(
+            '--process_all_in_product_instance',
+            action='store',
+            type=str,
+            required=False,
+            metavar='UUID',
+            help='Process all DataInstance resources belonging to a specific ProductInstance',
+        )
+        parser_rpc_group.add_argument(
+            '--process_data_instance',
+            action='store',
+            type=str,
+            required=False,
+            metavar='UUID',
+            help='Process a single DataInstance resource',
+        )
+        parser.add_argument(
+            '--debug',
+            action='store_true',
+            default=False,
+            help='Print DEBUG log statements by default',
+        )
+        parser.add_argument(
+            '--group-id',
+            action='store',
+            help='Manually set the EVA group id (DANGEROUS!)',
+        )
+        parser.add_argument(
+            '--health-check-port',
+            action='store',
+            type=int,
+            help='Run a HTTP health check server on all interfaces at the specified port',
+        )
+        self.args = parser.parse_args()
 
-    adapter = None
-    productstatus_api = None
-    event_listener = None
-    environment_variables = None
+    @staticmethod
+    def signal_handler(sig, frame):
+        raise eva.exceptions.ShutdownException('Caught signal %d, exiting.' % sig)
 
-    parser = argparse.ArgumentParser()
-    parser_rpc_group = parser.add_mutually_exclusive_group()
-    parser_rpc_group.add_argument(
-        '--process_all_in_product_instance',
-        action='store',
-        type=str,
-        required=False,
-        metavar='UUID',
-        help='Process all DataInstance resources belonging to a specific ProductInstance',
-    )
-    parser_rpc_group.add_argument(
-        '--process_data_instance',
-        action='store',
-        type=str,
-        required=False,
-        metavar='UUID',
-        help='Process a single DataInstance resource',
-    )
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        default=False,
-        help='Print DEBUG log statements by default',
-    )
-    parser.add_argument(
-        '--group-id',
-        action='store',
-        help='Manually set the EVA group id (DANGEROUS!)',
-    )
-    parser.add_argument(
-        '--health-check-port',
-        action='store',
-        type=int,
-        help='Run a HTTP health check server on all interfaces at the specified port',
-    )
-    args = parser.parse_args()
+    def setup_signals(self):
+        """!
+        @brief Set up signals to catch interrupts and exit cleanly.
+        """
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
 
-    try:
-        # Catch interrupts and exit cleanly
-        def signal_handler(sig, frame):
-            raise eva.exceptions.ShutdownException('Caught signal %d, exiting.' % sig)
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
+    def setup_environment_variables(self):
+        """!
+        @brief Read all environment variables from shell.
+        """
+        self.environment_variables = {key: var for key, var in os.environ.items() if key.startswith(('EVA_', 'MESOS_', 'MARATHON_'))}
+        self.env = copy.copy(self.environment_variables)
 
-        arg = build_argument_list()
+    def setup_basic_logging(self):
+        """!
+        @brief Set up a minimal logging configuration.
+        """
+        logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
+                            datefmt='%Y-%m-%dT%H:%M:%S%Z',
+                            level=logging.INFO if not self.args.debug else logging.DEBUG)
 
-        if arg['log_config']:
-            logging.config.fileConfig(arg['log_config'])
-        else:
-            logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
-                                datefmt='%Y-%m-%dT%H:%M:%S%Z',
-                                level=logging.INFO if not args.debug else logging.DEBUG)
-
-        # Randomly generated message queue client and group ID's
-        client_id = str(uuid.uuid4())
-        group_id = str(uuid.uuid4()) if not args.group_id else args.group_id
-
-        # Extract useful environment variables
-        environment_variables = {key: var for key, var in os.environ.items() if key.startswith(('EVA_', 'MARATHON_', 'MESOS_',))}
+    def setup_logging(self):
+        """!
+        @brief Override default logging configuration.
+        """
+        # Read configuration from file
+        if self.env['EVA_LOG_CONFIG']:
+            logging.config.fileConfig(self.env['EVA_LOG_CONFIG'])
 
         # Test for Mesos + Marathon execution, and set appropriate configuration
-        logger = logging.getLogger('root')
-        if 'MARATHON_APP_ID' in environment_variables:
-            group_id = environment_variables['MARATHON_APP_ID']
+        if self.env['MARATHON_APP_ID']:
             log_filter = eva.logger.TaskIdLogFilter(
-                app_id=environment_variables['MARATHON_APP_ID'],
-                task_id=environment_variables['MESOS_TASK_ID'],
+                app_id=self.env['MARATHON_APP_ID'],
+                task_id=self.env['MESOS_TASK_ID'],
             )
-            logger.addFilter(log_filter)
+            self.logger.addFilter(log_filter)
             # Try to hijack the Paramiko logger before it can be instantiated
             # when doing "import paramiko" in the GridEngineExecutor module
             logging.getLogger('paramiko').addFilter(log_filter)
@@ -157,134 +221,191 @@ if __name__ == "__main__":
         for noisy_logger in NOISY_LOGGERS:
             logging.getLogger(noisy_logger).setLevel(logging.INFO)
 
-        # Log startup event
-        logger.info('Starting EVA: the EVent Adapter.')
+    def setup_client_group_id(self):
+        """!
+        @brief Set up Kafka client and group id.
 
-        # Set up health check server
-        if args.health_check_port:
-            health_check_server = eva.health.HealthCheckServer('0.0.0.0', args.health_check_port)
-            logger.info('Started health check server on 0.0.0.0:%d', args.health_check_port)
+        Use a randomly generated message queue client and group ID, or use the
+        name from MARATHON_APP_ID.
+        """
+        self.client_id = str(uuid.uuid4())
+        if self.args.group_id:
+            self.group_id = self.args.group_id
+        elif self.env['MARATHON_APP_ID']:
+            self.group_id = self.env['MARATHON_APP_ID']
         else:
-            health_check_server = None
-            logger.warning('Not running health check server!')
+            self.group_id = str(uuid.uuid4())
+        self.logger.info('Using client ID: %s', self.client_id)
+        self.logger.info('Using group ID: %s', self.group_id)
 
-        # Print environment variables
-        for key, var in sorted(environment_variables.items()):
-            if key in SECRET_ENVIRONMENT_VARIABLES:
-                var = '****CENSORED****'
-            logger.info('Environment: %s=%s' % (key, var))
-
-        # Set up StatsD client
-        dsn_list = [x for x in eva.split_comma_separated(arg['statsd']) if len(x) > 0]
-        statsd_client = eva.statsd.StatsDClient({'application': group_id}, dsn_list)
-        if len(dsn_list) > 0:
-            logger.info('StatsD client set up with application tag "%s", sending data to: %s', group_id, ', '.join(dsn_list))
+    def setup_health_check_server(self):
+        """!
+        @brief Set up a simple HTTP server to answer health checks.
+        """
+        if self.args.health_check_port:
+            self.health_check_server = eva.health.HealthCheckServer('0.0.0.0', self.args.health_check_port)
+            self.logger.info('Started health check server on 0.0.0.0:%d', self.args.health_check_port)
         else:
-            logger.warning('StatsD not configured, will not send metrics.')
+            self.health_check_server = None
+            self.logger.warning('Not running health check server!')
 
-        # Instantiate the Zookeeper client, if enabled
-        if arg['zookeeper']:
-            logger.info('Setting up Zookeeper connection to %s', arg['zookeeper'])
-            tokens = arg['zookeeper'].strip().split(u'/')
-            server_string = tokens[0]
-            base_path = os.path.join('/', os.path.join(*tokens[1:]), str(eva.zookeeper_group_id(group_id)))
-            zookeeper = kazoo.client.KazooClient(
-                hosts=server_string,
-                randomize_hosts=True,
-            )
-            logger.info('Using ZooKeeper, base path "%s"', base_path)
-            zookeeper.start()
-            zookeeper.EVA_BASE_PATH = base_path
-            zookeeper.ensure_path(zookeeper.EVA_BASE_PATH)
+    def setup_statsd_client(self):
+        """!
+        @brief Set up a StatsD client that will send data to multiple servers simultaneously.
+        """
+        self.statsd_client = eva.statsd.StatsDClient({'application': self.group_id}, self.env['EVA_STATSD'])
+        if len(self.env['EVA_STATSD']) > 0:
+            self.logger.info('StatsD client set up with application tag "%s", sending data to: %s', self.group_id, ', '.join(self.env['EVA_STATSD']))
         else:
-            zookeeper = None
-            logger.warning('ZooKeeper not configured.')
+            self.logger.warning('StatsD not configured, will not send metrics.')
 
-        # Instantiate the Productstatus client
-        productstatus_api = productstatus.api.Api(
-            arg['productstatus_url'],
-            username=arg['productstatus_username'],
-            api_key=arg['productstatus_api_key'],
-            verify_ssl=arg['productstatus_verify_ssl'],
+    def setup_zookeeper(self):
+        """!
+        @brief Instantiate the Zookeeper client, if enabled.
+        """
+        if not self.env['EVA_ZOOKEEPER']:
+            self.logger.warning('ZooKeeper not configured.')
+            return
+
+        self.logger.info('Setting up Zookeeper connection to %s', self.env['EVA_ZOOKEEPER'])
+        tokens = self.env['EVA_ZOOKEEPER'].strip().split(u'/')
+        server_string = tokens[0]
+        base_path = os.path.join('/', os.path.join(*tokens[1:]), str(eva.zookeeper_group_id(self.group_id)))
+        self.zookeeper = kazoo.client.KazooClient(
+            hosts=server_string,
+            randomize_hosts=True,
+        )
+        self.logger.info('Using ZooKeeper, base path "%s"', base_path)
+        self.zookeeper.start()
+        self.zookeeper.EVA_BASE_PATH = base_path
+        self.zookeeper.ensure_path(self.zookeeper.EVA_BASE_PATH)
+
+    def setup_productstatus(self):
+        """!
+        @brief Instantiate the Productstatus client.
+        """
+        self.productstatus_api = productstatus.api.Api(
+            self.env['EVA_PRODUCTSTATUS_URL'],
+            username=self.env['EVA_PRODUCTSTATUS_USERNAME'],
+            api_key=self.env['EVA_PRODUCTSTATUS_API_KEY'],
+            verify_ssl=self.env['EVA_PRODUCTSTATUS_VERIFY_SSL'],
             timeout=10,
         )
 
-        # Instantiate and configure all message listeners
-        listeners = []
-        listener_classes = eva.split_comma_separated(arg['listeners'])
-        for listener_class in listener_classes:
+    def setup_listeners(self):
+        """!
+        @brief Instantiate and configure all message listeners.
+        """
+        self.listeners = []
+        for listener_class in self.env['EVA_LISTENERS']:
             listener = eva.import_module_class(listener_class)(
-                environment_variables,
-                logger,
-                zookeeper,
-                client_id=client_id,
-                group_id=group_id,
-                productstatus_api=productstatus_api,
-                statsd=statsd_client,
+                self.environment_variables,
+                self.logger,
+                self.zookeeper,
+                client_id=self.client_id,
+                group_id=self.group_id,
+                productstatus_api=self.productstatus_api,
+                statsd=self.statsd_client,
             )
             listener.setup_listener()
-            logger.info('Adding listener: %s' % listener.__class__)
-            listeners += [listener]
+            self.logger.info('Adding listener: %s' % listener.__class__)
+            self.listeners += [listener]
 
-        executor = eva.import_module_class(arg['executor'])(
-            group_id,
-            environment_variables,
-            logger,
-            zookeeper,
-            statsd_client,
+    def setup_executor(self):
+        """!
+        @brief Instantiate the configured executor class.
+        """
+        self.executor = eva.import_module_class(self.env['EVA_EXECUTOR'])(
+            self.group_id,
+            self.environment_variables,
+            self.logger,
+            self.zookeeper,
+            self.statsd_client,
         )
-        logger.info('Using executor: %s' % executor.__class__)
+        self.logger.info('Using executor: %s' % self.executor.__class__)
 
-        adapter = eva.import_module_class(arg['adapter'])(
-            environment_variables,
-            executor,
-            productstatus_api,
-            logger,
-            zookeeper,
-            statsd_client,
+    def setup_adapter(self):
+        """!
+        @brief Instantiate the configured adapter class.
+        """
+        self.adapter = eva.import_module_class(self.env['EVA_ADAPTER'])(
+            self.environment_variables,
+            self.executor,
+            self.productstatus_api,
+            self.logger,
+            self.zookeeper,
+            self.statsd_client,
         )
-        logger.info('Using adapter: %s' % adapter.__class__)
+        self.logger.info('Using adapter: %s' % self.adapter.__class__)
 
-    except eva.exceptions.EvaException as e:
-        logger.critical(str(e))
-        logger.info('Shutting down EVA due to missing or invalid configuration.')
-        sys.exit(1)
+    def setup(self):
+        try:
+            self.parse_args()
+            self.setup_basic_logging()
+            self.setup_signals()
+            self.setup_environment_variables()
+            self.read_configuration()
+            self.setup_logging()
 
-    except Exception as e:
-        eva.print_exception_as_bug(e, logger)
-        logger.critical('EVA initialization failed. Your code is broken, please fix it.')
-        sys.exit(255)
+            self.logger.info('Starting EVA: the EVent Adapter.')
+            self.print_environment('Global configuration: ')
+            self.setup_client_group_id()
+            self.setup_health_check_server()
+            self.setup_statsd_client()
+            self.setup_zookeeper()
+            self.setup_productstatus()
+            self.setup_listeners()
+            self.setup_executor()
+            self.setup_adapter()
 
-    try:
-        evaloop = eva.eventloop.Eventloop(productstatus_api,
-                                          listeners,
-                                          adapter,
-                                          executor,
-                                          statsd_client,
-                                          zookeeper,
-                                          environment_variables,
-                                          health_check_server,
-                                          logger,
-                                          )
-        if args.process_all_in_product_instance:
-            product_instance = productstatus_api.productinstance[args.process_all_in_product_instance]
-            evaloop.process_all_in_product_instance(product_instance)
-            evaloop.sort_queue()
-            while evaloop.process_all_events_once():
-                continue
-        elif args.process_data_instance:
-            evaloop.process_data_instance(args.process_data_instance)
-            evaloop.sort_queue()
-            while evaloop.process_all_events_once():
-                continue
-        else:
-            evaloop()
-    except eva.exceptions.ShutdownException as e:
-        logger.info(str(e))
-    except Exception as e:
-        eva.print_exception_as_bug(e, logger)
-        sys.exit(255)
+        except eva.exceptions.EvaException as e:
+            self.logger.critical(str(e))
+            self.logger.info('Shutting down EVA due to missing or invalid configuration.')
+            sys.exit(1)
 
-    if zookeeper:
-        zookeeper.stop()
-    logger.info('Shutting down EVA.')
+        except Exception as e:
+            eva.print_exception_as_bug(e, self.logger)
+            self.logger.critical('EVA initialization failed. Your code is broken, please fix it.')
+            sys.exit(255)
+
+    def start(self):
+        try:
+            evaloop = eva.eventloop.Eventloop(self.productstatus_api,
+                                              self.listeners,
+                                              self.adapter,
+                                              self.executor,
+                                              self.statsd_client,
+                                              self.zookeeper,
+                                              self.environment_variables,
+                                              self.health_check_server,
+                                              self.logger,
+                                              )
+
+            if self.args.process_all_in_product_instance or self.args.process_data_instance:
+                if self.args.process_all_in_product_instance:
+                    product_instance = self.productstatus_api.productinstance[self.args.process_all_in_product_instance]
+                    evaloop.process_all_in_product_instance(product_instance)
+                elif self.args.process_data_instance:
+                    evaloop.process_data_instance(self.args.process_data_instance)
+                evaloop.sort_queue()
+                while evaloop.process_all_events_once():
+                    continue
+            else:
+                evaloop()
+
+        except eva.exceptions.ShutdownException as e:
+            self.logger.info(str(e))
+        except Exception as e:
+            eva.print_exception_as_bug(e, self.logger)
+            sys.exit(255)
+
+        if self.zookeeper:
+            self.logger.info('Stopping ZooKeeper.')
+            self.zookeeper.stop()
+        self.logger.info('Shutting down EVA.')
+
+
+if __name__ == "__main__":
+    m = Main()
+    m.setup()
+    m.start()

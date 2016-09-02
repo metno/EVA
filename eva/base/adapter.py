@@ -133,6 +133,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.reference_time_threshold_delta = None
         self.template = eva.template.Environment()
         self.read_configuration()
+        self.print_environment(prefix='Adapter configuration: ')
         self.setup_process_partial()
         self.setup_single_instance()
         self.setup_reference_time_threshold()

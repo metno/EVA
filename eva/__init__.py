@@ -8,29 +8,42 @@ import traceback
 import eva.exceptions
 
 
+# Environment variables in this list will be censored in the log output.
+SECRET_ENVIRONMENT_VARIABLES = [
+    'EVA_PRODUCTSTATUS_API_KEY',
+]
+
+
 class ConfigurableObject(object):
     """
     Base class that allows the subclass to define a list of required and
     optional configuration environment variables.
 
-    The subclass has the responsibility of calling `read_configuration()`.
+    The subclass has the responsibility of populating `self.env` with a
+    dictionary of environment variables, and then call `read_configuration()`.
 
     Additionally, the subclass must have the property `logger`, which points to
-    a Python self.logger object.
+    a Python logging object.
 
-    Variables are configured as such:
+    Configurable variables are defined with:
 
         CONFIG = {
-            'EVA_VARIABLE_FOO': ('list_string', 'Description of what this setting does',),
-            'EVA_FOO_BAR': ('bool', 'Helpful description of what the other setting does',),
-        }
+            'EVA_FOO': {
+                'type': 'list_int',
+                'help': 'Description of what this setting does',
+                'default': '1,2,3',
+            },
+            'EVA_BAR': {
+                ...
+            },
+        },
 
     The types are defined as `normalize_config_<type>` functions in this class.
 
     Then, to use them either as required or optional variables, you may do:
 
-        REQUIRED_CONFIG = ['EVA_VARIABLE']
-        OPTIONAL_CONFIG = ['EVA_FOO_BAR']
+        REQUIRED_CONFIG = ['EVA_FOO']
+        OPTIONAL_CONFIG = ['EVA_BAR']
 
     """
 
@@ -161,6 +174,15 @@ class ConfigurableObject(object):
 
         # Drop non-normalized values
         self.env = env
+
+    def print_environment(self, prefix=''):
+        """!
+        @brief Print environment variables to log.
+        """
+        for key, var in sorted(self.env.items()):
+            if key in SECRET_ENVIRONMENT_VARIABLES:
+                var = '****CENSORED****'
+            self.logger.info('%s%s=%s' % (prefix, key, var))
 
 
 def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warning=1, error=3, give_up=5, logger=logging):

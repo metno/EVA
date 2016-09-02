@@ -16,6 +16,7 @@ class BaseExecutor(eva.ConfigurableObject):
         self.zookeeper = zookeeper
         self.statsd = statsd
         self.read_configuration()
+        self.print_environment(prefix='Executor configuration: ')
 
     def execute_async(self, job):
         """!

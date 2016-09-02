@@ -12,6 +12,7 @@ class BaseListener(eva.ConfigurableObject):
         self.zookeeper = zookeeper
         self.kwargs = kwargs
         self.read_configuration()
+        self.print_environment(prefix='Listener configuration: ')
 
     def setup_listener(self):
         """!
