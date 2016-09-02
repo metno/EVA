@@ -1,4 +1,4 @@
-.PHONY: eva eva-base upload-eva upload-eva-base doc
+.PHONY: test lint check-git-clean pull-eva-base eva eva-base upload-eva upload-eva-base doc
 
 test:
 	nosetests
@@ -7,14 +7,14 @@ lint:
 	flake8 eva/ --ignore=E501
 
 check-git-clean:
-	if test "`git status --porcelain | wc -l`" != "0"; then
+	ifeq ($(shell test "`git status --porcelain | wc -l`" != "0"; echo $$?), 1)
 		$(error Please clean up your working directory and push your changes before building EVA)
-	fi
+	endfi
 
 pull-eva-base:
 	docker pull metno/eva-base
 
-eva: check-git-clean test lint pull-eva-base
+eva: test lint pull-eva-base
 	docker build --no-cache --tag metno/eva docker/eva
 
 eva-base:
