@@ -280,7 +280,7 @@ class Eventloop(eva.ConfigurableObject):
         @brief Move an event from the event queue to the process list.
         @returns True if the event was moved, False otherwise.
         """
-        if not event in self.event_queue:
+        if event not in self.event_queue:
             return False
         self.process_list += [event]
         self.event_queue.remove(event)
