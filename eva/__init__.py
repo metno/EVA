@@ -57,6 +57,17 @@ class ConfigurableObject(object):
     # @brief List of optional configuration variables.
     OPTIONAL_CONFIG = []
 
+    @classmethod
+    def format_help(class_):
+        """!
+        @brief Format a help string with this class' configuration variables.
+        """
+        output = ['%s configuration:' % class_.__name__]
+        for key in sorted(class_.CONFIG.keys()):
+            output += ['  %s  (default: %s)' % (key, class_.CONFIG[key]['default'])]
+            output += ['      %s' % class_.CONFIG[key]['help']]
+        return '\n'.join(output)
+
     def normalize_config_string(self, value):
         """!
         Coerce a type into a unicode string.

@@ -135,7 +135,7 @@ class Main(eva.ConfigurableObject):
         self.executor = None
 
     def parse_args(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser()  # FIXME: epilog
         parser_rpc_group = parser.add_mutually_exclusive_group()
         parser_rpc_group.add_argument(
             '--process_all_in_product_instance',
@@ -196,7 +196,7 @@ class Main(eva.ConfigurableObject):
         """
         logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
                             datefmt='%Y-%m-%dT%H:%M:%S%Z',
-                            level=logging.INFO if not self.args.debug else logging.DEBUG)
+                            level=logging.INFO)
 
     def setup_logging(self):
         """!
@@ -220,6 +220,14 @@ class Main(eva.ConfigurableObject):
         # Disable DEBUG logging on some noisy loggers
         for noisy_logger in NOISY_LOGGERS:
             logging.getLogger(noisy_logger).setLevel(logging.INFO)
+
+    def setup_default_loglevel(self):
+        """!
+        @brief Ensure that DEBUG loglevel is set if --debug passed to
+        arguments, and not using a custom log configuration.
+        """
+        if self.args.debug and not self.env['EVA_LOG_CONFIG']:
+            self.logger.setLevel(logging.DEBUG)
 
     def setup_client_group_id(self):
         """!
@@ -340,12 +348,13 @@ class Main(eva.ConfigurableObject):
 
     def setup(self):
         try:
-            self.parse_args()
             self.setup_basic_logging()
             self.setup_signals()
             self.setup_environment_variables()
             self.read_configuration()
             self.setup_logging()
+            self.parse_args()
+            self.setup_default_loglevel()
 
             self.logger.info('Starting EVA: the EVent Adapter.')
             self.print_environment('Global configuration: ')

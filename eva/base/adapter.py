@@ -119,7 +119,6 @@ class BaseAdapter(eva.ConfigurableObject):
         @param api Productstatus API object
         @param environment_variables Dictionary of EVA_* environment variables
         """
-        self.CONFIG = self.CONFIG or {}
         self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
         self.logger = logger
