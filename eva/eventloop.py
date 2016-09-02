@@ -100,7 +100,7 @@ class Eventloop(eva.ConfigurableObject):
             except eva.exceptions.EventTimeoutException:
                 continue
             except eva.exceptions.InvalidEventException as e:
-                self.logger.warning('Received invalid event: %s', e)
+                self.logger.debug('Received invalid event: %s', e)
                 continue
             except self.RECOVERABLE_EXCEPTIONS as e:
                 self.logger.warning('Exception while receiving event: %s', e)
