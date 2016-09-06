@@ -445,12 +445,14 @@ class Eventloop(eva.ConfigurableObject):
             # Only process messages with the correct version
             if event.protocol_version()[0] != 1:
                 self.logger.warning('Event version is %s, but I am only accepting major version 1. Discarding message.', '.'.join(event.protocol_version()))
+                self.statsd.incr('event_version_unsupported')
                 self.remove_event_from_queues(event)
                 return
 
             # Discard messages that date from an earlier Resource version
             if not self.event_matches_object_version(event):
                 self.logger.warning('Resource object version is %d, expecting it to be equal to the Event object version %d. The message is too old, discarding.', event.data.object_version, event.object_version())
+                self.statsd.incr('resource_object_version_too_old')
                 self.remove_event_from_queues(event)
                 return
 
