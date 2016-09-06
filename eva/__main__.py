@@ -208,16 +208,23 @@ class Main(eva.ConfigurableObject):
             logging.config.fileConfig(self.env['EVA_LOG_CONFIG'], disable_existing_loggers=False)
             self.logger = logging.getLogger('root')
 
-        # Test for Mesos + Marathon execution, and set appropriate configuration
+        # Test for Mesos + Marathon execution, and set appropriate log configuration
         if self.env['MARATHON_APP_ID']:
             log_filter = eva.logger.TaskIdLogFilter(
                 app_id=self.env['MARATHON_APP_ID'],
                 task_id=self.env['MESOS_TASK_ID'],
             )
+            # Inject logging filter into any existing loggers so that all
+            # output will be correctly filtered.
             self.logger.addFilter(log_filter)
-            # Try to hijack the Paramiko logger before it can be instantiated
-            # when doing "import paramiko" in the GridEngineExecutor module
-            logging.getLogger('paramiko').addFilter(log_filter)
+            for key in sorted(logging.Logger.manager.loggerDict.keys()):
+                if key == 'root':
+                    continue
+                logger = logging.Logger.manager.loggerDict[key]
+                if not isinstance(logger, logging.Logger):
+                    continue
+                self.logger.debug('Adding logging filter to logger: %s', key)
+                logger.addFilter(log_filter)
 
         # Disable DEBUG logging on some noisy loggers
         for noisy_logger in NOISY_LOGGERS:
