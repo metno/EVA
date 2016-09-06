@@ -197,6 +197,7 @@ class Main(eva.ConfigurableObject):
         logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
                             datefmt='%Y-%m-%dT%H:%M:%S%Z',
                             level=logging.INFO)
+        self.logger = logging.getLogger('root')
 
     def setup_logging(self):
         """!
@@ -204,7 +205,8 @@ class Main(eva.ConfigurableObject):
         """
         # Read configuration from file
         if self.env['EVA_LOG_CONFIG']:
-            logging.config.fileConfig(self.env['EVA_LOG_CONFIG'])
+            logging.config.fileConfig(self.env['EVA_LOG_CONFIG'], disable_existing_loggers=False)
+            self.logger = logging.getLogger('root')
 
         # Test for Mesos + Marathon execution, and set appropriate configuration
         if self.env['MARATHON_APP_ID']:
@@ -226,7 +228,7 @@ class Main(eva.ConfigurableObject):
         @brief Ensure that DEBUG loglevel is set if --debug passed to
         arguments, and not using a custom log configuration.
         """
-        if self.args.debug and not self.env['EVA_LOG_CONFIG']:
+        if self.args.debug:
             self.logger.setLevel(logging.DEBUG)
 
     def setup_client_group_id(self):
