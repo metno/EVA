@@ -274,6 +274,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                     data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][lifetime_index])
                 else:
                     data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][-1])
+                lifetime_index += 1
             elif self.is_nml_data_output(output_file):
                 data_instance.format = self.nml_data_format
                 # let the NML file live as long as the shortest lived file in the output dataset
@@ -282,7 +283,5 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                 raise RuntimeError('Unsupported data format in job output: %s' % data['extension'])
 
             resources['datainstance'] += [data_instance]
-
-            lifetime_index += 1
 
         return resources
