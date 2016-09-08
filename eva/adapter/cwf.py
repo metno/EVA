@@ -246,7 +246,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             'reference_time': job.resource.data.productinstance.reference_time,
             'version': job.resource.data.productinstance.version,
         }
-        product_instance = qs = self.api.productinstance.find_or_create_ephemeral(parameters)
+        product_instance = self.api.productinstance.find_or_create_ephemeral(parameters)
         resources['productinstance'] += [product_instance]
 
         lifetime_index = 0
