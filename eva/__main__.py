@@ -7,6 +7,7 @@ import logging
 import logging.config
 import argparse
 import kazoo.client
+import kazoo.exceptions
 
 import productstatus
 import productstatus.api
@@ -413,6 +414,9 @@ class Main(eva.ConfigurableObject):
 
         except eva.exceptions.ShutdownException as e:
             self.logger.info(str(e))
+        except kazoo.exceptions.ConnectionLoss as e:
+            self.logger.critical('Shutting down EVA due to ZooKeeper connection loss: %s', str(e))
+            self.statsd.incr('zookeeper_connection_loss')
         except Exception as e:
             eva.print_exception_as_bug(e, self.logger)
             sys.exit(255)
