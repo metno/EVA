@@ -241,24 +241,29 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             'datainstance': [],
         }
 
-        product_instance = self.api.productinstance.create()
-        product_instance.product = self.output_product
-        product_instance.reference_time = job.resource.data.productinstance.reference_time
-
+        parameters = {
+            'product': self.output_product,
+            'reference_time': job.resource.data.productinstance.reference_time,
+            'version': job.resource.data.productinstance.version,
+        }
+        product_instance = qs = self.api.productinstance.find_or_create_ephemeral(parameters)
         resources['productinstance'] += [product_instance]
 
         lifetime_index = 0
 
         for output_file in job.output_files:
-            data = self.api.data.create()
-            data.productinstance = product_instance
+            parameters = {
+                'productinstance': product_instance,
+            }
 
             if self.is_netcdf_data_output(output_file):
-                data.time_period_begin = output_file['time_steps'][0]
-                data.time_period_end = output_file['time_steps'][-1]
+                parameters['time_period_begin'] = output_file['time_steps'][0]
+                parameters['time_period_end'] = output_file['time_steps'][-1]
             else:
-                data.time_period_begin = None
-                data.time_period_end = None
+                parameters['time_period_begin'] = None
+                parameters['time_period_end'] = None
+
+            data = self.api.data.find_or_create_ephemeral(parameters)
 
             data = self.get_matching_data(resources['data'], data)
             resources['data'] += [data]
