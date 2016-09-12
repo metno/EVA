@@ -11,6 +11,8 @@ import eva
 import eva.job
 import eva.base.adapter
 
+import productstatus.exceptions
+
 
 class CWFAdapter(eva.base.adapter.BaseAdapter):
     CONFIG = {
