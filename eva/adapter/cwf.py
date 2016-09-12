@@ -186,7 +186,19 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             )
 
         if not self.post_to_productstatus():
-            self.logger.info('NOT posting to Productstatus because of absent configuration.')
+            self.logger.warning('NOT posting to Productstatus because of absent configuration.')
+            return
+
+        # create a ProductInstance resource right away, in order to have correct filtering in self.generate_resources()
+        job.logger.info('Creating ProductInstance resource...')
+        eva.retry_n(self.api.productinstance.find_or_create,
+                    args=({
+                        'product': self.output_product,
+                        'reference_time': job.resource.data.productinstance.reference_time,
+                        'version': job.resource.data.productinstance.version,
+                    },),
+                    exceptions=(productstatus.exceptions.ServiceUnavailableException,),
+                    give_up=0)
 
         job.logger.info('Generating Productstatus resources...')
         resources = self.generate_resources(job)

@@ -13,7 +13,7 @@ config = {
     'install_requires': [
         'nose==1.3.7',
         'python-dateutil==2.5.0',
-        'productstatus-client==6.1.1',
+        'productstatus-client==6.1.2',
         'paramiko==1.16.0',
         'mock==1.3.0',
         'jinja2==2.8',
