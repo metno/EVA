@@ -440,7 +440,8 @@ class Eventloop(eva.ConfigurableObject):
         * Send a finish message to the Adapter
         """
 
-        if isinstance(event, eva.event.ProductstatusEvent):
+        # Checks for real Productstatus events from the message queue
+        if type(event) is eva.event.ProductstatusEvent:
 
             # Only process messages with the correct version
             if event.protocol_version()[0] != 1:
