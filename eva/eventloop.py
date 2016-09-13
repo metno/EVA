@@ -255,7 +255,7 @@ class Eventloop(eva.ConfigurableObject):
         if not self.zookeeper:
             return []
         data = eva.zk.load_serialized_data(self.zookeeper, path)
-        return [eva.event.ProductstatusEvent.factory(productstatus.event.Message(x)) for x in data]
+        return [eva.event.ProductstatusEvent.factory(productstatus.event.Message(x)) for x in data if x]
 
     def load_event_queue(self):
         """!
