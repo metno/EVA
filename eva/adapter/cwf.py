@@ -157,6 +157,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         cmd += ['export NREC_DAY_MIN=%d' % self.env['EVA_CWF_INPUT_MIN_DAYS']]
         cmd += ['export OUTDIR=%s' % job.output_directory]
         cmd += ['export UTC=%s' % reference_time.strftime('%H')]
+        cmd += ['set -e']  # terminate on errors
         cmd += ['%s >&2' % self.env['EVA_CWF_SCRIPT_PATH']]
 
         # Run output recognition
