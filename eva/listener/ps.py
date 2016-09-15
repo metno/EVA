@@ -47,7 +47,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
                 raise eva.exceptions.EventTimeoutException('No Productstatus messages available for consumption.')
             self.kwargs['statsd'].incr('productstatus_received_events')
             self.logger.debug('Productstatus message received: %s', event)
-            return eva.event.ProductstatusEvent.factory(event)
+            return eva.event.ProductstatusBaseEvent.factory(event)
         except self.RECOVERABLE_EXCEPTIONS as e:
             raise eva.exceptions.EventTimeoutException(e)
 

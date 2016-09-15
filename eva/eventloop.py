@@ -47,6 +47,9 @@ class Eventloop(eva.ConfigurableObject):
         'ADAPTIVE': QUEUE_ORDER_ADAPTIVE,
     }
 
+    # Allow maximum 60 seconds between each heartbeat before reporting process unhealthy
+    HEALTH_CHECK_HEARTBEAT_TIMEOUT = 60
+
     def __init__(self,
                  productstatus_api,
                  listeners,
@@ -76,6 +79,11 @@ class Eventloop(eva.ConfigurableObject):
         self.process_list = []
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
+
+        event_listener_configuration = self.productstatus_api.get_event_listener_configuration()
+        if hasattr(event_listener_configuration, 'heartbeat_interval'):
+            self.set_health_check_heartbeat_interval(int(event_listener_configuration.heartbeat_interval))
+            self.set_health_check_heartbeat_timeout(self.HEALTH_CHECK_HEARTBEAT_TIMEOUT)
 
     def parse_queue_order(self, s):
         """!
@@ -109,9 +117,17 @@ class Eventloop(eva.ConfigurableObject):
             # Duplicate events in queue should not happen
             if event.id() in [x.id() for x in self.event_queue]:
                 self.logger.warning('Event with id %s is already in the event queue. This is most probably due to a previous Kafka commit error. The message has been discarded.')
+                listener.acknowledge()
                 continue
             if event.id() in [x.id() for x in self.process_list]:
                 self.logger.warning('Event with id %s is already in the process list. This is most probably due to a previous Kafka commit error. The message has been discarded.')
+                listener.acknowledge()
+                continue
+
+            # Accept heartbeats without adding them to queue
+            if isinstance(event, eva.event.ProductstatusHeartbeatEvent):
+                listener.acknowledge()
+                self.set_health_check_timestamp(event.timestamp())
                 continue
 
             if self.add_event_to_queue(event):
@@ -255,7 +271,7 @@ class Eventloop(eva.ConfigurableObject):
         if not self.zookeeper:
             return []
         data = eva.zk.load_serialized_data(self.zookeeper, path)
-        return [eva.event.ProductstatusEvent.factory(productstatus.event.Message(x)) for x in data if x]
+        return [eva.event.ProductstatusBaseEvent.factory(productstatus.event.Message(x)) for x in data if x]
 
     def load_event_queue(self):
         """!
@@ -300,9 +316,9 @@ class Eventloop(eva.ConfigurableObject):
 
     def instantiate_productstatus_data(self, event):
         """!
-        @brief Make sure a ProductstatusEvent has a Productstatus resource in Event.data.
+        @brief Make sure a ProductstatusResourceEvent has a Productstatus resource in Event.data.
         """
-        if isinstance(event.data, str):
+        if isinstance(event.data, str) and type(event) == eva.event.ProductstatusResourceEvent:
             event.data = self.productstatus_api[event.data]
 
     def process_health_check(self):
@@ -311,6 +327,30 @@ class Eventloop(eva.ConfigurableObject):
         """
         if self.health_check_server:
             self.health_check_server.respond_to_next_request()
+
+    def set_health_check_heartbeat_interval(self, interval):
+        """!
+        @brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.
+        """
+        if self.health_check_server:
+            self.logger.debug('Setting health check heartbeat interval to %d seconds', interval)
+            self.health_check_server.set_heartbeat_interval(interval)
+
+    def set_health_check_heartbeat_timeout(self, timeout):
+        """!
+        @brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.
+        """
+        if self.health_check_server:
+            self.logger.debug('Setting health check heartbeat timeout to %d seconds', timeout)
+            self.health_check_server.set_heartbeat_timeout(timeout)
+
+    def set_health_check_timestamp(self, timestamp):
+        """!
+        @brief Give a heartbeat to the health check server.
+        """
+        if self.health_check_server:
+            self.logger.debug('Setting health check heartbeat at timestamp %s', timestamp)
+            self.health_check_server.heartbeat(timestamp)
 
     def sort_queue(self):
         """!
@@ -331,11 +371,11 @@ class Eventloop(eva.ConfigurableObject):
             return not isinstance(event, eva.event.RPCEvent)
 
         def sort_reference_time(event):
-            if not isinstance(event, eva.event.ProductstatusEvent):
-                return event.timestamp()
+            if not isinstance(event, eva.event.ProductstatusResourceEvent):
+                return eva.epoch_with_timezone()
             self.instantiate_productstatus_data(event)
             if event.data._collection._resource_name != 'datainstance':
-                return event.timestamp()
+                return eva.epoch_with_timezone()
             return event.data.data.productinstance.reference_time
 
         if self.queue_order == self.QUEUE_ORDER_FIFO:
@@ -424,7 +464,7 @@ class Eventloop(eva.ConfigurableObject):
         """!
         @brief Return True if Event.object_version() equals Resource.object_version, False otherwise.
         """
-        if not isinstance(event, eva.event.ProductstatusEvent):
+        if not isinstance(event, eva.event.ProductstatusResourceEvent):
             return False
         self.instantiate_productstatus_data(event)
         return event.object_version() == event.data.object_version
@@ -441,7 +481,7 @@ class Eventloop(eva.ConfigurableObject):
         """
 
         # Checks for real Productstatus events from the message queue
-        if type(event) is eva.event.ProductstatusEvent:
+        if type(event) is eva.event.ProductstatusResourceEvent:
 
             # Only process messages with the correct version
             if event.protocol_version()[0] != 1:
