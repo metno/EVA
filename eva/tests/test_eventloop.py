@@ -147,33 +147,44 @@ class TestEventloop(unittest.TestCase):
 
     def test_sort_queue_adaptive(self):
         now = eva.now_with_timezone()
-        # create mock objects
+        # create six mock objects
         mocks = [mock.MagicMock() for x in range(6)]
         # set type to 'datainstance' for the first four objects, and set reference time to now
-        for x in range(4):
+        for x in [0, 1, 2, 3]:
             mocks[x]._collection._resource_name = 'datainstance'
             mocks[x].data.productinstance.reference_time = now
-        # set future reference time for the mid two objects
-        for x in range(2, 4):
+        # set future reference time for the last two objects datainstance objects
+        for x in [2, 3]:
             mocks[x].data.productinstance.reference_time = eva.coerce_to_utc(datetime.datetime(2100, 1, 1, 12, 0, 0))
-        # set event queue contents two five ProductstatusLocalEvents, data
-        # pointing to the mock objects, with increasing timestamps
+        # set event queue contents to two ProductstatusResourceEvents and
+        # three ProductstatusLocalEvents, data pointing to the mock objects,
+        # with increasing timestamps
         self.eventloop.event_queue = [
-            eva.event.ProductstatusLocalEvent(None, mocks[x], timestamp=now + datetime.timedelta(hours=x + 1))
-            for x in range(5)
+            eva.event.ProductstatusLocalEvent(str(x), mocks[x], timestamp=now + datetime.timedelta(hours=x + 1))
+            for x in [0, 1, 4]
+        ]
+        self.eventloop.event_queue += [
+            eva.event.ProductstatusResourceEvent(str(x), mocks[x], timestamp=now + datetime.timedelta(hours=x + 1))
+            for x in [2, 3]
         ]
         # add an rpc event to the event queue
-        self.eventloop.event_queue += [eva.event.RPCEvent(None, mocks[-1], timestamp=now)]
+        self.eventloop.event_queue += [eva.event.RPCEvent(len(mocks) - 1, mocks[-1], timestamp=now + datetime.timedelta(hours=12))]
         # set queue sort order
         self.eventloop.queue_order = self.eventloop.QUEUE_ORDER_ADAPTIVE
         # sort queue
+        logging.info('=== PRE-SORT ===')
+        [logging.info("%d: ts=%s type=%s reference_time=%s", i, x.timestamp(), x.__class__.__name__, x.data.data.productinstance.reference_time) for i, x in enumerate(self.eventloop.event_queue)]
         self.eventloop.sort_queue()
-        # test expected order: rpc first, then future reftimes, then objects
-        # without reference time, then the other objects
-        order = [5, 2, 3, 4, 0, 1]
-        for i, n in enumerate(order):
+        logging.info('=== POST-SORT ===')
+        [logging.info("%d: ts=%s type=%s reference_time=%s", i, x.timestamp(), x.__class__.__name__, x.data.data.productinstance.reference_time) for i, x in enumerate(self.eventloop.event_queue)]
+        # test expected order: 1 rpc event first, then 2 objects with future
+        # reftimes, then 2 objects with "now" reference time, then 1
+        # non-datainstance object
+        expected_order = [5, 2, 3, 0, 1, 4]
+        real_order = [int(x.message) for x in self.eventloop.event_queue]
+        for i, n in enumerate(expected_order):
             self.assertEqual(self.eventloop.event_queue[i].data, mocks[n],
-                             msg='Queue was sorted incorrectly. Expected item %d at index %d' % (n, i))
+                             msg='Queue was sorted incorrectly. Expected %s but got %s' % (expected_order, real_order))
 
     def test_parse_queue_order(self):
         for key, value in self.eventloop.QUEUE_ORDERS.items():
