@@ -53,6 +53,7 @@ class HealthCheckServer(object):
 
     def calculate_status(self):
         if self.skip_heartbeat or self.heartbeat_interval == 0:
+            self.server.ok = True
             return
         next_heartbeat = self.heartbeat_timestamp + datetime.timedelta(seconds=self.heartbeat_interval + self.heartbeat_timeout)
         if next_heartbeat > eva.now_with_timezone():
