@@ -82,6 +82,7 @@ class Eventloop(eva.ConfigurableObject):
 
         event_listener_configuration = self.productstatus_api.get_event_listener_configuration()
         if hasattr(event_listener_configuration, 'heartbeat_interval'):
+            self.set_health_check_skip_heartbeat(False)
             self.set_health_check_heartbeat_interval(int(event_listener_configuration.heartbeat_interval))
             self.set_health_check_heartbeat_timeout(self.HEALTH_CHECK_HEARTBEAT_TIMEOUT)
 
@@ -157,6 +158,7 @@ class Eventloop(eva.ConfigurableObject):
         """
         self.drain = True
         self.logger.warning('Drain enabled! Will NOT process any more events from message listeners until event queue is empty!')
+        self.set_health_check_skip_heartbeat(True)
         for listener in self.listeners:
             listener.close_listener()
 
@@ -167,6 +169,7 @@ class Eventloop(eva.ConfigurableObject):
         """
         self.drain = False
         self.logger.info('Drain disabled. Will restart message listeners and start accepting new events.')
+        self.set_health_check_skip_heartbeat(False)
         for listener in self.listeners:
             listener.setup_listener()
 
@@ -327,6 +330,14 @@ class Eventloop(eva.ConfigurableObject):
         """
         if self.health_check_server:
             self.health_check_server.respond_to_next_request()
+
+    def set_health_check_skip_heartbeat(self, skip):
+        """!
+        @brief Tell the health check server to report healthy if heartbeats are skipped.
+        """
+        if self.health_check_server:
+            self.logger.debug('Setting health check heartbeat skip: %s', str(skip))
+            self.health_check_server.set_skip_heartbeat(bool(skip))
 
     def set_health_check_heartbeat_interval(self, interval):
         """!

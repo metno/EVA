@@ -42,6 +42,7 @@ class HealthCheckServer(object):
     def __init__(self, host, port):
         self.server = HTTPServer((host, port), HTTPRequestHandler)
         self.server.ok = True
+        self.skip_heartbeat = False
         self.heartbeat_interval = 0
         self.heartbeat_timeout = 0
         self.heartbeat_timestamp = eva.epoch_with_timezone()
@@ -51,13 +52,16 @@ class HealthCheckServer(object):
         self.server.handle_request()
 
     def calculate_status(self):
-        if self.heartbeat_interval == 0:
+        if self.skip_heartbeat or self.heartbeat_interval == 0:
             return
         next_heartbeat = self.heartbeat_timestamp + datetime.timedelta(seconds=self.heartbeat_interval + self.heartbeat_timeout)
         if next_heartbeat > eva.now_with_timezone():
             self.server.ok = True
         else:
             self.server.ok = False
+
+    def set_skip_heartbeat(self, skip):
+        self.skip_heartbeat = skip
 
     def set_heartbeat_timeout(self, timeout):
         self.heartbeat_timeout = int(timeout)
