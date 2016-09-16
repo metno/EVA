@@ -117,12 +117,10 @@ class Eventloop(eva.ConfigurableObject):
 
             # Duplicate events in queue should not happen
             if event.id() in [x.id() for x in self.event_queue]:
-                self.logger.warning('Event with id %s is already in the event queue. This is most probably due to a previous Kafka commit error. The message has been discarded.')
-                listener.acknowledge()
+                self.logger.warning('Event with id %s is already in the event queue. This is most probably due to a previous Kafka commit error. The message has been discarded.', event.id())
                 continue
             if event.id() in [x.id() for x in self.process_list]:
-                self.logger.warning('Event with id %s is already in the process list. This is most probably due to a previous Kafka commit error. The message has been discarded.')
-                listener.acknowledge()
+                self.logger.warning('Event with id %s is already in the process list. This is most probably due to a previous Kafka commit error. The message has been discarded.', event.id())
                 continue
 
             # Accept heartbeats without adding them to queue
