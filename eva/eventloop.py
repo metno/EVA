@@ -126,7 +126,7 @@ class Eventloop(eva.ConfigurableObject):
             # Accept heartbeats without adding them to queue
             if isinstance(event, eva.event.ProductstatusHeartbeatEvent):
                 listener.acknowledge()
-                self.set_health_check_timestamp(event.timestamp())
+                self.set_health_check_timestamp(eva.now_with_timezone())
                 continue
 
             if self.add_event_to_queue(event):
