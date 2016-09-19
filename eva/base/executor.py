@@ -15,8 +15,16 @@ class BaseExecutor(eva.ConfigurableObject):
         self.logger = logger
         self.zookeeper = zookeeper
         self.statsd = statsd
+        self.template = eva.template.Environment()
         self.read_configuration()
         self.print_environment(prefix='Executor configuration: ')
+        self.init()
+
+    def init(self):
+        """!
+        @brief Provides a place for subclasses to run their own initialization.
+        """
+        pass
 
     def execute_async(self, job):
         """!

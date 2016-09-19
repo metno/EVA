@@ -31,6 +31,14 @@ class TestGridEngineExecutor(unittest.TestCase):
         id = eva.executor.grid_engine.create_job_unique_id(group_id, BLANK_UUID)
         self.assertEqual(id, compare)
 
+    def test_qacct_command_default(self):
+        """!
+        @brief Test that the default value for EVA_GRIDENGINE_QACCT_COMMAND is
+        backwards-compatible.
+        """
+        rendered = self.executor.create_qacct_command(12345)
+        self.assertEqual(rendered, 'qacct -j 12345')
+
     def test_parse_qacct_metrics(self):
         raw = """
         ==============================================================
@@ -84,6 +92,41 @@ class TestGridEngineExecutor(unittest.TestCase):
                 'grid_engine_run_time': 300000,
                 'grid_engine_ru_utime': 14,
                 'grid_engine_ru_stime': 11,
+                'grid_engine_qsub_delay': 1000,
+            },
+            'tags': {
+                'grid_engine_hostname': 'c6320-5wszm62.int.met.no',
+                'grid_engine_qname': 'operational.q',
+            },
+        })
+
+    def test_parse_qacct_cache_metrics(self):
+        """!
+        @brief Test that the minimal output from qacct-cache.py (in the
+        eva-adapter-support package) is sufficient to produce usable output.
+        """
+        raw = """
+        ==============================================================
+        end_time    Sat Apr 16 20:45:43 2016
+        exit_status 0
+        group       eventadapter
+        hostname    c6320-5wszm62.int.met.no
+        jobname     eva.eva-ecmwf-delete-lustreab.aa129f56-9728-4f18-a141-c65bee7e9ae1
+        jobnumber   1000000
+        owner       eventadapter
+        qname       operational.q
+        qsub_time   Sat Apr 16 20:40:42 2016
+        ru_stime    0.010924
+        ru_utime    0.014404
+        start_time  Sat Apr 16 20:40:43 2016
+        """
+        lines = [x.lstrip() for x in raw.strip().splitlines()]
+        metrics = eva.executor.grid_engine.parse_qacct_metrics(lines)
+        self.assertDictEqual(metrics, {
+            'metrics': {
+                'grid_engine_run_time': 300000,
+                'grid_engine_ru_utime': 14,
+                'grid_engine_ru_stime': 10,
                 'grid_engine_qsub_delay': 1000,
             },
             'tags': {

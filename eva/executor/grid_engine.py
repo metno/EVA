@@ -116,6 +116,11 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """
 
     CONFIG = {
+        'EVA_GRIDENGINE_QACCT_COMMAND': {
+            'type': 'string',
+            'help': 'How to call the qacct program to get finished job information',
+            'default': 'qacct -j {{job_id}}',
+        },
         'EVA_GRIDENGINE_QUEUE': {
             'type': 'string',
             'help': 'Which Grid Engine queue to run jobs in',
@@ -139,6 +144,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     }
 
     OPTIONAL_CONFIG = [
+        'EVA_GRIDENGINE_QACCT_COMMAND',
         'EVA_GRIDENGINE_QUEUE',
     ]
 
@@ -148,6 +154,13 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         'EVA_GRIDENGINE_SSH_KEY_FILE',
     ]
 
+    def init(self):
+        """!
+        @brief Initialize the class.
+        """
+        # create command-line template for qacct.
+        self.qacct_command_template = self.template.from_string(self.env['EVA_GRIDENGINE_QACCT_COMMAND'])
+
     def validate_configuration(self, *args, **kwargs):
         """!
         @brief Make sure that the SSH key file exists.
@@ -155,6 +168,13 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         super(GridEngineExecutor, self).validate_configuration(*args, **kwargs)
         if not os.access(self.env['EVA_GRIDENGINE_SSH_KEY_FILE'], os.R_OK):
             raise eva.exceptions.InvalidConfigurationException("The SSH key '%s' is not readable!" % self.env['EVA_GRIDENGINE_SSH_KEY_FILE'])
+
+    def create_qacct_command(self, job_id):
+        """!
+        @brief Return a string with a qacct command that should be used to
+        check the status of a GridEngine job.
+        """
+        return self.qacct_command_template.render({'job_id': job_id})
 
     def create_job_filename(self, *args):
         """!
@@ -323,8 +343,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             raise eva.exceptions.RetryException(e)
 
         # Poll for job completion
-        check_command = 'qacct -j %d' % job.pid
+        check_command = self.create_qacct_command(job.pid)
         try:
+            job.logger.debug('Running: %s', check_command)
             exit_code, stdout, stderr = self.execute_ssh_command(check_command)
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
