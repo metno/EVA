@@ -81,15 +81,16 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
 
     def create_job(self, message_id, resource):
         """!
-        @brief Download a file, and optionally post the result to Productstatus.
+        @brief Create a generic FIMEX job.
         """
         job = eva.job.Job(message_id, self.logger)
 
         job.input_filename = eva.url_to_filename(resource.url)
         job.reference_time = resource.data.productinstance.reference_time
         template_variables = {
-            'reference_time': job.reference_time,
             'datainstance': resource,
+            'input_filename': os.path.basename(job.input_filename),
+            'reference_time': job.reference_time,
         }
 
         # Render the Jinja2 templates and report any errors
@@ -99,14 +100,15 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
 
-        # Generate and execute Fimex job
-        job.command = """#!/bin/bash
-        time fimex --input.file '%(input.file)s' --output.file '%(output.file)s' %(params)s
-        """ % {
+        # Generate Fimex job
+        command = ['#!/bin/bash']
+        command += ['#$ -S /bin/bash']
+        command += ["time fimex --input.file '%(input.file)s' --output.file '%(output.file)s' %(params)s" % {
             'input.file': job.input_filename,
             'output.file': job.output_filename,
             'params': params,
-        }
+        }]
+        job.command = '\n'.join(command)
 
         return job
 
