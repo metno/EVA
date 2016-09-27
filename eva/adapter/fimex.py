@@ -57,7 +57,6 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         if self.has_valid_output_config():
             self.post_to_productstatus = True
             self.require_productstatus_credentials()
-            self.lifetime = datetime.timedelta(hours=int(self.env['EVA_OUTPUT_LIFETIME']))
             self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
             self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
             self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
@@ -150,7 +149,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             self.post_datainstance_resource,
             args=(
                 data,
-                datetime.datetime.now() + self.lifetime,
+                self.expiry_from_lifetime(),
                 self.output_data_format,
                 self.output_service_backend,
                 url,
