@@ -122,7 +122,11 @@ class ProductstatusLocalEvent(ProductstatusBaseEvent):
     """!
     @brief Productstatus events, generated locally and not on the Kafka message queue.
     """
-    pass
+    def id(self):
+        """!
+        Return an ID for this event.
+        """
+        return str(self._id)
 
 
 class ProductstatusHeartbeatEvent(ProductstatusBaseEvent):
