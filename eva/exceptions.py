@@ -31,6 +31,14 @@ class RetryException(EvaException):
     pass
 
 
+class JobNotCompleteException(EvaException):
+    """!
+    @brief Thrown when an operation is performed on a Job object that is not
+    complete, but should be. Treat this exception as a BUG!
+    """
+    pass
+
+
 class InvalidEventException(EvaException):
     """!
     @brief Thrown when a received event is not valid for processing.

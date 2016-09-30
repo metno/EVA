@@ -4,6 +4,8 @@ import eva.job
 import eva.exceptions
 import eva.template
 
+import productstatus.api
+
 
 class GridPPAdapter(eva.base.adapter.BaseAdapter):
     """!
@@ -65,34 +67,24 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
+    PRODUCTSTATUS_REQUIRED_CONFIG = [
+        'EVA_OUTPUT_DATA_FORMAT',
+        'EVA_OUTPUT_PRODUCT',
+        'EVA_OUTPUT_SERVICE_BACKEND',
+    ]
+
     def init(self):
         """!
         @brief Check that optional configuration is consistent.
         """
-        if self.has_valid_output_config():
-            self.post_to_productstatus = True
-            self.require_productstatus_credentials()
+        if self.post_to_productstatus():
             self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
             self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
             self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        else:
-            self.post_to_productstatus = False
-            self.logger.warning('Will not post any data to Productstatus.')
         self.in_opts = self.template.from_string(self.env['EVA_GRIDPP_INPUT_OPTIONS'])
         self.out_opts = self.template.from_string(self.env['EVA_GRIDPP_OUTPUT_OPTIONS'])
         self.generic_opts = self.template.from_string(self.env['EVA_GRIDPP_GENERIC_OPTIONS'])
         self.output_filename = self.template.from_string(self.env['EVA_OUTPUT_FILENAME_PATTERN'])
-
-    def has_valid_output_config(self):
-        """!
-        @return True if all optional output variables are configured, False otherwise.
-        """
-        return (
-            (self.env['EVA_OUTPUT_DATA_FORMAT'] is not None) and
-            (self.env['EVA_OUTPUT_LIFETIME'] is not None) and
-            (self.env['EVA_OUTPUT_PRODUCT'] is not None) and
-            (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
-        )
 
     def create_job(self, message_id, resource):
         """!
@@ -132,56 +124,38 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         return job
 
     def finish_job(self, job):
-        # Retry on failure
-        if job.status != eva.job.COMPLETE:
+        """!
+        @brief Retry on failure.
+        """
+        if not job.complete():
             raise eva.exceptions.RetryException(
                 "GridPP post-processing of '%(input.file)s' to '%(output.file)s' failed." % job.gridpp_params
             )
 
-        # Succeed at this point if not posting to Productstatus
-        if not self.post_to_productstatus:
-            return
-
-        resources = self.generate_resources(job)
-        self.post_resources(resources, job)
-
-    def get_or_post_productinstance_resource(self, resource):
+    def generate_resources(self, job, resources):
         """!
-        Return a matching ProductInstance resource according to Product, reference time and version.
-        """
-        product = self.output_product
-        parameters = {
-            'product': product,
-            'reference_time': resource.data.productinstance.reference_time,
-            'version': resource.data.productinstance.version,
-        }
-        return self.api.productinstance.find_or_create(parameters)
+        @brief Generate a set of Productstatus resources based on job output.
 
-    def get_or_post_data_resource(self, product_instance, resource):
-        """!
-        Return a matching Data resource according to Productinstance and data begin/end times.
+        This adapter will re-use any existing ProductInstance and Data
+        resources, while creating a new DataInstance resource for the finished
+        job output.
         """
-        parameters = {
-            'productinstance': product_instance,
-            'time_period_begin': resource.data.time_period_begin,
-            'time_period_end': resource.data.time_period_end
-        }
-        return self.api.data.find_or_create(parameters)
-
-    def generate_resources(self, job):
-        """!
-        @brief Generate Productstatus resources based on finished job output.
-        """
-        resources = {
-            'productinstance': [],
-            'data': [],
-            'datainstance': [],
-        }
-
-        product_instance = self.get_or_post_productinstance_resource(job.resource)
+        product_instance = productstatus.api.EvaluatedResource(
+            self.api.productinstance.find_or_create_ephemeral, {
+                'product': self.output_product,
+                'reference_time': job.resource.data.productinstance.reference_time,
+                'version': job.resource.data.productinstance.version,
+            }
+        )
         resources['productinstance'] += [product_instance]
 
-        data = self.get_or_post_data_resource(product_instance, job.resource)
+        data = productstatus.api.EvaluatedResource(
+            self.api.data.find_or_create_ephemeral, {
+                'productinstance': product_instance,
+                'time_period_begin': job.resource.data.time_period_begin,
+                'time_period_end': job.resource.data.time_period_end
+            }
+        )
         resources['data'] += [data]
 
         data_instance = self.api.datainstance.create()
@@ -191,5 +165,3 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         data_instance.format = self.output_data_format
         data_instance.expires = self.expiry_from_lifetime()
         resources['datainstance'] += [data_instance]
-
-        return resources

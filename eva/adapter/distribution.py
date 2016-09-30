@@ -5,8 +5,6 @@ import eva.base.adapter
 import eva.job
 import eva.exceptions
 
-import productstatus
-
 
 class DistributionAdapter(eva.base.adapter.BaseAdapter):
     """!
@@ -32,27 +30,16 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
+    PRODUCTSTATUS_REQUIRED_CONFIG = [
+        'EVA_OUTPUT_SERVICE_BACKEND',
+    ]
+
     def init(self):
         """!
         @brief Check that optional configuration is consistent.
         """
-        if self.has_valid_output_config():
-            self.post_to_productstatus = True
-            self.require_productstatus_credentials()
-            if self.env['EVA_OUTPUT_SERVICE_BACKEND'] in self.env['EVA_INPUT_SERVICE_BACKEND']:
-                raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND cannot be present in the list of EVA_INPUT_SERVICE_BACKEND, as that will result in an endless loop.')
-        else:
-            self.post_to_productstatus = False
-            self.logger.warning('Will not post any data to Productstatus.')
-
-    def has_valid_output_config(self):
-        """!
-        @return True if all optional output variables are configured, False otherwise.
-        """
-        return (
-            (self.env['EVA_OUTPUT_BASE_URL'] is not None) and
-            (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
-        )
+        if self.env['EVA_OUTPUT_SERVICE_BACKEND'] in self.env['EVA_INPUT_SERVICE_BACKEND']:
+            raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND cannot be present in the list of EVA_INPUT_SERVICE_BACKEND, as that will result in an endless loop.')
 
     def create_job(self, message_id, resource):
         """!
@@ -65,7 +52,7 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         job.output_url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], job.base_filename)
         job.output_file = eva.url_to_filename(job.output_url)
 
-        if self.post_to_productstatus:
+        if self.post_to_productstatus():
             job.service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
             # check if the destination file already exists
             qs = self.api.datainstance.objects.filter(url=job.output_url,
@@ -94,11 +81,15 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     def finish_job(self, job):
         if not job.complete():
             raise eva.exceptions.RetryException("Distribution of '%s' to '%s' failed." % (job.input_file, job.output_file))
+        job.logger.info("The file '%s' has been successfully distributed to '%s'", job.input_file, job.output_file)
 
-        if not self.post_to_productstatus:
-            return
+    def generate_resources(self, job, resources):
+        """!
+        @brief Generate a set of Productstatus resources based on job output.
 
-        job.logger.info('Creating a new DataInstance on the Productstatus server...')
+        This adapter will post a new DataInstance using the same Data and
+        ProductInstance as the input resource.
+        """
         datainstance = self.api.datainstance.create()
         datainstance.data = job.resource.data
         datainstance.format = job.resource.format
@@ -107,8 +98,4 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         datainstance.url = job.output_url
         datainstance.hash = job.resource.hash
         datainstance.hash_type = job.resource.hash_type
-        eva.retry_n(datainstance.save,
-                    exceptions=(productstatus.exceptions.ServiceUnavailableException,),
-                    give_up=0)
-        job.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
-        job.logger.info("The file '%s' has been successfully copied to '%s'", job.input_file, job.output_file)
+        resources['datainstance'] += [datainstance]

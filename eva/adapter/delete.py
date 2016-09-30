@@ -69,12 +69,22 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         return job
 
     def finish_job(self, job):
+        """!
+        @brief Retry deletion on failures, and report metrics to statsd.
+        """
         if not job.complete():
             raise eva.exceptions.RetryException("%s: deleting files failed." % job.resource)
 
+        self.statsd.incr('deleted_datainstances', len(job.instance_list))
+
+    def generate_resources(self, job, resources):
+        """!
+        @brief Generate a set of Productstatus resources based on job output.
+
+        This adapter will modify all DataInstance objects processed and set
+        their 'deleted' property to True.
+        """
         for datainstance in job.instance_list:
             datainstance.deleted = True
-            datainstance.save()
-            job.logger.info('%s: marked DataInstance as deleted in Productstatus', datainstance)
-
-        job.logger.info("All expired data instances successfully processed.")
+            resources['datainstance'] += [datainstance]
+            job.logger.info('%s: marking DataInstance as deleted in Productstatus', datainstance)

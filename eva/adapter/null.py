@@ -8,9 +8,11 @@ class NullAdapter(eva.base.adapter.BaseAdapter):
     """
 
     def create_job(self, message_id, resource):
-        self.logger.info('NullAdapter has successfully sent the resource to /dev/null')
         job = eva.job.Job(message_id, self.logger)
         return job
 
     def finish_job(self, job):
-        return
+        self.logger.info('NullAdapter has successfully sent the resource to /dev/null')
+
+    def generate_resources(self, job, resources):
+        pass

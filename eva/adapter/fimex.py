@@ -6,6 +6,8 @@ import eva.job
 import eva.exceptions
 import eva.template
 
+import productstatus.api
+
 
 class FimexAdapter(eva.base.adapter.BaseAdapter):
     """!
@@ -47,32 +49,20 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
+    PRODUCTSTATUS_REQUIRED_CONFIG = [
+        'EVA_OUTPUT_BASE_URL',
+        'EVA_OUTPUT_DATA_FORMAT',
+        'EVA_OUTPUT_PRODUCT',
+        'EVA_OUTPUT_SERVICE_BACKEND',
+    ]
+
     def init(self):
-        """!
-        @brief Check that optional configuration is consistent.
-        """
-        if self.has_valid_output_config():
-            self.post_to_productstatus = True
-            self.require_productstatus_credentials()
+        if self.post_to_productstatus():
             self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
             self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
             self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        else:
-            self.post_to_productstatus = False
-            self.logger.info('Will not post any data to Productstatus.')
         self.fimex_parameters = self.template.from_string(self.env['EVA_FIMEX_PARAMETERS'])
         self.output_filename = self.template.from_string(self.env['EVA_OUTPUT_FILENAME_PATTERN'])
-
-    def has_valid_output_config(self):
-        """!
-        @return True if all optional output variables are configured, False otherwise.
-        """
-        return (
-            (len(self.env['EVA_OUTPUT_BASE_URL']) > 0) and
-            (len(self.env['EVA_OUTPUT_DATA_FORMAT']) > 0) and
-            (len(self.env['EVA_OUTPUT_PRODUCT']) > 0) and
-            (len(self.env['EVA_OUTPUT_SERVICE_BACKEND']) > 0)
-        )
 
     def create_job(self, message_id, resource):
         """!
@@ -82,7 +72,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
 
         job.input_filename = eva.url_to_filename(resource.url)
         job.reference_time = resource.data.productinstance.reference_time
-        template_variables = {
+        job.template_variables = {
             'datainstance': resource,
             'input_filename': os.path.basename(job.input_filename),
             'reference_time': job.reference_time,
@@ -90,8 +80,8 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
 
         # Render the Jinja2 templates and report any errors
         try:
-            params = self.fimex_parameters.render(**template_variables)
-            job.output_filename = self.output_filename.render(**template_variables)
+            params = self.fimex_parameters.render(**job.template_variables)
+            job.output_filename = self.output_filename.render(**job.template_variables)
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
 
@@ -103,33 +93,27 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             'output.file': job.output_filename,
             'params': params,
         }]
-        job.command = '\n'.join(command)
+        job.command = '\n'.join(command) + '\n'
 
         return job
 
     def finish_job(self, job):
-        # Retry on failure
+        """!
+        @brief Retry on failures.
+        """
         if not job.complete():
             raise eva.exceptions.RetryException(
                 "Fimex conversion of '%s' to '%s' failed." % (job.input_filename, job.output_filename)
             )
 
-        # Succeed at this point if not posting to Productstatus
-        if not self.post_to_productstatus:
-            return
+    def generate_resources(self, job, resources):
+        """!
+        @brief Generate a set of Productstatus resources based on job output.
 
-        job.logger.info('Generating Productstatus resources...')
-        resources = self.generate_resources(job)
-        self.post_resources(resources, job)
-        job.logger.info('Finished posting to Productstatus; all complete.')
-
-    def generate_resources(self, job):
-        resources = {
-            'productinstance': [],
-            'data': [],
-            'datainstance': [],
-        }
-
+        The adapter will try to re-use the existing ProductInstance if the
+        input and output products are the same. Otherwise, it will create a new
+        ProductInstance. Existing Data and DataInstance objects are re-used.
+        """
         # Generate ProductInstance resource
         parameters = {
             'product': self.output_product,
@@ -137,26 +121,27 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         }
         if self.output_product == job.resource.data.productinstance.product:
             parameters['version'] = job.resource.data.productinstance.version
-
-        product_instance = self.api.productinstance.find_or_create_ephemeral(parameters)
+        product_instance = productstatus.api.EvaluatedResource(self.api.productinstance.find_or_create_ephemeral, parameters)
         resources['productinstance'] += [product_instance]
 
         # Generate Data resource
-        data = self.api.data.find_or_create_ephemeral({
-            'productinstance': product_instance,
-            'time_period_begin': job.resource.data.time_period_begin,
-            'time_period_end': job.resource.data.time_period_end,
-        })
-        resources['data'] += [data]
+        data = productstatus.api.EvaluatedResource(
+            self.api.data.find_or_create_ephemeral, {
+                'productinstance': product_instance,
+                'time_period_begin': job.resource.data.time_period_begin,
+                'time_period_end': job.resource.data.time_period_end,
+            }
+        )
+        resources['data'] = [data]
 
         # Generate DataInstance resource
-        datainstance = self.api.datainstance.find_or_create_ephemeral({
-            'data': data,
-            'expires': self.expiry_from_lifetime(),
-            'format': self.output_data_format,
-            'servicebackend': self.output_service_backend,
-            'url': os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.output_filename)),
-        })
-        resources['datainstance'] += [datainstance]
-
-        return resources
+        datainstance = productstatus.api.EvaluatedResource(
+            self.api.datainstance.find_or_create_ephemeral, {
+                'data': data,
+                'expires': self.expiry_from_lifetime(),
+                'format': self.output_data_format,
+                'servicebackend': self.output_service_backend,
+                'url': os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.output_filename)),
+            }
+        )
+        resources['datainstance'] = [datainstance]

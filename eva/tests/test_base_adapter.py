@@ -134,6 +134,18 @@ class TestBaseAdapter(unittest.TestCase):
         with self.assertRaises(eva.exceptions.MissingConfigurationException):
             self.adapter.require_productstatus_credentials()
 
+    def test_post_to_productstatus(self):
+        self.env = {
+            'EVA_PRODUCTSTATUS_API_KEY': '5bcf851f09bc65043d987910e1448781fcf4ea12',
+            'EVA_PRODUCTSTATUS_USERNAME': 'admin',
+        }
+        eva.adapter.BaseAdapter.PRODUCTSTATUS_REQUIRED_CONFIG = ['EVA_INPUT_WITH_HASH']
+        self.create_adapter()
+        self.assertFalse(self.adapter.post_to_productstatus())
+        self.env['EVA_INPUT_WITH_HASH'] = 'YES'
+        self.create_adapter()
+        self.assertTrue(self.adapter.post_to_productstatus())
+
     def test_blacklist_add(self):
         self.create_adapter()
         self.assertFalse(self.adapter.is_blacklisted('abc'))

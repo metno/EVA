@@ -9,6 +9,7 @@ import eva.job
 import eva.exceptions
 
 import productstatus
+import productstatus.api
 
 
 class BaseAdapter(eva.ConfigurableObject):
@@ -109,6 +110,13 @@ class BaseAdapter(eva.ConfigurableObject):
         'EVA_SINGLE_INSTANCE',
     ]
 
+    _PRODUCTSTATUS_REQUIRED_CONFIG = [
+        'EVA_PRODUCTSTATUS_USERNAME',
+        'EVA_PRODUCTSTATUS_API_KEY',
+    ]
+
+    PRODUCTSTATUS_REQUIRED_CONFIG = []
+
     PROCESS_PARTIAL_ONLY = 0
     PROCESS_PARTIAL_NO = 1
     PROCESS_PARTIAL_BOTH = 2
@@ -127,6 +135,7 @@ class BaseAdapter(eva.ConfigurableObject):
         self.executor = executor
         self.api = api
         self.env = environment_variables
+        self._post_to_productstatus = None
         self.blacklist = set()
         self.required_uuids = set()
         self.reference_time_threshold_delta = None
@@ -137,6 +146,10 @@ class BaseAdapter(eva.ConfigurableObject):
         self.setup_single_instance()
         self.setup_reference_time_threshold()
         self.init()
+        if self.post_to_productstatus():
+            self.logger.info('Posting to Productstatus is ENABLED.')
+        else:
+            self.logger.warning('Posting to Productstatus is DISABLED due to insufficient configuration.')
 
     def setup_process_partial(self):
         """!
@@ -352,6 +365,20 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         pass
 
+    def post_to_productstatus(self):
+        """!
+        @brief Returns True if this adapter has sufficient configuration to be
+        able to post to Productstatus, False otherwise.
+        """
+        if self._post_to_productstatus is None:
+            required_keys = self._PRODUCTSTATUS_REQUIRED_CONFIG + self.PRODUCTSTATUS_REQUIRED_CONFIG
+            self._post_to_productstatus = True
+            for key in required_keys:
+                if not self.env[key]:
+                    self._post_to_productstatus = False
+                    break
+        return self._post_to_productstatus
+
     def resource_matches_hash_config(self, resource):
         """!
         Returns true if one of the following criteria matches:
@@ -410,23 +437,74 @@ class BaseAdapter(eva.ConfigurableObject):
             return None
         return self.expiry_from_hours(hours=self.env['EVA_OUTPUT_LIFETIME'])
 
-    def generate_resources(self, resource, job):
+    @staticmethod
+    def default_resource_dictionary():
+        """!
+        @brief Returns a dictionary of resource types that will be populated with generate_resources().
+        """
+        return {
+            'productinstance': [],
+            'data': [],
+            'datainstance': [],
+        }
+
+    def generate_and_post_resources(self, job):
+        """!
+        @brief Given a finished Job object, post information to Productstatus
+        about newly created resources. Performs a number of sanity checks
+        before posting any information.
+        """
+        if not self.post_to_productstatus():
+            job.logger.warning('Skipping post to Productstatus because of missing configuration.')
+            return
+
+        if not job.complete():
+            raise eva.exceptions.JobNotCompleteException('Refusing to post to Productstatus without a complete job.')
+
+        try:
+            job.logger.info('Generating Productstatus resources...')
+            resources = self.default_resource_dictionary()
+            self.generate_resources(job, resources)
+        except ValueError:
+            raise RuntimeError('generate_resources() did not return a tuple with three arrays, this is a bug in the code!')
+
+        self.post_resources(job, resources)
+
+        job.logger.info('Finished posting to Productstatus; all complete.')
+
+    def generate_resources(self, job, resources):
         """!
         @brief Generate Productstatus resources based on finished job output.
+        @param resources Dictionary with resource types that can be populated by the subclass implementation.
         """
         raise NotImplementedError('Please override this method in order to post to Productstatus.')
 
-    def post_resources(self, resources, job):
+    def post_resources(self, job, resources):
         """!
         @brief Post information about a finished job to Productstatus. Takes a
-        dictionary of resources.
+        dictionary of arrays of Resource or EvaluatedResource objects.
         """
-        job.logger.info('Posting %d new resources to Productstatus.', sum(len(x) for x in resources.items()))
-        for resource_type in ['productinstance', 'data', 'datainstance']:
+        job.logger.info('Saving %d resources to Productstatus.', sum([len(x) for x in resources.values()]))
+
+        for resource_name in ['ProductInstance', 'Data', 'DataInstance']:
+            resource_type = resource_name.lower()
             resource_list = resources[resource_type]
+
             for resource in resource_list:
+                # lazy evaluation
+                if isinstance(resource, productstatus.api.EvaluatedResource):
+                    resource = resource.resource
+
+                if resource.id is None:
+                    job.logger.info('Creating new %s resource...', resource_name)
+                else:
+                    job.logger.info('Saving existing %s resource...', resource_name)
+
+                # save the resource, with infinite retries
                 eva.retry_n(resource.save,
                             exceptions=(productstatus.exceptions.ServiceUnavailableException,),
                             give_up=0,
                             logger=job.logger)
-                job.logger.info('Created resource: %s', resource)
+
+                # log the event
+                job.logger.info('Saved %s resource: %s', resource_name, resource)

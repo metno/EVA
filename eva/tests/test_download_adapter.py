@@ -38,7 +38,7 @@ class TestDownloadAdapter(unittest.TestCase):
         output configuration is not given.
         """
         self.create_adapter()
-        self.assertFalse(self.adapter.post_to_productstatus)
+        self.assertFalse(self.adapter.post_to_productstatus())
 
     def test_productstatus_write_with_output_config(self):
         """!

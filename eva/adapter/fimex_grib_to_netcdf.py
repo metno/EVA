@@ -4,6 +4,8 @@ import eva
 import eva.job
 import eva.base.adapter
 
+import productstatus.api
+
 
 class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
     """!
@@ -40,6 +42,17 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
+    PRODUCTSTATUS_REQUIRED_CONFIG = [
+        'EVA_OUTPUT_BASE_URL',
+        'EVA_OUTPUT_PRODUCT',
+        'EVA_OUTPUT_SERVICE_BACKEND',
+    ]
+
+    def init(self, *args, **kwargs):
+        if self.post_to_productstatus():
+            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
+            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
+
     def create_job(self, message_id, resource):
         """!
         @brief Generate a Job which converts GRIB to NetCDF using the
@@ -75,65 +88,46 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         return job
 
     def finish_job(self, job):
-        if job.status != eva.job.COMPLETE:
+        if not job.complete():
             raise eva.exceptions.RetryException("GRIB to NetCDF conversion of '%s' failed." % job.resource.url)
-
-        if self.has_productstatus_credentials():
-            self.register_output(job)
 
         job.logger.info('Successfully filled the NetCDF file %s with data from %s', job.data['filename'], job.resource.url)
 
-    def register_output(self, job):
+    def generate_resources(self, job, resources):
         """!
-        @brief Create a Productstatus DataInstance based on a Job object.
-        """
-        productinstance = self.get_or_post_productinstance_resource(job)
-        data = self.get_or_post_data_resource(productinstance, job)
-        datainstance = self.post_datainstance_resource(data, job)
-        job.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
-        return datainstance
+        @brief Generate a set of Productstatus resources based on job output.
 
-    def get_productstatus_product(self):
-        """!
-        @returns The Productstatus output Product resource.
+        The adapter will try to re-use the existing ProductInstance if the
+        input and output products are the same. Otherwise, it will create a new
+        ProductInstance. Existing Data and DataInstance objects are re-used.
         """
-        return self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
+        # Generate ProductInstance resource
+        product_instance = productstatus.api.EvaluatedResource(
+            self.api.productinstance.find_or_create_ephemeral,
+            {
+                'product': self.output_product,
+                'reference_time': job.data['reftime'],
+                'version': job.data['version'],
+            }
+        )
+        resources['productinstance'] += [product_instance]
 
-    def get_or_post_productinstance_resource(self, job):
-        """!
-        Return a matching ProductInstance resource according to Product, reference time and version.
-        """
-        product = self.get_productstatus_product()
-        parameters = {
-            'product': product,
-            'reference_time': job.data['reftime'],
-            'version': job.data['version'],
-        }
-        return self.api.productinstance.find_or_create(parameters)
+        # Generate Data resource
+        data = productstatus.api.EvaluatedResource(
+            self.api.data.find_or_create_ephemeral, {
+                'productinstance': product_instance,
+                'time_period_begin': job.data['time_period_begin'],
+                'time_period_end': job.data['time_period_end'],
+            }
+        )
+        resources['data'] = [data]
 
-    def get_or_post_data_resource(self, productinstance, job):
-        """!
-        Return a matching Data resource according to ProductInstance and data file
-        begin/end times.
-        """
-        parameters = {
-            'productinstance': productinstance,
-            'time_period_begin': job.data['time_period_begin'],
-            'time_period_end': job.data['time_period_end'],
-        }
-        return self.api.data.find_or_create(parameters)
-
-    def post_datainstance_resource(self, data, job):
-        """!
-        Create a DataInstance resource at the Productstatus server, referring to the
-        given data set.
-        """
-        resource = self.api.datainstance.create()
-        resource.data = data
-        resource.partial = True
-        resource.expires = self.expiry_from_lifetime()
-        resource.format = self.api.dataformat['netcdf']
-        resource.servicebackend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        resource.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.data['filename']))
-        resource.save()
-        return resource
+        # Generate DataInstance resource
+        datainstance = self.api.datainstance.create()
+        datainstance.data = data
+        datainstance.partial = True
+        datainstance.expires = self.expiry_from_lifetime()
+        datainstance.format = self.api.dataformat['netcdf']
+        datainstance.servicebackend = self.output_service_backend
+        datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.data['filename']))
+        resources['datainstance'] += [datainstance]

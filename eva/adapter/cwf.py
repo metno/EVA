@@ -10,8 +10,10 @@ import os
 import eva
 import eva.job
 import eva.base.adapter
+import eva.tests.schemas
 
 import productstatus.exceptions
+import productstatus.api
 
 
 class CWFAdapter(eva.base.adapter.BaseAdapter):
@@ -84,6 +86,12 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_DATA_FORMAT',
     ]
 
+    PRODUCTSTATUS_REQUIRED_CONFIG = [
+        'EVA_OUTPUT_PRODUCT',
+        'EVA_OUTPUT_SERVICE_BACKEND',
+        'EVA_OUTPUT_DATA_FORMAT',
+    ]
+
     def init(self, *args, **kwargs):
         if self.env['EVA_CWF_PARALLEL'] < 1:
             raise eva.exceptions.InvalidConfigurationException(
@@ -94,11 +102,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
             self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
             self.nml_data_format = self.api.dataformat[self.env['EVA_CWF_NML_DATA_FORMAT']]
-
-    def post_to_productstatus(self):
-        return (len(self.env['EVA_OUTPUT_PRODUCT']) > 0 and
-                len(self.env['EVA_OUTPUT_SERVICE_BACKEND']) > 0 and
-                len(self.env['EVA_OUTPUT_DATA_FORMAT']) > 0)
 
     def is_netcdf_data_output(self, data):
         """!
@@ -187,26 +190,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                 "Processing of %s did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output." % job.resource.url
             )
 
-        if not self.post_to_productstatus():
-            self.logger.warning('NOT posting to Productstatus because of absent configuration.')
-            return
-
-        # create a ProductInstance resource right away, in order to have correct filtering in self.generate_resources()
-        job.logger.info('Creating ProductInstance resource...')
-        eva.retry_n(self.api.productinstance.find_or_create,
-                    args=({
-                        'product': self.output_product,
-                        'reference_time': job.resource.data.productinstance.reference_time,
-                        'version': job.resource.data.productinstance.version,
-                    },),
-                    exceptions=(productstatus.exceptions.ServiceUnavailableException,),
-                    give_up=0)
-
-        job.logger.info('Generating Productstatus resources...')
-        resources = self.generate_resources(job)
-        self.post_resources(resources, job)
-        job.logger.info('Finished posting to Productstatus; all complete.')
-
     def parse_file_recognition_output(self, lines):
         """!
         @brief Parse standard output containing time dimensions from NetCDF
@@ -230,38 +213,22 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             result += [data]
         return result
 
-    def get_matching_data(self, data_list, data):
+    def generate_resources(self, job, resources):
         """!
-        @brief Return a Data resource if one matching the data variable is
-        found in data_list, else return the original object.
-        """
-        for m_data in data_list:
-            if data.productinstance != m_data.productinstance:
-                continue
-            if data.time_period_begin != m_data.time_period_begin:
-                continue
-            if data.time_period_end != m_data.time_period_end:
-                continue
-            return m_data
-        return data
+        @brief Generate a set of Productstatus resources based on job output.
 
-    def generate_resources(self, job):
-        """!
-        @brief Generate Productstatus resources based on finished job output.
+        This adapter will re-use any existing ProductInstance and Data objects,
+        and will create one new DataInstance resource for each file produced by
+        the job.
         """
-        resources = {
-            'productinstance': [],
-            'data': [],
-            'datainstance': [],
-        }
-
-        parameters = {
-            'product': self.output_product,
-            'reference_time': job.resource.data.productinstance.reference_time,
-            'version': job.resource.data.productinstance.version,
-        }
-        product_instance = self.api.productinstance.find_or_create_ephemeral(parameters)
-        resources['productinstance'] += [product_instance]
+        product_instance = productstatus.api.EvaluatedResource(
+            self.api.productinstance.find_or_create_ephemeral, {
+                'product': self.output_product,
+                'reference_time': job.resource.data.productinstance.reference_time,
+                'version': job.resource.data.productinstance.version,
+            }
+        )
+        resources['productinstance'] = [product_instance]
 
         lifetime_index = 0
 
@@ -277,9 +244,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                 parameters['time_period_begin'] = None
                 parameters['time_period_end'] = None
 
-            data = self.api.data.find_or_create_ephemeral(parameters)
-
-            data = self.get_matching_data(resources['data'], data)
+            data = productstatus.api.EvaluatedResource(self.api.data.find_or_create_ephemeral, parameters)
             resources['data'] += [data]
 
             data_instance = self.api.datainstance.create()
@@ -302,5 +267,3 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                 raise RuntimeError('Unsupported data format in job output: %s' % data['extension'])
 
             resources['datainstance'] += [data_instance]
-
-        return resources

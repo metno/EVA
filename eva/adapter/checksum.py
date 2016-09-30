@@ -3,8 +3,6 @@ import eva.base.adapter
 import eva.job
 import eva.exceptions
 
-import productstatus.exceptions
-
 
 class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
     """!
@@ -52,7 +50,7 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
             '#!/bin/bash',
             '#$ -S /bin/bash',  # for GridEngine compatibility
             'set -e',
-            'cat %(md5_filename)s',  # for hash detection in finish_job()
+            'cat %(md5_filename)s',  # for hash detection in generate_resources()
             'printf "%%s  %(dataset_filename)s\\n" $(cat %(md5_filename)s) | md5sum --check --status --strict -',
             'rm -fv %(md5_filename)s >&2',
         ]
@@ -70,16 +68,19 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
             job.logger.error("md5sum checking of '%s' failed, skipping further processing!", job.resource.url)
             self.statsd.incr('md5sum_fail')
             return
+        job.logger.info('DataInstance %s has md5sum hash %s.', job.resource, job.resource.hash)
 
-        job.logger.info('Updating DataInstance with hash data...')
+    def generate_resources(self, job, resources):
+        """!
+        @brief Generate a set of Productstatus resources based on job output.
+
+        This adapter will modify the original DataInstance object so that it
+        contains an MD5 hash.
+        """
         job.resource.hash_type = str('md5')
         job.resource.hash = ''.join(job.stdout)
 
         # FIXME: how do we actually handle this error?
         assert len(job.resource.hash) == 32
 
-        eva.retry_n(job.resource.save,
-                    exceptions=(productstatus.exceptions.ServiceUnavailableException,),
-                    give_up=0)
-
-        job.logger.info('DataInstance %s has been updated with md5sum hash %s.', job.resource, job.resource.hash)
+        resources['datainstance'] += [job.resource]

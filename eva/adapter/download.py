@@ -6,8 +6,6 @@ import eva.base.adapter
 import eva.job
 import eva.exceptions
 
-import productstatus
-
 
 class DownloadAdapter(eva.base.adapter.BaseAdapter):
     """!
@@ -50,29 +48,18 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
         'EVA_OUTPUT_SERVICE_BACKEND',
     ]
 
+    PRODUCTSTATUS_REQUIRED_CONFIG = [
+        'EVA_OUTPUT_BASE_URL',
+        'EVA_OUTPUT_SERVICE_BACKEND',
+    ]
+
     def init(self):
         """!
         @brief Check that optional configuration is consistent.
         """
         self.check_hash = self.env['EVA_DOWNLOAD_CHECK_HASH']
-        if self.has_valid_output_config():
-            self.post_to_productstatus = True
-            self.require_productstatus_credentials()
-            if self.env['EVA_OUTPUT_SERVICE_BACKEND'] in self.env['EVA_INPUT_SERVICE_BACKEND']:
-                raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND cannot be present in the list of EVA_INPUT_SERVICE_BACKEND, as that will result in an endless loop.')
-        else:
-            self.post_to_productstatus = False
-            self.logger.debug('Will not post any data to Productstatus.')
-
-    def has_valid_output_config(self):
-        """!
-        @return True if all optional output variables are configured, False otherwise.
-        """
-        return (
-            (self.env['EVA_OUTPUT_BASE_URL'] is not None) and
-            (self.env['EVA_OUTPUT_LIFETIME'] is not None) and
-            (self.env['EVA_OUTPUT_SERVICE_BACKEND'] is not None)
-        )
+        if self.env['EVA_OUTPUT_SERVICE_BACKEND'] in self.env['EVA_INPUT_SERVICE_BACKEND']:
+            raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND cannot be present in the list of EVA_INPUT_SERVICE_BACKEND, as that will result in an endless loop.')
 
     def parse_bytes_sec_from_lines(self, lines):
         """!
@@ -130,30 +117,29 @@ class DownloadAdapter(eva.base.adapter.BaseAdapter):
             raise eva.exceptions.RetryException("Download of '%s' failed." % job.resource.url)
 
         if self.env['EVA_OUTPUT_SERVICE_BACKEND']:
-            service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
+            self.service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
         else:
-            service_backend = None
+            self.service_backend = None
 
         bytes_sec = self.parse_bytes_sec_from_lines(job.stderr)
         if bytes_sec is not None:
-            if service_backend is not None:
-                self.statsd.gauge('download_rate', bytes_sec, {'service_backend': service_backend.slug})
+            if self.service_backend is not None:
+                self.statsd.gauge('download_rate', bytes_sec, {'service_backend': self.service_backend.slug})
             else:
                 self.statsd.gauge('download_rate', bytes_sec)
             job.logger.info('Download speed is %d bytes/sec', bytes_sec)
 
-        if not self.post_to_productstatus:
-            return
+    def generate_resources(self, job, resources):
+        """!
+        @brief Generate a set of Productstatus resources based on job output.
 
-        job.logger.info('Creating a new DataInstance on the Productstatus server...')
+        This adapter will post a new DataInstance using the same Data and
+        ProductInstance as the input resource.
+        """
         datainstance = self.api.datainstance.create()
         datainstance.data = job.resource.data
         datainstance.format = job.resource.format
         datainstance.expires = self.expiry_from_lifetime()
-        datainstance.servicebackend = service_backend
+        datainstance.servicebackend = self.service_backend
         datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], job.base_filename)
-        eva.retry_n(datainstance.save,
-                    exceptions=(productstatus.exceptions.ServiceUnavailableException,),
-                    give_up=0)
-        job.logger.info('DataInstance %s, expires %s', datainstance, datainstance.expires)
-        job.logger.info('The file %s has been successfully copied to %s', job.resource.url, datainstance.url)
+        resources['datainstance'] += [datainstance]

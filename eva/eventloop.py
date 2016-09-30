@@ -546,6 +546,7 @@ class Eventloop(eva.ConfigurableObject):
             event.job.timer.stop()
             event.job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', event.job.timer.total_time_msec() / 1000.0)
             self.adapter.finish_job(event.job)
+            self.adapter.generate_and_post_resources(event.job)
             event.job.logger.info('Adapter has finished processing the job.')
             self.remove_event_from_queues(event)
             self.logger.debug('Finished processing event: %s', event)

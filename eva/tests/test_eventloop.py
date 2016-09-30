@@ -9,14 +9,12 @@ import eva.eventloop
 import eva.adapter
 import eva.executor
 
-import productstatus.api
-
 
 class TestEventloop(unittest.TestCase):
 
     def setUp(self):
         self.env = {}
-        self.productstatus_api = productstatus.api.Api('http://localhost:8000')
+        self.productstatus_api = mock.MagicMock()
         self.logger = logging
         self.zookeeper = None
         self.statsd = eva.statsd.StatsDClient()
