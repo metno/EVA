@@ -30,7 +30,7 @@ upload-eva-base:
 	docker push metno/eva-base
 
 upload-staging-eva:
-	docker push metno/eva-base:staging
+	docker push metno/eva:staging
 
 doc:
 	doxygen doxygen.conf
