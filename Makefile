@@ -17,6 +17,9 @@ pull-eva-base:
 eva: test lint pull-eva-base
 	docker build --no-cache --tag metno/eva docker/eva
 
+staging-eva: test lint pull-eva-base
+	docker build --no-cache --tag metno/eva:staging docker/eva
+
 eva-base:
 	docker build --no-cache --tag metno/eva-base docker/eva-base
 
@@ -25,6 +28,9 @@ upload-eva:
 
 upload-eva-base:
 	docker push metno/eva-base
+
+upload-staging-eva:
+	docker push metno/eva-base:staging
 
 doc:
 	doxygen doxygen.conf
