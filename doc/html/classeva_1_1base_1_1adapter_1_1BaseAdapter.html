@@ -89,6 +89,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classeva_1_1base_1_1adapter_1_1BaseAdapter-members.html">List of all members</a>  </div>
@@ -108,16 +109,18 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <img src="classeva_1_1base_1_1adapter_1_1BaseAdapter.png" usemap="#eva.base.adapter.BaseAdapter_map" alt=""/>
   <map id="eva.base.adapter.BaseAdapter_map" name="eva.base.adapter.BaseAdapter_map">
 <area href="classeva_1_1ConfigurableObject.html" alt="eva.ConfigurableObject" shape="rect" coords="0,56,363,80"/>
-<area href="classeva_1_1adapter_1_1cwf_1_1CWFAdapter.html" alt="eva.adapter.cwf.CWFAdapter" shape="rect" coords="373,168,736,192"/>
-<area href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html" alt="eva.adapter.delete.DeleteAdapter" shape="rect" coords="373,224,736,248"/>
-<area href="classeva_1_1adapter_1_1download_1_1DownloadAdapter.html" title="An adapter that downloads files, and optionally posts their metadata to Productstatus. " alt="eva.adapter.download.DownloadAdapter" shape="rect" coords="373,280,736,304"/>
-<area href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html" title="An adapter that is good for demonstration purposes. " alt="eva.adapter.example.ExampleAdapter" shape="rect" coords="373,336,736,360"/>
-<area href="classeva_1_1adapter_1_1fimex_1_1FimexAdapter.html" title="Generic FIMEX adapter that will accept virtually any parameter known to FIMEX. " alt="eva.adapter.fimex.FimexAdapter" shape="rect" coords="373,392,736,416"/>
-<area href="classeva_1_1adapter_1_1fimex__grib__to__netcdf_1_1FimexGRIB2NetCDFAdapter.html" title="This adapter fills a NetCDF file with GRIB data using Fimex. " alt="eva.adapter.fimex_grib_to_netcdf.FimexGRIB2NetCDFAdapter" shape="rect" coords="373,448,736,472"/>
-<area href="classeva_1_1adapter_1_1gridpp_1_1GridPPAdapter.html" title="Generic GridPP adapter that will accept any parameter known to GridPP. " alt="eva.adapter.gridpp.GridPPAdapter" shape="rect" coords="373,504,736,528"/>
-<area href="classeva_1_1adapter_1_1null_1_1NullAdapter.html" title="An adapter that matches nothing and does nothing. " alt="eva.adapter.null.NullAdapter" shape="rect" coords="373,560,736,584"/>
-<area href="classeva_1_1adapter_1_1test__executor_1_1TestExecutorAdapter.html" title="An adapter that echoes the URL of the received DataInstance. " alt="eva.adapter.test_executor.TestExecutorAdapter" shape="rect" coords="373,616,736,640"/>
-<area href="classeva_1_1adapter_1_1thredds_1_1ThreddsAdapter.html" title="An adapter that listens to events about files being produced on /lustre and then polls the Thredds se..." alt="eva.adapter.thredds.ThreddsAdapter" shape="rect" coords="373,672,736,696"/>
+<area href="classeva_1_1adapter_1_1checksum_1_1ChecksumVerificationAdapter.html" title="An adapter that verifies checksums on data sets according to auxiliary files. " alt="eva.adapter.checksum.ChecksumVerificationAdapter" shape="rect" coords="373,168,736,192"/>
+<area href="classeva_1_1adapter_1_1cwf_1_1CWFAdapter.html" alt="eva.adapter.cwf.CWFAdapter" shape="rect" coords="373,224,736,248"/>
+<area href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html" alt="eva.adapter.delete.DeleteAdapter" shape="rect" coords="373,280,736,304"/>
+<area href="classeva_1_1adapter_1_1distribution_1_1DistributionAdapter.html" title="Copy data to another destination. " alt="eva.adapter.distribution.DistributionAdapter" shape="rect" coords="373,336,736,360"/>
+<area href="classeva_1_1adapter_1_1download_1_1DownloadAdapter.html" title="An adapter that downloads files, and optionally posts their metadata to Productstatus. " alt="eva.adapter.download.DownloadAdapter" shape="rect" coords="373,392,736,416"/>
+<area href="classeva_1_1adapter_1_1example_1_1ExampleAdapter.html" title="An adapter that is good for demonstration purposes. " alt="eva.adapter.example.ExampleAdapter" shape="rect" coords="373,448,736,472"/>
+<area href="classeva_1_1adapter_1_1fimex_1_1FimexAdapter.html" title="Generic FIMEX adapter that will accept virtually any parameter known to FIMEX. " alt="eva.adapter.fimex.FimexAdapter" shape="rect" coords="373,504,736,528"/>
+<area href="classeva_1_1adapter_1_1fimex__grib__to__netcdf_1_1FimexGRIB2NetCDFAdapter.html" title="This adapter fills a NetCDF file with GRIB data using Fimex. " alt="eva.adapter.fimex_grib_to_netcdf.FimexGRIB2NetCDFAdapter" shape="rect" coords="373,560,736,584"/>
+<area href="classeva_1_1adapter_1_1gridpp_1_1GridPPAdapter.html" title="Generic GridPP adapter that will accept any parameter known to GridPP. " alt="eva.adapter.gridpp.GridPPAdapter" shape="rect" coords="373,616,736,640"/>
+<area href="classeva_1_1adapter_1_1null_1_1NullAdapter.html" title="An adapter that matches nothing and does nothing. " alt="eva.adapter.null.NullAdapter" shape="rect" coords="373,672,736,696"/>
+<area href="classeva_1_1adapter_1_1test__executor_1_1TestExecutorAdapter.html" title="An adapter that echoes the URL of the received DataInstance. " alt="eva.adapter.test_executor.TestExecutorAdapter" shape="rect" coords="373,728,736,752"/>
+<area href="classeva_1_1adapter_1_1thredds_1_1ThreddsAdapter.html" title="An adapter that listens to events about files being produced on /lustre and then polls the Thredds se..." alt="eva.adapter.thredds.ThreddsAdapter" shape="rect" coords="373,784,736,808"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -131,6 +134,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a396fd92feb4064aedadc0fdb65c4ff0c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a396fd92feb4064aedadc0fdb65c4ff0c">setup_single_instance</a></td></tr>
 <tr class="memdesc:a396fd92feb4064aedadc0fdb65c4ff0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check that we have a Zookeeper endpoint if EVA requires that only a single instance is running at any given time.  <a href="#a396fd92feb4064aedadc0fdb65c4ff0c">More...</a><br/></td></tr>
 <tr class="separator:a396fd92feb4064aedadc0fdb65c4ff0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1acf0a87d732104aca970e22f381ce2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ac1acf0a87d732104aca970e22f381ce2">setup_reference_time_threshold</a></td></tr>
+<tr class="memdesc:ac1acf0a87d732104aca970e22f381ce2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define the <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#aa7b19ed830811c9fc5bab3d33a08fdbc" title="Return a DateTime object which represent the oldest reference time that will be processed. ">BaseAdapter.reference_time_threshold</a> variable, which is either a datetime.timedelta object representing the difference from current time, or None.  <a href="#ac1acf0a87d732104aca970e22f381ce2">More...</a><br/></td></tr>
+<tr class="separator:ac1acf0a87d732104aca970e22f381ce2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4042de261f21c51e0362df3cdb96a140"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a4042de261f21c51e0362df3cdb96a140">in_array_or_empty</a></td></tr>
 <tr class="memdesc:a4042de261f21c51e0362df3cdb96a140"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filter input events by filter list.  <a href="#a4042de261f21c51e0362df3cdb96a140">More...</a><br/></td></tr>
 <tr class="separator:a4042de261f21c51e0362df3cdb96a140"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -152,6 +158,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:adf01df4a8676793f0dd035e8cee7deff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab3292e9b159aa6a84c064e4bdcae650"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#aab3292e9b159aa6a84c064e4bdcae650">datainstance_has_required_uuids</a></td></tr>
 <tr class="separator:aab3292e9b159aa6a84c064e4bdcae650"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7b19ed830811c9fc5bab3d33a08fdbc"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#aa7b19ed830811c9fc5bab3d33a08fdbc">reference_time_threshold</a></td></tr>
+<tr class="memdesc:aa7b19ed830811c9fc5bab3d33a08fdbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a DateTime object which represent the oldest reference time that will be processed.  <a href="#aa7b19ed830811c9fc5bab3d33a08fdbc">More...</a><br/></td></tr>
+<tr class="separator:aa7b19ed830811c9fc5bab3d33a08fdbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0e39346e475c7065eade5c189fb5b7c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ae0e39346e475c7065eade5c189fb5b7c">resource_matches_input_config</a></td></tr>
 <tr class="memdesc:ae0e39346e475c7065eade5c189fb5b7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check that a Productstatus resource matches the configured processing criteria.  <a href="#ae0e39346e475c7065eade5c189fb5b7c">More...</a><br/></td></tr>
 <tr class="separator:ae0e39346e475c7065eade5c189fb5b7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -170,6 +179,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad37967c52e77473f574ba184973a4dd0"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ad37967c52e77473f574ba184973a4dd0">init</a></td></tr>
 <tr class="memdesc:ad37967c52e77473f574ba184973a4dd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function provides a place for subclasses to initialize itself before accepting jobs.  <a href="#ad37967c52e77473f574ba184973a4dd0">More...</a><br/></td></tr>
 <tr class="separator:ad37967c52e77473f574ba184973a4dd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8b51c4ad10ff70cd2fe45d0a21ea08c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ab8b51c4ad10ff70cd2fe45d0a21ea08c">post_to_productstatus</a></td></tr>
+<tr class="memdesc:ab8b51c4ad10ff70cd2fe45d0a21ea08c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns True if this adapter has sufficient configuration to be able to post to Productstatus, False otherwise.  <a href="#ab8b51c4ad10ff70cd2fe45d0a21ea08c">More...</a><br/></td></tr>
+<tr class="separator:ab8b51c4ad10ff70cd2fe45d0a21ea08c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab39446585760d87ae80308086ed2085a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ab39446585760d87ae80308086ed2085a">resource_matches_hash_config</a></td></tr>
+<tr class="memdesc:ab39446585760d87ae80308086ed2085a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if one of the following criteria matches:  <a href="#ab39446585760d87ae80308086ed2085a">More...</a><br/></td></tr>
+<tr class="separator:ab39446585760d87ae80308086ed2085a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac25f33943d2c8068689a01fbbe444b37"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ac25f33943d2c8068689a01fbbe444b37">has_productstatus_credentials</a></td></tr>
 <tr class="separator:ac25f33943d2c8068689a01fbbe444b37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02e8d94e20f64712ec560a1db78063df"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">require_productstatus_credentials</a></td></tr>
@@ -181,6 +196,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3b2719bb0a6c5d43954e8dae9b43326c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5922777a2289e7f0fd10dd3f6dec8a27"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a5922777a2289e7f0fd10dd3f6dec8a27">expiry_from_lifetime</a></td></tr>
 <tr class="separator:a5922777a2289e7f0fd10dd3f6dec8a27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d6ab0ad394e6dcbb2d3058c6558e84b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a9d6ab0ad394e6dcbb2d3058c6558e84b">generate_and_post_resources</a></td></tr>
+<tr class="memdesc:a9d6ab0ad394e6dcbb2d3058c6558e84b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Given a finished Job object, post information to Productstatus about newly created resources.  <a href="#a9d6ab0ad394e6dcbb2d3058c6558e84b">More...</a><br/></td></tr>
+<tr class="separator:a9d6ab0ad394e6dcbb2d3058c6558e84b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afcfec9266e6bd91e6d3e2935cf031dec"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#afcfec9266e6bd91e6d3e2935cf031dec">generate_resources</a></td></tr>
 <tr class="memdesc:afcfec9266e6bd91e6d3e2935cf031dec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate Productstatus resources based on finished job output.  <a href="#afcfec9266e6bd91e6d3e2935cf031dec">More...</a><br/></td></tr>
 <tr class="separator:afcfec9266e6bd91e6d3e2935cf031dec"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,12 +206,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a617f1b4490551a06fd3ed9c0b72738da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Post information about a finished job to Productstatus.  <a href="#a617f1b4490551a06fd3ed9c0b72738da">More...</a><br/></td></tr>
 <tr class="separator:a617f1b4490551a06fd3ed9c0b72738da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classeva_1_1ConfigurableObject"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classeva_1_1ConfigurableObject')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classeva_1_1ConfigurableObject.html">eva.ConfigurableObject</a></td></tr>
+<tr class="memitem:a5b2a90925bd0c0af6fb49c711dfc8083 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1ConfigurableObject.html#a5b2a90925bd0c0af6fb49c711dfc8083">format_help</a></td></tr>
+<tr class="memdesc:a5b2a90925bd0c0af6fb49c711dfc8083 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format a help string with this class' configuration variables.  <a href="#a5b2a90925bd0c0af6fb49c711dfc8083">More...</a><br/></td></tr>
+<tr class="separator:a5b2a90925bd0c0af6fb49c711dfc8083 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b20271738697c7adba0cc124844b555 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1ConfigurableObject.html#a9b20271738697c7adba0cc124844b555">normalize_config_string</a></td></tr>
 <tr class="memdesc:a9b20271738697c7adba0cc124844b555 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coerce a type into a unicode string.  <a href="#a9b20271738697c7adba0cc124844b555">More...</a><br/></td></tr>
 <tr class="separator:a9b20271738697c7adba0cc124844b555 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb6157977c966d784cb08a27efd124ae inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1ConfigurableObject.html#acb6157977c966d784cb08a27efd124ae">normalize_config_int</a></td></tr>
 <tr class="memdesc:acb6157977c966d784cb08a27efd124ae inherit pub_methods_classeva_1_1ConfigurableObject"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coerce a type into an integer.  <a href="#acb6157977c966d784cb08a27efd124ae">More...</a><br/></td></tr>
 <tr class="separator:acb6157977c966d784cb08a27efd124ae inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7147d27dadaf417bf5a2dc3b95d1e08c inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1ConfigurableObject.html#a7147d27dadaf417bf5a2dc3b95d1e08c">normalize_config_positive_int</a></td></tr>
+<tr class="memdesc:a7147d27dadaf417bf5a2dc3b95d1e08c inherit pub_methods_classeva_1_1ConfigurableObject"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coerce a type into an integer.  <a href="#a7147d27dadaf417bf5a2dc3b95d1e08c">More...</a><br/></td></tr>
+<tr class="separator:a7147d27dadaf417bf5a2dc3b95d1e08c inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e9f88e21df6d39d917b032b7f4c9f45 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1ConfigurableObject.html#a0e9f88e21df6d39d917b032b7f4c9f45">normalize_config_null_bool</a></td></tr>
 <tr class="memdesc:a0e9f88e21df6d39d917b032b7f4c9f45 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coerce a type into a unicode string.  <a href="#a0e9f88e21df6d39d917b032b7f4c9f45">More...</a><br/></td></tr>
 <tr class="separator:a0e9f88e21df6d39d917b032b7f4c9f45 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -212,11 +236,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae6c08f5ef2223ae8fbd7e5a4fdc33286 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1ConfigurableObject.html#ae6c08f5ef2223ae8fbd7e5a4fdc33286">read_configuration</a></td></tr>
 <tr class="memdesc:ae6c08f5ef2223ae8fbd7e5a4fdc33286 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize input configuration based on the configuration definition: split strings into lists, convert to types.  <a href="#ae6c08f5ef2223ae8fbd7e5a4fdc33286">More...</a><br/></td></tr>
 <tr class="separator:ae6c08f5ef2223ae8fbd7e5a4fdc33286 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10a932c4e599ecafd15c1d30a6bedfb6 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1ConfigurableObject.html#a10a932c4e599ecafd15c1d30a6bedfb6">print_environment</a></td></tr>
+<tr class="memdesc:a10a932c4e599ecafd15c1d30a6bedfb6 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print environment variables to log.  <a href="#a10a932c4e599ecafd15c1d30a6bedfb6">More...</a><br/></td></tr>
+<tr class="separator:a10a932c4e599ecafd15c1d30a6bedfb6 inherit pub_methods_classeva_1_1ConfigurableObject"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a03508771eecf8544d4c33e819726de3e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a03508771eecf8544d4c33e819726de3e">default_resource_dictionary</a></td></tr>
+<tr class="memdesc:a03508771eecf8544d4c33e819726de3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a dictionary of resource types that will be populated with <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#afcfec9266e6bd91e6d3e2935cf031dec" title="Generate Productstatus resources based on finished job output. ">generate_resources()</a>.  <a href="#a03508771eecf8544d4c33e819726de3e">More...</a><br/></td></tr>
+<tr class="separator:a03508771eecf8544d4c33e819726de3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a66aa1782a965c50ed7cd8e600cff4b01"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a66aa1782a965c50ed7cd8e600cff4b01">CONFIG</a></td></tr>
-<tr class="separator:a66aa1782a965c50ed7cd8e600cff4b01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c9a7e10390a8ba04b262d53ab26840f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a7c9a7e10390a8ba04b262d53ab26840f">OPTIONAL_CONFIG</a></td></tr>
 <tr class="separator:a7c9a7e10390a8ba04b262d53ab26840f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ed7ab581c1eb2641b9104d1a241d9d1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a6ed7ab581c1eb2641b9104d1a241d9d1">logger</a></td></tr>
@@ -235,6 +266,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:ab09931ef6c90053c1668a1e4ab27a8a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a72b5c2aafaa99e6671a6ea3abba119fc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a72b5c2aafaa99e6671a6ea3abba119fc">required_uuids</a></td></tr>
 <tr class="separator:a72b5c2aafaa99e6671a6ea3abba119fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d288cb50c0988845e681af2e74f1840"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a8d288cb50c0988845e681af2e74f1840">reference_time_threshold_delta</a></td></tr>
+<tr class="separator:a8d288cb50c0988845e681af2e74f1840"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a8c07711b7c28384c913b592c567332"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a0a8c07711b7c28384c913b592c567332">template</a></td></tr>
 <tr class="separator:a0a8c07711b7c28384c913b592c567332"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab28f11d287e93ac78131e14be290ab8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#aab28f11d287e93ac78131e14be290ab8">process_partial</a></td></tr>
@@ -245,6 +278,8 @@ Public Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
+<tr class="memitem:a477f92d6c1725565e3bd95066af01e11"><td class="memItemLeft" align="right" valign="top">list&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a477f92d6c1725565e3bd95066af01e11">PRODUCTSTATUS_REQUIRED_CONFIG</a> = []</td></tr>
+<tr class="separator:a477f92d6c1725565e3bd95066af01e11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa29f856166f573effd768d0ce75ef1e3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#aa29f856166f573effd768d0ce75ef1e3">PROCESS_PARTIAL_ONLY</a> = 0</td></tr>
 <tr class="separator:aa29f856166f573effd768d0ce75ef1e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac19f1a5bd1c7297d64605b35ff8e8373"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ac19f1a5bd1c7297d64605b35ff8e8373">PROCESS_PARTIAL_NO</a> = 1</td></tr>
@@ -262,7 +297,7 @@ Static Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Adapters contain all the information and configuration needed to translate a Productstatus resource into job execution. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00016">16</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00015">15</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a21f0d19beea154049b3f2c93f1314845"></a>
 <div class="memitem">
@@ -326,7 +361,7 @@ Static Public Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00106">106</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00124">124</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -358,7 +393,7 @@ Static Public Attributes</h2></td></tr>
 <p>Add a resource UUID to the blacklist. </p>
 <p>Once added to the blacklist, no ProductInstance with this UUID will be processed. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00172">172</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00207">207</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -378,7 +413,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Delete all UUIDs from the required UUID set. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00200">200</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00235">235</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -421,7 +456,7 @@ Static Public Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00298">298</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00345">345</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -450,7 +485,34 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>True if the DataInstance or any of its parents or children have the specified UUID as their primary key. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00213">213</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00248">248</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a03508771eecf8544d4c33e819726de3e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.base.adapter.BaseAdapter.default_resource_dictionary </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a dictionary of resource types that will be populated with <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#afcfec9266e6bd91e6d3e2935cf031dec" title="Generate Productstatus resources based on finished job output. ">generate_resources()</a>. </p>
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00441">441</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -479,7 +541,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>a DateTime object representing an absolute DataInstance expiry time, calculated from the current time. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00346">346</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00423">423</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -498,7 +560,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>a DateTime object representing an absolute DataInstance expiry time, based on the EVA_OUTPUT_LIFETIME environment variable. If the variable is not set, this function returns None. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00353">353</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00430">430</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -534,7 +596,7 @@ Static Public Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00306">306</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00353">353</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -565,7 +627,38 @@ Static Public Attributes</h2></td></tr>
 <p>Instruct the adapter to ignore messages that do not refer to the specified UUID through either its own ID or any child or parent IDs. </p>
 <p>This parameter is deleted once a valid message is accepted for processing. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00185">185</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00220">220</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a9d6ab0ad394e6dcbb2d3058c6558e84b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.base.adapter.BaseAdapter.generate_and_post_resources </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>job</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Given a finished Job object, post information to Productstatus about newly created resources. </p>
+<p>Performs a number of sanity checks before posting any information. </p>
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00451">451</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -583,13 +676,13 @@ Static Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>resource</em>, </td>
+          <td class="paramname"><em>job</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>job</em>&#160;</td>
+          <td class="paramname"><em>resources</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -600,8 +693,14 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Generate Productstatus resources based on finished job output. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">resources</td><td>Dictionary with resource types that can be populated by the subclass implementation. </td></tr>
+  </table>
+  </dd>
+</dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00363">363</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00475">475</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -620,7 +719,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>True if a DataInstance lifetime is specified, false otherwise. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00340">340</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00417">417</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -639,7 +738,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>True if the adapter is configured with a user name and API key to Productstatus, False otherwise. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00321">321</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00398">398</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -677,7 +776,7 @@ Static Public Attributes</h2></td></tr>
 <p>If a filter is not defined, then it is skipped and treated as matching. If a filter array is empty, it is also treated as matching. </p>
 <dl class="section return"><dt>Returns</dt><dd>True if <code>env</code> is not found in <code>self.env</code>, or if <code>self.env[env]</code> is empty, or if <code>env</code> is found in <code>self.env</code>. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00160">160</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00195">195</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -697,7 +796,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>This function provides a place for subclasses to initialize itself before accepting jobs. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00315">315</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00362">362</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -726,7 +825,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>True if a resource UUID is blacklisted, False otherwise. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00179">179</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00214">214</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -755,7 +854,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>True if self.required_uuids is empty or the specified UUID is in that set. </dd></dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00206">206</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00241">241</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -773,6 +872,12 @@ Static Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>job</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
           <td class="paramname"><em>resources</em>&#160;</td>
         </tr>
         <tr>
@@ -784,9 +889,29 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Post information about a finished job to Productstatus. </p>
-<p>Takes a dictionary of resources. </p>
+<p>Takes a dictionary of arrays of Resource or EvaluatedResource objects. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00369">369</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00482">482</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ab8b51c4ad10ff70cd2fe45d0a21ea08c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.base.adapter.BaseAdapter.post_to_productstatus </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns True if this adapter has sufficient configuration to be able to post to Productstatus, False otherwise. </p>
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00368">368</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -822,7 +947,27 @@ Static Public Attributes</h2></td></tr>
 
 <p>Print information about a DataInstance to the debug log. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00271">271</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00318">318</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="aa7b19ed830811c9fc5bab3d33a08fdbc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.base.adapter.BaseAdapter.reference_time_threshold </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return a DateTime object which represent the oldest reference time that will be processed. </p>
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00267">267</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -852,7 +997,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Delete an UUID from the required UUID set. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00194">194</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00229">229</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -872,7 +1017,42 @@ Static Public Attributes</h2></td></tr>
 
 <p>Raise an exception if Productstatus credentials are not configured. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00331">331</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00408">408</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ab39446585760d87ae80308086ed2085a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.base.adapter.BaseAdapter.resource_matches_hash_config </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>resource</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns true if one of the following criteria matches: </p>
+<ul>
+<li>DataInstance.hash is NULL, and EVA_INPUT_WITH_HASH is set to NO</li>
+<li>DataInstance.hash populated, and EVA_INPUT_WITH_HASH is set to YES</li>
+<li>EVA_INPUT_WITH_HASH is unset </li>
+</ul>
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00382">382</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -902,7 +1082,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Check that a Productstatus resource matches the configured processing criteria. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00232">232</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00275">275</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -922,7 +1102,28 @@ Static Public Attributes</h2></td></tr>
 
 <p>Set up the <code>process_partial</code> variable. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00129">129</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00154">154</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ac1acf0a87d732104aca970e22f381ce2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def eva.base.adapter.BaseAdapter.setup_reference_time_threshold </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Define the <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#aa7b19ed830811c9fc5bab3d33a08fdbc" title="Return a DateTime object which represent the oldest reference time that will be processed. ">BaseAdapter.reference_time_threshold</a> variable, which is either a datetime.timedelta object representing the difference from current time, or None. </p>
+<p>The variable is used to determine whether or not to process a specific dataset. </p>
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00185">185</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -942,7 +1143,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Check that we have a Zookeeper endpoint if EVA requires that only a single instance is running at any given time. </p>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00142">142</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00167">167</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -978,7 +1179,7 @@ Static Public Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00285">285</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00332">332</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -993,7 +1194,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00119">119</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00136">136</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1007,21 +1208,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00121">121</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a66aa1782a965c50ed7cd8e600cff4b01"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">eva.base.adapter.BaseAdapter.CONFIG</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00112">112</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00139">139</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1035,7 +1222,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00120">120</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00137">137</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1049,7 +1236,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00118">118</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00135">135</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1063,7 +1250,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00115">115</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00132">132</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1077,7 +1264,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00114">114</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00131">131</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1091,7 +1278,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00134">134</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00159">159</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1113,7 +1300,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00104">104</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00122">122</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1135,7 +1322,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00103">103</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00121">121</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1157,7 +1344,43 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00102">102</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00120">120</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a477f92d6c1725565e3bd95066af01e11"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">list eva.base.adapter.BaseAdapter.PRODUCTSTATUS_REQUIRED_CONFIG = []</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00118">118</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a8d288cb50c0988845e681af2e74f1840"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">eva.base.adapter.BaseAdapter.reference_time_threshold_delta</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00141">141</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1171,7 +1394,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00122">122</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00140">140</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1185,7 +1408,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00116">116</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00133">133</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1199,7 +1422,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00123">123</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00142">142</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1213,7 +1436,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="adapter_8py_source.html#l00117">117</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
+<p>Definition at line <a class="el" href="adapter_8py_source.html#l00134">134</a> of file <a class="el" href="adapter_8py_source.html">adapter.py</a>.</p>
 
 </div>
 </div>
@@ -1223,7 +1446,7 @@ Static Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 10 2016 14:50:31 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 3 2016 10:24:04 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

@@ -93,6 +93,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions_n.html#index_n"><span>n</span></a></li>
       <li><a href="functions_o.html#index_o"><span>o</span></a></li>
       <li><a href="functions_p.html#index_p"><span>p</span></a></li>
+      <li><a href="functions_q.html#index_q"><span>q</span></a></li>
       <li><a href="functions_r.html#index_r"><span>r</span></a></li>
       <li class="current"><a href="functions_s.html#index_s"><span>s</span></a></li>
       <li><a href="functions_t.html#index_t"><span>t</span></a></li>
@@ -122,6 +123,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>send()
 : <a class="el" href="classeva_1_1statsd_1_1StatsDTimer.html#a6d831864dd36b0a1db5fcc39bdf35d8d">eva.statsd.StatsDTimer</a>
 </li>
+<li>server
+: <a class="el" href="classeva_1_1health_1_1HealthCheckServer.html#a567fd6601a95cccfe58d8837f9358844">eva.health.HealthCheckServer</a>
+</li>
+<li>service_backend
+: <a class="el" href="classeva_1_1adapter_1_1download_1_1DownloadAdapter.html#adddc49e9d180bdc67deae6dedf19d8e9">eva.adapter.download.DownloadAdapter</a>
+</li>
 <li>set()
 : <a class="el" href="classeva_1_1statsd_1_1StatsDClient.html#a25fcc8e5ac48464464ea73e116a46f3e">eva.statsd.StatsDClient</a>
 </li>
@@ -130,6 +137,24 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>set_executor_instance()
 : <a class="el" href="classeva_1_1rpc_1_1RPC.html#aa970978b0f89c45f06d049eb0309df82">eva.rpc.RPC</a>
+</li>
+<li>set_health_check_heartbeat_interval()
+: <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ac54b74f70ae22e055e9e0989e8750bab">eva.eventloop.Eventloop</a>
+</li>
+<li>set_health_check_heartbeat_timeout()
+: <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#aea65f14e6a0b3d9441c776fc517023c5">eva.eventloop.Eventloop</a>
+</li>
+<li>set_health_check_skip_heartbeat()
+: <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a2ae78f11e6bcda85d33aeb7f1cdae116">eva.eventloop.Eventloop</a>
+</li>
+<li>set_health_check_timestamp()
+: <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#aefdc796e8387977f10e9c998742cb81f">eva.eventloop.Eventloop</a>
+</li>
+<li>set_heartbeat_interval()
+: <a class="el" href="classeva_1_1health_1_1HealthCheckServer.html#ab13b8a27922f082c7555d6e1da96bb61">eva.health.HealthCheckServer</a>
+</li>
+<li>set_heartbeat_timeout()
+: <a class="el" href="classeva_1_1health_1_1HealthCheckServer.html#adbda0c53a251dff26482e4d722ebd509">eva.health.HealthCheckServer</a>
 </li>
 <li>set_message_timestamp_threshold()
 : <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#aaad5cb24ce0226d77e21052286df66ba">eva.eventloop.Eventloop</a>
@@ -141,34 +166,79 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>set_no_drain()
 : <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#ac17f8a5938932bae810f7b95e494b1b7">eva.eventloop.Eventloop</a>
 </li>
+<li>set_skip_heartbeat()
+: <a class="el" href="classeva_1_1health_1_1HealthCheckServer.html#a70023ad6d8a440660f06d7dc7fa5adf6">eva.health.HealthCheckServer</a>
+</li>
 <li>set_status()
 : <a class="el" href="classeva_1_1job_1_1Job.html#a83b76ce767baa8daec846d6498a680aa">eva.job.Job</a>
 </li>
+<li>setup()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a7ed61bff77b744e24b777d10ea1d17ad">eva.__main__.Main</a>
+</li>
 <li>setUp()
-: <a class="el" href="classtest__base__adapter_1_1TestBaseAdapter.html#a415d0f2b83b160e80bdb91b8dd6cf429">test_base_adapter.TestBaseAdapter</a>
-, <a class="el" href="classtest__cwf_1_1TestCWFAdapter.html#a23212222bb3486a44ad1e3ceb6e496ed">test_cwf.TestCWFAdapter</a>
-, <a class="el" href="classtest__download__adapter_1_1TestDownloadAdapter.html#a1cfa9f63b7231769db95f3bc0a6acbdf">test_download_adapter.TestDownloadAdapter</a>
-, <a class="el" href="classtest__event_1_1TestEvent.html#aa6e9b57dc804922bcdab342875b257c6">test_event.TestEvent</a>
-, <a class="el" href="classtest__eventloop_1_1TestEventloop.html#a7a38bdd08904c29445417c99afb6424e">test_eventloop.TestEventloop</a>
-, <a class="el" href="classtest__fg2nc_1_1TestFimexGRIB2NetCDFAdapter.html#a7a8b7f28e2d1390ca62404698bf32dc1">test_fg2nc.TestFimexGRIB2NetCDFAdapter</a>
-, <a class="el" href="classtest__fimex__adapter_1_1TestFimexAdapter.html#ad820002b1d4db165f399b7f22e389b62">test_fimex_adapter.TestFimexAdapter</a>
-, <a class="el" href="classtest__grid__engine_1_1TestGridEngineExecutor.html#a187d1875360b5bf6319d4dc159da3fae">test_grid_engine.TestGridEngineExecutor</a>
-, <a class="el" href="classtest__job_1_1TestJob.html#a7c3e550649a6fd5731284c9e8f5433fa">test_job.TestJob</a>
-, <a class="el" href="classtest__statsd_1_1TestStatsD.html#af2373c2fe43a8f105531e4bfd846559f">test_statsd.TestStatsD</a>
-, <a class="el" href="classtest__statsd_1_1TestStatsDTimer.html#aad24fd039d47b20a7c9a06ec0b60d6c7">test_statsd.TestStatsDTimer</a>
-, <a class="el" href="classtest__template_1_1TestTemplate.html#a1b4e86bed3ec52b56c08bb9407dc1eb6">test_template.TestTemplate</a>
-, <a class="el" href="classtest__thredds_1_1TestThreddsAdapter.html#a3ed042cae3822bcf3f2a16e72a603936">test_thredds.TestThreddsAdapter</a>
+: <a class="el" href="classeva_1_1tests_1_1BaseTestAdapter.html#a3cc51176df7660681eea205e7ccdf2e4">eva.tests.BaseTestAdapter</a>
+, <a class="el" href="classeva_1_1tests_1_1test__base__adapter_1_1TestBaseAdapter.html#a3d69caf4fdf322c68b68547d92b5a400">eva.tests.test_base_adapter.TestBaseAdapter</a>
+, <a class="el" href="classeva_1_1tests_1_1test__download__adapter_1_1TestDownloadAdapter.html#ab82e977181a0fce5bddf17db6cc6cd5a">eva.tests.test_download_adapter.TestDownloadAdapter</a>
+, <a class="el" href="classeva_1_1tests_1_1test__event_1_1TestEvent.html#ad46c4c5cb91f19e5a779f96c22adc08f">eva.tests.test_event.TestEvent</a>
+, <a class="el" href="classeva_1_1tests_1_1test__eventloop_1_1TestEventloop.html#a759443f309c33146ddf1796daa8959d1">eva.tests.test_eventloop.TestEventloop</a>
+, <a class="el" href="classeva_1_1tests_1_1test__grid__engine_1_1TestGridEngineExecutor.html#aeb14e649f5f2cc6bee46103c0a43a67d">eva.tests.test_grid_engine.TestGridEngineExecutor</a>
+, <a class="el" href="classeva_1_1tests_1_1test__job_1_1TestJob.html#aa9eb010483733bafc16c7a276f971dfb">eva.tests.test_job.TestJob</a>
+, <a class="el" href="classeva_1_1tests_1_1test__statsd_1_1TestStatsD.html#a4717e33f9047ccafdddb1e80fcca27e9">eva.tests.test_statsd.TestStatsD</a>
+, <a class="el" href="classeva_1_1tests_1_1test__statsd_1_1TestStatsDTimer.html#af4e24264221ca4240af0ad7ac9f27b61">eva.tests.test_statsd.TestStatsDTimer</a>
+, <a class="el" href="classeva_1_1tests_1_1test__template_1_1TestTemplate.html#a4267e54b35d83fabfd49699e0ae2bfda">eva.tests.test_template.TestTemplate</a>
+</li>
+<li>setup_adapter()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a931a17425f4d231122e67fb6b1db6a80">eva.__main__.Main</a>
+</li>
+<li>setup_basic_logging()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a194ecf086f890bf7de515ed16fa647ac">eva.__main__.Main</a>
+</li>
+<li>setup_client_group_id()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a46b91380166127e998d806e3b4e42fc7">eva.__main__.Main</a>
+</li>
+<li>setup_default_loglevel()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#ad3bd1642ca1caf963d20a69f025b22d7">eva.__main__.Main</a>
+</li>
+<li>setup_environment_variables()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a6de3a5ac455d16ab3bd959a3867a60c2">eva.__main__.Main</a>
+</li>
+<li>setup_executor()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a2d096e03ed79740e5af478a3c8055d38">eva.__main__.Main</a>
+</li>
+<li>setup_health_check_server()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#adde21aeab3b4f4ca0eb5c4f47266f824">eva.__main__.Main</a>
 </li>
 <li>setup_listener()
 : <a class="el" href="classeva_1_1base_1_1listener_1_1BaseListener.html#a6c7ed9a40da88166b6b01e2af7d1b122">eva.base.listener.BaseListener</a>
 , <a class="el" href="classeva_1_1listener_1_1ps_1_1ProductstatusListener.html#a6df3fba7f5d9d589499bfaf21f0fcd16">eva.listener.ps.ProductstatusListener</a>
 , <a class="el" href="classeva_1_1listener_1_1rpc_1_1RPCListener.html#a2a13ddceee2eaf6c642709d0513f6f5a">eva.listener.rpc.RPCListener</a>
 </li>
+<li>setup_listeners()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a8ce079658542c9f87dc2c0654a604dcf">eva.__main__.Main</a>
+</li>
+<li>setup_logging()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#adb4383350794e80417f405b8f080c4db">eva.__main__.Main</a>
+</li>
 <li>setup_process_partial()
 : <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a5fa1693ecaf1b8fa87ea4d2535a9d610">eva.base.adapter.BaseAdapter</a>
 </li>
+<li>setup_productstatus()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#aac60a9254ac864e71e474df48f3483ae">eva.__main__.Main</a>
+</li>
+<li>setup_reference_time_threshold()
+: <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#ac1acf0a87d732104aca970e22f381ce2">eva.base.adapter.BaseAdapter</a>
+</li>
+<li>setup_signals()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a984d0df47ac43dc0118b601b9b33b185">eva.__main__.Main</a>
+</li>
 <li>setup_single_instance()
 : <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a396fd92feb4064aedadc0fdb65c4ff0c">eva.base.adapter.BaseAdapter</a>
+</li>
+<li>setup_statsd_client()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a0c89e82a120ea2f20837d219d6952168">eva.__main__.Main</a>
+</li>
+<li>setup_zookeeper()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a9565d9462131e2659be33440112ef6dc">eva.__main__.Main</a>
 </li>
 <li>sftp_client
 : <a class="el" href="classeva_1_1executor_1_1grid__engine_1_1GridEngineExecutor.html#a474c7abfee40a61b5992b7f9061ef8f3">eva.executor.grid_engine.GridEngineExecutor</a>
@@ -177,6 +247,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a4bb0e62d27539a58908fcdadaa3f413a">eva.eventloop.Eventloop</a>
 , <a class="el" href="classeva_1_1rpc_1_1RPC.html#ac477e9280f5bed2be3942a0b87c141fa">eva.rpc.RPC</a>
 </li>
+<li>signal_handler()
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#aec4bd8146a901b78cfe004d249165d47">eva.__main__.Main</a>
+</li>
+<li>skip_heartbeat
+: <a class="el" href="classeva_1_1health_1_1HealthCheckServer.html#a2b1c962c553ac1dc1ed35d4dbb5da252">eva.health.HealthCheckServer</a>
+</li>
 <li>sort_queue()
 : <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#aafecc9600a283260334eb8a6c00cdce8">eva.eventloop.Eventloop</a>
 </li>
@@ -184,7 +260,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classeva_1_1executor_1_1grid__engine_1_1GridEngineExecutor.html#a23732566034521c3f21ad86efc0bf0d5">eva.executor.grid_engine.GridEngineExecutor</a>
 </li>
 <li>start()
-: <a class="el" href="classeva_1_1statsd_1_1StatsDTimer.html#a709179ebbead90a04a5ab34d60525ccb">eva.statsd.StatsDTimer</a>
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a5f3733f80e7eec8c06706f2eacb8908e">eva.__main__.Main</a>
+, <a class="el" href="classeva_1_1statsd_1_1StatsDTimer.html#a709179ebbead90a04a5ab34d60525ccb">eva.statsd.StatsDTimer</a>
 </li>
 <li>start_time
 : <a class="el" href="classeva_1_1statsd_1_1StatsDTimer.html#ae8f01a8931d244b82074c5411fa3c282">eva.statsd.StatsDTimer</a>
@@ -196,16 +273,16 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a672e702f8998cecdc0b52670b4e67dfd">eva.base.adapter.BaseAdapter</a>
 , <a class="el" href="classeva_1_1base_1_1executor_1_1BaseExecutor.html#a486e982b40ae1dfeb3c7fa6352ae5eb9">eva.base.executor.BaseExecutor</a>
 , <a class="el" href="classeva_1_1eventloop_1_1Eventloop.html#a00c2334c967f8f9b597eab09486dfec0">eva.eventloop.Eventloop</a>
-, <a class="el" href="classtest__base__adapter_1_1TestBaseAdapter.html#af63369d5322d266027816f645c112044">test_base_adapter.TestBaseAdapter</a>
-, <a class="el" href="classtest__cwf_1_1TestCWFAdapter.html#a107423df67731f4260d5d174785240be">test_cwf.TestCWFAdapter</a>
-, <a class="el" href="classtest__download__adapter_1_1TestDownloadAdapter.html#a697ead409d66ef7ac4b38691d69881ce">test_download_adapter.TestDownloadAdapter</a>
-, <a class="el" href="classtest__eventloop_1_1TestEventloop.html#a186352322256571aea30c22930c6af27">test_eventloop.TestEventloop</a>
-, <a class="el" href="classtest__fg2nc_1_1TestFimexGRIB2NetCDFAdapter.html#aea647547695b6408cfd234556136001f">test_fg2nc.TestFimexGRIB2NetCDFAdapter</a>
-, <a class="el" href="classtest__fimex__adapter_1_1TestFimexAdapter.html#a606151e04bb568cc9bb705a3e7688bc7">test_fimex_adapter.TestFimexAdapter</a>
-, <a class="el" href="classtest__grid__engine_1_1TestGridEngineExecutor.html#a887dcbbe0cd65ab27721dbdda5b77062">test_grid_engine.TestGridEngineExecutor</a>
-, <a class="el" href="classtest__statsd_1_1TestStatsD.html#a40da06d186a8eacd5414fc90cbc16263">test_statsd.TestStatsD</a>
-, <a class="el" href="classtest__statsd_1_1TestStatsDTimer.html#a9d3d9769f3834a1b5376fa304b2bc87d">test_statsd.TestStatsDTimer</a>
-, <a class="el" href="classtest__thredds_1_1TestThreddsAdapter.html#a6203c36fdfb7a166093f593b787f9ac1">test_thredds.TestThreddsAdapter</a>
+, <a class="el" href="classeva_1_1tests_1_1BaseTestAdapter.html#a9b01ee18b9a407924eec378f8df3d3ea">eva.tests.BaseTestAdapter</a>
+, <a class="el" href="classeva_1_1tests_1_1test__base__adapter_1_1TestBaseAdapter.html#a1cb4f57256107773dc15c2435507120b">eva.tests.test_base_adapter.TestBaseAdapter</a>
+, <a class="el" href="classeva_1_1tests_1_1test__download__adapter_1_1TestDownloadAdapter.html#a943aefdfe5e3621043f62c1fd33c4024">eva.tests.test_download_adapter.TestDownloadAdapter</a>
+, <a class="el" href="classeva_1_1tests_1_1test__eventloop_1_1TestEventloop.html#af323dde77641ec4b00b6d74602d1283e">eva.tests.test_eventloop.TestEventloop</a>
+, <a class="el" href="classeva_1_1tests_1_1test__grid__engine_1_1TestGridEngineExecutor.html#a3d6ab913fb4cb17a79b2302146b49670">eva.tests.test_grid_engine.TestGridEngineExecutor</a>
+, <a class="el" href="classeva_1_1tests_1_1test__statsd_1_1TestStatsD.html#a945326ba064abf0186c64717085bbf0a">eva.tests.test_statsd.TestStatsD</a>
+, <a class="el" href="classeva_1_1tests_1_1test__statsd_1_1TestStatsDTimer.html#adbf4f8662392da811a9b70f8db34f86d">eva.tests.test_statsd.TestStatsDTimer</a>
+</li>
+<li>statsd_client
+: <a class="el" href="classeva_1_1____main_____1_1Main.html#a870b13c1d80dea867c68399f9c561808">eva.__main__.Main</a>
 </li>
 <li>status
 : <a class="el" href="classeva_1_1job_1_1Job.html#aabe93e02c971efe6d1ffea67e1d0bc9f">eva.job.Job</a>
@@ -241,7 +318,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 10 2016 14:50:31 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 3 2016 10:24:04 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

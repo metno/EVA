@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['var',['var',['../namespaceeva_1_1____main____.html#a0c5db5975d7fa6944600e4f58f9277b1',1,'eva::__main__']]]
+  ['unrecognized_5fserialized_5fevent',['unrecognized_serialized_event',['../namespaceeva_1_1tests_1_1test__event.html#aa6bb0424326985bd69aba93ef997c454',1,'eva::tests::test_event']]]
 ];
