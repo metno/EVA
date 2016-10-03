@@ -60,3 +60,6 @@ target/
 # misc stuff
 scripts/
 bin/multitail
+
+# Doxygen documentation
+doc/html/
