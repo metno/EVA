@@ -13,15 +13,21 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
     """
 
     CONFIG = {
-        'EVA_FIMEX_FILL_FILE_TEMPLATE': {
+        'EVA_FIMEX_FILL_FILE_NCFILL_PATH': {
             'type': 'string',
-            'help': 'Path to template file that is used as a starting point for the fill operation.',
+            'help': 'Path to the "ncfill" binary that will perform the fill operation.',
+            'default': '',
+        },
+        'EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY': {
+            'type': 'string',
+            'help': 'Path to template directory that is used for fill operation configuration.',
             'default': '',
         }
     }
 
     REQUIRED_CONFIG = [
-        'EVA_FIMEX_FILL_FILE_TEMPLATE',
+        'EVA_FIMEX_FILL_FILE_NCFILL_PATH',
+        'EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY',
         'EVA_INPUT_DATA_FORMAT',
         'EVA_INPUT_PRODUCT',
         'EVA_INPUT_SERVICE_BACKEND',
@@ -53,7 +59,8 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
             self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
             self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
             self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        self.fill_file_template = self.template.from_string(self.env['EVA_FIMEX_FILL_FILE_TEMPLATE'])
+        self.ncfill_path = self.env['EVA_FIMEX_FILL_FILE_NCFILL_PATH']
+        self.template_directory = self.template.from_string(self.env['EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY'])
         self.output_filename = self.template.from_string(self.env['EVA_OUTPUT_FILENAME_PATTERN'])
 
     def create_job(self, message_id, resource):
@@ -63,12 +70,14 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
         job.template_variables = {
             'datainstance': resource,
             'input_filename': os.path.basename(job.input_filename),
+            'ncfill_path': self.ncfill_path,
+            'template_directory': self.template_directory,
             'reference_time': resource.data.productinstance.reference_time,
         }
 
         # Render the Jinja2 templates and report any errors
         try:
-            job.fill_file_template = self.fill_file_template.render(**job.template_variables)
+            job.template_directory = self.template_directory.render(**job.template_variables)
             job.output_filename = self.output_filename.render(**job.template_variables)
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
@@ -76,14 +85,16 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
         # Generate Fimex job
         command = ['#!/bin/bash']
         command += ['#$ -S /bin/bash']
-        command += ["[ ! -f '%(output.fillFile)s' ] && cp -v '%(template)s' '%(output.fillFile)s'"]
-        command += ["time fimex --input.file '%(input.file)s' --output.fillFile '%(output.fillFile)s'"]
+        command += ["time %(ncfill)s --input '%(input)s' --output '%(output)s' --input_format '%(input_format)s' --reference_time '%(reference_time)s' --template_directory '%(template_directory)s'"]
 
         job.command = '\n'.join(command) + '\n'
         job.command = job.command % {
-            'input.file': job.input_filename,
-            'output.fillFile': job.output_filename,
-            'template': job.fill_file_template,
+            'input': job.input_filename,
+            'input_format': resource.format.slug,
+            'ncfill': self.ncfill_path,
+            'output': job.output_filename,
+            'reference_time': eva.strftime_iso8601(resource.data.productinstance.reference_time),
+            'template_directory': job.template_directory,
         }
 
         return job

@@ -13,7 +13,8 @@ import datetime
 class TestFimexAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.FimexFillFileAdapter
     environment = {
-        'EVA_FIMEX_FILL_FILE_TEMPLATE': '/template/{{reference_time|iso8601_compact}}.nc',
+        'EVA_FIMEX_FILL_FILE_NCFILL_PATH': '/path/to/ncfill',
+        'EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY': '/template',
         'EVA_INPUT_DATA_FORMAT': 'foo',
         'EVA_INPUT_PRODUCT': 'foo',
         'EVA_INPUT_SERVICE_BACKEND': 'foo',
@@ -41,12 +42,20 @@ class TestFimexAdapter(eva.tests.BaseTestAdapter):
         self.create_adapter()
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
+        resource.format.slug = 'netcdf'
         resource.data.productinstance.reference_time = eva.coerce_to_utc(datetime.datetime(2016, 1, 1, 18, 15, 0))
         with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
             job = self.create_job(resource)
-        print(job.command)
-        self.assertTrue("[ ! -f '/output/20160101T181500Z.nc' ] && cp -v '/template/20160101T181500Z.nc' '/output/20160101T181500Z.nc'" in job.command)
-        self.assertTrue("fimex --input.file '/foo/bar/baz' --output.fillFile '/output/20160101T181500Z.nc'" in job.command)
+        check_command = ' '.join([
+            "time",
+            "/path/to/ncfill",
+            "--input '/foo/bar/baz'",
+            "--output '/output/20160101T181500Z.nc'",
+            "--input_format 'netcdf'",
+            "--reference_time '2016-01-01T18:15:00+0000'",
+            "--template_directory '/template'"
+        ])
+        self.assertTrue(check_command in job.command)
 
     def test_finish_job_and_generate_resources(self):
         """!
