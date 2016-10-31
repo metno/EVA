@@ -463,6 +463,7 @@ class Eventloop(eva.ConfigurableObject):
                 self.process_event(event)
             except self.RECOVERABLE_EXCEPTIONS as e:
                 del event.job
+                event.reset_data()
                 self.logger.error('Re-queueing failed event %s due to error: %s', event, e)
                 self.statsd.incr('requeued_jobs')
                 continue
