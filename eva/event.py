@@ -12,7 +12,7 @@ class Event(object):
         self._id = uuid.uuid4()
         self.message = message
         self.data = data
-        self.original_data = copy.deepcopy(self.data)
+        self.original_data = copy.copy(self.data)
         self.kwargs = kwargs
 
     def __str__(self):
@@ -25,7 +25,7 @@ class Event(object):
         """!
         @brief Resets the data object to the original object used when constructing the event.
         """
-        self.data = copy.deepcopy(self.original_data)
+        self.data = copy.copy(self.original_data)
 
     def raw_message(self):
         """!
