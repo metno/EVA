@@ -52,7 +52,6 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
             'set -e',
             'cat %(md5_filename)s',  # for hash detection in generate_resources()
             'printf "%%s  %(dataset_filename)s\\n" $(cat %(md5_filename)s) | md5sum --check --status --strict -',
-            'rm -fv %(md5_filename)s >&2',
         ]
         values = {
             'dataset_filename': job.dataset_filename,
