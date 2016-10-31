@@ -62,7 +62,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
                 path = path[7:]
             job.logger.info("%s: expired at %s, queueing for deletion", datainstance, datainstance.expires)
             job.command += ["rm -vf '%s' && \\" % path]
-            if len(datainstance.hash) > 0 and datainstance.hash_type == 'md5':
+            if datainstance.hash is not None and datainstance.hash_type == 'md5':
                 # magical md5sum file deletion
                 job.command += ["rm -vf '%s.md5' && \\" % path]
         job.command += ["exit 0"]
