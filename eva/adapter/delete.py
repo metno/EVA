@@ -51,7 +51,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         job = eva.job.Job(message_id, self.logger)
         job.logger.info("Found %d expired data instances", count)
 
-        job.command = "#!/bin/bash\n"
+        job.command = ["#!/bin/bash"]
 
         # One line in delete script per data instance
         job.instance_list = []
@@ -60,11 +60,14 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
             path = datainstance.url
             if path.startswith('file://'):
                 path = path[7:]
-            job.logger.info("%s: expired at %s, queueing for deletion", datainstance.expires, datainstance)
-            job.command += "rm -vf '%s' && \\\n" % path
+            job.logger.info("%s: expired at %s, queueing for deletion", datainstance, datainstance.expires)
+            job.command += ["rm -vf '%s' && \\" % path]
+            if len(datainstance.hash) > 0 and datainstance.hash_type == 'md5':
+                # magical md5sum file deletion
+                job.command += ["rm -vf '%s.md5' && \\" % path]
+        job.command += ["exit 0"]
 
-        job.command += "exit 0\n"
-        job.logger.info(job.command)
+        job.command = '\n'.join(job.command) + '\n'
 
         return job
 
