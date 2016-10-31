@@ -2,6 +2,7 @@ import os
 import datetime
 import dateutil.tz
 import copy
+import traceback
 
 import eva
 import eva.zk
@@ -566,6 +567,9 @@ class Eventloop(eva.ConfigurableObject):
             event.data()
         except eva.exceptions.RPCFailedException as e:
             self.logger.error('Error while executing RPC request: %s', e)
+            backtrace = traceback.format_exc().split("\n")
+            for line in backtrace:
+                self.logger.critical(line)
         self.logger.info('Finished processing RPC request: %s', str(event))
         self.remove_event_from_queues(event)
 
