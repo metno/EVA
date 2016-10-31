@@ -1,7 +1,6 @@
 import uuid
 import datetime
 import dateutil.parser
-import copy
 
 
 class Event(object):
