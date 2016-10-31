@@ -447,7 +447,7 @@ class Eventloop(eva.ConfigurableObject):
         self.process_health_check()
         self.fill_process_list()
 
-        for event in self.process_list:
+        for index, event in enumerate(self.process_list):
             self.process_health_check()
 
             if isinstance(event, eva.event.RPCEvent):
@@ -464,9 +464,12 @@ class Eventloop(eva.ConfigurableObject):
                 self.process_event(event)
             except self.RECOVERABLE_EXCEPTIONS as e:
                 del event.job
-                event.reset_data()
                 self.logger.error('Re-queueing failed event %s due to error: %s', event, e)
                 self.statsd.incr('requeued_jobs')
+                # reload event in order to get fresh Productstatus data
+                if isinstance(event, eva.event.ProductstatusResourceEvent):
+                    self.logger.info('Re-creating event from memory in order to reload Productstatus data.')
+                    self.process_list[index] = event.factory(event.message)
                 continue
 
         return not self.both_queues_empty()
