@@ -1,7 +1,4 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+#!/usr/bin/env python3
 
 config = {
     'description': 'Event Adapter',
@@ -25,4 +22,10 @@ config = {
     'name': 'eva'
 }
 
-setup(**config)
+if __name__ == '__main__':
+    try:
+        from setuptools import setup
+    except ImportError:
+        from distutils.core import setup
+
+    setup(**config)
