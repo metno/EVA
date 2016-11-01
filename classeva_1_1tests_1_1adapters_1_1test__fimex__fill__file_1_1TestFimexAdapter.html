@@ -180,7 +180,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Test that job creation generates the correct FIMEX command line. </p>
 
-<p>Definition at line <a class="el" href="test__fimex__fill__file_8py_source.html#l00037">37</a> of file <a class="el" href="test__fimex__fill__file_8py_source.html">test_fimex_fill_file.py</a>.</p>
+<p>Definition at line <a class="el" href="test__fimex__fill__file_8py_source.html#l00038">38</a> of file <a class="el" href="test__fimex__fill__file_8py_source.html">test_fimex_fill_file.py</a>.</p>
 
 </div>
 </div>
@@ -200,7 +200,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Test that job finish works and doesn't throw any exceptions. </p>
 
-<p>Definition at line <a class="el" href="test__fimex__fill__file_8py_source.html#l00051">51</a> of file <a class="el" href="test__fimex__fill__file_8py_source.html">test_fimex_fill_file.py</a>.</p>
+<p>Definition at line <a class="el" href="test__fimex__fill__file_8py_source.html#l00060">60</a> of file <a class="el" href="test__fimex__fill__file_8py_source.html">test_fimex_fill_file.py</a>.</p>
 
 </div>
 </div>
@@ -220,7 +220,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Test that the adapter requires EVA_INPUT_PARTIAL=NO. </p>
 
-<p>Definition at line <a class="el" href="test__fimex__fill__file_8py_source.html#l00029">29</a> of file <a class="el" href="test__fimex__fill__file_8py_source.html">test_fimex_fill_file.py</a>.</p>
+<p>Definition at line <a class="el" href="test__fimex__fill__file_8py_source.html#l00030">30</a> of file <a class="el" href="test__fimex__fill__file_8py_source.html">test_fimex_fill_file.py</a>.</p>
 
 </div>
 </div>
@@ -265,18 +265,19 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;= {</div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;        <span class="stringliteral">&#39;EVA_FIMEX_FILL_FILE_TEMPLATE&#39;</span>: <span class="stringliteral">&#39;/template/{{reference_time|iso8601_compact}}.nc&#39;</span>,</div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;        <span class="stringliteral">&#39;EVA_INPUT_DATA_FORMAT&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;        <span class="stringliteral">&#39;EVA_INPUT_PRODUCT&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;        <span class="stringliteral">&#39;EVA_INPUT_SERVICE_BACKEND&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_BASE_URL&#39;</span>: <span class="stringliteral">&#39;file:///foo&#39;</span>,</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_DATA_FORMAT&#39;</span>: <span class="stringliteral">&#39;netcdf&#39;</span>,</div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_FILENAME_PATTERN&#39;</span>: <span class="stringliteral">&#39;/output/{{reference_time|iso8601_compact}}.nc&#39;</span>,</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_PRODUCT&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_SERVICE_BACKEND&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;        <span class="stringliteral">&#39;EVA_PRODUCTSTATUS_API_KEY&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;        <span class="stringliteral">&#39;EVA_PRODUCTSTATUS_USERNAME&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    }</div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;        <span class="stringliteral">&#39;EVA_FIMEX_FILL_FILE_NCFILL_PATH&#39;</span>: <span class="stringliteral">&#39;/path/to/ncfill&#39;</span>,</div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;        <span class="stringliteral">&#39;EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY&#39;</span>: <span class="stringliteral">&#39;/template&#39;</span>,</div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;        <span class="stringliteral">&#39;EVA_INPUT_DATA_FORMAT&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;        <span class="stringliteral">&#39;EVA_INPUT_PRODUCT&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;        <span class="stringliteral">&#39;EVA_INPUT_SERVICE_BACKEND&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_BASE_URL&#39;</span>: <span class="stringliteral">&#39;file:///foo&#39;</span>,</div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_DATA_FORMAT&#39;</span>: <span class="stringliteral">&#39;netcdf&#39;</span>,</div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_FILENAME_PATTERN&#39;</span>: <span class="stringliteral">&#39;/output/{{reference_time|iso8601_compact}}.nc&#39;</span>,</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_PRODUCT&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;        <span class="stringliteral">&#39;EVA_OUTPUT_SERVICE_BACKEND&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;        <span class="stringliteral">&#39;EVA_PRODUCTSTATUS_API_KEY&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;        <span class="stringliteral">&#39;EVA_PRODUCTSTATUS_USERNAME&#39;</span>: <span class="stringliteral">&#39;foo&#39;</span>,</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    }</div>
 </div><!-- fragment -->
 <p>Definition at line <a class="el" href="test__fimex__fill__file_8py_source.html#l00015">15</a> of file <a class="el" href="test__fimex__fill__file_8py_source.html">test_fimex_fill_file.py</a>.</p>
 
@@ -288,7 +289,7 @@ Additional Inherited Members</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 3 2016 13:08:28 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Nov 1 2016 12:43:44 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

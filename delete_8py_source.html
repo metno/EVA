@@ -141,7 +141,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;        job = <a class="code" href="classeva_1_1job_1_1Job.html">eva.job.Job</a>(message_id, self.<a class="code" href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a6ed7ab581c1eb2641b9104d1a241d9d1">logger</a>)</div>
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;        job.logger.info(<span class="stringliteral">&quot;Found %d expired data instances&quot;</span>, count)</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        job.command = <span class="stringliteral">&quot;#!/bin/bash\n&quot;</span></div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        job.command = [<span class="stringliteral">&quot;#!/bin/bash&quot;</span>]</div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;</div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        <span class="comment"># One line in delete script per data instance</span></div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        job.instance_list = []</div>
@@ -150,34 +150,37 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;            path = datainstance.url</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;            <span class="keywordflow">if</span> path.startswith(<span class="stringliteral">&#39;file://&#39;</span>):</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;                path = path[7:]</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;            job.logger.info(<span class="stringliteral">&quot;%s: expired at %s, queueing for deletion&quot;</span>, datainstance.expires, datainstance)</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;            job.command += <span class="stringliteral">&quot;rm -vf &#39;%s&#39; &amp;&amp; \\\n&quot;</span> % path</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        job.command += <span class="stringliteral">&quot;exit 0\n&quot;</span></div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        job.logger.info(job.command)</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        <span class="keywordflow">return</span> job</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
-<div class="line"><a name="l00071"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#a0df32850f75c8ed4a6683cb2d5ad880f">   71</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#a0df32850f75c8ed4a6683cb2d5ad880f">finish_job</a>(self, job):</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        <span class="stringliteral">&quot;&quot;&quot;!</span></div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="stringliteral">        @brief Retry deletion on failures, and report metrics to statsd.</span></div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="stringliteral">        &quot;&quot;&quot;</span></div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="keywordflow">if</span> <span class="keywordflow">not</span> job.complete():</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;            <span class="keywordflow">raise</span> <a class="code" href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a>(<span class="stringliteral">&quot;%s: deleting files failed.&quot;</span> % job.resource)</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;        self.statsd.incr(<span class="stringliteral">&#39;deleted_datainstances&#39;</span>, len(job.instance_list))</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
-<div class="line"><a name="l00080"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#afe7ceb2797ccd5f59f5816e72ce69c8e">   80</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#afe7ceb2797ccd5f59f5816e72ce69c8e">generate_resources</a>(self, job, resources):</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;        <span class="stringliteral">&quot;&quot;&quot;!</span></div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;<span class="stringliteral">        @brief Generate a set of Productstatus resources based on job output.</span></div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;<span class="stringliteral"></span></div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<span class="stringliteral">        This adapter will modify all DataInstance objects processed and set</span></div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;<span class="stringliteral">        their &#39;deleted&#39; property to True.</span></div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="stringliteral">        &quot;&quot;&quot;</span></div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        <span class="keywordflow">for</span> datainstance <span class="keywordflow">in</span> job.instance_list:</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;            datainstance.deleted = <span class="keyword">True</span></div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;            resources[<span class="stringliteral">&#39;datainstance&#39;</span>] += [datainstance]</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;            job.logger.info(<span class="stringliteral">&#39;%s: marking DataInstance as deleted in Productstatus&#39;</span>, datainstance)</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;            job.logger.info(<span class="stringliteral">&quot;%s: expired at %s, queueing for deletion&quot;</span>, datainstance, datainstance.expires)</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;            job.command += [<span class="stringliteral">&quot;rm -vf &#39;%s&#39; &amp;&amp; \\&quot;</span> % path]</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;            <span class="keywordflow">if</span> datainstance.hash <span class="keywordflow">is</span> <span class="keywordflow">not</span> <span class="keywordtype">None</span> <span class="keywordflow">and</span> datainstance.hash_type == <span class="stringliteral">&#39;md5&#39;</span>:</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;                <span class="comment"># magical md5sum file deletion</span></div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;                job.command += [<span class="stringliteral">&quot;rm -vf &#39;%s.md5&#39; &amp;&amp; \\&quot;</span> % path]</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;        job.command += [<span class="stringliteral">&quot;exit 0&quot;</span>]</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        job.command = <span class="stringliteral">&#39;\n&#39;</span>.join(job.command) + <span class="stringliteral">&#39;\n&#39;</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        <span class="keywordflow">return</span> job</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
+<div class="line"><a name="l00074"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#a0df32850f75c8ed4a6683cb2d5ad880f">   74</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#a0df32850f75c8ed4a6683cb2d5ad880f">finish_job</a>(self, job):</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="stringliteral">&quot;&quot;&quot;!</span></div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;<span class="stringliteral">        @brief Retry deletion on failures, and report metrics to statsd.</span></div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;<span class="stringliteral">        &quot;&quot;&quot;</span></div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;        <span class="keywordflow">if</span> <span class="keywordflow">not</span> job.complete():</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;            <span class="keywordflow">raise</span> <a class="code" href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a>(<span class="stringliteral">&quot;%s: deleting files failed.&quot;</span> % job.resource)</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;        self.statsd.incr(<span class="stringliteral">&#39;deleted_datainstances&#39;</span>, len(job.instance_list))</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
+<div class="line"><a name="l00083"></a><span class="lineno"><a class="line" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#afe7ceb2797ccd5f59f5816e72ce69c8e">   83</a></span>&#160;    <span class="keyword">def </span><a class="code" href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#afe7ceb2797ccd5f59f5816e72ce69c8e">generate_resources</a>(self, job, resources):</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;        <span class="stringliteral">&quot;&quot;&quot;!</span></div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;<span class="stringliteral">        @brief Generate a set of Productstatus resources based on job output.</span></div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="stringliteral"></span></div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="stringliteral">        This adapter will modify all DataInstance objects processed and set</span></div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="stringliteral">        their &#39;deleted&#39; property to True.</span></div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="stringliteral">        &quot;&quot;&quot;</span></div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        <span class="keywordflow">for</span> datainstance <span class="keywordflow">in</span> job.instance_list:</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;            datainstance.deleted = <span class="keyword">True</span></div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;            resources[<span class="stringliteral">&#39;datainstance&#39;</span>] += [datainstance]</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;            job.logger.info(<span class="stringliteral">&#39;%s: marking DataInstance as deleted in Productstatus&#39;</span>, datainstance)</div>
 <div class="ttc" id="namespaceeva_1_1base_1_1adapter_html"><div class="ttname"><a href="namespaceeva_1_1base_1_1adapter.html">eva.base.adapter</a></div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00001">adapter.py:1</a></div></div>
 <div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html_aece72a9c530e0dfd49fe9389d6acb36f"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#aece72a9c530e0dfd49fe9389d6acb36f">eva.adapter.delete.DeleteAdapter.create_job</a></div><div class="ttdeci">def create_job</div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00030">delete.py:30</a></div></div>
 <div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a02e8d94e20f64712ec560a1db78063df"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a02e8d94e20f64712ec560a1db78063df">eva.base.adapter.BaseAdapter.require_productstatus_credentials</a></div><div class="ttdeci">def require_productstatus_credentials</div><div class="ttdoc">Raise an exception if Productstatus credentials are not configured. </div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00408">adapter.py:408</a></div></div>
@@ -186,15 +189,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="ttc" id="classeva_1_1exceptions_1_1RetryException_html"><div class="ttname"><a href="classeva_1_1exceptions_1_1RetryException.html">eva.exceptions.RetryException</a></div><div class="ttdoc">Thrown when a step cannot be completed due to a transient error on an underlying resource, typically a network or service outage. </div><div class="ttdef"><b>Definition:</b> <a href="exceptions_8py_source.html#l00026">exceptions.py:26</a></div></div>
 <div class="ttc" id="classeva_1_1job_1_1Job_html"><div class="ttname"><a href="classeva_1_1job_1_1Job.html">eva.job.Job</a></div><div class="ttdoc">The Job object holds information about which commands to execute, the job&#39;s state, exit status, standard output, and standard error. </div><div class="ttdef"><b>Definition:</b> <a href="job_8py_source.html#l00013">job.py:13</a></div></div>
 <div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html">eva.adapter.delete.DeleteAdapter</a></div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00009">delete.py:9</a></div></div>
-<div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html_a0df32850f75c8ed4a6683cb2d5ad880f"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#a0df32850f75c8ed4a6683cb2d5ad880f">eva.adapter.delete.DeleteAdapter.finish_job</a></div><div class="ttdeci">def finish_job</div><div class="ttdoc">Retry deletion on failures, and report metrics to statsd. </div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00071">delete.py:71</a></div></div>
+<div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html_a0df32850f75c8ed4a6683cb2d5ad880f"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#a0df32850f75c8ed4a6683cb2d5ad880f">eva.adapter.delete.DeleteAdapter.finish_job</a></div><div class="ttdeci">def finish_job</div><div class="ttdoc">Retry deletion on failures, and report metrics to statsd. </div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00074">delete.py:74</a></div></div>
 <div class="ttc" id="classeva_1_1base_1_1adapter_1_1BaseAdapter_html_a6ed7ab581c1eb2641b9104d1a241d9d1"><div class="ttname"><a href="classeva_1_1base_1_1adapter_1_1BaseAdapter.html#a6ed7ab581c1eb2641b9104d1a241d9d1">eva.base.adapter.BaseAdapter.logger</a></div><div class="ttdeci">logger</div><div class="ttdef"><b>Definition:</b> <a href="adapter_8py_source.html#l00132">adapter.py:132</a></div></div>
 <div class="ttc" id="namespaceeva_1_1exceptions_html"><div class="ttname"><a href="namespaceeva_1_1exceptions.html">eva.exceptions</a></div><div class="ttdef"><b>Definition:</b> <a href="exceptions_8py_source.html#l00001">exceptions.py:1</a></div></div>
 <div class="ttc" id="namespaceeva_1_1job_html"><div class="ttname"><a href="namespaceeva_1_1job.html">eva.job</a></div><div class="ttdef"><b>Definition:</b> <a href="job_8py_source.html#l00001">job.py:1</a></div></div>
-<div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html_afe7ceb2797ccd5f59f5816e72ce69c8e"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#afe7ceb2797ccd5f59f5816e72ce69c8e">eva.adapter.delete.DeleteAdapter.generate_resources</a></div><div class="ttdeci">def generate_resources</div><div class="ttdoc">Generate a set of Productstatus resources based on job output. </div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00080">delete.py:80</a></div></div>
+<div class="ttc" id="classeva_1_1adapter_1_1delete_1_1DeleteAdapter_html_afe7ceb2797ccd5f59f5816e72ce69c8e"><div class="ttname"><a href="classeva_1_1adapter_1_1delete_1_1DeleteAdapter.html#afe7ceb2797ccd5f59f5816e72ce69c8e">eva.adapter.delete.DeleteAdapter.generate_resources</a></div><div class="ttdeci">def generate_resources</div><div class="ttdoc">Generate a set of Productstatus resources based on job output. </div><div class="ttdef"><b>Definition:</b> <a href="delete_8py_source.html#l00083">delete.py:83</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 3 2016 13:08:27 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Nov 1 2016 12:43:43 for EVA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
