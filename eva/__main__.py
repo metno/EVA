@@ -15,6 +15,7 @@ import productstatus.event
 
 import eva
 import eva.health
+import eva.mail
 import eva.statsd
 import eva.logger
 import eva.eventloop
@@ -94,6 +95,26 @@ class Main(eva.ConfigurableObject):
             'help': 'Comma-separated list of StatsD endpoints in the form <host>:<port>',
             'default': '',
         },
+        'EVA_MAIL_ENABLED': {
+            'type': 'bool',
+            'help': 'Send e-mails to product owner when something unexpected happens',
+            'default': 'NO',
+        },
+        'EVA_MAIL_FROM': {
+            'type': 'string',
+            'help': 'EVA sender e-mail address',
+            'default': 'eva@localhost',
+        },
+        'EVA_MAIL_RECIPIENTS': {
+            'type': 'list_string',
+            'help': 'List of recipients of e-mails from EVA',
+            'default': '',
+        },
+        'EVA_MAIL_SMTP_HOST': {
+            'type': 'string',
+            'help': 'Which SMTP server to use when sending e-mails',
+            'default': '127.0.0.1',
+        },
         'MARATHON_APP_ID': {
             'type': 'string',
             'help': 'Set by Marathon, and used for Kafka group ID. DO NOT SET THIS VARIABLE MANUALLY!',
@@ -113,6 +134,10 @@ class Main(eva.ConfigurableObject):
         'EVA_EXECUTOR',
         'EVA_LISTENERS',
         'EVA_LOG_CONFIG',
+        'EVA_MAIL_ENABLED',
+        'EVA_MAIL_FROM',
+        'EVA_MAIL_RECIPIENTS',
+        'EVA_MAIL_SMTP_HOST',
         'EVA_PRODUCTSTATUS_API_KEY',
         'EVA_PRODUCTSTATUS_URL',
         'EVA_PRODUCTSTATUS_USERNAME',
@@ -134,6 +159,7 @@ class Main(eva.ConfigurableObject):
         self.listeners = []
         self.adapter = None
         self.executor = None
+        self.mailer = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser()  # FIXME: epilog
@@ -356,6 +382,20 @@ class Main(eva.ConfigurableObject):
         )
         self.logger.info('Using adapter: %s' % self.adapter.__class__)
 
+    def setup_mailer(self):
+        """!
+        @brief Instantiate a mailer class, if configured.
+        """
+        if not self.env['EVA_MAIL_ENABLED']:
+            self.logger.warning('DISABLED sending e-mails due to EVA_MAIL_DISABLED=NO')
+            self.mailer = eva.mail.NullMailer()
+            return
+        self.mailer = eva.mail.Mailer(self.group_id,
+                                      self.env['EVA_MAIL_SMTP_HOST'],
+                                      self.env['EVA_MAIL_FROM'],
+                                      self.env['EVA_MAIL_RECIPIENTS'])
+        self.logger.info('Sending e-mails to %s via %s', self.env['EVA_MAIL_RECIPIENTS'], self.env['EVA_MAIL_SMTP_HOST'])
+
     def setup(self):
         try:
             self.setup_basic_logging()
@@ -373,6 +413,7 @@ class Main(eva.ConfigurableObject):
             self.setup_statsd_client()
             self.setup_zookeeper()
             self.setup_productstatus()
+            self.setup_mailer()
             self.setup_listeners()
             self.setup_executor()
             self.setup_adapter()
@@ -389,7 +430,8 @@ class Main(eva.ConfigurableObject):
 
     def start(self):
         try:
-            evaloop = eva.eventloop.Eventloop(self.productstatus_api,
+            evaloop = eva.eventloop.Eventloop(self.group_id,
+                                              self.productstatus_api,
                                               self.listeners,
                                               self.adapter,
                                               self.executor,
@@ -397,6 +439,7 @@ class Main(eva.ConfigurableObject):
                                               self.zookeeper,
                                               self.environment_variables,
                                               self.health_check_server,
+                                              self.mailer,
                                               self.logger,
                                               )
 

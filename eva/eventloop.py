@@ -52,6 +52,7 @@ class Eventloop(eva.ConfigurableObject):
     HEALTH_CHECK_HEARTBEAT_TIMEOUT = 60
 
     def __init__(self,
+                 group_id,
                  productstatus_api,
                  listeners,
                  adapter,
@@ -60,9 +61,11 @@ class Eventloop(eva.ConfigurableObject):
                  zookeeper,
                  environment_variables,
                  health_check_server,
+                 mailer,
                  logger,
                  ):
         self.listeners = listeners
+        self.group_id = group_id
         self.productstatus_api = productstatus_api
         self.adapter = adapter
         self.executor = executor
@@ -70,6 +73,7 @@ class Eventloop(eva.ConfigurableObject):
         self.zookeeper = zookeeper
         self.env = environment_variables
         self.health_check_server = health_check_server
+        self.mailer = mailer
         self.logger = logger
 
         self.read_configuration()
@@ -446,15 +450,55 @@ class Eventloop(eva.ConfigurableObject):
         """
         failures = self.adapter.incr_processing_failures(event.id())
         self.logger.warning('Job %s failed, total fail count: %d.', event.id(), failures)
-        # TODO: send e-mail
+
+        # Only send mail on the first failure
+        if failures != 1:
+            return
+
+        recipients = [self.adapter.output_product_email_recipient()]
+        raise Exception(recipients)
+        subject = 'Job failed'
+        text = """I'm sorry to inform you that your job has failed. Your job will be retried, and
+you will get an e-mail as soon as the job succeeds.
+
+Note that you will not receive e-mails about further failures of this event.
+
+Event ID: %(event_id)s
+"""
+        text = text % {
+            'event_id': event.id(),
+            'failures': failures,
+        }
+        recipients = ['kimtj@met.no']
+
+        self.mailer.send_email(recipients, subject, text)
 
     def register_job_success(self, event):
         """!
-        @brief Set the number of failures for a specific event to zero.
+        @brief Set the number of failures for a specific event to zero, and
+        send out an e-mail in case it recovered from a non-zero error count.
         """
         failures = self.adapter.processing_failures(event.id())
         self.adapter.set_processing_failures(event.id(), 0)
-        # TODO: send e-mail
+
+        # Skip sending mail for healthy jobs
+        if failures == 0:
+            return
+
+        recipients = [self.adapter.output_product_email_recipient()]
+        subject = 'Job succeeded after %d failures' % failures
+        text = """Your previously failing job has finally succeeded.
+
+Event ID:      %(event_id)s
+Failure count: %(failures)d
+"""
+        text = text % {
+            'event_id': event.id(),
+            'failures': failures,
+        }
+        recipients = ['kimtj@met.no']
+
+        self.mailer.send_email(recipients, subject, text)
 
     def process_all_events_once(self):
         """!

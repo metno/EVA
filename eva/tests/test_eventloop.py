@@ -14,14 +14,17 @@ class TestEventloop(unittest.TestCase):
 
     def setUp(self):
         self.env = {}
+        self.group_id = 'group_id'
         self.productstatus_api = mock.MagicMock()
         self.logger = logging
         self.zookeeper = None
         self.statsd = eva.statsd.StatsDClient()
         self.health_check_server = None
+        self.mailer = None
         self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
         self.adapter = eva.adapter.NullAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
-        self.eventloop = eva.eventloop.Eventloop(self.productstatus_api,
+        self.eventloop = eva.eventloop.Eventloop(self.group_id,
+                                                 self.productstatus_api,
                                                  [],
                                                  self.adapter,
                                                  self.executor,
@@ -29,6 +32,7 @@ class TestEventloop(unittest.TestCase):
                                                  self.zookeeper,
                                                  self.env,
                                                  self.health_check_server,
+                                                 self.mailer,
                                                  self.logger,
                                                  )
 

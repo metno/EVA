@@ -246,6 +246,19 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         return (len(self.required_uuids) == 0) or (uuid in self.required_uuids)
 
+    def output_product_email_recipient(self):
+        """!
+        @brief Return the e-mail recipient of the configured output product in
+        a 'Name <email>' format, or None if there is no configured output product.
+        """
+        if not self.env['EVA_OUTPUT_PRODUCT']:
+            return None
+        product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
+        return '%s <%s>' % (
+            product.contact.name,
+            product.contact.email,
+        )
+
     def set_processing_failures(self, uuid, failures):
         """!
         @brief Set the number of processing failures for the given UUID.
