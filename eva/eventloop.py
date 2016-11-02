@@ -439,6 +439,23 @@ class Eventloop(eva.ConfigurableObject):
                 break
         return added
 
+    def register_job_failure(self, event):
+        """!
+        @brief Increase the number of failures for a specific event, for
+        statistic and mail purposes.
+        """
+        failures = self.adapter.incr_processing_failures(event.id())
+        self.logger.warning('Job %s failed, total fail count: %d.', event.id(), failures)
+        # TODO: send e-mail
+
+    def register_job_success(self, event):
+        """!
+        @brief Set the number of failures for a specific event to zero.
+        """
+        failures = self.adapter.processing_failures(event.id())
+        self.adapter.set_processing_failures(event.id(), 0)
+        # TODO: send e-mail
+
     def process_all_events_once(self):
         """!
         @brief Process any events in the process list once.
@@ -550,6 +567,10 @@ class Eventloop(eva.ConfigurableObject):
         elif event.job.complete() or event.job.failed():
             event.job.timer.stop()
             event.job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', event.job.timer.total_time_msec() / 1000.0)
+            if not event.job.complete():
+                self.register_job_failure(event)
+            else:
+                self.register_job_success(event)
             self.adapter.finish_job(event.job)
             try:
                 self.adapter.generate_and_post_resources(event.job)

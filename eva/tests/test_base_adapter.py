@@ -285,3 +285,17 @@ class TestBaseAdapter(unittest.TestCase):
         self.assertTrue(self.adapter.resource_matches_hash_config(resource))
         resource.hash = 'd3b07384d113edec49eaa6238ad5ff00'
         self.assertFalse(self.adapter.resource_matches_hash_config(resource))
+
+    def test_processing_failures(self):
+        self.create_adapter()
+        self.assertEqual(self.adapter.processing_failures('foo'), 0)
+        self.adapter.incr_processing_failures('foo')
+        self.assertEqual(self.adapter.processing_failures('foo'), 1)
+        self.adapter.incr_processing_failures('foo')
+        self.assertEqual(self.adapter.processing_failures('foo'), 2)
+        self.adapter.incr_processing_failures('bar')
+        self.assertEqual(self.adapter.processing_failures('bar'), 1)
+        self.assertEqual(self.adapter.processing_failures('foo'), 2)
+        self.adapter.set_processing_failures('baz', 44)
+        self.assertEqual(self.adapter.processing_failures('foo'), 2)
+        self.assertEqual(self.adapter.processing_failures('baz'), 44)
