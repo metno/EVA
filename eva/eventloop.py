@@ -456,11 +456,13 @@ class Eventloop(eva.ConfigurableObject):
         if failures != 1:
             return
 
-        text = eva.mail.text.JOB_FAIL_TEXT % {
+        template_params = {
             'event_id': event.id(),
         }
+        subject = eva.mail.text.JOB_FAIL_SUBJECT % template_params
+        text = eva.mail.text.JOB_FAIL_TEXT % template_params
 
-        self.mailer.send_email(self.env['EVA_MAIL_RECIPIENTS'], eva.mail.text.JOB_FAIL_SUBJECT, text)
+        self.mailer.send_email(subject, text)
 
     def register_job_success(self, event):
         """!
@@ -481,7 +483,7 @@ class Eventloop(eva.ConfigurableObject):
         subject = eva.mail.text.JOB_RECOVER_SUBJECT % template_params
         text = eva.mail.text.JOB_RECOVER_TEXT % template_params
 
-        self.mailer.send_email(self.env['EVA_MAIL_RECIPIENTS'], subject, text)
+        self.mailer.send_email(subject, text)
 
     def process_all_events_once(self):
         """!

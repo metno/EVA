@@ -387,14 +387,18 @@ class Main(eva.ConfigurableObject):
         @brief Instantiate a mailer class, if configured.
         """
         if not self.env['EVA_MAIL_ENABLED']:
-            self.logger.warning('DISABLED sending e-mails due to EVA_MAIL_DISABLED=NO')
+            self.logger.warning('Sending e-mails of important events not configured.')
             self.mailer = eva.mail.NullMailer()
             return
+        if not self.env['EVA_MAIL_RECIPIENTS']:
+            raise eva.exceptions.InvalidConfigurationException(
+                'EVA_MAIL_RECIPIENTS must be configured when e-mails are enabled.'
+            )
         self.mailer = eva.mail.Mailer(self.group_id,
                                       self.env['EVA_MAIL_SMTP_HOST'],
                                       self.env['EVA_MAIL_FROM'],
                                       self.env['EVA_MAIL_RECIPIENTS'])
-        self.logger.info('Sending e-mails to %s via %s', self.env['EVA_MAIL_RECIPIENTS'], self.env['EVA_MAIL_SMTP_HOST'])
+        self.logger.info('Sending e-mails of important events to %s via %s', self.env['EVA_MAIL_RECIPIENTS'], self.env['EVA_MAIL_SMTP_HOST'])
 
     def setup(self):
         try:
