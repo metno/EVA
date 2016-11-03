@@ -29,3 +29,12 @@ JOB_RECOVER_TEXT = """Your previously failing job has finally succeeded.
 Event ID:      %(event_id)s
 Failure count: %(failures)d
 """
+
+# Message sent upon a critical error
+CRITICAL_ERROR_SUBJECT = "%(error_message)s"
+CRITICAL_ERROR_TEXT = """I'm terribly sorry, but EVA has encountered a critical error which caused the program to crash.
+
+%(error_message)s
+
+%(backtrace)s
+"""

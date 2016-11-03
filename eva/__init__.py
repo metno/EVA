@@ -231,18 +231,33 @@ def import_module_class(name):
     return getattr(mod, components[-1])
 
 
-def print_exception_as_bug(exception, logger):
+def format_exception_as_bug(exception):
     """!
-    @brief Print the stack trace of an exception to the logging framework, and
-    label it as CRITICAL and a bug.
+    @brief Given an Exception object, return a list of lines that can be
+    printed in order to display the backtrace and error.
     """
-    logger.critical("Fatal error: %s" % exception)
+    lines = []
+    lines += ["Fatal error: %s" % exception]
     backtrace = traceback.format_exc().split("\n")
-    logger.critical("***********************************************************")
-    logger.critical("Uncaught exception during program execution. THIS IS A BUG!")
-    logger.critical("***********************************************************")
+    lines += ["***********************************************************"]
+    lines += ["Uncaught exception during program execution. THIS IS A BUG!"]
+    lines += ["***********************************************************"]
     for line in backtrace:
+        lines += [line]
+    return lines
+
+
+def print_and_mail_exception(exception, logger, mailer):
+    lines = format_exception_as_bug(exception)
+    for line in lines:
         logger.critical(line)
+    template_params = {
+        'error_message': lines[0],
+        'backtrace': '\n'.join(lines[1:]) + '\n',
+    }
+    subject = eva.mail.text.CRITICAL_ERROR_SUBJECT % template_params
+    text = eva.mail.text.CRITICAL_ERROR_TEXT % template_params
+    mailer.send_email(subject, text)
 
 
 def in_array_or_empty(id, array):

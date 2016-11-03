@@ -428,7 +428,7 @@ class Main(eva.ConfigurableObject):
             sys.exit(1)
 
         except Exception as e:
-            eva.print_exception_as_bug(e, self.logger)
+            eva.print_and_mail_exception(e, self.logger, self.mailer)
             self.logger.critical('EVA initialization failed. Your code is broken, please fix it.')
             sys.exit(255)
 
@@ -465,7 +465,7 @@ class Main(eva.ConfigurableObject):
             self.logger.critical('Shutting down EVA due to ZooKeeper connection loss: %s', str(e))
             self.statsd.incr('zookeeper_connection_loss')
         except Exception as e:
-            eva.print_exception_as_bug(e, self.logger)
+            eva.print_and_mail_exception(e, self.logger, self.mailer)
             sys.exit(255)
 
         if self.zookeeper:
