@@ -15,8 +15,8 @@ class Mailer(object):
         @param mail_from str The source e-mail address from which mail originates
         @param recipients list A list strings with mail recipients
         """
-        self.mailer = smtplib.SMTP(smtp_host)
         self.group_id = group_id
+        self.smtp_host = smtp_host
         self.mail_from = mail_from
         self.recipients = recipients
 
@@ -27,9 +27,13 @@ class Mailer(object):
         text = eva.mail.text.MASTER_TEXT % text
         message = email.mime.text.MIMEText(text)
         message['Subject'] = eva.mail.text.MASTER_SUBJECT % (self.group_id, subject)
-        self.mailer.connect()
-        self.mailer.send_message(message, from_addr=self.mail_from, to_addrs=self.recipients)
-        self.mailer.quit()
+        try:
+            mailer = smtplib.SMTP(self.smtp_host)
+            mailer.send_message(message, from_addr=self.mail_from, to_addrs=self.recipients)
+            mailer.quit()
+        except smtplib.SMTPException:
+            # silently ignore errors
+            pass
 
 
 class NullMailer(object):
