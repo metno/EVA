@@ -2,6 +2,8 @@ import smtplib
 import email.policy
 import email.mime.text
 
+import eva.mail.text
+
 
 class Mailer(object):
     """!
@@ -21,15 +23,9 @@ class Mailer(object):
         """
         if self.recipients:
             recipients = self.recipients
-        text = """Hi,
-
-%s
-
-Best regards,
-The EVent Adapter automatic mailer
-""" % text
+        text = eva.mail.text.MASTER_TEXT % text
         message = email.mime.text.MIMEText(text)
-        message['Subject'] = 'EVA %s: %s' % (self.group_id, subject)
+        message['Subject'] = eva.mail.text.MASTER_SUBJECT % (self.group_id, subject)
         self.mailer.connect()
         self.mailer.send_message(message, from_addr=self.mail_from, to_addrs=recipients)
         self.mailer.quit()

@@ -8,6 +8,7 @@ import eva
 import eva.zk
 import eva.rpc
 import eva.event
+import eva.mail.text
 
 import productstatus.exceptions
 
@@ -455,23 +456,11 @@ class Eventloop(eva.ConfigurableObject):
         if failures != 1:
             return
 
-        recipients = [self.adapter.output_product_email_recipient()]
-        raise Exception(recipients)
-        subject = 'Job failed'
-        text = """I'm sorry to inform you that your job has failed. Your job will be retried, and
-you will get an e-mail as soon as the job succeeds.
-
-Note that you will not receive e-mails about further failures of this event.
-
-Event ID: %(event_id)s
-"""
-        text = text % {
+        text = eva.mail.text.JOB_FAIL_TEXT % {
             'event_id': event.id(),
-            'failures': failures,
         }
-        recipients = ['kimtj@met.no']
 
-        self.mailer.send_email(recipients, subject, text)
+        self.mailer.send_email(self.env['EVA_MAIL_RECIPIENTS'], eva.mail.text.JOB_FAIL_SUBJECT, text)
 
     def register_job_success(self, event):
         """!
@@ -485,20 +474,14 @@ Event ID: %(event_id)s
         if failures == 0:
             return
 
-        recipients = [self.adapter.output_product_email_recipient()]
-        subject = 'Job succeeded after %d failures' % failures
-        text = """Your previously failing job has finally succeeded.
-
-Event ID:      %(event_id)s
-Failure count: %(failures)d
-"""
-        text = text % {
+        template_params = {
             'event_id': event.id(),
             'failures': failures,
         }
-        recipients = ['kimtj@met.no']
+        subject = eva.mail.text.JOB_RECOVER_SUBJECT % template_params
+        text = eva.mail.text.JOB_RECOVER_TEXT % template_params
 
-        self.mailer.send_email(recipients, subject, text)
+        self.mailer.send_email(self.env['EVA_MAIL_RECIPIENTS'], subject, text)
 
     def process_all_events_once(self):
         """!
