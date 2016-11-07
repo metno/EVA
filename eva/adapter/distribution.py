@@ -46,7 +46,7 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         @brief Create a Job object that will copy a file to another
         destination, and optionally post the result to Productstatus.
         """
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
         job.base_filename = os.path.basename(resource.url)
         job.input_file = eva.url_to_filename(resource.url)
         job.output_url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], job.base_filename)

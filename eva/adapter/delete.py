@@ -48,7 +48,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
             return
 
         # Create Job object and log startup info
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
         job.logger.info("Found %d expired data instances", count)
 
         job.command = ["#!/bin/bash"]

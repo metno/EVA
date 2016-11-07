@@ -3,12 +3,25 @@ import logging
 
 import eva
 import eva.job
+import eva.mail
+import eva.globe
+import eva.statsd
 
 
 class TestJob(unittest.TestCase):
     def setUp(self):
+        self.group_id = 'group-id'
         self.logger = logging.getLogger('root')
-        self.job = eva.job.Job('id', self.logger)
+        self.zookeeper = None
+        self.statsd = eva.statsd.StatsDClient()
+        self.mailer = eva.mail.NullMailer()
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+        self.job = eva.job.Job('id', self.globe)
 
     def test_create_job_initialized(self):
         self.assertTrue(self.job.initialized())

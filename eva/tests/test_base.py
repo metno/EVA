@@ -32,7 +32,18 @@ class TestBase(unittest.TestCase):
             eva.url_to_filename('https://example.com/foo.nc')
 
     def test_log_stdout_stderr(self):
-        job = eva.job.Job('foo', logging.getLogger('root'))
+        self.group_id = 'group-id'
+        self.logger = logging.getLogger('root')
+        self.zookeeper = None
+        self.statsd = eva.statsd.StatsDClient()
+        self.mailer = eva.mail.NullMailer()
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+        job = eva.job.Job('foo', self.globe)
         eva.executor.log_stdout_stderr(job, ['x'], [])
 
     def test_split_comma_separated(self):

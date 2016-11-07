@@ -2,6 +2,7 @@ import datetime
 
 import eva
 import eva.logger
+import eva.globe
 
 
 INITIALIZED = "INITIALIZED"
@@ -10,15 +11,16 @@ COMPLETE = "COMPLETE"
 FAILED = "FAILED"
 
 
-class Job(object):
+class Job(eva.globe.GlobalMixin):
     """!
     The Job object holds information about which commands to execute, the job's
     state, exit status, standard output, and standard error.
     """
 
-    def __init__(self, id, logger):
+    def __init__(self, id, globe):
         self.id = id
-        self.logger = self.create_logger(logger)
+        self.globe = globe
+        self.logger = self.create_logger(self.logger)
         self.command = ""  # a multi-line string containing the commands to be run
         self.exit_code = None  # process exit code
         self.stdout = []  # multi-line standard output

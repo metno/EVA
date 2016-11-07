@@ -41,7 +41,7 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
         @brief Return a Job object that will check the file's md5sum against a
         stored hash in a corresponding file.
         """
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
         job.dataset_filename = eva.url_to_filename(resource.url)
         job.md5_filename = job.dataset_filename + '.md5'
         job.logger.info("Starting verification of file '%s' against md5sum file '%s'.", job.dataset_filename, job.md5_filename)

@@ -8,7 +8,7 @@ class NullAdapter(eva.base.adapter.BaseAdapter):
     """
 
     def create_job(self, message_id, resource):
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
         return job
 
     def finish_job(self, job):

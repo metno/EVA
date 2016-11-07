@@ -21,8 +21,8 @@ class TestBaseAdapter(unittest.TestCase):
 
     def setUp(self):
         self.env = {}
-        self.group_id = 'group-id'
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
+        self.group_id = 'group-id'
         self.logger = logging
         self.zookeeper = None
         self.statsd = eva.statsd.StatsDClient()

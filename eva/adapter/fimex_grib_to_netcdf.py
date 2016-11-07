@@ -58,7 +58,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         @brief Generate a Job which converts GRIB to NetCDF using the
         eva-adapter-support library.
         """
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
 
         reftime = resource.data.productinstance.reference_time
 

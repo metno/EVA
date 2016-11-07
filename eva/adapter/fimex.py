@@ -68,7 +68,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Create a generic FIMEX job.
         """
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
 
         job.input_filename = eva.url_to_filename(resource.url)
         job.reference_time = resource.data.productinstance.reference_time

@@ -101,7 +101,7 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
 
         # Instantiate a Job object, required if you are going to run an
         # external process, e.g. on GridEngine.
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
 
         # The Job object contains a logger object, which you can use to print
         # status or debugging information. DO NOT USE "print", the output will

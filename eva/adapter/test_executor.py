@@ -12,7 +12,7 @@ class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Create a Job that echoes the URI of the received resource.
         """
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
         job.command = """
 #!/bin/bash
 #$ -S /bin/bash

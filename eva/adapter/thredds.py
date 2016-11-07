@@ -60,7 +60,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         @brief Check if the resource is reachable via the provided URL if not, sleep and try again
         @fixme This job does not run on an executor, and is thus at least partially broken at the moment.
         """
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
 
         # Assuming that when the .html link is accessible so will be the dataset via OPeNDAP
         basename = os.path.basename(resource.url)

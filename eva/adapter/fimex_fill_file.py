@@ -64,7 +64,7 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
         self.output_filename = self.template.from_string(self.env['EVA_OUTPUT_FILENAME_PATTERN'])
 
     def create_job(self, message_id, resource):
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
 
         job.input_filename = eva.url_to_filename(resource.url)
         job.template_variables = {

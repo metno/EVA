@@ -97,7 +97,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
             'datainstance': resource,
         }
 
-        job = eva.job.Job(message_id, self.logger)
+        job = eva.job.Job(message_id, self.globe)
 
         # Render the Jinja2 templates and report any errors
         try:
