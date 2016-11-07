@@ -35,6 +35,7 @@ class Job(eva.globe.GlobalMixin):
         assert status in [INITIALIZED, STARTED, COMPLETE, FAILED]
         self.status = status
         self.logger.info('Setting job status to %s', self.status)
+        self.statsd.incr('job_%s' % status.lower())
 
     def set_next_poll_time(self, msecs):
         """!
