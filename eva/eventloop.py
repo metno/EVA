@@ -509,7 +509,8 @@ class Eventloop(eva.ConfigurableObject):
             try:
                 self.process_event(event)
             except self.RECOVERABLE_EXCEPTIONS as e:
-                del event.job
+                if hasattr(event, 'job'):
+                    del event.job
                 self.logger.error('Re-queueing failed event %s due to error: %s', event, e)
                 self.statsd.incr('requeued_jobs')
                 # reload event in order to get fresh Productstatus data
