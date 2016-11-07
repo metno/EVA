@@ -1,10 +1,13 @@
-.PHONY: test lint check-git-clean pull-eva-base eva eva-base upload-eva upload-eva-base doc publish-doc
+.PHONY: test lint tag check-git-clean pull-eva-base eva eva-base upload-eva upload-eva-base doc publish-doc
 
 test:
 	nosetests
 
 lint:
 	flake8 eva/ --ignore=E501
+
+tag:
+	git tag --sign --message "Version $(shell python setup.py --version)" $(shell python setup.py --version)
 
 check-git-clean:
 	ifeq ($(shell test "`git status --porcelain | wc -l`" != "0"; echo $$?), 1)
