@@ -434,14 +434,16 @@ class Main(eva.ConfigurableObject):
         except eva.exceptions.EvaException as e:
             self.logger.critical(str(e))
             self.logger.info('Shutting down EVA due to missing or invalid configuration.')
-            sys.exit(1)
+            self.exit(1)
 
         except Exception as e:
             eva.print_and_mail_exception(e, self.logger, self.mailer)
             self.logger.critical('EVA initialization failed. Your code is broken, please fix it.')
-            sys.exit(255)
+            self.exit(255)
 
     def start(self):
+        self.statsd.incr('eva_start')
+
         try:
             evaloop = eva.eventloop.Eventloop(self.globe,
                                               self.productstatus_api,
@@ -471,12 +473,17 @@ class Main(eva.ConfigurableObject):
             self.statsd.incr('zookeeper_connection_loss')
         except Exception as e:
             eva.print_and_mail_exception(e, self.logger, self.mailer)
-            sys.exit(255)
+            self.exit(255)
 
         if self.zookeeper:
             self.logger.info('Stopping ZooKeeper.')
             self.zookeeper.stop()
         self.logger.info('Shutting down EVA.')
+        self.exit(0)
+
+    def exit(self, exit_code):
+        self.statsd.incr('eva_shutdown', tags={'exit_code': exit_code})
+        sys.exit(exit_code)
 
 
 if __name__ == "__main__":
