@@ -36,5 +36,5 @@ class GlobalMixin(object):
 
     def __getattr__(self, name):
         if name not in PROPERTIES:
-            raise KeyError("No property %s found in Global configuration" % name)
+            raise AttributeError("No attribute %s found in Global configuration" % name)
         return getattr(self.globe, name)
