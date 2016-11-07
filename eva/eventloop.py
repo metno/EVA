@@ -5,6 +5,7 @@ import copy
 import traceback
 
 import eva
+import eva.globe
 import eva.zk
 import eva.rpc
 import eva.event
@@ -13,7 +14,7 @@ import eva.mail.text
 import productstatus.exceptions
 
 
-class Eventloop(eva.ConfigurableObject):
+class Eventloop(eva.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     The main loop.
     """
@@ -53,29 +54,21 @@ class Eventloop(eva.ConfigurableObject):
     HEALTH_CHECK_HEARTBEAT_TIMEOUT = 60
 
     def __init__(self,
-                 group_id,
+                 globe,
                  productstatus_api,
                  listeners,
                  adapter,
                  executor,
-                 statsd,
-                 zookeeper,
                  environment_variables,
                  health_check_server,
-                 mailer,
-                 logger,
                  ):
+        self.globe = globe
         self.listeners = listeners
-        self.group_id = group_id
         self.productstatus_api = productstatus_api
         self.adapter = adapter
         self.executor = executor
-        self.statsd = statsd
-        self.zookeeper = zookeeper
         self.env = environment_variables
         self.health_check_server = health_check_server
-        self.mailer = mailer
-        self.logger = logger
 
         self.read_configuration()
         self.concurrency = self.env['EVA_CONCURRENCY']

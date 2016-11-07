@@ -4,6 +4,7 @@ import datetime
 import mock
 
 import eva
+import eva.mail
 import eva.event
 import eva.eventloop
 import eva.adapter
@@ -20,20 +21,22 @@ class TestEventloop(unittest.TestCase):
         self.zookeeper = None
         self.statsd = eva.statsd.StatsDClient()
         self.health_check_server = None
-        self.mailer = None
-        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
-        self.adapter = eva.adapter.NullAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
-        self.eventloop = eva.eventloop.Eventloop(self.group_id,
+        self.mailer = eva.mail.NullMailer()
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+        self.executor = eva.executor.NullExecutor(None, self.env, self.globe)
+        self.adapter = eva.adapter.NullAdapter(self.env, self.executor, self.productstatus_api, self.globe)
+        self.eventloop = eva.eventloop.Eventloop(self.globe,
                                                  self.productstatus_api,
                                                  [],
                                                  self.adapter,
                                                  self.executor,
-                                                 self.statsd,
-                                                 self.zookeeper,
                                                  self.env,
                                                  self.health_check_server,
-                                                 self.mailer,
-                                                 self.logger,
                                                  )
 
     def test_add_event_to_queue(self):

@@ -2,19 +2,18 @@ import os
 import tempfile
 
 import eva
+import eva.globe
 
 
-class BaseExecutor(eva.ConfigurableObject):
+class BaseExecutor(eva.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     @brief Abstract base class for execution engines.
     """
 
-    def __init__(self, group_id, environment_variables, logger, zookeeper, statsd):
+    def __init__(self, group_id, environment_variables, globe):
         self.group_id = group_id
         self.env = environment_variables
-        self.logger = logger
-        self.zookeeper = zookeeper
-        self.statsd = statsd
+        self.globe = globe
         self.template = eva.template.Environment()
         self.read_configuration()
         self.print_environment(prefix='Executor configuration: ')

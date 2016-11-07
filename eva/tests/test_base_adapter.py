@@ -7,6 +7,7 @@ import productstatus
 import productstatus.api
 import productstatus.event
 
+import eva.mail
 import eva.adapter
 import eva.executor
 import eva.statsd
@@ -20,14 +21,22 @@ class TestBaseAdapter(unittest.TestCase):
 
     def setUp(self):
         self.env = {}
+        self.group_id = 'group-id'
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
         self.zookeeper = None
         self.statsd = eva.statsd.StatsDClient()
-        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
+        self.mailer = eva.mail.NullMailer()
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+        self.executor = eva.executor.NullExecutor(None, self.env, self.globe)
 
     def create_adapter(self):
-        self.adapter = eva.adapter.BaseAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = eva.adapter.BaseAdapter(self.env, self.executor, self.productstatus_api, self.globe)
 
     def test_default_configuration_keys(self):
         self.create_adapter()
@@ -55,7 +64,7 @@ class TestBaseAdapter(unittest.TestCase):
             CONFIG = {
                 'EVA_TEST_FOO': 'Foo documentation',
             }
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertIn('EVA_TEST_FOO', self.adapter.CONFIG.keys())
         self.assertIn('EVA_INPUT_DATA_FORMAT', self.adapter.CONFIG.keys())
 
@@ -65,14 +74,14 @@ class TestBaseAdapter(unittest.TestCase):
                 'EVA_INPUT_PRODUCT',
             ]
         with self.assertRaises(eva.exceptions.MissingConfigurationException):
-            self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+            self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
 
     def test_optional_configuration_keys(self):
         class Foo(eva.adapter.BaseAdapter):
             OPTIONAL_CONFIG = [
                 'EVA_INPUT_PRODUCT',
             ]
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertIn('EVA_INPUT_PRODUCT', self.adapter.env)
         self.assertEqual(self.adapter.env['EVA_INPUT_PRODUCT'], [])
 
@@ -92,7 +101,7 @@ class TestBaseAdapter(unittest.TestCase):
             'EVA_INPUT_SERVICE_BACKEND': '%s,%s, %s' % (BLANK_UUID, BLANK_UUID, BLANK_UUID),
             'EVA_OUTPUT_SERVICE_BACKEND': BLANK_UUID,
         }
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertListEqual(self.adapter.env['EVA_INPUT_PRODUCT'], [BLANK_UUID])
         self.assertListEqual(self.adapter.env['EVA_INPUT_REFERENCE_HOURS'], [0, 12, 18])
         self.assertListEqual(self.adapter.env['EVA_INPUT_SERVICE_BACKEND'], [BLANK_UUID, BLANK_UUID, BLANK_UUID])
@@ -182,27 +191,27 @@ class TestBaseAdapter(unittest.TestCase):
         class Foo(eva.adapter.BaseAdapter):
             REQUIRED_CONFIG = ['EVA_INPUT_PARTIAL']
         self.env['EVA_INPUT_PARTIAL'] = 'NO'
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertEqual(self.adapter.process_partial, self.adapter.PROCESS_PARTIAL_NO)
 
     def test_input_partial_false(self):
         class Foo(eva.adapter.BaseAdapter):
             REQUIRED_CONFIG = ['EVA_INPUT_PARTIAL']
         self.env['EVA_INPUT_PARTIAL'] = 'YES'
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertEqual(self.adapter.process_partial, self.adapter.PROCESS_PARTIAL_ONLY)
 
     def test_input_partial_both(self):
         class Foo(eva.adapter.BaseAdapter):
             REQUIRED_CONFIG = ['EVA_INPUT_PARTIAL']
         self.env['EVA_INPUT_PARTIAL'] = 'BOTH'
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertEqual(self.adapter.process_partial, self.adapter.PROCESS_PARTIAL_BOTH)
 
     def test_lifetime_none(self):
         class Foo(eva.adapter.BaseAdapter):
             OPTIONAL_CONFIG = ['EVA_OUTPUT_LIFETIME']
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertFalse(self.adapter.has_output_lifetime())
         self.assertIsNone(self.adapter.expiry_from_lifetime())
 
@@ -213,7 +222,7 @@ class TestBaseAdapter(unittest.TestCase):
         class Foo(eva.adapter.BaseAdapter):
             OPTIONAL_CONFIG = ['EVA_OUTPUT_LIFETIME']
         self.env['EVA_OUTPUT_LIFETIME'] = '0'
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertTrue(self.adapter.has_output_lifetime())
         timediff = eva.now_with_timezone() - self.adapter.expiry_from_lifetime()
         self.assertEqual(int(timediff.total_seconds()), 0)
@@ -222,7 +231,7 @@ class TestBaseAdapter(unittest.TestCase):
         class Foo(eva.adapter.BaseAdapter):
             OPTIONAL_CONFIG = ['EVA_OUTPUT_LIFETIME']
         self.env['EVA_OUTPUT_LIFETIME'] = '24'
-        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = Foo(self.env, self.executor, self.productstatus_api, self.globe)
         self.assertTrue(self.adapter.has_output_lifetime())
         expiry = self.adapter.expiry_from_lifetime()
         future = eva.now_with_timezone() + datetime.timedelta(days=1)
@@ -238,6 +247,12 @@ class TestBaseAdapter(unittest.TestCase):
         self.zookeeper = mock.MagicMock()
         self.zookeeper.EVA_BASE_PATH = '/foo'
         self.zookeeper.create = mock.MagicMock()
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
         self.create_adapter()
         self.zookeeper.create.assert_called_once_with('/foo/single_instance_lock', None, ephemeral=True)
 

@@ -4,6 +4,7 @@ import logging
 import kazoo.exceptions
 
 import eva
+import eva.globe
 import eva.logger
 import eva.job
 import eva.exceptions
@@ -12,7 +13,7 @@ import productstatus
 import productstatus.api
 
 
-class BaseAdapter(eva.ConfigurableObject):
+class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     Adapters contain all the information and configuration needed to translate
     a Productstatus resource into job execution.
@@ -121,7 +122,7 @@ class BaseAdapter(eva.ConfigurableObject):
     PROCESS_PARTIAL_NO = 1
     PROCESS_PARTIAL_BOTH = 2
 
-    def __init__(self, environment_variables, executor, api, logger, zookeeper, statsd):
+    def __init__(self, environment_variables, executor, api, globe):
         """!
         @param id an identifier for the adapter; must be constant across program restart
         @param api Productstatus API object
@@ -129,9 +130,7 @@ class BaseAdapter(eva.ConfigurableObject):
         """
         self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
-        self.logger = logger
-        self.statsd = statsd
-        self.zookeeper = zookeeper
+        self.globe = globe
         self.executor = executor
         self.api = api
         self.env = environment_variables

@@ -5,6 +5,7 @@ import logging
 
 import productstatus.api
 
+import eva.mail
 import eva.statsd
 import eva.executor.grid_engine
 
@@ -19,11 +20,19 @@ class TestGridEngineExecutor(unittest.TestCase):
             'EVA_GRIDENGINE_SSH_HOST': 'localhost',
             'EVA_GRIDENGINE_SSH_USER': 'nobody',
         }
+        self.group_id = 'group-id'
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
         self.zookeeper = None
+        self.mailer = eva.mail.NullMailer()
         self.statsd = eva.statsd.StatsDClient()
-        self.executor = eva.executor.grid_engine.GridEngineExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+        self.executor = eva.executor.grid_engine.GridEngineExecutor(None, self.env, self.globe)
 
     def test_create_job_unique_id(self):
         compare = 'eva.y-h-gr34t--job.%s' % BLANK_UUID

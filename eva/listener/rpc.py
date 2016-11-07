@@ -30,7 +30,7 @@ class RPCListener(eva.base.listener.BaseListener):
                 self.rpc_configuration.ssl_verify,
             )
         self.event_listener = productstatus.event.Listener('eva.rpc', **kwargs)
-        self.logger.info('Instance ID for RPC calls: %s', self.kwargs['group_id'])
+        self.logger.info('Instance ID for RPC calls: %s', self.group_id)
 
     def close_listener(self):
         """!
@@ -65,11 +65,11 @@ class RPCListener(eva.base.listener.BaseListener):
         invalid regular expression is encountered.
         """
         try:
-            if not re.match(event.instance_id, self.kwargs['group_id']):
+            if not re.match(event.instance_id, self.group_id):
                 raise eva.exceptions.RPCWrongInstanceIDException(
                     'RPC call instance ID regular expression "%s" does not match my ID "%s"' % (
                         event.instance_id,
-                        self.kwargs['group_id'],
+                        self.group_id,
                     )
                 )
         except re.error as e:

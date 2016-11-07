@@ -1,15 +1,15 @@
 import eva
+import eva.globe
 
 
-class BaseListener(eva.ConfigurableObject):
+class BaseListener(eva.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     @brief Abstract base class for execution engines.
     """
 
-    def __init__(self, environment_variables, logger, zookeeper, **kwargs):
+    def __init__(self, globe, environment_variables, **kwargs):
+        self.globe = globe
         self.env = environment_variables
-        self.logger = logger
-        self.zookeeper = zookeeper
         self.kwargs = kwargs
         self.read_configuration()
         self.print_environment(prefix='Listener configuration: ')

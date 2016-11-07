@@ -14,6 +14,7 @@ import productstatus.api
 import productstatus.event
 
 import eva
+import eva.globe
 import eva.health
 import eva.mail
 import eva.statsd
@@ -297,7 +298,7 @@ class Main(eva.ConfigurableObject):
         """!
         @brief Set up a StatsD client that will send data to multiple servers simultaneously.
         """
-        self.statsd_client = eva.statsd.StatsDClient({'application': self.group_id}, self.env['EVA_STATSD'])
+        self.statsd = eva.statsd.StatsDClient({'application': self.group_id}, self.env['EVA_STATSD'])
         if len(self.env['EVA_STATSD']) > 0:
             self.logger.info('StatsD client set up with application tag "%s", sending data to: %s', self.group_id, ', '.join(self.env['EVA_STATSD']))
         else:
@@ -343,13 +344,10 @@ class Main(eva.ConfigurableObject):
         self.listeners = []
         for listener_class in self.env['EVA_LISTENERS']:
             listener = eva.import_module_class(listener_class)(
+                self.globe,
                 self.environment_variables,
-                self.logger,
-                self.zookeeper,
                 client_id=self.client_id,
-                group_id=self.group_id,
                 productstatus_api=self.productstatus_api,
-                statsd=self.statsd_client,
             )
             listener.setup_listener()
             self.logger.info('Adding listener: %s' % listener.__class__)
@@ -362,9 +360,7 @@ class Main(eva.ConfigurableObject):
         self.executor = eva.import_module_class(self.env['EVA_EXECUTOR'])(
             self.group_id,
             self.environment_variables,
-            self.logger,
-            self.zookeeper,
-            self.statsd_client,
+            self.globe,
         )
         self.logger.info('Using executor: %s' % self.executor.__class__)
 
@@ -376,9 +372,7 @@ class Main(eva.ConfigurableObject):
             self.environment_variables,
             self.executor,
             self.productstatus_api,
-            self.logger,
-            self.zookeeper,
-            self.statsd_client,
+            self.globe,
         )
         self.logger.info('Using adapter: %s' % self.adapter.__class__)
 
@@ -400,6 +394,18 @@ class Main(eva.ConfigurableObject):
                                       self.env['EVA_MAIL_RECIPIENTS'])
         self.logger.info('Sending e-mails of important events to %s via %s', self.env['EVA_MAIL_RECIPIENTS'], self.env['EVA_MAIL_SMTP_HOST'])
 
+    def setup_globe(self):
+        """!
+        @brief Instantiate the Global class, populating it with instances of
+        useful services such as logging and mailing.
+        """
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+
     def setup(self):
         try:
             self.setup_basic_logging()
@@ -418,6 +424,9 @@ class Main(eva.ConfigurableObject):
             self.setup_zookeeper()
             self.setup_productstatus()
             self.setup_mailer()
+
+            self.setup_globe()
+
             self.setup_listeners()
             self.setup_executor()
             self.setup_adapter()
@@ -434,17 +443,13 @@ class Main(eva.ConfigurableObject):
 
     def start(self):
         try:
-            evaloop = eva.eventloop.Eventloop(self.group_id,
+            evaloop = eva.eventloop.Eventloop(self.globe,
                                               self.productstatus_api,
                                               self.listeners,
                                               self.adapter,
                                               self.executor,
-                                              self.statsd_client,
-                                              self.zookeeper,
                                               self.environment_variables,
                                               self.health_check_server,
-                                              self.mailer,
-                                              self.logger,
                                               )
 
             if self.args.process_all_in_product_instance or self.args.process_data_instance:

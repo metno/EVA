@@ -7,6 +7,8 @@ import httmock
 import productstatus
 import productstatus.api
 
+import eva.globe
+import eva.mail
 import eva.base.adapter
 import eva.executor
 import eva.statsd
@@ -23,11 +25,19 @@ class BaseTestAdapter(unittest.TestCase):
 
     def setUp(self):
         self.env = copy.copy(self.environment)
+        self.group_id = 'group-id'
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging.getLogger('root')
         self.zookeeper = None
+        self.mailer = eva.mail.NullMailer()
         self.statsd = eva.statsd.StatsDClient()
-        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+        self.executor = eva.executor.NullExecutor(None, self.env, self.globe)
 
     def random_uuid(self):
         return str(uuid.uuid4())
@@ -44,4 +54,4 @@ class BaseTestAdapter(unittest.TestCase):
 
     def create_adapter(self):
         with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
-            self.adapter = self.adapter_class(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+            self.adapter = self.adapter_class(self.env, self.executor, self.productstatus_api, self.globe)

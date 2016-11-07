@@ -8,6 +8,7 @@ import productstatus.event
 import eva.adapter
 import eva.executor
 import eva.statsd
+import eva.mail
 
 
 BLANK_UUID = '00000000-0000-0000-0000-000000000000'
@@ -23,14 +24,22 @@ class TestDownloadAdapter(unittest.TestCase):
             'EVA_INPUT_PRODUCT': BLANK_UUID,
             'EVA_INPUT_SERVICE_BACKEND': BLANK_UUID,
         }
+        self.group_id = 'group-id'
         self.productstatus_api = productstatus.api.Api('http://localhost:8000')
         self.logger = logging
         self.zookeeper = None
         self.statsd = eva.statsd.StatsDClient()
-        self.executor = eva.executor.NullExecutor(None, self.env, self.logger, self.zookeeper, self.statsd)
+        self.mailer = eva.mail.NullMailer()
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
+        self.executor = eva.executor.NullExecutor(None, self.env, self.globe)
 
     def create_adapter(self):
-        self.adapter = eva.adapter.DownloadAdapter(self.env, self.executor, self.productstatus_api, self.logger, self.zookeeper, self.statsd)
+        self.adapter = eva.adapter.DownloadAdapter(self.env, self.executor, self.productstatus_api, self.globe)
 
     def test_productstatus_read_only_default(self):
         """!
