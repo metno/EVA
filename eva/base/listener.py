@@ -7,12 +7,11 @@ class BaseListener(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     @brief Abstract base class for execution engines.
     """
 
-    def __init__(self, globe, environment_variables, **kwargs):
-        self.globe = globe
-        self.env = environment_variables
+    def set_kwargs(self, **kwargs):
+        """!
+        @brief Provide a set of keyword arguments as extra data for the listener.
+        """
         self.kwargs = kwargs
-        self.read_configuration()
-        self.print_environment(prefix='Listener configuration: ')
 
     def setup_listener(self):
         """!

@@ -88,9 +88,6 @@ class Main(eva.config.ConfigurableObject):
         self.env = {}
         self.logger = logging.getLogger('root')
         self.zookeeper = None
-        self.listeners = []
-        self.adapter = None
-        self.executor = None
         self.mailer = None
         self.config_class = {}
 
@@ -212,7 +209,7 @@ class Main(eva.config.ConfigurableObject):
         self.config.read(filenames)
         self.logger.info('Successfully read and parsed all configuration files.')
         for section in sorted(self.config.sections()):
-            self.logger.debug('Configuration section: %s', section)
+            self.logger.debug('Found configuration section: %s', section)
 
     def setup_client_group_id(self):
         """!
@@ -276,7 +273,7 @@ class Main(eva.config.ConfigurableObject):
 
         The resulting class is added to the `self.config_class` dictionary.
         """
-        self.logger.debug('Instantiating classes from configuration file...')
+        self.logger.info('Instantiating classes from configuration file...')
 
         sections = self.config.sections()
         for section in sections:
@@ -284,7 +281,7 @@ class Main(eva.config.ConfigurableObject):
                 continue
             section_defaults = 'defaults.' + section.split('.')[0]
             class_name = self.config.get(section, 'class')
-            self.logger.debug("Instantiating '%s' from configuration section '%s'.", class_name, section)
+            self.logger.info("Instantiating '%s' from configuration section '%s'.", class_name, section)
             class_type = eva.import_module_class(class_name)
             if not issubclass(class_type, eva.config.ConfigurableObject):
                 raise eva.exceptions.InvalidConfigurationException(
@@ -292,46 +289,77 @@ class Main(eva.config.ConfigurableObject):
                 )
             incubator = class_type()
             instance = incubator.factory(self.config, section_defaults, section)
-            self.logger.debug("Instance '%s': '%s'", section, instance)
             self.config_class[section] = instance
 
+        # Hack to make this class a member of configuration classes, in order
+        # to simplify further setup
         self.config_class['eva'] = self
 
-        self.logger.debug('Finished instantiating classes from configuration file.')
+        self.logger.info('Finished instantiating classes from configuration file.')
 
-    def init_config_classes(self):
+    def resolve_config_class_dependencies(self):
         """!
         @brief Resolve class dependency references across classes instantiated
         from the configuration files.
         """
-        self.logger.debug('Resolving class dependencies...')
+        self.logger.info('Resolving class dependencies...')
 
         for key, instance in self.config_class.items():
             if not isinstance(instance, eva.config.ConfigurableObject):
                 continue
-            self.logger.debug("Resolving dependencies for '%s'...", key)
+            self.logger.info("Resolving dependencies for '%s'...", key)
+            instance.resolve_dependencies(self.config_class)
+
+        self.logger.info('Finished resolving class dependencies.')
+
+    def init_config_classes(self):
+        """!
+        @brief Run initialization procedures on all classes instantiated from
+        the configuration files.
+        """
+        self.logger.info('Initializing classes...')
+
+        for key, instance in self.config_class.items():
+            if not isinstance(instance, eva.config.ConfigurableObject):
+                continue
+            self.logger.info("Initializing '%s'...", instance)
             if isinstance(instance, eva.globe.GlobalMixin):
                 instance.set_globe(self.globe)
-            instance.resolve_dependencies(self.config_class)
             instance.init()
 
-        self.logger.debug('Finished resolving class dependencies.')
+        self.logger.info('Finished initializing classes.')
+
+    @property
+    def adapters(self):
+        for key, instance in self.config_class.items():
+            if isinstance(instance, eva.base.adapter.BaseAdapter):
+                yield instance
+
+    @property
+    def executors(self):
+        for key, instance in self.config_class.items():
+            if isinstance(instance, eva.base.executor.BaseExecutor):
+                yield instance
+
+    @property
+    def listeners(self):
+        for key, instance in self.config_class.items():
+            if isinstance(instance, eva.base.listener.BaseListener):
+                yield instance
 
     def setup_listeners(self):
         """!
-        @brief Instantiate and configure all message listeners.
+        @brief Configure all message listeners with a client ID.
         """
-        self.listeners = []
-        for listener_class in self.env['EVA_LISTENERS']:
-            listener = eva.import_module_class(listener_class)(
-                self.globe,
-                self.environment_variables,
+        self.logger.info('Setting up listeners...')
+        for listener in self.listeners:
+            self.logger.info("Listener: '%s'", listener)
+            listener.set_kwargs(
                 client_id=self.client_id,
-                productstatus_api=self.productstatus_api,
+                productstatus_api=self.env['productstatus'],
             )
             listener.setup_listener()
-            self.logger.info('Adding listener: %s' % listener.__class__)
-            self.listeners += [listener]
+        self.logger.info('Finished setting up listeners.')
 
     def setup_executor(self):
         """!
@@ -412,11 +440,13 @@ class Main(eva.config.ConfigurableObject):
             self.setup_globe()
 
             self.instantiate_config_classes()
+            self.resolve_config_class_dependencies()
             self.init_config_classes()
+
+            self.setup_listeners()
 
             sys.exit(0)
 
-            self.setup_listeners()
             self.setup_executor()
             self.setup_adapter()
 

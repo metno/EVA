@@ -132,11 +132,10 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     PROCESS_PARTIAL_NO = 1
     PROCESS_PARTIAL_BOTH = 2
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
         self.REQUIRED_CONFIG = self.REQUIRED_CONFIG + self._REQUIRED_CONFIG
-        return super(BaseAdapter, self).__init__(*args, **kwargs)
 
     def _factory(self):
         """!
