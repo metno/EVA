@@ -116,27 +116,27 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """
 
     CONFIG = {
-        'EVA_GRIDENGINE_QACCT_COMMAND': {
+        'qacct_command': {
             'type': 'string',
             'help': 'How to call the qacct program to get finished job information',
             'default': 'qacct -j {{job_id}}',
         },
-        'EVA_GRIDENGINE_QUEUE': {
+        'queue': {
             'type': 'string',
             'help': 'Which Grid Engine queue to run jobs in',
             'default': '',
         },
-        'EVA_GRIDENGINE_SSH_HOST': {
+        'ssh_host': {
             'type': 'string',
             'help': 'Hostname of the Grid Engine submit host',
             'default': '',
         },
-        'EVA_GRIDENGINE_SSH_USER': {
+        'ssh_user': {
             'type': 'string',
             'help': 'Username on the Grid Engine submit host',
             'default': '',
         },
-        'EVA_GRIDENGINE_SSH_KEY_FILE': {
+        'ssh_key_file': {
             'type': 'string',
             'help': 'Path to a SSH private key used for connecting to the Grid Engine submit host',
             'default': '',
@@ -144,14 +144,14 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     }
 
     OPTIONAL_CONFIG = [
-        'EVA_GRIDENGINE_QACCT_COMMAND',
-        'EVA_GRIDENGINE_QUEUE',
+        'qacct_command',
+        'queue',
     ]
 
     REQUIRED_CONFIG = [
-        'EVA_GRIDENGINE_SSH_HOST',
-        'EVA_GRIDENGINE_SSH_USER',
-        'EVA_GRIDENGINE_SSH_KEY_FILE',
+        'ssh_host',
+        'ssh_user',
+        'ssh_key_file',
     ]
 
     def init(self):
@@ -159,15 +159,15 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         @brief Initialize the class.
         """
         # create command-line template for qacct.
-        self.qacct_command_template = self.template.from_string(self.env['EVA_GRIDENGINE_QACCT_COMMAND'])
+        self.qacct_command_template = self.template.from_string(self.env['qacct_command'])
 
     def validate_configuration(self, *args, **kwargs):
         """!
         @brief Make sure that the SSH key file exists.
         """
         super(GridEngineExecutor, self).validate_configuration(*args, **kwargs)
-        if not os.access(self.env['EVA_GRIDENGINE_SSH_KEY_FILE'], os.R_OK):
-            raise eva.exceptions.InvalidConfigurationException("The SSH key '%s' is not readable!" % self.env['EVA_GRIDENGINE_SSH_KEY_FILE'])
+        if not os.access(self.env['ssh_key_file'], os.R_OK):
+            raise eva.exceptions.InvalidConfigurationException("The SSH key '%s' is not readable!" % self.env['ssh_key_file'])
 
     def create_qacct_command(self, job_id):
         """!
@@ -201,12 +201,12 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         """!
         @brief Open an SSH connection to the submit host, and open an SFTP channel.
         """
-        job.logger.info('Creating SSH connection to %s@%s', self.env['EVA_GRIDENGINE_SSH_USER'], self.env['EVA_GRIDENGINE_SSH_HOST'])
+        job.logger.info('Creating SSH connection to %s@%s', self.env['ssh_user'], self.env['ssh_host'])
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
-        self.ssh_client.connect(self.env['EVA_GRIDENGINE_SSH_HOST'],
-                                username=self.env['EVA_GRIDENGINE_SSH_USER'],
-                                key_filename=self.env['EVA_GRIDENGINE_SSH_KEY_FILE'],
+        self.ssh_client.connect(self.env['ssh_host'],
+                                username=self.env['ssh_user'],
+                                key_filename=self.env['ssh_key_file'],
                                 timeout=SSH_TIMEOUT)
         self.sftp_client = self.ssh_client.open_sftp()
         self.sftp_client.get_channel().settimeout(SSH_TIMEOUT)
@@ -308,8 +308,8 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                        ]
 
             # Run jobs in a specified queue
-            if self.env['EVA_GRIDENGINE_QUEUE']:
-                command += ['-q', self.env['EVA_GRIDENGINE_QUEUE']]
+            if self.env['queue']:
+                command += ['-q', self.env['queue']]
 
             command += [job.submit_script_path]
 

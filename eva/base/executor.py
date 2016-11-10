@@ -2,28 +2,21 @@ import os
 import tempfile
 
 import eva
+import eva.incubator
 import eva.globe
 
 
-class BaseExecutor(eva.ConfigurableObject, eva.globe.GlobalMixin):
+class BaseExecutor(eva.incubator.Incubator, eva.globe.GlobalMixin):
     """!
     @brief Abstract base class for execution engines.
     """
 
-    def __init__(self, group_id, environment_variables, globe):
-        self.group_id = group_id
-        self.env = environment_variables
-        self.globe = globe
-        self.template = eva.template.Environment()
-        self.read_configuration()
-        self.print_environment(prefix='Executor configuration: ')
-        self.init()
-
-    def init(self):
+    def _factory(self):
         """!
-        @brief Provides a place for subclasses to run their own initialization.
+        @brief Initialize the environment, then return this instance.
         """
-        pass
+        self.template = eva.template.Environment()
+        return self
 
     def execute_async(self, job):
         """!

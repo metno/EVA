@@ -1,5 +1,4 @@
 import os
-import copy
 import uuid
 import signal
 import sys
@@ -8,6 +7,7 @@ import logging.config
 import argparse
 import kazoo.client
 import kazoo.exceptions
+import configparser
 
 import productstatus
 import productstatus.api
@@ -46,107 +46,63 @@ EXIT_BUG = 255
 class Main(eva.ConfigurableObject):
 
     CONFIG = {
-        'EVA_LOG_CONFIG': {
-            'type': 'string',
-            'help': 'Path to logging configuration file',
-            'default': '',
-        },
-        'EVA_PRODUCTSTATUS_URL': {
-            'type': 'string',
-            'help': 'URL to Productstatus service',
-            'default': 'https://productstatus.met.no',
-        },
-        'EVA_PRODUCTSTATUS_USERNAME': {
-            'type': 'string',
-            'help': 'Productstatus username for authentication',
-            'default': '',
-        },
-        'EVA_PRODUCTSTATUS_API_KEY': {
-            'type': 'string',
-            'help': 'Productstatus API key matching the username',
-            'default': '',
-        },
-        'EVA_PRODUCTSTATUS_VERIFY_SSL': {
-            'type': 'bool',
-            'help': 'Set this option to skip Productstatus SSL certificate verification',
-            'default': 'YES',
-        },
-        'EVA_ADAPTER': {
+        'adapter': {
             'type': 'string',
             'help': 'Python class name of adapters that should be run',
             'default': 'eva.adapter.NullAdapter',
         },
-        'EVA_EXECUTOR': {
+        'executor': {
             'type': 'string',
             'help': 'Python class name of executor that should be used',
             'default': 'eva.executor.ShellExecutor',
         },
-        'EVA_LISTENERS': {
+        'listeners': {
             'type': 'list_string',
             'help': 'Comma separated Python class names of listeners that should be run',
             'default': 'eva.listener.RPCListener,eva.listener.ProductstatusListener',
         },
-        'EVA_ZOOKEEPER': {
+        'zookeeper': {
             'type': 'string',
             'help': 'ZooKeeper endpoints in the form <host>:<port>[,<host>:<port>,[...]]/<path>',
             'default': '',
         },
-        'EVA_STATSD': {
+        'statsd': {
             'type': 'list_string',
             'help': 'Comma-separated list of StatsD endpoints in the form <host>:<port>',
             'default': '',
         },
-        'EVA_MAIL_ENABLED': {
+        'mail_enabled': {
             'type': 'bool',
             'help': 'Send e-mails to product owner when something unexpected happens',
             'default': 'NO',
         },
-        'EVA_MAIL_FROM': {
+        'mail_from': {
             'type': 'string',
             'help': 'EVA sender e-mail address',
             'default': 'eva@localhost',
         },
-        'EVA_MAIL_RECIPIENTS': {
+        'mail_recipients': {
             'type': 'list_string',
             'help': 'List of recipients of e-mails from EVA',
             'default': '',
         },
-        'EVA_MAIL_SMTP_HOST': {
+        'mail_smtp_host': {
             'type': 'string',
             'help': 'Which SMTP server to use when sending e-mails',
             'default': '127.0.0.1',
         },
-        'MARATHON_APP_ID': {
-            'type': 'string',
-            'help': 'Set by Marathon, and used for Kafka group ID. DO NOT SET THIS VARIABLE MANUALLY!',
-            'default': '',
-            'hidden': True,
-        },
-        'MESOS_TASK_ID': {
-            'type': 'string',
-            'help': 'Set by Marathon, and used for logging purposes. DO NOT SET THIS VARIABLE MANUALLY!',
-            'default': '',
-            'hidden': True,
-        },
     }
 
     OPTIONAL_CONFIG = [
-        'EVA_ADAPTER',
-        'EVA_EXECUTOR',
-        'EVA_LISTENERS',
-        'EVA_LOG_CONFIG',
-        'EVA_MAIL_ENABLED',
-        'EVA_MAIL_FROM',
-        'EVA_MAIL_RECIPIENTS',
-        'EVA_MAIL_SMTP_HOST',
-        'EVA_PRODUCTSTATUS_API_KEY',
-        'EVA_PRODUCTSTATUS_URL',
-        'EVA_PRODUCTSTATUS_USERNAME',
-        'EVA_PRODUCTSTATUS_VERIFY_SSL',
-        'EVA_STATSD',
-        'EVA_ZOOKEEPER',
-        'MARATHON_APP_ID',
-        'MESOS_TASK_ID',
+        'adapter',
+        'executor',
+        'listeners',
+        'mail_enabled',
+        'mail_from',
+        'mail_recipients',
+        'mail_smtp_host',
+        'statsd',
+        'zookeeper',
     ]
 
     def __init__(self):
@@ -161,6 +117,7 @@ class Main(eva.ConfigurableObject):
         self.adapter = None
         self.executor = None
         self.mailer = None
+        self.config_class = {}
 
     def parse_args(self):
         parser = argparse.ArgumentParser()  # FIXME: epilog
@@ -198,6 +155,18 @@ class Main(eva.ConfigurableObject):
             type=int,
             help='Run a HTTP health check server on all interfaces at the specified port',
         )
+        parser.add_argument(
+            '--config',
+            action='append',
+            type=str,
+            help='Load the specified configuration file, or an entire directory structure of configuration files. Can be specified multiple times.',
+        )
+        parser.add_argument(
+            '--log-config',
+            action='store',
+            type=str,
+            help='Use the specified configuration file for logging configuration.',
+        )
         self.args = parser.parse_args()
 
     @staticmethod
@@ -210,13 +179,6 @@ class Main(eva.ConfigurableObject):
         """
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
-
-    def setup_environment_variables(self):
-        """!
-        @brief Read all environment variables from shell.
-        """
-        self.environment_variables = {key: var for key, var in os.environ.items() if key.startswith(('EVA_', 'MESOS_', 'MARATHON_'))}
-        self.env = copy.copy(self.environment_variables)
 
     def setup_basic_logging(self):
         """!
@@ -231,55 +193,58 @@ class Main(eva.ConfigurableObject):
         """!
         @brief Override default logging configuration.
         """
-        # Read configuration from file
-        if self.env['EVA_LOG_CONFIG']:
-            logging.config.fileConfig(self.env['EVA_LOG_CONFIG'], disable_existing_loggers=False)
+        # Read configuration from parsed configuration
+        if self.args.log_config:
+            logging.config.fileConfig(self.args.log_config, disable_existing_loggers=False)
             self.logger = logging.getLogger('root')
 
-        # Test for Mesos + Marathon execution, and set appropriate log configuration
-        if self.env['MARATHON_APP_ID']:
-            log_filter = eva.logger.TaskIdLogFilter(
-                app_id=self.env['MARATHON_APP_ID'],
-                task_id=self.env['MESOS_TASK_ID'],
-            )
-            # Inject logging filter into any existing loggers so that all
-            # output will be correctly filtered.
-            self.logger.addFilter(log_filter)
-            for key in sorted(logging.Logger.manager.loggerDict.keys()):
-                if key == 'root':
-                    continue
-                logger = logging.Logger.manager.loggerDict[key]
-                if not isinstance(logger, logging.Logger):
-                    continue
-                self.logger.debug('Adding logging filter to logger: %s', key)
-                logger.addFilter(log_filter)
+        # Set DEBUG loglevel if --debug passed
+        if self.args.debug:
+            self.logger.setLevel(logging.DEBUG)
 
         # Disable DEBUG logging on some noisy loggers
         for noisy_logger in NOISY_LOGGERS:
             logging.getLogger(noisy_logger).setLevel(logging.INFO)
 
-    def setup_default_loglevel(self):
+    def get_config_filenames(self, filenames):
         """!
-        @brief Ensure that DEBUG loglevel is set if --debug passed to
-        arguments, and not using a custom log configuration.
+        @brief Given a list of directories or filenames, return a list of
+        recursively discovered configuration files where the file names end
+        with ".ini".
         """
-        if self.args.debug:
-            self.logger.setLevel(logging.DEBUG)
+        expanded_filenames = []
+        for filename in filenames:
+            if os.path.isdir(filename):
+                for (path, dirs, files) in os.walk(filename):
+                    for filename in files:
+                        if filename[-4:] != '.ini':
+                            continue
+                        expanded_filenames += [os.path.realpath(os.path.join(path, filename))]
+            elif os.path.isfile(filename) or os.path.islink(filename):
+                expanded_filenames += [os.path.realpath(filename)]
+        return expanded_filenames
+
+    def setup_configuration(self):
+        """!
+        @brief Scan for and read all configuration files into the `self.config` object.
+        """
+        self.logger.info('Scanning for configuration files...')
+        filenames = self.get_config_filenames(self.args.config)
+        for filename in filenames:
+            self.logger.info('Found configuration file: %s', filename)
+        self.config = configparser.ConfigParser()
+        self.logger.info('Reading all configuration files...')
+        self.config.read(filenames)
+        self.logger.info('Successfully read and parsed all configuration files.')
+        for section in sorted(self.config.sections()):
+            self.logger.debug('Configuration section: %s', section)
 
     def setup_client_group_id(self):
         """!
         @brief Set up Kafka client and group id.
-
-        Use a randomly generated message queue client and group ID, or use the
-        name from MARATHON_APP_ID.
         """
         self.client_id = str(uuid.uuid4())
-        if self.args.group_id:
-            self.group_id = self.args.group_id
-        elif self.env['MARATHON_APP_ID']:
-            self.group_id = self.env['MARATHON_APP_ID']
-        else:
-            self.group_id = str(uuid.uuid4())
+        self.group_id = str(uuid.uuid4()) if not self.args.group_id else self.args.group_id
         self.logger.info('Using client ID: %s', self.client_id)
         self.logger.info('Using group ID: %s', self.group_id)
 
@@ -298,9 +263,9 @@ class Main(eva.ConfigurableObject):
         """!
         @brief Set up a StatsD client that will send data to multiple servers simultaneously.
         """
-        self.statsd = eva.statsd.StatsDClient({'application': self.group_id}, self.env['EVA_STATSD'])
-        if len(self.env['EVA_STATSD']) > 0:
-            self.logger.info('StatsD client set up with application tag "%s", sending data to: %s', self.group_id, ', '.join(self.env['EVA_STATSD']))
+        self.statsd = eva.statsd.StatsDClient({'application': self.group_id}, self.env['statsd'])
+        if len(self.env['statsd']) > 0:
+            self.logger.info('StatsD client set up with application tag "%s", sending data to: %s', self.group_id, ', '.join(self.env['statsd']))
         else:
             self.logger.warning('StatsD not configured, will not send metrics.')
 
@@ -308,12 +273,12 @@ class Main(eva.ConfigurableObject):
         """!
         @brief Instantiate the Zookeeper client, if enabled.
         """
-        if not self.env['EVA_ZOOKEEPER']:
+        if not self.env['zookeeper']:
             self.logger.warning('ZooKeeper not configured.')
             return
 
-        self.logger.info('Setting up Zookeeper connection to %s', self.env['EVA_ZOOKEEPER'])
-        tokens = self.env['EVA_ZOOKEEPER'].strip().split(u'/')
+        self.logger.info('Setting up Zookeeper connection to %s', self.env['zookeeper'])
+        tokens = self.env['zookeeper'].strip().split(u'/')
         server_string = tokens[0]
         base_path = os.path.join('/', os.path.join(*tokens[1:]), str(eva.zookeeper_group_id(self.group_id)))
         self.zookeeper = kazoo.client.KazooClient(
@@ -325,17 +290,51 @@ class Main(eva.ConfigurableObject):
         self.zookeeper.EVA_BASE_PATH = base_path
         self.zookeeper.ensure_path(self.zookeeper.EVA_BASE_PATH)
 
-    def setup_productstatus(self):
+    def instantiate_config_classes(self):
         """!
-        @brief Instantiate the Productstatus client.
+        @brief Run through the configuration files, search for classes, and
+        instantiate them.
+
+        The class to load is defined by `class = path.to.ClassName` under each
+        section of the configuration file. Classes must be instances of
+        eva.ConfigurableObject or eva.incubator.Incubator.
+        
+        The resulting class is added to the `self.config_class` dictionary.
         """
-        self.productstatus_api = productstatus.api.Api(
-            self.env['EVA_PRODUCTSTATUS_URL'],
-            username=self.env['EVA_PRODUCTSTATUS_USERNAME'],
-            api_key=self.env['EVA_PRODUCTSTATUS_API_KEY'],
-            verify_ssl=self.env['EVA_PRODUCTSTATUS_VERIFY_SSL'],
-            timeout=10,
-        )
+        self.logger.debug('Instantiating classes from configuration file...')
+
+        sections = self.config.sections()
+        for section in sections:
+            if 'class' not in self.config[section]:
+                continue
+            section_defaults = 'defaults.' + section.split('.')[0]
+            class_name = self.config.get(section, 'class')
+            self.logger.debug("Instantiating '%s' from configuration section '%s'.", class_name, section)
+            class_type = eva.import_module_class(class_name)
+            if not issubclass(class_type, eva.incubator.Incubator):
+                raise eva.exceptions.InvalidConfigurationException(
+                    "The class '%s' is not a subclass of eva.incubator.Incubator." % class_name
+                )
+            incubator = class_type()
+            instance = incubator.factory(self.config, section_defaults, section)
+            self.logger.debug("Instance '%s': '%s'", section, instance)
+            self.config_class[section] = instance
+
+        self.logger.debug('Finished instantiating classes from configuration file.')
+
+    def init_config_classes(self):
+        """!
+        @brief Resolve class dependency references across classes instantiated
+        from the configuration files.
+        """
+        self.logger.debug('Resolving class dependencies...')
+        for key, instance in self.config_class.items():
+            if not isinstance(instance, eva.ConfigurableObject):
+                continue
+            self.logger.debug("Resolving dependencies for '%s'...", key)
+            instance.resolve_dependencies(self.config_class)
+            instance.init()
+        self.logger.debug('Finished resolving class dependencies.')
 
     def setup_listeners(self):
         """!
@@ -408,20 +407,27 @@ class Main(eva.ConfigurableObject):
 
     def setup(self):
         try:
+            # Basic pre-flight setup: argument parsing, signals, logging setup
             self.setup_basic_logging()
             self.setup_signals()
-            self.setup_environment_variables()
-            self.read_configuration()
-            self.setup_logging()
             self.parse_args()
-            self.setup_default_loglevel()
+            self.setup_logging()
 
             self.logger.info('Starting EVA: the EVent Adapter.')
-            self.print_environment('Global configuration: ')
+
+            # Read all configuration from files
+            self.setup_configuration()
+            self.load_configuration(self.config, 'eva')
             self.setup_client_group_id()
             self.setup_health_check_server()
             self.setup_statsd_client()
             self.setup_zookeeper()
+            self.instantiate_config_classes()
+            self.init_config_classes()
+
+            print(self.env)
+            sys.exit(0)
+
             self.setup_productstatus()
             self.setup_mailer()
 

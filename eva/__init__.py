@@ -10,7 +10,7 @@ import eva.exceptions
 
 # Environment variables in this list will be censored in the log output.
 SECRET_ENVIRONMENT_VARIABLES = [
-    'EVA_PRODUCTSTATUS_API_KEY',
+    'api_key',
 ]
 
 
@@ -124,14 +124,20 @@ class ConfigurableObject(object):
         """
         return [self.normalize_config_int(x) for x in self.normalize_config_list(value)]
 
-    def read_configuration(self):
+    def resolve_dependencies(self, config):
+        """!
+        @brief Replace all configuration objects with their true class reference.
+        """
+        for key in self.env.keys():
+            if isinstance(self.env[key], eva.incubator.ResolvableDependency):
+                self.env[key] = self.env[key].resolve()
+
+    def load_configuration(self, config, *args):
         """!
         @brief Normalize input configuration based on the configuration
         definition: split strings into lists, convert to types.
         """
         env = {}
-        errors = 0
-        missing = 0
         keys = list(set(self.REQUIRED_CONFIG + self.OPTIONAL_CONFIG))
 
         # Iterate through required and optional config, and read only those variables
@@ -142,19 +148,23 @@ class ConfigurableObject(object):
                 )
 
             # Read default value and enforce requirements
-            if key not in self.env:
-                if key in self.REQUIRED_CONFIG:
-                    self.logger.critical(
+            found = False
+            for section in args:
+                if section not in config:
+                    continue
+                if key not in config[section]:
+                    if key not in self.REQUIRED_CONFIG:
+                        continue
+                    raise eva.exceptions.MissingConfigurationException(
                         'Missing required environment variable %s (%s)', key, self.CONFIG[key]['help']
                     )
-                    missing += 1
-                    errors += 1
-                    continue
+                else:
+                    value = config.get(section, key)
+                    found = True
+            if not found:
                 if key in self.OPTIONAL_CONFIG:
-                    self.logger.debug('Optional environment variable not configured: %s (%s), defaults to "%s"', key, self.CONFIG[key]['help'], self.CONFIG[key]['default'])
-                value = self.CONFIG[key]['default']
-            else:
-                value = self.env[key]
+                    value = self.CONFIG[key]['default']
+                    #logger.debug("Setting unconfigured variable %s='%s' (%s)", key, self.CONFIG[key]['default'], self.CONFIG[key]['help'])
 
             # Normalize configuration option
             option_type = self.CONFIG[key]['type']
@@ -166,22 +176,10 @@ class ConfigurableObject(object):
             try:
                 value = func(value)
             except Exception as e:
-                self.logger.critical("Invalid value '%s' for configuration '%s': %s", value, key, e)
-                errors += 1
-                continue
+                raise eva.exceptions.InvalidConfigurationException("Invalid value '%s' for configuration '%s': %s", value, key, e)
 
             # Write normalized value into configuration hash
             env[key] = value
-
-        # Terminate if invalid configuration
-        if missing > 0:
-            raise eva.exceptions.MissingConfigurationException(
-                'Missing %d required configuration values' % missing
-            )
-        if errors > 0:
-            raise eva.exceptions.InvalidConfigurationException(
-                'Encountered %d errors while reading configuration' % errors
-            )
 
         # Drop non-normalized values
         self.env = env
@@ -193,7 +191,7 @@ class ConfigurableObject(object):
         for key, var in sorted(self.env.items()):
             if key in SECRET_ENVIRONMENT_VARIABLES:
                 var = '****CENSORED****'
-            self.logger.info('%s%s=%s' % (prefix, key, var))
+            self.logger.info("%s%s='%s'" % (prefix, key, var))
 
 
 def retry_n(func, args=(), kwargs={}, interval=5, exceptions=(Exception,), warning=1, error=3, give_up=5, logger=logging):

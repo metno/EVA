@@ -122,30 +122,35 @@ class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
     PROCESS_PARTIAL_NO = 1
     PROCESS_PARTIAL_BOTH = 2
 
-    def __init__(self, environment_variables, executor, api, globe):
+    def _factory(self):
         """!
-        @param id an identifier for the adapter; must be constant across program restart
-        @param api Productstatus API object
-        @param environment_variables Dictionary of EVA_* environment variables
+        @brief Initialize the environment, then return this instance.
         """
         self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
-        self.globe = globe
-        self.executor = executor
-        self.api = api
-        self.env = environment_variables
         self._post_to_productstatus = None
         self._processing_failures = {}
         self.blacklist = set()
         self.required_uuids = set()
         self.reference_time_threshold_delta = None
         self.template = eva.template.Environment()
-        self.read_configuration()
-        self.print_environment(prefix='Adapter configuration: ')
+        return self
+
+    def init(self):
+        """!
+        @param id an identifier for the adapter; must be constant across program restart
+        @param api Productstatus API object
+        @param environment_variables Dictionary of EVA_* environment variables
+        """
+        self.globe = globe
+        self.executor = executor
+        self.api = api
+        self.env = environment_variables
+
         self.setup_process_partial()
         self.setup_single_instance()
         self.setup_reference_time_threshold()
-        self.init()
+
         if self.post_to_productstatus():
             self.logger.info('Posting to Productstatus is ENABLED.')
         else:
