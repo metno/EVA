@@ -64,11 +64,12 @@ class ConfigurableObject(object):
     def factory(self, config, *args):
         """!
         @brief Load the specified configuration data, according to
-        load_configuration, and return an instance of the correct class.
+        load_configuration, and return a tuple of the incubator class and the
+        instantiated class.
         """
         object_ = self()
         object_.load_configuration(config, *args)
-        return object_._factory()
+        return (object_, object_._factory())
 
     def _factory(self):
         """!
@@ -216,13 +217,14 @@ class ConfigurableObject(object):
     def format_config(self):
         """!
         @brief Return a list of strings with configuration options, formatted
-        in "key='value'" format, and censored variables filtered out.
+        in "key=value" format, and censored variables filtered out.
         """
         strings = []
         for key, var in sorted(self.env.items()):
             if key in SECRET_CONFIGURATION:
                 var = '****CENSORED****'
-            strings += ["%s='%s'" % (key, var)]
+            strings += ["%s=%s" % (key, var)]
+        return strings
 
 
 class ResolvableDependency(object):
@@ -242,3 +244,6 @@ class ResolvableDependency(object):
                 "Cannot resolve class dependencies: section '%s' is not found in the configuration." %
                 self.key
             )
+
+    def __str__(self):
+        return self.key

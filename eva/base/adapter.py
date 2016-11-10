@@ -27,82 +27,82 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
             'help': 'Executor name from configuration files',
             'default': '',
         },
-        'EVA_INPUT_DATA_FORMAT': {
+        'input_data_format': {
             'type': 'list_string',
             'help': 'Comma-separated input Productstatus data format slugs',
             'default': '',
         },
-        'EVA_INPUT_PARTIAL': {
+        'input_partial': {
             'type': 'null_bool',
             'help': 'Whether or not to process partial data instances',
             'default': 'NO',
         },
-        'EVA_INPUT_PRODUCT': {
+        'input_product': {
             'type': 'list_string',
             'help': 'Comma-separated input Productstatus product slugs',
             'default': '',
         },
-        'EVA_INPUT_SERVICE_BACKEND': {
+        'input_service_backend': {
             'type': 'list_string',
             'help': 'Comma-separated input Productstatus service backend slugs',
             'default': '',
         },
-        'EVA_INPUT_REFERENCE_HOURS': {
+        'input_reference_hours': {
             'type': 'list_int',
             'help': 'Comma-separated reference hours to process data for',
             'default': '',
         },
-        'EVA_INPUT_WITH_HASH': {
+        'input_with_hash': {
             'type': 'null_bool',
             'help': 'Whether or not to process DataInstance resources containing a hash',
             'default': '',
         },
-        'EVA_OUTPUT_BASE_URL': {
+        'output_base_url': {
             'type': 'string',
             'help': 'Base URL for DataInstances posted to Productstatus',
             'default': '',
         },
-        'EVA_OUTPUT_DATA_FORMAT': {
+        'output_data_format': {
             'type': 'string',
             'help': 'Productstatus Data Format ID for the finished product',
             'default': '',
         },
-        'EVA_OUTPUT_FILENAME_PATTERN': {
+        'output_filename_pattern': {
             'type': 'string',
             'help': 'strftime pattern for output data instance filename',
             'default': '',
         },
-        'EVA_OUTPUT_LIFETIME': {
+        'output_lifetime': {
             'type': 'int',
             'help': 'Lifetime of output data instance, in hours, before it can be deleted',
             'default': '',
         },
-        'EVA_OUTPUT_PRODUCT': {
+        'output_product': {
             'type': 'string',
             'help': 'Productstatus Product ID for the finished product',
             'default': '',
         },
-        'EVA_OUTPUT_SERVICE_BACKEND': {
+        'output_service_backend': {
             'type': 'string',
             'help': 'Productstatus Service Backend ID for the position of the finished product',
             'default': '',
         },
-        'EVA_PRODUCTSTATUS_API_KEY': {
+        'productstatus_api_key': {
             'type': 'string',
             'help': 'Productstatus API key',
             'default': '',
         },
-        'EVA_PRODUCTSTATUS_USERNAME': {
+        'productstatus_username': {
             'type': 'string',
             'help': 'Productstatus user name',
             'default': '',
         },
-        'EVA_REFERENCE_TIME_THRESHOLD': {
+        'reference_time_threshold': {
             'type': 'int',
             'help': 'If non-zero, EVA will never process DataInstance resources that belong to a ProductInstance with a reference time older than N seconds.',
             'default': '0',
         },
-        'EVA_SINGLE_INSTANCE': {
+        'single_instance': {
             'type': 'bool',
             'help': 'Allow only one EVA instance with the same group id running at the same time',
             'default': 'NO',
@@ -110,11 +110,11 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     }
 
     _OPTIONAL_CONFIG = [
-        'EVA_INPUT_WITH_HASH',
-        'EVA_PRODUCTSTATUS_API_KEY',
-        'EVA_PRODUCTSTATUS_USERNAME',
-        'EVA_REFERENCE_TIME_THRESHOLD',
-        'EVA_SINGLE_INSTANCE',
+        'input_with_hash',
+        'productstatus_api_key',
+        'productstatus_username',
+        'reference_time_threshold',
+        'single_instance',
     ]
 
     _REQUIRED_CONFIG = [
@@ -122,8 +122,8 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     ]
 
     _PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'EVA_PRODUCTSTATUS_USERNAME',
-        'EVA_PRODUCTSTATUS_API_KEY',
+        'productstatus_username',
+        'productstatus_api_key',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = []
@@ -153,7 +153,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """!
         @param id an identifier for the adapter; must be constant across program restart
         @param api Productstatus API object
-        @param environment_variables Dictionary of EVA_* environment variables
+        @param environment_variables Dictionary of * environment variables
         """
         self.setup_process_partial()
         self.setup_single_instance()
@@ -176,11 +176,11 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """!
         @brief Set up the `process_partial` variable.
         """
-        if 'EVA_INPUT_PARTIAL' not in self.env:
+        if 'input_partial' not in self.env:
             self.process_partial = self.PROCESS_PARTIAL_NO
-        elif self.env['EVA_INPUT_PARTIAL'] is None:
+        elif self.env['input_partial'] is None:
             self.process_partial = self.PROCESS_PARTIAL_BOTH
-        elif self.env['EVA_INPUT_PARTIAL'] is True:
+        elif self.env['input_partial'] is True:
             self.process_partial = self.PROCESS_PARTIAL_ONLY
         else:
             self.process_partial = self.PROCESS_PARTIAL_NO
@@ -190,13 +190,13 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @brief Check that we have a Zookeeper endpoint if EVA requires that
         only a single instance is running at any given time.
         """
-        if not self.env['EVA_SINGLE_INSTANCE']:
+        if not self.env['single_instance']:
             return
         if not self.zookeeper:
             raise eva.exceptions.InvalidConfigurationException(
-                'Running with EVA_SINGLE_INSTANCE enabled requires Zookeeper configuration.'
+                'Running with single_instance enabled requires Zookeeper configuration.'
             )
-        lock_path = os.path.join(self.zookeeper.EVA_BASE_PATH, 'single_instance_lock')
+        lock_path = os.path.join(self.zookeeper.base_path, 'single_instance_lock')
         try:
             self.logger.info('Creating a Zookeeper ephemeral node with path %s', lock_path)
             self.zookeeper.create(lock_path, None, ephemeral=True)
@@ -210,8 +210,8 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         current time, or None. The variable is used to determine whether or not
         to process a specific dataset.
         """
-        if self.env['EVA_REFERENCE_TIME_THRESHOLD'] != 0:
-            self.reference_time_threshold_delta = datetime.timedelta(seconds=self.env['EVA_REFERENCE_TIME_THRESHOLD'])
+        if self.env['reference_time_threshold'] != 0:
+            self.reference_time_threshold_delta = datetime.timedelta(seconds=self.env['reference_time_threshold'])
 
     def in_array_or_empty(self, data, env):
         """!
@@ -329,17 +329,17 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """
         if resource._collection._resource_name != 'datainstance':
             self.logger.debug('Resource is not of type DataInstance, ignoring.')
-        elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'EVA_INPUT_PRODUCT'):
+        elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'input_product'):
             self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
                               resource.data.productinstance.product.name)
-        elif not self.in_array_or_empty(resource.servicebackend.slug, 'EVA_INPUT_SERVICE_BACKEND'):
+        elif not self.in_array_or_empty(resource.servicebackend.slug, 'input_service_backend'):
             self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
                               resource.servicebackend.name)
-        elif not self.in_array_or_empty(resource.format.slug, 'EVA_INPUT_DATA_FORMAT'):
+        elif not self.in_array_or_empty(resource.format.slug, 'input_data_format'):
             self.logger.debug('DataInstance file type is %s, ignoring.',
                               resource.format.name)
-        elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'EVA_INPUT_REFERENCE_HOURS'):
-            self.logger.debug('ProductInstance reference hour does not match any of %s, ignoring.', list(set(self.env['EVA_INPUT_REFERENCE_HOURS'])))
+        elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'input_reference_hours'):
+            self.logger.debug('ProductInstance reference hour does not match any of %s, ignoring.', list(set(self.env['input_reference_hours'])))
         elif self.reference_time_threshold() > resource.data.productinstance.reference_time:
             self.logger.debug('ProductInstance reference time is older than threshold of %s, ignoring.', self.reference_time_threshold())
         elif resource.deleted:
@@ -427,15 +427,15 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """!
         Returns true if one of the following criteria matches:
 
-        * DataInstance.hash is NULL, and EVA_INPUT_WITH_HASH is set to NO
-        * DataInstance.hash populated, and EVA_INPUT_WITH_HASH is set to YES
-        * EVA_INPUT_WITH_HASH is unset
+        * DataInstance.hash is NULL, and input_with_hash is set to NO
+        * DataInstance.hash populated, and input_with_hash is set to YES
+        * input_with_hash is unset
         """
-        if self.env['EVA_INPUT_WITH_HASH'] is None:
+        if self.env['input_with_hash'] is None:
             return True
-        if resource.hash is None and self.env['EVA_INPUT_WITH_HASH'] is False:
+        if resource.hash is None and self.env['input_with_hash'] is False:
             return True
-        if resource.hash is not None and self.env['EVA_INPUT_WITH_HASH'] is True:
+        if resource.hash is not None and self.env['input_with_hash'] is True:
             return True
         return False
 
@@ -445,8 +445,8 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         to Productstatus, False otherwise.
         """
         return (
-            (len(self.env['EVA_PRODUCTSTATUS_USERNAME']) > 0) and
-            (len(self.env['EVA_PRODUCTSTATUS_API_KEY']) > 0)
+            (len(self.env['productstatus_username']) > 0) and
+            (len(self.env['productstatus_api_key']) > 0)
         )
 
     def require_productstatus_credentials(self):
@@ -455,14 +455,14 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """
         if not self.has_productstatus_credentials():
             raise eva.exceptions.MissingConfigurationException(
-                'Posting to Productstatus requires environment variables EVA_PRODUCTSTATUS_USERNAME and EVA_PRODUCTSTATUS_API_KEY.'
+                'Posting to Productstatus requires environment variables productstatus_username and productstatus_api_key.'
             )
 
     def has_output_lifetime(self):
         """!
         @returns True if a DataInstance lifetime is specified, false otherwise.
         """
-        return 'EVA_OUTPUT_LIFETIME' in self.env and self.env['EVA_OUTPUT_LIFETIME'] is not None
+        return 'output_lifetime' in self.env and self.env['output_lifetime'] is not None
 
     def expiry_from_hours(self, hours):
         """!
@@ -474,12 +474,12 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     def expiry_from_lifetime(self):
         """!
         @returns a DateTime object representing an absolute DataInstance expiry
-        time, based on the EVA_OUTPUT_LIFETIME environment variable. If the
+        time, based on the output_lifetime environment variable. If the
         variable is not set, this function returns None.
         """
         if not self.has_output_lifetime():
             return None
-        return self.expiry_from_hours(hours=self.env['EVA_OUTPUT_LIFETIME'])
+        return self.expiry_from_hours(hours=self.env['output_lifetime'])
 
     @staticmethod
     def default_resource_dictionary():

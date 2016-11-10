@@ -83,6 +83,7 @@ class Main(eva.config.ConfigurableObject):
     def __init__(self):
         self.args = None
         self.config_class = {}
+        self.incubator_class = {}
         self.logger = logging.getLogger('root')
         self.mailer = None
         self.zookeeper = None
@@ -310,13 +311,15 @@ class Main(eva.config.ConfigurableObject):
                 raise eva.exceptions.InvalidConfigurationException(
                     "The class '%s' is not a subclass of eva.config.ConfigurableObject." % class_name
                 )
-            incubator = class_type()
-            instance = incubator.factory(self.config, section_defaults, section)
+            incubator_class = class_type()
+            incubator, instance = incubator_class.factory(self.config, section_defaults, section)
+            self.incubator_class[section] = incubator
             self.config_class[section] = instance
 
         # Hack to make this class a member of configuration classes, in order
         # to simplify further setup
         self.config_class['eva'] = self
+        self.incubator_class['eva'] = self
 
         self.logger.info('Finished instantiating classes from configuration file.')
 
@@ -384,8 +387,16 @@ class Main(eva.config.ConfigurableObject):
         """!
         @brief Print all configuration to log.
         """
-        self.mailer = self.env['mail']
+        self.logger.info('*** COMPLETE SET OF CONFIGURATION VARIABLES ***')
+        lines = []
+        for key, instance in self.incubator_class.items():
+            config = instance.format_config()
+            lines += [key + '.' + line for line in config]
+        for line in sorted(lines):
+            self.logger.info(line)
+        self.logger.info('*** END OF CONFIGURATION VARIABLES ***')
         return
+
         if not self.env['EVA_MAIL_ENABLED']:
             self.logger.warning('Sending e-mails of important events not configured.')
             self.mailer = eva.mail.NullMailer()
@@ -424,15 +435,13 @@ class Main(eva.config.ConfigurableObject):
             self.setup_globe()
 
             self.instantiate_config_classes()
+            self.print_configuration()
             self.resolve_config_class_dependencies()
             self.init_config_classes()
 
             self.setup_listeners()
 
             sys.exit(0)
-
-            self.setup_executor()
-            self.setup_adapter()
 
         except eva.exceptions.EvaException as e:
             self.logger.critical(str(e))
