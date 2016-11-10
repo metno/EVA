@@ -91,6 +91,29 @@ class Main(eva.config.ConfigurableObject):
         self.mailer = None
         self.config_class = {}
 
+    @property
+    def config_classes(self):
+        for key, instance in self.config_class.items():
+            yield instance
+
+    @property
+    def adapters(self):
+        for instance in self.config_classes:
+            if isinstance(instance, eva.base.adapter.BaseAdapter):
+                yield instance
+
+    @property
+    def executors(self):
+        for instance in self.config_classes:
+            if isinstance(instance, eva.base.executor.BaseExecutor):
+                yield instance
+
+    @property
+    def listeners(self):
+        for instance in self.config_classes:
+            if isinstance(instance, eva.base.listener.BaseListener):
+                yield instance
+
     def parse_args(self):
         parser = argparse.ArgumentParser()  # FIXME: epilog
         parser_rpc_group = parser.add_mutually_exclusive_group()
@@ -319,7 +342,7 @@ class Main(eva.config.ConfigurableObject):
         """
         self.logger.info('Initializing classes...')
 
-        for key, instance in self.config_class.items():
+        for instance in self.config_classes:
             if not isinstance(instance, eva.config.ConfigurableObject):
                 continue
             self.logger.info("Initializing '%s'...", instance)
@@ -328,24 +351,6 @@ class Main(eva.config.ConfigurableObject):
             instance.init()
 
         self.logger.info('Finished initializing classes.')
-
-    @property
-    def adapters(self):
-        for key, instance in self.config_class.items():
-            if isinstance(instance, eva.base.adapter.BaseAdapter):
-                yield instance
-
-    @property
-    def executors(self):
-        for key, instance in self.config_class.items():
-            if isinstance(instance, eva.base.executor.BaseExecutor):
-                yield instance
-
-    @property
-    def listeners(self):
-        for key, instance in self.config_class.items():
-            if isinstance(instance, eva.base.listener.BaseListener):
-                yield instance
 
     def setup_listeners(self):
         """!
