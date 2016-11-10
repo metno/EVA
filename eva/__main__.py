@@ -82,14 +82,10 @@ class Main(eva.config.ConfigurableObject):
 
     def __init__(self):
         self.args = None
-        self.adapter = None
-        self.productstatus_api = None
-        self.event_listener = None
-        self.env = {}
-        self.logger = logging.getLogger('root')
-        self.zookeeper = None
-        self.mailer = None
         self.config_class = {}
+        self.logger = logging.getLogger('root')
+        self.mailer = None
+        self.zookeeper = None
 
     @property
     def config_classes(self):
@@ -113,6 +109,10 @@ class Main(eva.config.ConfigurableObject):
         for instance in self.config_classes:
             if isinstance(instance, eva.base.listener.BaseListener):
                 yield instance
+
+    @property
+    def productstatus(self):
+        return self.env['productstatus']
 
     def parse_args(self):
         parser = argparse.ArgumentParser()  # FIXME: epilog
@@ -357,6 +357,7 @@ class Main(eva.config.ConfigurableObject):
         @brief Configure all message listeners with a client ID.
         """
         self.logger.info('Setting up listeners...')
+
         for listener in self.listeners:
             self.logger.info("Listener: '%s'", listener)
             listener.set_kwargs(
@@ -364,34 +365,24 @@ class Main(eva.config.ConfigurableObject):
                 productstatus_api=self.env['productstatus'],
             )
             listener.setup_listener()
+
         self.logger.info('Finished setting up listeners.')
 
-    def setup_executor(self):
+    def setup_globe(self):
         """!
-        @brief Instantiate the configured executor class.
+        @brief Instantiate the Global class, populating it with instances of
+        useful services such as logging and mailing.
         """
-        self.executor = eva.import_module_class(self.env['EVA_EXECUTOR'])(
-            self.group_id,
-            self.environment_variables,
-            self.globe,
-        )
-        self.logger.info('Using executor: %s' % self.executor.__class__)
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      productstatus=self.productstatus,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
 
-    def setup_adapter(self):
+    def print_configuration(self):
         """!
-        @brief Instantiate the configured adapter class.
-        """
-        self.adapter = eva.import_module_class(self.env['EVA_ADAPTER'])(
-            self.environment_variables,
-            self.executor,
-            self.productstatus_api,
-            self.globe,
-        )
-        self.logger.info('Using adapter: %s' % self.adapter.__class__)
-
-    def setup_mailer(self):
-        """!
-        @brief Instantiate a mailer class, if configured.
+        @brief Print all configuration to log.
         """
         self.mailer = self.env['mail']
         return
@@ -408,18 +399,6 @@ class Main(eva.config.ConfigurableObject):
                                       self.env['EVA_MAIL_FROM'],
                                       self.env['EVA_MAIL_RECIPIENTS'])
         self.logger.info('Sending e-mails of important events to %s via %s', self.env['EVA_MAIL_RECIPIENTS'], self.env['EVA_MAIL_SMTP_HOST'])
-
-    def setup_globe(self):
-        """!
-        @brief Instantiate the Global class, populating it with instances of
-        useful services such as logging and mailing.
-        """
-        self.globe = eva.globe.Global(group_id=self.group_id,
-                                      logger=self.logger,
-                                      productstatus=self.env['productstatus'],
-                                      statsd=self.statsd,
-                                      zookeeper=self.zookeeper,
-                                      )
 
     def setup(self):
         try:
