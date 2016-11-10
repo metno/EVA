@@ -170,7 +170,7 @@ class ConfigurableObject(object):
         @brief Normalize input configuration based on the configuration
         definition: split strings into lists, convert to types.
         """
-        env = {}
+        self.env = {}
         keys = list(set(self.REQUIRED_CONFIG + self.OPTIONAL_CONFIG))
 
         # Iterate through required and optional config, and read only those variables
@@ -211,10 +211,7 @@ class ConfigurableObject(object):
                 raise eva.exceptions.InvalidConfigurationException("Invalid value '%s' for configuration '%s': %s", value, key, e)
 
             # Write normalized value into configuration hash
-            env[key] = value
-
-        # Drop non-normalized values
-        self.env = env
+            self.env[key] = value
 
     def format_config(self):
         """!
@@ -238,4 +235,10 @@ class ResolvableDependency(object):
         self.key = key
 
     def resolve(self, config_classes):
-        return config_classes[self.key]
+        try:
+            return config_classes[self.key]
+        except KeyError:
+            raise eva.exceptions.InvalidConfigurationException(
+                "Cannot resolve class dependencies: section '%s' is not found in the configuration." %
+                self.key
+            )
