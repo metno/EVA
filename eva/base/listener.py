@@ -1,8 +1,8 @@
-import eva
+import eva.config
 import eva.globe
 
 
-class BaseListener(eva.ConfigurableObject, eva.globe.GlobalMixin):
+class BaseListener(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     @brief Abstract base class for execution engines.
     """

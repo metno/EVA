@@ -5,16 +5,17 @@ import copy
 import traceback
 
 import eva
-import eva.globe
-import eva.zk
-import eva.rpc
+import eva.config
 import eva.event
+import eva.globe
 import eva.mail.text
+import eva.rpc
+import eva.zk
 
 import productstatus.exceptions
 
 
-class Eventloop(eva.ConfigurableObject, eva.globe.GlobalMixin):
+class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     The main loop.
     """

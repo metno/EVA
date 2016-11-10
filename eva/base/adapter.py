@@ -4,6 +4,7 @@ import logging
 import kazoo.exceptions
 
 import eva
+import eva.config
 import eva.globe
 import eva.logger
 import eva.job
@@ -13,7 +14,7 @@ import productstatus
 import productstatus.api
 
 
-class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
+class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     Adapters contain all the information and configuration needed to translate
     a Productstatus resource into job execution.
@@ -21,6 +22,11 @@ class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
 
     # @brief Common configuration variables all subclasses may use.
     _COMMON_ADAPTER_CONFIG = {
+        'executor': {
+            'type': 'config_class',
+            'help': 'Executor name from configuration files',
+            'default': '',
+        },
         'EVA_INPUT_DATA_FORMAT': {
             'type': 'list_string',
             'help': 'Comma-separated input Productstatus data format slugs',
@@ -111,6 +117,10 @@ class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
         'EVA_SINGLE_INSTANCE',
     ]
 
+    _REQUIRED_CONFIG = [
+        'executor',
+    ]
+
     _PRODUCTSTATUS_REQUIRED_CONFIG = [
         'EVA_PRODUCTSTATUS_USERNAME',
         'EVA_PRODUCTSTATUS_API_KEY',
@@ -122,12 +132,16 @@ class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
     PROCESS_PARTIAL_NO = 1
     PROCESS_PARTIAL_BOTH = 2
 
+    def __init__(self, *args, **kwargs):
+        self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
+        self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
+        self.REQUIRED_CONFIG = self.REQUIRED_CONFIG + self._REQUIRED_CONFIG
+        return super(BaseAdapter, self).__init__(*args, **kwargs)
+
     def _factory(self):
         """!
         @brief Initialize the environment, then return this instance.
         """
-        self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
-        self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
         self._post_to_productstatus = None
         self._processing_failures = {}
         self.blacklist = set()
@@ -142,11 +156,6 @@ class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
         @param api Productstatus API object
         @param environment_variables Dictionary of EVA_* environment variables
         """
-        self.globe = globe
-        self.executor = executor
-        self.api = api
-        self.env = environment_variables
-
         self.setup_process_partial()
         self.setup_single_instance()
         self.setup_reference_time_threshold()
@@ -155,6 +164,14 @@ class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
             self.logger.info('Posting to Productstatus is ENABLED.')
         else:
             self.logger.warning('Posting to Productstatus is DISABLED due to insufficient configuration.')
+
+    @property
+    def executor(self):
+        return self.env['executor']
+
+    @property
+    def api(self):
+        return self.globe.productstatus
 
     def setup_process_partial(self):
         """!
@@ -392,12 +409,6 @@ class BaseAdapter(eva.ConfigurableObject, eva.globe.GlobalMixin):
         @param job A Job object.
         """
         raise NotImplementedError()
-
-    def init(self):
-        """!
-        @brief This function provides a place for subclasses to initialize itself before accepting jobs.
-        """
-        pass
 
     def post_to_productstatus(self):
         """!

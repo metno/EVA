@@ -9,19 +9,15 @@ import kazoo.client
 import kazoo.exceptions
 import configparser
 
-import productstatus
-import productstatus.api
-import productstatus.event
-
-import eva
+import eva.adapter
+import eva.config
+import eva.eventloop
+import eva.executor
 import eva.globe
 import eva.health
+import eva.logger
 import eva.mail
 import eva.statsd
-import eva.logger
-import eva.eventloop
-import eva.adapter
-import eva.executor
 
 
 # Some modules are producing way too much DEBUG log, define them here.
@@ -43,19 +39,9 @@ EXIT_INVALID_CONFIG = 1
 EXIT_BUG = 255
 
 
-class Main(eva.ConfigurableObject):
+class Main(eva.config.ConfigurableObject):
 
     CONFIG = {
-        'adapter': {
-            'type': 'string',
-            'help': 'Python class name of adapters that should be run',
-            'default': 'eva.adapter.NullAdapter',
-        },
-        'executor': {
-            'type': 'string',
-            'help': 'Python class name of executor that should be used',
-            'default': 'eva.executor.ShellExecutor',
-        },
         'listeners': {
             'type': 'list_string',
             'help': 'Comma separated Python class names of listeners that should be run',
@@ -71,38 +57,26 @@ class Main(eva.ConfigurableObject):
             'help': 'Comma-separated list of StatsD endpoints in the form <host>:<port>',
             'default': '',
         },
-        'mail_enabled': {
-            'type': 'bool',
-            'help': 'Send e-mails to product owner when something unexpected happens',
-            'default': 'NO',
-        },
-        'mail_from': {
-            'type': 'string',
-            'help': 'EVA sender e-mail address',
-            'default': 'eva@localhost',
-        },
-        'mail_recipients': {
-            'type': 'list_string',
-            'help': 'List of recipients of e-mails from EVA',
+        'productstatus': {
+            'type': 'config_class',
+            'help': 'Configured Productstatus instance',
             'default': '',
         },
-        'mail_smtp_host': {
-            'type': 'string',
-            'help': 'Which SMTP server to use when sending e-mails',
-            'default': '127.0.0.1',
+        'mailer': {
+            'type': 'config_class',
+            'help': 'Configured Mailer instance',
+            'default': '',
         },
     }
 
     OPTIONAL_CONFIG = [
-        'adapter',
-        'executor',
         'listeners',
-        'mail_enabled',
-        'mail_from',
-        'mail_recipients',
-        'mail_smtp_host',
         'statsd',
         'zookeeper',
+    ]
+
+    REQUIRED_CONFIG = [
+        'productstatus',
     ]
 
     def __init__(self):
@@ -297,8 +271,8 @@ class Main(eva.ConfigurableObject):
 
         The class to load is defined by `class = path.to.ClassName` under each
         section of the configuration file. Classes must be instances of
-        eva.ConfigurableObject or eva.incubator.Incubator.
-        
+        eva.config.ConfigurableObject.
+
         The resulting class is added to the `self.config_class` dictionary.
         """
         self.logger.debug('Instantiating classes from configuration file...')
@@ -311,14 +285,16 @@ class Main(eva.ConfigurableObject):
             class_name = self.config.get(section, 'class')
             self.logger.debug("Instantiating '%s' from configuration section '%s'.", class_name, section)
             class_type = eva.import_module_class(class_name)
-            if not issubclass(class_type, eva.incubator.Incubator):
+            if not issubclass(class_type, eva.config.ConfigurableObject):
                 raise eva.exceptions.InvalidConfigurationException(
-                    "The class '%s' is not a subclass of eva.incubator.Incubator." % class_name
+                    "The class '%s' is not a subclass of eva.config.ConfigurableObject." % class_name
                 )
             incubator = class_type()
             instance = incubator.factory(self.config, section_defaults, section)
             self.logger.debug("Instance '%s': '%s'", section, instance)
             self.config_class[section] = instance
+
+        self.config_class['eva'] = self
 
         self.logger.debug('Finished instantiating classes from configuration file.')
 
@@ -328,12 +304,16 @@ class Main(eva.ConfigurableObject):
         from the configuration files.
         """
         self.logger.debug('Resolving class dependencies...')
+
         for key, instance in self.config_class.items():
-            if not isinstance(instance, eva.ConfigurableObject):
+            if not isinstance(instance, eva.config.ConfigurableObject):
                 continue
             self.logger.debug("Resolving dependencies for '%s'...", key)
+            if isinstance(instance, eva.globe.GlobalMixin):
+                instance.set_globe(self.globe)
             instance.resolve_dependencies(self.config_class)
             instance.init()
+
         self.logger.debug('Finished resolving class dependencies.')
 
     def setup_listeners(self):
@@ -379,6 +359,8 @@ class Main(eva.ConfigurableObject):
         """!
         @brief Instantiate a mailer class, if configured.
         """
+        self.mailer = self.env['mail']
+        return
         if not self.env['EVA_MAIL_ENABLED']:
             self.logger.warning('Sending e-mails of important events not configured.')
             self.mailer = eva.mail.NullMailer()
@@ -400,7 +382,7 @@ class Main(eva.ConfigurableObject):
         """
         self.globe = eva.globe.Global(group_id=self.group_id,
                                       logger=self.logger,
-                                      mailer=self.mailer,
+                                      productstatus=self.env['productstatus'],
                                       statsd=self.statsd,
                                       zookeeper=self.zookeeper,
                                       )
@@ -418,20 +400,20 @@ class Main(eva.ConfigurableObject):
             # Read all configuration from files
             self.setup_configuration()
             self.load_configuration(self.config, 'eva')
-            self.setup_client_group_id()
+
+            # Start the health check server
             self.setup_health_check_server()
+
+            # Set up objects required for the Global class
+            self.setup_client_group_id()
             self.setup_statsd_client()
             self.setup_zookeeper()
+            self.setup_globe()
+
             self.instantiate_config_classes()
             self.init_config_classes()
 
-            print(self.env)
             sys.exit(0)
-
-            self.setup_productstatus()
-            self.setup_mailer()
-
-            self.setup_globe()
 
             self.setup_listeners()
             self.setup_executor()

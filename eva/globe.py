@@ -4,7 +4,7 @@ import eva.exceptions
 PROPERTIES = [
     'group_id',
     'logger',
-    'mailer',
+    'productstatus',
     'statsd',
     'zookeeper',
 ]
@@ -33,6 +33,9 @@ class GlobalMixin(object):
     The class member 'global' needs to be set to a Global instance for this
     mixin to work.
     """
+
+    def set_globe(self, globe):
+        self.globe = globe
 
     def __getattr__(self, name):
         if name not in PROPERTIES:

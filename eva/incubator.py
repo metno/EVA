@@ -3,47 +3,12 @@
 in the EVA namespace.
 """
 
-import eva
+import eva.config
 
 import productstatus.api
 
 
-class Incubator(eva.ConfigurableObject):
-    """!
-    @brief Base class with a factory method, which should instantiate an object
-    and configure it according to the given configuration.
-    """
-
-    @classmethod
-    def factory(self, config, *args):
-        object_ = self()
-        object_.load_configuration(config, *args)
-        return object_._factory()
-
-    def _factory(self):
-        raise NotImplementedError('Please implement the factory() method in Incubator derived classes.')
-
-    def init(self):
-        """!
-        @brief Provides a place for subclasses to run their own initialization.
-        """
-        pass
-
-
-class ResolvableDependency(object):
-    """!
-    @brief A string representation of a configuration key, which will be
-    converted into an object as soon as all the configuration keys have been
-    loaded.
-    """
-    def __init__(self, key):
-        self.key = key
-
-    def resolve(self, config_classes):
-        return config_classes[key]
-
-
-class Productstatus(Incubator):
+class Productstatus(eva.config.ConfigurableObject):
     CONFIG = {
         'url': {
             'type': 'string',

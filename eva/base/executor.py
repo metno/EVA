@@ -2,11 +2,11 @@ import os
 import tempfile
 
 import eva
-import eva.incubator
+import eva.config
 import eva.globe
 
 
-class BaseExecutor(eva.incubator.Incubator, eva.globe.GlobalMixin):
+class BaseExecutor(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     @brief Abstract base class for execution engines.
     """
