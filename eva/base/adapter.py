@@ -22,6 +22,11 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
 
     # @brief Common configuration variables all subclasses may use.
     _COMMON_ADAPTER_CONFIG = {
+        'concurrency': {
+            'type': 'int',
+            'help': 'How many Executor tasks to run at the same time',
+            'default': '1',
+        },
         'executor': {
             'type': 'config_class',
             'help': 'Executor name from configuration files',
@@ -96,6 +101,11 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
             'type': 'string',
             'help': 'Productstatus user name',
             'default': '',
+        },
+        'queue_order': {
+            'type': 'string',
+            'help': 'Specify how to process incoming events; one of FIFO, LIFO, ADAPTIVE. See the documentation for implementation details',
+            'default': 'FIFO',
         },
         'reference_time_threshold': {
             'type': 'int',

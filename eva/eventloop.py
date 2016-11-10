@@ -21,16 +21,6 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """
 
     CONFIG = {
-        'EVA_CONCURRENCY': {
-            'type': 'positive_int',
-            'help': 'How many Executor tasks to run at the same time',
-            'default': '1',
-        },
-        'EVA_QUEUE_ORDER': {
-            'type': 'string',
-            'help': 'Specify how to process incoming events; one of FIFO, LIFO, ADAPTIVE. See the documentation for implementation details',
-            'default': 'FIFO',
-        },
     }
 
     OPTIONAL_CONFIG = [
@@ -55,32 +45,25 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     HEALTH_CHECK_HEARTBEAT_TIMEOUT = 60
 
     def __init__(self,
-                 globe,
-                 productstatus_api,
-                 listeners,
-                 adapter,
+                 adapters,
                  executor,
-                 environment_variables,
+                 listeners,
                  health_check_server,
                  ):
-        self.globe = globe
-        self.listeners = listeners
-        self.productstatus_api = productstatus_api
-        self.adapter = adapter
+        self.adapters = adapters
         self.executor = executor
-        self.env = environment_variables
+        self.listeners = listeners
         self.health_check_server = health_check_server
 
-        self.read_configuration()
-        self.concurrency = self.env['EVA_CONCURRENCY']
-        self.queue_order = self.parse_queue_order(self.env['EVA_QUEUE_ORDER'])
+    def init(self):
+        #self.queue_order = self.parse_queue_order(self.env['EVA_QUEUE_ORDER'])
         self.drain = False
         self.event_queue = []
         self.process_list = []
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
-        event_listener_configuration = self.productstatus_api.get_event_listener_configuration()
+        event_listener_configuration = self.productstatus.get_event_listener_configuration()
         if hasattr(event_listener_configuration, 'heartbeat_interval'):
             self.set_health_check_skip_heartbeat(False)
             self.set_health_check_heartbeat_interval(int(event_listener_configuration.heartbeat_interval))
@@ -320,7 +303,7 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @brief Make sure a ProductstatusResourceEvent has a Productstatus resource in Event.data.
         """
         if isinstance(event.data, str) and type(event) == eva.event.ProductstatusResourceEvent:
-            event.data = self.productstatus_api[event.data]
+            event.data = self.productstatus[event.data]
 
     def process_health_check(self):
         """!
@@ -639,7 +622,7 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         events = []
         self.logger.info('Processing all DataInstance resources descended from %s', product_instance)
         try:
-            instances = self.productstatus_api.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
+            instances = self.productstatus.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
             index = 1
             count = instances.count()
             self.logger.info('Adding %d DataInstance resources to queue...', count)
@@ -660,7 +643,7 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """!
         @brief Process a single DataInstance resource.
         """
-        resource = self.productstatus_api.datainstance[data_instance_uuid]
+        resource = self.productstatus.datainstance[data_instance_uuid]
         event = eva.event.ProductstatusLocalEvent(
             {},
             resource,

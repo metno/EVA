@@ -85,7 +85,6 @@ class Main(eva.config.ConfigurableObject):
         self.config_class = {}
         self.incubator_class = {}
         self.logger = logging.getLogger('root')
-        self.mailer = None
         self.zookeeper = None
 
     @property
@@ -114,6 +113,10 @@ class Main(eva.config.ConfigurableObject):
     @property
     def productstatus(self):
         return self.env['productstatus']
+
+    @property
+    def mailer(self):
+        return self.env['mailer']
 
     def parse_args(self):
         parser = argparse.ArgumentParser()  # FIXME: epilog
@@ -395,21 +398,6 @@ class Main(eva.config.ConfigurableObject):
         for line in sorted(lines):
             self.logger.info(line)
         self.logger.info('*** END OF CONFIGURATION VARIABLES ***')
-        return
-
-        if not self.env['EVA_MAIL_ENABLED']:
-            self.logger.warning('Sending e-mails of important events not configured.')
-            self.mailer = eva.mail.NullMailer()
-            return
-        if not self.env['EVA_MAIL_RECIPIENTS']:
-            raise eva.exceptions.InvalidConfigurationException(
-                'EVA_MAIL_RECIPIENTS must be configured when e-mails are enabled.'
-            )
-        self.mailer = eva.mail.Mailer(self.group_id,
-                                      self.env['EVA_MAIL_SMTP_HOST'],
-                                      self.env['EVA_MAIL_FROM'],
-                                      self.env['EVA_MAIL_RECIPIENTS'])
-        self.logger.info('Sending e-mails of important events to %s via %s', self.env['EVA_MAIL_RECIPIENTS'], self.env['EVA_MAIL_SMTP_HOST'])
 
     def setup(self):
         try:
@@ -432,16 +420,16 @@ class Main(eva.config.ConfigurableObject):
             self.setup_client_group_id()
             self.setup_statsd_client()
             self.setup_zookeeper()
-            self.setup_globe()
 
+            # Instantiate, link and initialize everything
             self.instantiate_config_classes()
             self.print_configuration()
             self.resolve_config_class_dependencies()
+            self.setup_globe()
             self.init_config_classes()
 
+            # Start listener classes
             self.setup_listeners()
-
-            sys.exit(0)
 
         except eva.exceptions.EvaException as e:
             self.logger.critical(str(e))
@@ -457,14 +445,13 @@ class Main(eva.config.ConfigurableObject):
         self.statsd.incr('eva_start')
 
         try:
-            evaloop = eva.eventloop.Eventloop(self.globe,
-                                              self.productstatus_api,
+            evaloop = eva.eventloop.Eventloop(self.adapters,
+                                              self.executors,
                                               self.listeners,
-                                              self.adapter,
-                                              self.executor,
-                                              self.environment_variables,
                                               self.health_check_server,
                                               )
+            evaloop.set_globe(self.globe)
+            evaloop.init()
 
             if self.args.process_all_in_product_instance or self.args.process_data_instance:
                 if self.args.process_all_in_product_instance:

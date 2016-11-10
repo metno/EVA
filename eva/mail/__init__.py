@@ -2,10 +2,11 @@ import smtplib
 import email.mime.text
 
 import eva.config
+import eva.globe
 import eva.mail.text
 
 
-class Mailer(eva.config.ConfigurableObject):
+class Mailer(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """!
     @brief A class that simplifies sending e-mail from EVA.
     """
@@ -64,7 +65,7 @@ class Mailer(eva.config.ConfigurableObject):
         message['Subject'] = eva.mail.text.MASTER_SUBJECT % (self.group_id, subject)
         try:
             mailer = smtplib.SMTP(self.env['smtp_host'])
-            mailer.send_message(message, from_addr=self.env['mail_from'], to_addrs=self.env['recipients'])
+            mailer.send_message(message, from_addr=self.env['from'], to_addrs=self.env['recipients'])
             mailer.quit()
         except smtplib.SMTPException:
             # silently ignore errors
