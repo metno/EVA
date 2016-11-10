@@ -47,14 +47,9 @@ class Main(eva.config.ConfigurableObject):
             'help': 'Comma separated Python class names of listeners that should be run',
             'default': 'eva.listener.RPCListener,eva.listener.ProductstatusListener',
         },
-        'zookeeper': {
-            'type': 'string',
-            'help': 'ZooKeeper endpoints in the form <host>:<port>[,<host>:<port>,[...]]/<path>',
-            'default': '',
-        },
-        'statsd': {
-            'type': 'list_string',
-            'help': 'Comma-separated list of StatsD endpoints in the form <host>:<port>',
+        'mailer': {
+            'type': 'config_class',
+            'help': 'Configured Mailer instance',
             'default': '',
         },
         'productstatus': {
@@ -62,9 +57,14 @@ class Main(eva.config.ConfigurableObject):
             'help': 'Configured Productstatus instance',
             'default': '',
         },
-        'mailer': {
-            'type': 'config_class',
-            'help': 'Configured Mailer instance',
+        'statsd': {
+            'type': 'list_string',
+            'help': 'Comma-separated list of StatsD endpoints in the form <host>:<port>',
+            'default': '',
+        },
+        'zookeeper': {
+            'type': 'string',
+            'help': 'ZooKeeper endpoints in the form <host>:<port>[,<host>:<port>,[...]]/<path>',
             'default': '',
         },
     }
@@ -76,6 +76,7 @@ class Main(eva.config.ConfigurableObject):
     ]
 
     REQUIRED_CONFIG = [
+        'mailer',
         'productstatus',
     ]
 

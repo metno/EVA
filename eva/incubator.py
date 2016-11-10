@@ -1,6 +1,6 @@
 """!
 @brief This module serves as a configuration endpoint for classes that are not
-in the EVA namespace.
+in the EVA namespace, but still need to be configured using a configuration section.
 """
 
 import eva.config
