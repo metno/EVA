@@ -9,14 +9,21 @@ class ShutdownException(EvaException):
     pass
 
 
-class MissingConfigurationException(EvaException):
+class ConfigurationException(EvaException):
+    """!
+    @brief Base class for configuration related exceptions.
+    """
+    pass
+
+
+class MissingConfigurationException(ConfigurationException):
     """!
     @brief Thrown when a configuration variable is missing.
     """
     pass
 
 
-class InvalidConfigurationException(EvaException):
+class InvalidConfigurationException(ConfigurationException):
     """!
     @brief Thrown when configuration does not make sense.
     """

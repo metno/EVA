@@ -1,7 +1,5 @@
-import os
 import datetime
 import logging
-import kazoo.exceptions
 
 import eva
 import eva.config
@@ -166,7 +164,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @param environment_variables Dictionary of * environment variables
         """
         self.setup_process_partial()
-        self.setup_single_instance()
         self.setup_reference_time_threshold()
 
         if self.post_to_productstatus():
@@ -194,24 +191,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
             self.process_partial = self.PROCESS_PARTIAL_ONLY
         else:
             self.process_partial = self.PROCESS_PARTIAL_NO
-
-    def setup_single_instance(self):
-        """!
-        @brief Check that we have a Zookeeper endpoint if EVA requires that
-        only a single instance is running at any given time.
-        """
-        if not self.env['single_instance']:
-            return
-        if not self.zookeeper:
-            raise eva.exceptions.InvalidConfigurationException(
-                'Running with single_instance enabled requires Zookeeper configuration.'
-            )
-        lock_path = os.path.join(self.zookeeper.base_path, 'single_instance_lock')
-        try:
-            self.logger.info('Creating a Zookeeper ephemeral node with path %s', lock_path)
-            self.zookeeper.create(lock_path, None, ephemeral=True)
-        except kazoo.exceptions.NodeExistsError:
-            raise eva.exceptions.AlreadyRunningException('EVA is already running with the same group id, aborting!')
 
     def setup_reference_time_threshold(self):
         """!

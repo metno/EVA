@@ -34,8 +34,9 @@ NOISY_LOGGERS = [
     'paramiko',
 ]
 
-EXIT_OK = 0
+EXIT_SUCCESS = 0
 EXIT_INVALID_CONFIG = 1
+EXIT_ALREADY_RUNNING = 2
 EXIT_BUG = 255
 
 
@@ -280,7 +281,7 @@ class Main(eva.config.ConfigurableObject):
         self.logger.info('Setting up Zookeeper connection to %s', self.env['zookeeper'])
         tokens = self.env['zookeeper'].strip().split(u'/')
         server_string = tokens[0]
-        base_path = os.path.join('/', os.path.join(*tokens[1:]), str(eva.zookeeper_group_id(self.group_id)))
+        base_path = os.path.join('/', os.path.join(*tokens[1:]))
         self.zookeeper = kazoo.client.KazooClient(
             hosts=server_string,
             randomize_hosts=True,
@@ -289,6 +290,22 @@ class Main(eva.config.ConfigurableObject):
         self.zookeeper.start()
         self.zookeeper.EVA_BASE_PATH = base_path
         self.zookeeper.ensure_path(self.zookeeper.EVA_BASE_PATH)
+
+    def setup_instance_lock(self):
+        """!
+        @brief Check that we have a Zookeeper endpoint if EVA requires that
+        only a single instance is running at any given time.
+        """
+        if not self.zookeeper:
+            self.logger.warning('DANGEROUS: single instance lock disabled because ZooKeeper is not set up.')
+            self.logger.warning('DO NOT RUN THIS INSTANCE IN PRODUCTION!')
+            return
+        lock_path = os.path.join(self.zookeeper.EVA_BASE_PATH, 'lock')
+        try:
+            self.logger.info('Creating a Zookeeper ephemeral node with path %s', lock_path)
+            self.zookeeper.create(lock_path, None, ephemeral=True)
+        except kazoo.exceptions.NodeExistsError:
+            raise eva.exceptions.AlreadyRunningException('Another instance of EVA is already running against this ZooKeeper endpoint; aborting!')
 
     def instantiate_config_classes(self):
         """!
@@ -429,18 +446,25 @@ class Main(eva.config.ConfigurableObject):
             self.setup_globe()
             self.init_config_classes()
 
+            # Abort if EVA is already running
+            self.setup_instance_lock()
+
             # Start listener classes
             self.setup_listeners()
 
-        except eva.exceptions.EvaException as e:
+        except eva.exceptions.ConfigurationException as e:
             self.logger.critical(str(e))
             self.logger.info('Shutting down EVA due to missing or invalid configuration.')
-            self.exit(1)
+            self.exit(EXIT_INVALID_CONFIG)
+
+        except eva.exceptions.AlreadyRunningException as e:
+            self.logger.critical(str(e))
+            self.exit(EXIT_ALREADY_RUNNING)
 
         except Exception as e:
             eva.print_and_mail_exception(e, self.logger, self.mailer)
             self.logger.critical('EVA initialization failed. Your code is broken, please fix it.')
-            self.exit(255)
+            self.exit(EXIT_BUG)
 
     def start(self):
         self.statsd.incr('eva_start')
@@ -473,13 +497,13 @@ class Main(eva.config.ConfigurableObject):
             self.statsd.incr('zookeeper_connection_loss')
         except Exception as e:
             eva.print_and_mail_exception(e, self.logger, self.mailer)
-            self.exit(255)
+            self.exit(EXIT_BUG)
 
         if self.zookeeper:
             self.logger.info('Stopping ZooKeeper.')
             self.zookeeper.stop()
         self.logger.info('Shutting down EVA.')
-        self.exit(0)
+        self.exit(EXIT_SUCCESS)
 
     def exit(self, exit_code):
         if hasattr(self, 'statsd'):
