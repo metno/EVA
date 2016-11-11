@@ -157,6 +157,7 @@ class Main(eva.config.ConfigurableObject):
         parser.add_argument(
             '--config',
             action='append',
+            required=True,
             type=str,
             help='Load the specified configuration file, or an entire directory structure of configuration files. Can be specified multiple times.',
         )
@@ -481,7 +482,8 @@ class Main(eva.config.ConfigurableObject):
         self.exit(0)
 
     def exit(self, exit_code):
-        self.statsd.incr('eva_shutdown', tags={'exit_code': exit_code})
+        if hasattr(self, 'statsd'):
+            self.statsd.incr('eva_shutdown', tags={'exit_code': exit_code})
         sys.exit(exit_code)
 
 
