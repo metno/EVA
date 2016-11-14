@@ -3,10 +3,12 @@ import datetime
 import dateutil.tz
 import copy
 import traceback
+import collections
 
 import eva
 import eva.config
 import eva.event
+import eva.exceptions
 import eva.globe
 import eva.mail.text
 import eva.rpc
@@ -15,18 +17,120 @@ import eva.zk
 import productstatus.exceptions
 
 
-class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
+class EventQueueItem(object):
+    def __init__(self, event):
+        # Dictionary of Job objects, indexed by the adapter configuration key.
+        self.jobs = {}
+        assert isinstance(event, eva.event.Event)
+        self.event = event
+
+    def id(self):
+        return self.event.id()
+
+    def add_job(self, job):
+        self.jobs[job.id] = job
+
+    def remove_job(self, job_id):
+        del self.jobs[job_id]
+
+    def job_keys(self):
+        return list(self.jobs.keys())
+
+    def serialize(self):
+        serialized = {}
+        serialized['message'] = self.event.message
+        serialized['job_keys'] = self.job_keys()
+        serialized['jobs'] = {}
+        for key, job in self.jobs.items():
+            serialized['jobs'][key] = {
+                'status': job.status,
+                'adapter': job.adapter,
+            }
+        return serialized
+
+
+class EventQueue(eva.globe.GlobalMixin):
+    """!
+    @brief Manages events under processing in a queue mirrored to ZooKeeper.
+
+    ZooKeeper paths:
+
+    * /events
+        A list of event IDs referring to individual ZooKeeper paths. This list
+        exists only in order to detect which events are in the processing list.
+    * /events/<EVENT_UUID>
+        A list of jobs IDs, referring to jobs that have been initialized from
+        this particular event. This list exists only in order to detect which
+        jobs are in the processing list.
+    * /events/<EVENT_UUID>/message
+        The raw message string for an event, as received on the wire. Used for
+        reconstructing event objects in case of a program crash or adapter
+        failure.
+    * /events/<EVENT_UUID>/<JOB_UUID>/status
+        The job status of this job.
+    * /events/<EVENT_UUID>/<JOB_UUID>/adapter
+        The adapter that owns this job.
+    """
+
+    def init(self):
+        # Dictionary of EventQueueItem objects, indexed by the event id.
+        self.items = collections.OrderedDict()
+        self.zk_base_path = os.path.join(self.zookeeper.EVA_BASE_PATH, 'events')
+        self.zookeeper.ensure_path(self.zk_base_path)
+
+    def add_event(self, event):
+        assert isinstance(event, eva.event.Event)
+        id = event.id()
+        if id in self.items:
+            raise eva.exceptions.DuplicateEventException('Event %s already exists in the event queue.', id)
+        item = EventQueueItem(event)
+        self.items[id] = item
+        try:
+            self.store_list()
+            self.store_item(item)
+        except eva.exceptions.ZooKeeperDataTooLargeException as e:
+            self.logger.warning(str(e))
+            return False
+        #except kazoo.exceptions.ZooKeeperError as e:
+            #self.logger.warning(str(e))
+            #return False
+        return item
+
+    def item_keys(self):
+        return list(self.items.keys())
+
+    def store_list(self):
+        self.store_serialized_data(self.zk_base_path, self.item_keys(), metric_base='event_queue')
+
+    def store_item(self, item):
+        base_path = os.path.join(self.zk_base_path, item.id())
+        self.zookeeper.ensure_path(base_path)
+        serialized = item.serialize()
+        self.store_serialized_data(os.path.join(base_path, 'message'), serialized['message'])
+        self.store_serialized_data(os.path.join(base_path, 'jobs'), serialized['job_keys'])
+        for key, job in serialized['jobs'].items():
+            path = os.path.join(base_path, 'jobs', key)
+            self.zookeeper.ensure_path(path)
+            self.store_serialized_data(os.path.join(path, 'adapter'), job['adapter'])
+            self.store_serialized_data(os.path.join(path, 'status'), job['status'])
+
+    def store_serialized_data(self, path, data, metric_base=None):
+        """!
+        @brief Store structured data in ZooKeeper.
+        @returns True if the data could be stored in ZooKeeper, False otherwise.
+        @throws kazoo.exceptions.ZooKeeperError on failure
+        """
+        count, size = eva.zk.store_serialized_data(self.zookeeper, path, data)
+        if not metric_base:
+            return
+        self.statsd.gauge('eva_zookeeper_' + metric_base + '_count', count)
+        self.statsd.gauge('eva_zookeeper_' + metric_base + '_size', size)
+
+
+class Eventloop(eva.globe.GlobalMixin):
     """!
     The main loop.
     """
-
-    CONFIG = {
-    }
-
-    OPTIONAL_CONFIG = [
-        'EVA_CONCURRENCY',
-        'EVA_QUEUE_ORDER',
-    ]
 
     RECOVERABLE_EXCEPTIONS = (eva.exceptions.RetryException, productstatus.exceptions.ServiceUnavailableException,)
 
@@ -41,7 +145,7 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         'ADAPTIVE': QUEUE_ORDER_ADAPTIVE,
     }
 
-    # Allow maximum 60 seconds between each heartbeat before reporting process unhealthy
+    # Allow maximum 60 seconds since last heartbeat before reporting process unhealthy
     HEALTH_CHECK_HEARTBEAT_TIMEOUT = 60
 
     def __init__(self,
@@ -58,8 +162,9 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     def init(self):
         #self.queue_order = self.parse_queue_order(self.env['EVA_QUEUE_ORDER'])
         self.drain = False
-        self.event_queue = []
-        self.process_list = []
+        self.event_queue = EventQueue()
+        self.event_queue.set_globe(self.globe)
+        self.event_queue.init()
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
@@ -87,7 +192,7 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """
         for listener in self.listeners:
             try:
-                event = listener.get_next_event(self.adapter.resource_matches_input_config)
+                event = listener.get_next_event()
                 assert isinstance(event, eva.event.Event)
             except eva.exceptions.EventTimeoutException:
                 continue
@@ -99,12 +204,10 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
                 continue
 
             # Duplicate events in queue should not happen
-            if event.id() in [x.id() for x in self.event_queue]:
-                self.logger.warning('Event with id %s is already in the event queue. This is most probably due to a previous Kafka commit error. The message has been discarded.', event.id())
-                continue
-            if event.id() in [x.id() for x in self.process_list]:
-                self.logger.warning('Event with id %s is already in the process list. This is most probably due to a previous Kafka commit error. The message has been discarded.', event.id())
-                continue
+            #if event.id() in [x.id() for x in self.event_queue]:
+                #self.statsd.incr('duplicate_event')
+                #self.logger.warning('Event with id %s is already in the event queue. This is most probably due to a previous Kafka commit error. The message has been discarded.', event.id())
+                #continue
 
             # Accept heartbeats without adding them to queue
             if isinstance(event, eva.event.ProductstatusHeartbeatEvent):
@@ -112,8 +215,16 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
                 self.set_health_check_timestamp(eva.now_with_timezone())
                 continue
 
-            if self.add_event_to_queue(event):
-                listener.acknowledge()
+            # Fast acknowledging of messages, adds it to event queue and stores queue in ZooKeeper
+            try:
+                self.event_queue.add_event(event)
+                #self.add_event_to_queue(event):
+            except eva.exceptions.DuplicateEventException as e:
+                self.statsd.incr('duplicate_event')
+                self.logger.warning(e)
+                self.logger.warning('This is most probably due to a previous Kafka commit error. The message has been discarded.')
+
+            listener.acknowledge()
 
     def event_queue_empty(self):
         """!
@@ -188,18 +299,6 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
             self.set_drain()
             self.event_queue = self.event_queue[:-1]
             return False
-
-    def zookeeper_path(self, *args):
-        """!
-        @brief Return a ZooKeeper path.
-        """
-        return os.path.join(self.zookeeper.EVA_BASE_PATH, *args)
-
-    def zookeeper_event_queue_path(self):
-        """!
-        @brief Return the ZooKeeper path to the store of cached event queue messages.
-        """
-        return self.zookeeper_path('event_queue')
 
     def zookeeper_process_list_path(self):
         """!
@@ -370,22 +469,22 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
                 return eva.epoch_with_timezone()
             return event.data.data.productinstance.reference_time
 
-        if self.queue_order == self.QUEUE_ORDER_FIFO:
-            self.event_queue.sort(key=sort_timestamp)
-        elif self.queue_order == self.QUEUE_ORDER_LIFO:
-            self.event_queue.sort(key=sort_timestamp, reverse=True)
-        elif self.queue_order == self.QUEUE_ORDER_ADAPTIVE:
-            self.event_queue.sort(key=sort_timestamp)
-            self.event_queue.sort(key=sort_reference_time, reverse=True)
+        #if self.queue_order == self.QUEUE_ORDER_FIFO:
+            #self.event_queue.sort(key=sort_timestamp)
+        #elif self.queue_order == self.QUEUE_ORDER_LIFO:
+            #self.event_queue.sort(key=sort_timestamp, reverse=True)
+        #elif self.queue_order == self.QUEUE_ORDER_ADAPTIVE:
+            #self.event_queue.sort(key=sort_timestamp)
+            #self.event_queue.sort(key=sort_reference_time, reverse=True)
         self.event_queue.sort(key=sort_rpc)
 
     def __call__(self):
         """!
         @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
         """
-        self.logger.info('Start processing events and RPC calls.')
-        self.load_process_list()
-        self.load_event_queue()
+        self.logger.info('Entering main loop.')
+        #self.load_process_list()
+        #self.load_event_queue()
         while not self.do_shutdown:
             if self.drained():
                 self.set_no_drain()
@@ -394,9 +493,9 @@ class Eventloop(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
                 timer.start()
                 self.poll_listeners()
                 timer.stop()
-            self.sort_queue()
-            self.process_all_events_once()
-        self.logger.info('Stop processing events and RPC calls.')
+            #self.sort_queue()
+            #self.process_all_events_once()
+        self.logger.info('Exited main loop.')
 
     def fill_process_list(self):
         """!

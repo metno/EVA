@@ -90,26 +90,34 @@ class Main(eva.config.ConfigurableObject):
 
     @property
     def config_classes(self):
+        instances = []
         for key, instance in self.config_class.items():
-            yield instance
+            instances += [instance]
+        return instances
 
     @property
     def adapters(self):
+        instances = []
         for instance in self.config_classes:
             if isinstance(instance, eva.base.adapter.BaseAdapter):
-                yield instance
+                instances += [instance]
+        return instances
 
     @property
     def executors(self):
+        instances = []
         for instance in self.config_classes:
             if isinstance(instance, eva.base.executor.BaseExecutor):
-                yield instance
+                instances += [instance]
+        return instances
 
     @property
     def listeners(self):
+        instances = []
         for instance in self.config_classes:
             if isinstance(instance, eva.base.listener.BaseListener):
-                yield instance
+                instances += [instance]
+        return instances
 
     @property
     def productstatus(self):

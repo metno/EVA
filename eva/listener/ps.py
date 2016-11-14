@@ -37,7 +37,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         self.kwargs['productstatus_api'].delete_event_listener()
         del self.event_listener
 
-    def get_next_event(self, validation_callback):
+    def get_next_event(self):
         """!
         @brief Return the next message on the Kafka topic sent by Productstatus.
         """

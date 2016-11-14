@@ -114,3 +114,10 @@ class ZooKeeperDataTooLargeException(EvaException):
     @brief Thrown when trying to store a message in ZooKeeper that is too big.
     """
     pass
+
+
+class DuplicateEventException(EvaException):
+    """!
+    @brief Thrown when trying to add an event to the event queue and it already exists.
+    """
+    pass

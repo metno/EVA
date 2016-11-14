@@ -69,6 +69,7 @@ class ConfigurableObject(object):
         """
         object_ = self()
         object_.load_configuration(config, *args)
+        object_.set_config_id(args[-1])
         return (object_, object_._factory())
 
     def _factory(self):
@@ -78,6 +79,21 @@ class ConfigurableObject(object):
         @returns object
         """
         return self
+
+    def set_config_id(self, id):
+        """!
+        @brief Set the configuration ID of this class.
+        """
+        if hasattr(self, '_config_id'):
+            raise RuntimeError('Configuration ID for this class already set!')
+        self._config_id = id
+
+    @property
+    def config_id(self):
+        """!
+        @brief Return the configuration ID of this class.
+        """
+        return self._config_id
 
     def init(self):
         """!
