@@ -18,6 +18,13 @@ import productstatus.exceptions
 
 
 class EventQueueItem(object):
+    """!
+    @brief Manages jobs for a specific event.
+
+    This class is a wrapper around the eva.event.Event object, maintaining an
+    ordered list of eva.job.Job objects. The class can be iterated to retrieve
+    a list of the job objects.
+    """
     def __init__(self, event):
         # Dictionary of Job objects, indexed by the adapter configuration key.
         self.jobs = collections.OrderedDict()
@@ -34,8 +41,8 @@ class EventQueueItem(object):
     def remove_job(self, job_id):
         del self.jobs[job_id]
 
-    def has_jobs(self):
-        return len(self.jobs) > 0
+    def empty(self):
+        return len(self.jobs) == 0
 
     def job_keys(self):
         return list(self.jobs.keys())
@@ -44,9 +51,8 @@ class EventQueueItem(object):
         return [job for key, job in self.jobs.items() if job.failed()]
 
     def finished(self):
-        if len(self) == 0:
-            raise RuntimeError('empty length')
-            return False
+        if len(self.jobs) == 0:
+            raise RuntimeError('finished() should not be called on an EventQueueItem with zero jobs')
         for job in self:
             if not job.finished():
                 return False
@@ -64,30 +70,11 @@ class EventQueueItem(object):
             }
         return serialized
 
-    def __iter__(self):
-        """!
-        @brief Iterator implementation. Makes a list out of the event queue
-        item keys, and resets the iterator index to zero.
-        """
-        self.iter_index = 0
-        self.iter_keys = self.job_keys()
-        return self
-
-    def __next__(self):
-        """!
-        @brief Return the next queue item in the iterator.
-        """
-        if self.iter_index >= len(self.jobs):
-            raise StopIteration
-        item = self.jobs[self.iter_keys[self.iter_index]]
-        self.iter_index += 1
-        return item
-
-    def __len__(self):
-        return len(self.jobs)
-
     def __repr__(self):
         return '<EventQueueItem: event.id=%s>' % self.id()
+
+    def __iter__(self):
+        return iter(self.jobs.values())
 
 
 class EventQueue(eva.globe.GlobalMixin):
@@ -212,26 +199,7 @@ class EventQueue(eva.globe.GlobalMixin):
         return len(self.items) == 0
 
     def __iter__(self):
-        """!
-        @brief Iterator implementation. Makes a list out of the event queue
-        item keys, and resets the iterator index to zero.
-        """
-        self.iter_index = 0
-        self.iter_keys = self.item_keys()
-        return self
-
-    def __next__(self):
-        """!
-        @brief Return the next queue item in the iterator.
-        """
-        if self.iter_index >= len(self.items):
-            raise StopIteration
-        item = self.items[self.iter_keys[self.iter_index]]
-        self.iter_index += 1
-        return item
-
-    def __len__(self):
-        return len(self.items)
+        return iter(self.items.values())
 
 
 class Eventloop(eva.globe.GlobalMixin):
@@ -323,13 +291,15 @@ class Eventloop(eva.globe.GlobalMixin):
             # Reject messages that are too old
             if event.timestamp() < self.message_timestamp_threshold:
                 listener.acknowledge()
-                self.statsd.incr('eva_event_rejected')
+                self.statsd.incr('eva_event_too_old')
                 self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
                                     event.timestamp(),
                                     self.message_timestamp_threshold)
 
             # Checks for real Productstatus events from the message queue
             if type(event) is eva.event.ProductstatusResourceEvent:
+
+                self.statsd.incr('eva_event_productstatus')
 
                 # Make sure we get a Productstatus object from this resource
                 eva.retry_n(self.instantiate_productstatus_data,
@@ -392,10 +362,10 @@ class Eventloop(eva.globe.GlobalMixin):
             self.process_health_check()
 
             # Ask all adapters to create jobs for this event
-            if not item.has_jobs():
+            if item.empty():
                 jobs = self.create_jobs_for_event_queue_item(item)
                 if not jobs:
-                    self.logger.debug('No jobs generated for %s, discarding.', event)
+                    self.logger.debug('No jobs generated for %s, discarding.', item)
                     self.event_queue.remove_item(item)
                     continue
                 for job in jobs:
@@ -425,8 +395,8 @@ class Eventloop(eva.globe.GlobalMixin):
 
             # Process RPC events
             if isinstance(item.event, eva.event.RPCEvent):
-                event.data.set_executor_instance(self)
-                self.process_rpc_event(event)
+                item.event.data.set_executor_instance(self)
+                self.process_rpc_event(item.event)
                 continue
 
             for job in item:
@@ -438,11 +408,6 @@ class Eventloop(eva.globe.GlobalMixin):
                     # reload event data in order to get fresh Productstatus data
                     del item.resource
                     self.instantiate_productstatus_data(item.event)
-
-                # Store updated item status in ZooKeeper
-                if job.status_changed():
-                    self.statsd.incr('eva_job_status_change')
-                    self.event_queue.store_item(item)
 
         return not self.event_queue.empty()
 
@@ -506,6 +471,7 @@ class Eventloop(eva.globe.GlobalMixin):
             #self.sort_queue()
             self.process_health_check()
             self.process_all_events_once()
+            self.store_job_status_change()
             self.report_job_status_metrics()
             self.remove_finished_events()
         self.logger.info('Exited main loop.')
@@ -520,6 +486,20 @@ class Eventloop(eva.globe.GlobalMixin):
         for status, count in status_count.items():
             self.statsd.gauge('eva_job_status_count', count, tags={'status': status})
 
+    def store_job_status_change(self):
+        """!
+        @brief Check if any job statuses have changed, and store the new
+        statuses in the event queue's ZooKeeper instance.
+        """
+        changed = []
+        for item in self.event_queue:
+            for job in item:
+                if job.status_changed():
+                    changed += [item]
+        for item in set(changed):
+            self.event_queue.store_item(item)
+            self.statsd.incr('eva_job_status_change')
+
     def create_job_for_event_queue_item(self, item, adapter):
         """!
         @brief Given an EventQueueItem object, create a job based on its Event.
@@ -530,7 +510,8 @@ class Eventloop(eva.globe.GlobalMixin):
         if not adapter.validate_resource(resource):
             return None
 
-        job = adapter.create_job(item.event.id(), resource)
+        id = item.event.id() + '.' + adapter.config_id
+        job = adapter.create_job(id, resource)
 
         if not job:
             return None
@@ -557,11 +538,11 @@ class Eventloop(eva.globe.GlobalMixin):
 
             if job is None:
                 self.logger.debug('Adapter did not generate a job: %s', adapter.config_id)
-                self.statsd.incr('eva_productstatus_rejected_events', tags={'adapter': adapter.config_id})
+                self.statsd.incr('eva_event_rejected', tags={'adapter': adapter.config_id})
                 continue
 
             self.logger.debug('Adapter accepted event: %s', adapter.config_id)
-            self.statsd.incr('eva_productstatus_accepted_events', tags={'adapter': adapter.config_id})
+            self.statsd.incr('eva_event_accepted', tags={'adapter': adapter.config_id})
 
             jobs += [job]
 
