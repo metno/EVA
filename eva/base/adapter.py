@@ -118,6 +118,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     }
 
     _OPTIONAL_CONFIG = [
+        'concurrency',
         'input_with_hash',
         'productstatus_api_key',
         'productstatus_username',
@@ -178,6 +179,10 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     @property
     def api(self):
         return self.globe.productstatus
+
+    @property
+    def concurrency(self):
+        return self.env['concurrency']
 
     def setup_process_partial(self):
         """!

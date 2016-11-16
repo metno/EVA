@@ -479,7 +479,6 @@ class Main(eva.config.ConfigurableObject):
 
         try:
             evaloop = eva.eventloop.Eventloop(self.adapters,
-                                              self.executors,
                                               self.listeners,
                                               self.health_check_server,
                                               )

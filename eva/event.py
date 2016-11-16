@@ -14,10 +14,10 @@ class Event(object):
         self.kwargs = kwargs
 
     def __str__(self):
-        return str(self.data)
+        return str(self.id())
 
     def __repr__(self):
-        return str(self)
+        return '<Event: id=%s>' % str(self.id())
 
     def raw_message(self):
         """!

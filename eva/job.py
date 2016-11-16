@@ -9,6 +9,15 @@ INITIALIZED = "INITIALIZED"
 STARTED = "STARTED"
 COMPLETE = "COMPLETE"
 FAILED = "FAILED"
+FINISHED = "FINISHED"
+
+ALL_STATUSES = (
+    INITIALIZED,
+    STARTED,
+    COMPLETE,
+    FAILED,
+    FINISHED,
+)
 
 
 class Job(eva.globe.GlobalMixin):
@@ -27,15 +36,23 @@ class Job(eva.globe.GlobalMixin):
         self.stderr = []  # multi-line standard error
         self.set_status(INITIALIZED)  # what state the job is in
         self.next_poll_time = eva.now_with_timezone()
+        self._status_changed = False
 
     def set_status(self, status):
         """!
         @brief Verify and set a new Job.status variable, and log the event.
         """
-        assert status in [INITIALIZED, STARTED, COMPLETE, FAILED]
+        assert status in ALL_STATUSES
         self.status = status
         self.logger.info('Setting job status to %s', self.status)
         self.statsd.incr('job_%s' % status.lower())
+        self._status_changed = True
+
+    def status_changed(self):
+        r = self._status_changed
+        if r:
+            self._status_changed = False
+        return r
 
     def set_next_poll_time(self, msecs):
         """!
@@ -75,6 +92,12 @@ class Job(eva.globe.GlobalMixin):
         @brief Returns True if Job.status equals Job.FAILED.
         """
         return self.status == FAILED
+
+    def finished(self):
+        """!
+        @brief Returns True if Job.status equals Job.FINISHED.
+        """
+        return self.status == FINISHED
 
     def create_logger(self, logger):
         """!

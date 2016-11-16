@@ -20,7 +20,7 @@ import productstatus.exceptions
 class EventQueueItem(object):
     def __init__(self, event):
         # Dictionary of Job objects, indexed by the adapter configuration key.
-        self.jobs = {}
+        self.jobs = collections.OrderedDict()
         assert isinstance(event, eva.event.Event)
         self.event = event
 
@@ -28,13 +28,29 @@ class EventQueueItem(object):
         return self.event.id()
 
     def add_job(self, job):
+        assert isinstance(job, eva.job.Job)
         self.jobs[job.id] = job
 
     def remove_job(self, job_id):
         del self.jobs[job_id]
 
+    def has_jobs(self):
+        return len(self.jobs) > 0
+
     def job_keys(self):
         return list(self.jobs.keys())
+
+    def failed_jobs(self):
+        return [job for key, job in self.jobs.items() if job.failed()]
+
+    def finished(self):
+        if len(self) == 0:
+            raise RuntimeError('empty length')
+            return False
+        for job in self:
+            if not job.finished():
+                return False
+        return True
 
     def serialize(self):
         serialized = {}
@@ -44,9 +60,34 @@ class EventQueueItem(object):
         for key, job in self.jobs.items():
             serialized['jobs'][key] = {
                 'status': job.status,
-                'adapter': job.adapter,
+                'adapter': job.adapter.config_id,
             }
         return serialized
+
+    def __iter__(self):
+        """!
+        @brief Iterator implementation. Makes a list out of the event queue
+        item keys, and resets the iterator index to zero.
+        """
+        self.iter_index = 0
+        self.iter_keys = self.job_keys()
+        return self
+
+    def __next__(self):
+        """!
+        @brief Return the next queue item in the iterator.
+        """
+        if self.iter_index >= len(self.jobs):
+            raise StopIteration
+        item = self.jobs[self.iter_keys[self.iter_index]]
+        self.iter_index += 1
+        return item
+
+    def __len__(self):
+        return len(self.jobs)
+
+    def __repr__(self):
+        return '<EventQueueItem: event.id=%s>' % self.id()
 
 
 class EventQueue(eva.globe.GlobalMixin):
@@ -85,16 +126,45 @@ class EventQueue(eva.globe.GlobalMixin):
             raise eva.exceptions.DuplicateEventException('Event %s already exists in the event queue.', id)
         item = EventQueueItem(event)
         self.items[id] = item
-        try:
-            self.store_list()
-            self.store_item(item)
-        except eva.exceptions.ZooKeeperDataTooLargeException as e:
-            self.logger.warning(str(e))
-            return False
+        self.store_item(item)
+        self.logger.debug('Event added to event queue: %s', event)
+        return item
+        #try:
+        #except eva.exceptions.ZooKeeperDataTooLargeException as e:
+            #self.logger.warning(str(e))
+            #return False
         #except kazoo.exceptions.ZooKeeperError as e:
             #self.logger.warning(str(e))
             #return False
         return item
+
+    def active_jobs_in_adapter(self, adapter):
+        active = 0
+        for item in self:
+            for job in item:
+                if job.started():
+                    active += 1
+        return active
+
+    def status_count(self):
+        """!
+        @brief Return a hash with status codes and the total number of jobs in
+        the event queue having that specific status.
+        """
+        status_map = dict(zip(eva.job.ALL_STATUSES, [0] * len(eva.job.ALL_STATUSES)))
+        for item in self:
+            for job in item:
+                status_map[job.status] += 1
+        return status_map
+
+    def remove_item(self, item):
+        assert isinstance(item, EventQueueItem)
+        id = item.id()
+        assert id in self.items
+        text = 'Event removed from event queue: %s' % item.event
+        del self.items[id]
+        self.delete_stored_item(id)
+        self.logger.debug(text)
 
     def item_keys(self):
         return list(self.items.keys())
@@ -103,6 +173,7 @@ class EventQueue(eva.globe.GlobalMixin):
         self.store_serialized_data(self.zk_base_path, self.item_keys(), metric_base='event_queue')
 
     def store_item(self, item):
+        assert isinstance(item, EventQueueItem)
         base_path = os.path.join(self.zk_base_path, item.id())
         self.zookeeper.ensure_path(base_path)
         serialized = item.serialize()
@@ -113,18 +184,54 @@ class EventQueue(eva.globe.GlobalMixin):
             self.zookeeper.ensure_path(path)
             self.store_serialized_data(os.path.join(path, 'adapter'), job['adapter'])
             self.store_serialized_data(os.path.join(path, 'status'), job['status'])
+        self.store_list()
+
+    def delete_stored_item(self, item_id):
+        assert isinstance(item_id, str)
+        path = os.path.join(self.zk_base_path, item_id)
+        self.zookeeper.delete(path, recursive=True)
+        self.logger.debug('Recursively deleted ZooKeeper path: %s', path)
+        self.store_list()
 
     def store_serialized_data(self, path, data, metric_base=None):
         """!
         @brief Store structured data in ZooKeeper.
-        @returns True if the data could be stored in ZooKeeper, False otherwise.
         @throws kazoo.exceptions.ZooKeeperError on failure
         """
         count, size = eva.zk.store_serialized_data(self.zookeeper, path, data)
+        self.logger.debug('Stored %d items of total %d bytes at ZooKeeper path %s', count, size, path)
         if not metric_base:
             return
-        self.statsd.gauge('eva_zookeeper_' + metric_base + '_count', count)
-        self.statsd.gauge('eva_zookeeper_' + metric_base + '_size', size)
+        self.statsd.gauge('eva_' + metric_base + '_count', count)
+        self.statsd.gauge('eva_' + metric_base + '_size', size)
+
+    def empty(self):
+        """!
+        @brief Returns True if the event queue list is empty.
+        """
+        return len(self.items) == 0
+
+    def __iter__(self):
+        """!
+        @brief Iterator implementation. Makes a list out of the event queue
+        item keys, and resets the iterator index to zero.
+        """
+        self.iter_index = 0
+        self.iter_keys = self.item_keys()
+        return self
+
+    def __next__(self):
+        """!
+        @brief Return the next queue item in the iterator.
+        """
+        if self.iter_index >= len(self.items):
+            raise StopIteration
+        item = self.items[self.iter_keys[self.iter_index]]
+        self.iter_index += 1
+        return item
+
+    def __len__(self):
+        return len(self.items)
 
 
 class Eventloop(eva.globe.GlobalMixin):
@@ -150,12 +257,10 @@ class Eventloop(eva.globe.GlobalMixin):
 
     def __init__(self,
                  adapters,
-                 executor,
                  listeners,
                  health_check_server,
                  ):
         self.adapters = adapters
-        self.executor = executor
         self.listeners = listeners
         self.health_check_server = health_check_server
 
@@ -190,6 +295,9 @@ class Eventloop(eva.globe.GlobalMixin):
         """!
         @brief Poll for new messages from all message listeners.
         """
+        timer = self.statsd.timer('eva_poll_listeners')
+        timer.start()
+
         for listener in self.listeners:
             try:
                 event = listener.get_next_event()
@@ -203,46 +311,261 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.logger.warning('Exception while receiving event: %s', e)
                 continue
 
-            # Duplicate events in queue should not happen
-            #if event.id() in [x.id() for x in self.event_queue]:
-                #self.statsd.incr('duplicate_event')
-                #self.logger.warning('Event with id %s is already in the event queue. This is most probably due to a previous Kafka commit error. The message has been discarded.', event.id())
-                #continue
+            self.statsd.incr('eva_event_received')
 
             # Accept heartbeats without adding them to queue
             if isinstance(event, eva.event.ProductstatusHeartbeatEvent):
                 listener.acknowledge()
+                self.statsd.incr('eva_event_heartbeat')
                 self.set_health_check_timestamp(eva.now_with_timezone())
                 continue
 
-            # Fast acknowledging of messages, adds it to event queue and stores queue in ZooKeeper
+            # Reject messages that are too old
+            if event.timestamp() < self.message_timestamp_threshold:
+                listener.acknowledge()
+                self.statsd.incr('eva_event_rejected')
+                self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
+                                    event.timestamp(),
+                                    self.message_timestamp_threshold)
+
+            # Checks for real Productstatus events from the message queue
+            if type(event) is eva.event.ProductstatusResourceEvent:
+
+                # Make sure we get a Productstatus object from this resource
+                eva.retry_n(self.instantiate_productstatus_data,
+                            args=[event],
+                            exceptions=self.RECOVERABLE_EXCEPTIONS,
+                            give_up=0,
+                            logger=self.logger)
+
+                # Only process messages with the correct version
+                if event.protocol_version()[0] != 1:
+                    self.logger.warning('Event version is %s, but I am only accepting major version 1. Discarding message.', '.'.join(event.protocol_version()))
+                    self.statsd.incr('eva_event_version_unsupported')
+                    listener.acknowledge()
+                    continue
+
+                # Discard messages that date from an earlier Resource version
+                if not self.event_matches_object_version(event):
+                    self.logger.warning('Resource object version is %d, expecting it to be equal to the Event object version %d. The message is too old, discarding.', event.resource.object_version, event.object_version())
+                    self.statsd.incr('eva_resource_object_version_too_old')
+                    listener.acknowledge()
+                    continue
+
+            # Add message to event queue
             try:
                 self.event_queue.add_event(event)
-                #self.add_event_to_queue(event):
             except eva.exceptions.DuplicateEventException as e:
-                self.statsd.incr('duplicate_event')
+                self.statsd.incr('eva_event_duplicate')
                 self.logger.warning(e)
                 self.logger.warning('This is most probably due to a previous Kafka commit error. The message has been discarded.')
 
             listener.acknowledge()
 
-    def event_queue_empty(self):
-        """!
-        @returns True if the event queue is empty, False otherwise.
-        """
-        return len(self.event_queue) == 0
+        timer.stop()
 
-    def process_list_empty(self):
+    def remove_finished_events(self):
         """!
-        @returns True if the process list is empty, False otherwise.
+        @brief Process any events in the process list once.
+        @returns True if there is anything left to process, false otherwise.
         """
-        return len(self.process_list) == 0
+        finished = []
+        for item in self.event_queue:
+            if item.finished():
+                finished += [item]
+        if not finished:
+            return
+        self.logger.debug('Removing finished events from queue...')
+        for item in finished:
+            self.logger.debug('Removing: %s', item)
+            self.event_queue.remove_item(item)
+        self.logger.debug('Finished removing finished events from queue.')
 
-    def both_queues_empty(self):
+    def process_all_events_once(self):
         """!
-        @returns True if the event queue and process lists are both empty, False otherwise.
+        @brief Process any events in the process list once.
+        @returns True if there is anything left to process, false otherwise.
         """
-        return self.event_queue_empty() and self.process_list_empty()
+        for item in self.event_queue:
+
+            # Answer health check requests
+            self.process_health_check()
+
+            # Ask all adapters to create jobs for this event
+            if not item.has_jobs():
+                jobs = self.create_jobs_for_event_queue_item(item)
+                if not jobs:
+                    self.logger.debug('No jobs generated for %s, discarding.', event)
+                    self.event_queue.remove_item(item)
+                    continue
+                for job in jobs:
+                    self.logger.debug('Adding job %s to event queue item %s', job, item)
+                    item.add_job(job)
+                self.event_queue.store_item(item)
+
+            # Check if any jobs for this event has failed, and recreate them if necessary
+            failed_jobs = item.failed_jobs()
+            if failed_jobs:
+                jobs = []
+                for failed_job in item.failed_jobs():
+                    jobs += [self.create_job_for_event_queue_item(self, item, failed_job.adapter)]
+                    self.logger.debug('Removing failed job: %s', failed_job)
+                    item.remove_job(failed_job)
+                for job in jobs:
+                    self.logger.debug('Re-queueing failed job replacement: %s', job)
+                    item.add_job(job)
+                    self.statsd.incr('eva_requeued_jobs')
+                self.event_queue.store_item(item)
+
+            # Postpone processing of event if it has a delay
+            delay = item.event.get_processing_delay().total_seconds()
+            if delay > 0:
+                self.logger.info('Postponing processing of event due to %.1f seconds event delay', delay)
+                continue
+
+            # Process RPC events
+            if isinstance(item.event, eva.event.RPCEvent):
+                event.data.set_executor_instance(self)
+                self.process_rpc_event(event)
+                continue
+
+            for job in item:
+                try:
+                    if (not job.initialized()) or job.adapter.concurrency > self.event_queue.active_jobs_in_adapter(job.adapter):
+                        self.process_job(job)
+                except self.RECOVERABLE_EXCEPTIONS as e:
+                    self.logger.error('Re-queueing failed event %s due to error: %s', item.event, e)
+                    # reload event data in order to get fresh Productstatus data
+                    del item.resource
+                    self.instantiate_productstatus_data(item.event)
+
+                # Store updated item status in ZooKeeper
+                if job.status_changed():
+                    self.statsd.incr('eva_job_status_change')
+                    self.event_queue.store_item(item)
+
+        return not self.event_queue.empty()
+
+    def process_job(self, job):
+        """!
+        @brief Run asynchronous processing of an event queue item.
+
+        This function will, based on the status of the event:
+
+        * Ask the Adapter to initialize the Job
+        * Send the Job for execution to the Executor
+        * Send a finish message to the Adapter
+        """
+
+        # Start job if it is not running
+        if job.initialized():
+            job.logger.info('Sending job to executor for asynchronous execution...')
+            job.timer.start()
+            job.adapter.executor.execute_async(job)
+            job.logger.info('Job has been sent successfully to the executor.')
+
+        # Check status of the job
+        elif job.started():
+            if not job.poll_time_reached():
+                return
+            job.logger.debug('Job is running, polling executor for job status...')
+            job.adapter.executor.sync(job)
+            job.logger.debug('Finished polling executor for job status.')
+
+        # Tell adapter that the job has finished
+        elif job.complete() or job.failed():
+            job.timer.stop()
+            job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', job.timer.total_time_msec() / 1000.0)
+            #if not job.complete():
+                #self.register_job_failure(job)
+            #else:
+                #self.register_job_success(job)
+            job.adapter.finish_job(job)
+            try:
+                job.adapter.generate_and_post_resources(job)
+            except eva.exceptions.JobNotCompleteException as e:
+                # ignore non-fatal errors
+                job.logger.error(e)
+                job.logger.warning('Job is not complete, skipping anyway.')
+            job.logger.info('Adapter has finished processing the job.')
+            job.set_status(eva.job.FINISHED)
+            #self.remove_event_from_queues(event)
+
+    def __call__(self):
+        """!
+        @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
+        """
+        self.logger.info('Entering main loop.')
+        #self.load_process_list()
+        #self.load_event_queue()
+        while not self.do_shutdown:
+            if self.drained():
+                self.set_no_drain()
+            if not self.draining():
+                self.poll_listeners()
+            #self.sort_queue()
+            self.process_health_check()
+            self.process_all_events_once()
+            self.report_job_status_metrics()
+            self.remove_finished_events()
+        self.logger.info('Exited main loop.')
+
+    def report_job_status_metrics(self):
+        """!
+        @brief Report job status metrics to statsd.
+        """
+        status_count = self.event_queue.status_count()
+        #strs = ['%s=%d' % (status, count) for status, count in status_count.items()]
+        #self.logger.debug(' '.join(strs))
+        for status, count in status_count.items():
+            self.statsd.gauge('eva_job_status_count', count, tags={'status': status})
+
+    def create_job_for_event_queue_item(self, item, adapter):
+        """!
+        @brief Given an EventQueueItem object, create a job based on its Event.
+        @returns eva.job.Job
+        """
+        resource = self.productstatus[item.event.data]
+
+        if not adapter.validate_resource(resource):
+            return None
+
+        job = adapter.create_job(item.event.id(), resource)
+
+        if not job:
+            return None
+
+        job.resource = resource
+        job.timer = self.statsd.timer('eva_execution_time')
+        job.logger.info('Created Job object: %s', job)
+        job.adapter = adapter
+
+        return job
+
+    def create_jobs_for_event_queue_item(self, item):
+        """!
+        @brief Given an EventQueueItem object, run through all adapters and
+        create jobs based on the Event.
+        @returns List of Job objects
+        """
+        jobs = []
+
+        self.logger.debug('Start generating jobs for %s', item)
+
+        for adapter in self.adapters:
+            job = self.create_job_for_event_queue_item(item, adapter)
+
+            if job is None:
+                self.logger.debug('Adapter did not generate a job: %s', adapter.config_id)
+                self.statsd.incr('eva_productstatus_rejected_events', tags={'adapter': adapter.config_id})
+                continue
+
+            self.logger.debug('Adapter accepted event: %s', adapter.config_id)
+            self.statsd.incr('eva_productstatus_accepted_events', tags={'adapter': adapter.config_id})
+
+            jobs += [job]
+
+        return jobs
 
     def set_drain(self):
         """!
@@ -273,15 +596,9 @@ class Eventloop(eva.globe.GlobalMixin):
 
     def drained(self):
         """!
-        @returns True if EVA is draining queues for messages AND both process queues are empty.
+        @returns True if EVA is draining queues for messages AND event queue is empty.
         """
-        return self.draining() and self.both_queues_empty()
-
-    def process_list_full(self):
-        """!
-        @returns True if the process list is empty, False otherwise.
-        """
-        return len(self.process_list) >= self.concurrency
+        return self.draining() and self.event_queue.empty()
 
     def add_event_to_queue(self, event):
         """!
@@ -305,46 +622,6 @@ class Eventloop(eva.globe.GlobalMixin):
         @brief Return the ZooKeeper path to the store of process list messages.
         """
         return self.zookeeper_path('process_list')
-
-    def store_serialized_data(self, path, data, metric_base, log_name):
-        """!
-        @brief Store structured data in ZooKeeper.
-        @returns True if the data could be stored in ZooKeeper, False otherwise.
-        @throws kazoo.exceptions.ZooKeeperError on failure
-        """
-        if not self.zookeeper:
-            return True
-        raw = [x.raw_message() for x in data if x is not None]
-        self.logger.debug('Storing %s in ZooKeeper, number of items: %d', log_name, len(raw))
-        try:
-            count, size = eva.zk.store_serialized_data(self.zookeeper, path, raw)
-        except eva.exceptions.ZooKeeperDataTooLargeException as e:
-            self.logger.warning(str(e))
-            return False
-        self.logger.debug('Successfully stored %d items with size %d', count, size)
-        self.statsd.gauge(metric_base + '_count', count)
-        self.statsd.gauge(metric_base + '_size', size)
-        return True
-
-    def store_event_queue(self):
-        """!
-        @brief Store the event queue in ZooKeeper.
-        @returns True if the data could be stored in ZooKeeper, False otherwise.
-        @throws kazoo.exceptions.ZooKeeperError on failure
-        """
-        if not self.zookeeper:
-            return True
-        return self.store_serialized_data(self.zookeeper_event_queue_path(), self.event_queue, 'event_queue', 'event queue')
-
-    def store_process_list(self):
-        """!
-        @brief Store the event processing list in ZooKeeper.
-        @returns True if the data could be stored in ZooKeeper, False otherwise.
-        @throws kazoo.exceptions.ZooKeeperError on failure
-        """
-        if not self.zookeeper:
-            return True
-        return self.store_serialized_data(self.zookeeper_process_list_path(), self.process_list, 'process_list', 'process list')
 
     def load_serialized_data(self, path):
         """!
@@ -401,8 +678,9 @@ class Eventloop(eva.globe.GlobalMixin):
         """!
         @brief Make sure a ProductstatusResourceEvent has a Productstatus resource in Event.data.
         """
-        if isinstance(event.data, str) and type(event) == eva.event.ProductstatusResourceEvent:
-            event.data = self.productstatus[event.data]
+        if type(event) is not eva.event.ProductstatusResourceEvent:
+            return None
+        event.resource = self.productstatus[event.data]
 
     def process_health_check(self):
         """!
@@ -464,10 +742,10 @@ class Eventloop(eva.globe.GlobalMixin):
         def sort_reference_time(event):
             if not isinstance(event, eva.event.ProductstatusResourceEvent):
                 return eva.epoch_with_timezone()
-            self.instantiate_productstatus_data(event)
-            if event.data._collection._resource_name != 'datainstance':
+            #self.instantiate_productstatus_data(event)
+            if event.resource._collection._resource_name != 'datainstance':
                 return eva.epoch_with_timezone()
-            return event.data.data.productinstance.reference_time
+            return event.resource.data.productinstance.reference_time
 
         #if self.queue_order == self.QUEUE_ORDER_FIFO:
             #self.event_queue.sort(key=sort_timestamp)
@@ -477,48 +755,6 @@ class Eventloop(eva.globe.GlobalMixin):
             #self.event_queue.sort(key=sort_timestamp)
             #self.event_queue.sort(key=sort_reference_time, reverse=True)
         self.event_queue.sort(key=sort_rpc)
-
-    def __call__(self):
-        """!
-        @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
-        """
-        self.logger.info('Entering main loop.')
-        #self.load_process_list()
-        #self.load_event_queue()
-        while not self.do_shutdown:
-            if self.drained():
-                self.set_no_drain()
-            if not self.draining():
-                timer = self.statsd.timer('poll_listeners')
-                timer.start()
-                self.poll_listeners()
-                timer.stop()
-            #self.sort_queue()
-            #self.process_all_events_once()
-        self.logger.info('Exited main loop.')
-
-    def fill_process_list(self):
-        """!
-        @brief Iteration of the main loop. Fills the processing list with events from the event queue.
-        @returns True if some events were moved into the other queue, False otherwise.
-        """
-        added = False
-        while not self.event_queue_empty():
-            if self.process_list_full():
-                return added
-            for event in self.event_queue:
-                # Discard message if below timestamp threshold
-                if event.timestamp() < self.message_timestamp_threshold:
-                    self.logger.warning('Skip processing event because resource is older than threshold: %s vs %s',
-                                        event.timestamp(),
-                                        self.message_timestamp_threshold)
-                    self.remove_event_from_queues(event)
-                    self.statsd.incr('productstatus_rejected_events')
-                else:
-                    self.move_to_process_list(event)
-                    added = True
-                break
-        return added
 
     def register_job_failure(self, event):
         """!
@@ -561,132 +797,13 @@ class Eventloop(eva.globe.GlobalMixin):
 
         self.mailer.send_email(subject, text)
 
-    def process_all_events_once(self):
-        """!
-        @brief Process any events in the process list once.
-        @returns True if there is anything left to process, false otherwise.
-        """
-        self.process_health_check()
-        self.fill_process_list()
-
-        for index, event in enumerate(self.process_list):
-            self.process_health_check()
-
-            if isinstance(event, eva.event.RPCEvent):
-                event.data.set_executor_instance(self)
-                self.process_rpc_event(event)
-                continue
-
-                delay = event.get_processing_delay().total_seconds()
-                if delay > 0:
-                    self.logger.info('Postponing processing of event due to %.1f seconds event delay', delay)
-                    continue
-
-            try:
-                self.process_event(event)
-            except self.RECOVERABLE_EXCEPTIONS as e:
-                if hasattr(event, 'job'):
-                    del event.job
-                self.logger.error('Re-queueing failed event %s due to error: %s', event, e)
-                self.statsd.incr('requeued_jobs')
-                # reload event in order to get fresh Productstatus data
-                if isinstance(event, eva.event.ProductstatusResourceEvent):
-                    self.logger.info('Re-creating event from memory in order to reload Productstatus data.')
-                    self.process_list[index] = event.factory(event.message)
-                continue
-
-        return not self.both_queues_empty()
-
     def event_matches_object_version(self, event):
         """!
         @brief Return True if Event.object_version() equals Resource.object_version, False otherwise.
         """
         if not isinstance(event, eva.event.ProductstatusResourceEvent):
             return False
-        self.instantiate_productstatus_data(event)
-        return event.object_version() == event.data.object_version
-
-    def process_event(self, event):
-        """!
-        @brief Run asynchronous processing of an current event.
-
-        This function will, based on the status of the event:
-
-        * Ask the Adapter to initialize the Job
-        * Send the Job for execution to the Executor
-        * Send a finish message to the Adapter
-        """
-
-        # Checks for real Productstatus events from the message queue
-        if type(event) is eva.event.ProductstatusResourceEvent:
-
-            # Only process messages with the correct version
-            if event.protocol_version()[0] != 1:
-                self.logger.warning('Event version is %s, but I am only accepting major version 1. Discarding message.', '.'.join(event.protocol_version()))
-                self.statsd.incr('event_version_unsupported')
-                self.remove_event_from_queues(event)
-                return
-
-            # Discard messages that date from an earlier Resource version
-            if not self.event_matches_object_version(event):
-                self.logger.warning('Resource object version is %d, expecting it to be equal to the Event object version %d. The message is too old, discarding.', event.data.object_version, event.object_version())
-                self.statsd.incr('resource_object_version_too_old')
-                self.remove_event_from_queues(event)
-                return
-
-        # Create event job if it has not been created yet
-        if not hasattr(event, 'job'):
-            self.logger.debug('Start processing event: %s', event)
-            self.instantiate_productstatus_data(event)
-            resource = event.data
-            if not self.adapter.validate_resource(resource):
-                self.logger.debug('Adapter did not validate the current event, skipping.')
-                self.statsd.incr('productstatus_rejected_events')
-                self.remove_event_from_queues(event)
-            else:
-                self.logger.debug('Creating a Job object for the current event...')
-                self.statsd.incr('productstatus_accepted_events')
-                event.job = self.adapter.create_job(event.id(), resource)
-                if not event.job:
-                    self.logger.debug('No Job object was returned by the adapter; assuming no-op.')
-                    self.remove_event_from_queues(event)
-                else:
-                    event.job.resource = resource
-                    event.job.timer = self.statsd.timer('execution_time')
-                    event.job.logger.info('Created Job object for event: %s', event)
-
-        # Start job if it is not running
-        elif event.job.initialized():
-            event.job.logger.info('Sending job to executor for asynchronous execution...')
-            event.job.timer.start()
-            self.executor.execute_async(event.job)
-            event.job.logger.info('Job has been sent successfully to the executor.')
-
-        # Check status of the job
-        elif event.job.started():
-            if event.job.poll_time_reached():
-                event.job.logger.debug('Job is running, polling executor for job status...')
-                self.executor.sync(event.job)
-                event.job.logger.debug('Finished polling executor for job status.')
-
-        # Tell adapter that the job has finished
-        elif event.job.complete() or event.job.failed():
-            event.job.timer.stop()
-            event.job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', event.job.timer.total_time_msec() / 1000.0)
-            if not event.job.complete():
-                self.register_job_failure(event)
-            else:
-                self.register_job_success(event)
-            self.adapter.finish_job(event.job)
-            try:
-                self.adapter.generate_and_post_resources(event.job)
-            except eva.exceptions.JobNotCompleteException as e:
-                # ignore non-fatal errors
-                event.job.logger.error(e)
-                event.job.logger.warning('Job is not complete, skipping anyway.')
-            event.job.logger.info('Adapter has finished processing the job.')
-            self.remove_event_from_queues(event)
-            self.logger.debug('Finished processing event: %s', event)
+        return event.object_version() == event.resource.object_version
 
     def process_rpc_event(self, event):
         """!
