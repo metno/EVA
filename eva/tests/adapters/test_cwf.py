@@ -13,17 +13,23 @@ import eva.adapter.cwf
 
 class TestCWFAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.CWFAdapter
-    environment = {
-        'EVA_CWF_DOMAIN': "NRPA_EUROPE_0_1",
-        'EVA_CWF_INPUT_MIN_DAYS': "4",
-        'EVA_CWF_MODULES': "ecdis4cwf/1.1.0",
-        'EVA_CWF_OUTPUT_DAYS': "3",
-        'EVA_CWF_OUTPUT_DIRECTORY_PATTERN': "/tmp/{{reference_time|iso8601_compact}}",
-        'EVA_CWF_SCRIPT_PATH': "ecdis4cwf.sh",
-        'EVA_INPUT_DATA_FORMAT': "nil",
-        'EVA_INPUT_PRODUCT': "nil",
-        'EVA_INPUT_SERVICE_BACKEND': "nil",
-    }
+    config_ini = \
+"""
+[adapter]
+cwf_domain = NRPA_EUROPE_0_1
+cwf_input_min_days = 4
+cwf_modules = ecdis4cwf/1.1.0
+cwf_output_days = 3
+cwf_output_directory_pattern = /tmp/{{reference_time|iso8601_compact}}
+cwf_script_path = ecdis4cwf.sh
+input_data_format = nil
+input_product = nil
+input_service_backend = nil
+"""  # NOQA
+
+    def setUp(self):
+        super().setUp()
+        self.setup_productstatus()
 
     def test_parse_file_recognition_output(self):
         stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;',

@@ -18,47 +18,47 @@ import productstatus.api
 
 class CWFAdapter(eva.base.adapter.BaseAdapter):
     CONFIG = {
-        'EVA_CWF_DOMAIN': {
+        'cwf_domain': {
             'type': 'string',
             'help': 'Geographical domain to process.',
             'default': 'NRPA_EUROPE_0_1',
         },
-        'EVA_CWF_INPUT_MIN_DAYS': {
+        'cwf_input_min_days': {
             'type': 'int',
             'help': 'Number of forecast days required in source dataset.',
             'default': '2',
         },
-        'EVA_CWF_OUTPUT_DAYS': {
+        'cwf_output_days': {
             'type': 'int',
             'help': 'Number of forecast days to generate in the resulting dataset.',
             'default': '3',
         },
-        'EVA_CWF_OUTPUT_DIRECTORY_PATTERN': {
+        'cwf_output_directory_pattern': {
             'type': 'string',
             'help': 'Destination output directory',
             'default': '',
         },
-        'EVA_CWF_PARALLEL': {
+        'cwf_parallel': {
             'type': 'int',
             'help': 'Number of processes run in parallel.',
             'default': '1',
         },
-        'EVA_CWF_SCRIPT_PATH': {
+        'cwf_script_path': {
             'type': 'string',
             'help': 'Full path to the executable CWF script that should be run.',
             'default': '',
         },
-        'EVA_CWF_LIFETIME': {
+        'cwf_lifetime': {
             'type': 'list_int',
             'help': 'Comma-separated list of DataInstance lifetimes. If the number of files produced is less than the list size, the value of the last list instance is used for all subsequent files.',
             'default': '72,24',
         },
-        'EVA_CWF_MODULES': {
+        'cwf_modules': {
             'type': 'list_string',
             'help': 'Comma-separated list of modules to load before running.',
             'default': '',
         },
-        'EVA_CWF_NML_DATA_FORMAT': {
+        'cwf_nml_data_format': {
             'type': 'string',
             'help': 'Which Productstatus data format to use for NML files',
             'default': 'nml',
@@ -66,42 +66,42 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
     }
 
     REQUIRED_CONFIG = [
-        'EVA_CWF_OUTPUT_DIRECTORY_PATTERN',
-        'EVA_CWF_SCRIPT_PATH',
-        'EVA_INPUT_DATA_FORMAT',
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_SERVICE_BACKEND',
+        'cwf_output_directory_pattern',
+        'cwf_script_path',
+        'input_data_format',
+        'input_product',
+        'input_service_backend',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_CWF_DOMAIN',
-        'EVA_CWF_INPUT_MIN_DAYS',
-        'EVA_CWF_LIFETIME',
-        'EVA_CWF_MODULES',
-        'EVA_CWF_NML_DATA_FORMAT',
-        'EVA_CWF_OUTPUT_DAYS',
-        'EVA_CWF_PARALLEL',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_DATA_FORMAT',
+        'cwf_domain',
+        'cwf_input_min_days',
+        'cwf_lifetime',
+        'cwf_modules',
+        'cwf_nml_data_format',
+        'cwf_output_days',
+        'cwf_parallel',
+        'output_product',
+        'output_service_backend',
+        'output_data_format',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_DATA_FORMAT',
+        'output_product',
+        'output_service_backend',
+        'output_data_format',
     ]
 
     def init(self, *args, **kwargs):
-        if self.env['EVA_CWF_PARALLEL'] < 1:
+        if self.env['cwf_parallel'] < 1:
             raise eva.exceptions.InvalidConfigurationException(
-                'Number of instances in EVA_CWF_PARALLEL must be equal to or higher than 1.'
+                'Number of instances in cwf_parallel must be equal to or higher than 1.'
             )
         if self.post_to_productstatus():
-            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
-            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-            self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
-            self.nml_data_format = self.api.dataformat[self.env['EVA_CWF_NML_DATA_FORMAT']]
+            self.output_product = self.api.product[self.env['output_product']]
+            self.output_service_backend = self.api.servicebackend[self.env['output_service_backend']]
+            self.output_data_format = self.api.dataformat[self.env['output_data_format']]
+            self.nml_data_format = self.api.dataformat[self.env['cwf_nml_data_format']]
 
     def is_netcdf_data_output(self, data):
         """!
@@ -134,33 +134,33 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
 
         job = eva.job.Job(message_id, self.globe)
         job.output_directory_template = self.template.from_string(
-            self.env['EVA_CWF_OUTPUT_DIRECTORY_PATTERN']
+            self.env['cwf_output_directory_pattern']
         )
         job.output_directory = job.output_directory_template.render(
             reference_time=reference_time,
-            domain=self.env['EVA_CWF_DOMAIN'],
+            domain=self.env['cwf_domain'],
         )
 
         cmd = []
         cmd += ['#/bin/bash']
         cmd += ['#$ -S /bin/bash']
-        if self.env['EVA_CWF_PARALLEL'] > 1:
-            cmd += ['#$ -pe mpi-fn %d' % self.env['EVA_CWF_PARALLEL']]
-        for module in self.env['EVA_CWF_MODULES']:
+        if self.env['cwf_parallel'] > 1:
+            cmd += ['#$ -pe mpi-fn %d' % self.env['cwf_parallel']]
+        for module in self.env['cwf_modules']:
             cmd += ['module load %s' % module]
-        if self.env['EVA_CWF_PARALLEL'] > 1:
+        if self.env['cwf_parallel'] > 1:
             cmd += ['export ECDIS_PARALLEL=1']
         else:
             cmd += ['export ECDIS_PARALLEL=0']
         cmd += ['export DATE=%s' % reference_time.strftime('%Y%m%d')]
-        cmd += ['export DOMAIN=%s' % self.env['EVA_CWF_DOMAIN']]
+        cmd += ['export DOMAIN=%s' % self.env['cwf_domain']]
         cmd += ['export ECDIS=%s' % eva.url_to_filename(resource.url)]
         cmd += ['export ECDIS_TMPDIR=%s' % os.path.join(job.output_directory, 'work')]
-        cmd += ['export NDAYS_MAX=%d' % self.env['EVA_CWF_OUTPUT_DAYS']]
-        cmd += ['export NREC_DAY_MIN=%d' % self.env['EVA_CWF_INPUT_MIN_DAYS']]
+        cmd += ['export NDAYS_MAX=%d' % self.env['cwf_output_days']]
+        cmd += ['export NREC_DAY_MIN=%d' % self.env['cwf_input_min_days']]
         cmd += ['export OUTDIR=%s' % job.output_directory]
         cmd += ['export UTC=%s' % reference_time.strftime('%H')]
-        cmd += ['%s >&2' % self.env['EVA_CWF_SCRIPT_PATH']]
+        cmd += ['%s >&2' % self.env['cwf_script_path']]
 
         # Run output recognition
         datestamp_glob = reference_time.strftime('*%Y%m%d_*.*')
@@ -254,15 +254,15 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
 
             if self.is_netcdf_data_output(output_file):
                 data_instance.format = self.output_data_format
-                if lifetime_index < len(self.env['EVA_CWF_LIFETIME']):
-                    data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][lifetime_index])
+                if lifetime_index < len(self.env['cwf_lifetime']):
+                    data_instance.expires = self.expiry_from_hours(self.env['cwf_lifetime'][lifetime_index])
                 else:
-                    data_instance.expires = self.expiry_from_hours(self.env['EVA_CWF_LIFETIME'][-1])
+                    data_instance.expires = self.expiry_from_hours(self.env['cwf_lifetime'][-1])
                 lifetime_index += 1
             elif self.is_nml_data_output(output_file):
                 data_instance.format = self.nml_data_format
                 # let the NML file live as long as the shortest lived file in the output dataset
-                data_instance.expires = self.expiry_from_hours(min(self.env['EVA_CWF_LIFETIME']))
+                data_instance.expires = self.expiry_from_hours(min(self.env['cwf_lifetime']))
             else:
                 raise RuntimeError('Unsupported data format in job output: %s' % data['extension'])
 

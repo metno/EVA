@@ -4,6 +4,8 @@ import mock
 import unittest
 import uuid
 
+import productstatus.api
+
 import eva.globe
 import eva.mail
 import eva.base.adapter
@@ -20,6 +22,10 @@ class TestBase(unittest.TestCase):
         self.statsd = mock.MagicMock()
         self.mailer = mock.MagicMock()
         self.productstatus = mock.MagicMock()
+        self.setup_globe()
+
+    def setup_productstatus(self):
+        self.productstatus = productstatus.api.Api('http://127.0.0.1:900000')
         self.setup_globe()
 
     def setup_globe(self):
