@@ -18,6 +18,14 @@ class TaskIdLogFilter(logging.Filter):
         return True
 
 
+class AdapterLogAdapter(logging.LoggerAdapter):
+    """
+    @brief This adapter prepends the job adapter ID in brackets to all log messages.
+    """
+    def process(self, msg, kwargs):
+        return u'[%s] %s' % (self.extra['ADAPTER'].config_id, msg), kwargs
+
+
 class JobLogAdapter(logging.LoggerAdapter):
     """
     @brief This adapter prepends the job ID in brackets to all log messages.

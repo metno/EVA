@@ -164,6 +164,8 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @param api Productstatus API object
         @param environment_variables Dictionary of * environment variables
         """
+        self.logger = self.create_logger(self.logger)
+        self.logger.critical('foo')
         self.setup_process_partial()
         self.setup_reference_time_threshold()
 
@@ -183,6 +185,13 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     @property
     def concurrency(self):
         return self.env['concurrency']
+
+    def create_logger(self, logger):
+        """!
+        @brief Returns a custom log adapter for logging contextual information
+        about jobs.
+        """
+        return eva.logger.AdapterLogAdapter(logger, {'ADAPTER': self})
 
     def setup_process_partial(self):
         """!
