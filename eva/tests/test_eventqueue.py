@@ -5,15 +5,29 @@ import eva.eventqueue
 import eva.tests
 
 
-class TestEventQueue(eva.tests.TestBase):
+class TestEventBase(eva.tests.TestBase):
+    """!
+    @brief Base class for EventQueue and EventQueueItem tests.
+    """
+
+    def make_event(self, data=''):
+        return eva.event.Event(data, data)
+
+    def make_events(self, count=1):
+        return [self.make_event(data=str(x)) for x in range(count)]
+
+    def make_job(self, id='foo'):
+        return eva.job.Job(id, self.globe)
+
+    def make_jobs(self, count=1):
+        return [self.make_job(str(x)) for x in range(count)]
+
+class TestEventQueue(TestEventBase):
     def setUp(self):
         super().setUp()
         self.event_queue = eva.eventqueue.EventQueue()
         self.event_queue.set_globe(self.globe)
         self.event_queue.init()
-
-    def make_event(self, data=''):
-        return eva.event.Event(data, data)
 
     def test_add_event(self):
         """!
@@ -49,7 +63,7 @@ class TestEventQueue(eva.tests.TestBase):
         @brief Test that multiple events can be added to the event queue, and
         that the order is correct when iterating the queue.
         """
-        events = [self.make_event(data=str(x)) for x in range(10)]
+        events = self.make_events(10)
         for event in events:
             self.event_queue.add_event(event)
         self.assertEqual(len(self.event_queue), 10)
@@ -61,22 +75,42 @@ class TestEventQueue(eva.tests.TestBase):
         """!
         @brief Test that an ordered list of event keys are returned with item_keys().
         """
-        events = [self.make_event(data=str(x)) for x in range(3)]
+        events = self.make_events(3)
         keys = [event.id() for event in events]
         for event in events:
             self.event_queue.add_event(event)
         event_queue_keys = self.event_queue.item_keys()
         self.assertListEqual(keys, event_queue_keys)
 
+    def test_adapter_active_job_count(self):
+        """!
+        @brief Test that the event queue returns the number of active jobs for
+        a specific adapter.
+        """
+        adapter = eva.base.adapter.BaseAdapter()
+        self.assertEqual(self.event_queue.adapter_active_job_count(adapter), 0)
+        events = self.make_events(10)
+        for event in events:
+            item = self.event_queue.add_event(event)
+            jobs = self.make_jobs(10)
+            for job in jobs:
+                job.adapter = adapter
+                item.add_job(job)
+            for i in range(3, 6):
+                jobs[i].set_status(eva.job.STARTED)
+            for i in range(6, 9):
+                jobs[i].set_status(eva.job.COMPLETE)
+        self.assertEqual(self.event_queue.adapter_active_job_count(adapter), 30)
 
-class TestEventQueueItem(eva.tests.TestBase):
+
+class TestEventQueueItem(TestEventBase):
     def setUp(self):
         super().setUp()
         self.event = eva.event.Event('foo-bar', 'foo-bar')
         self.item = eva.eventqueue.EventQueueItem(self.event)
 
     def test_add_job(self):
-        job = eva.job.Job('foo', self.globe)
+        job = self.make_job()
         self.item.add_job(job)
         self.assertEqual(len(self.item), 1)
         self.assertTrue(job.id in self.item.jobs)
@@ -87,7 +121,7 @@ class TestEventQueueItem(eva.tests.TestBase):
             self.item.add_job(job)
 
     def test_multi_job(self):
-        jobs = [eva.job.Job(str(x), self.globe) for x in range(10)]
+        jobs = self.make_jobs(10)
         for job in jobs:
             self.item.add_job(job)
         self.assertEqual(len(self.item), 10)
@@ -95,7 +129,7 @@ class TestEventQueueItem(eva.tests.TestBase):
             self.assertEqual(jobs[index].id, job.id)
 
     def test_finished(self):
-        jobs = [eva.job.Job(str(x), self.globe) for x in range(len(eva.job.ALL_STATUSES))]
+        jobs = self.make_jobs(len(eva.job.ALL_STATUSES))
         for job in jobs:
             self.item.add_job(job)
         for index, status in enumerate(eva.job.ALL_STATUSES):
@@ -107,7 +141,7 @@ class TestEventQueueItem(eva.tests.TestBase):
 
     def test_serialize(self):
         jobs_serialized = {}
-        jobs = [eva.job.Job(str(x), self.globe) for x in range(2)]
+        jobs = self.make_jobs(2)
         for job in jobs:
             job.adapter = mock.MagicMock()
             job.adapter.config_id = 'foo'

@@ -204,7 +204,7 @@ class EventQueue(eva.globe.GlobalMixin):
         @brief Returns the number of active jobs for a specific adapter.
         @param adapter eva.base.adapter.BaseAdapter
         """
-        assert isinstance(event, eva.base.adapter.BaseAdapter)
+        assert isinstance(adapter, eva.base.adapter.BaseAdapter)
 
         active = 0
         for item in self:
