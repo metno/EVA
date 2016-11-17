@@ -18,28 +18,28 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     """
 
     REQUIRED_CONFIG = [
-        'EVA_INPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_BASE_URL',
+        'input_service_backend',
+        'output_base_url',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_INPUT_DATA_FORMAT',
-        'EVA_INPUT_PARTIAL',
-        'EVA_INPUT_PRODUCT',
-        'EVA_OUTPUT_LIFETIME',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'input_data_format',
+        'input_partial',
+        'input_product',
+        'output_lifetime',
+        'output_service_backend',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'output_service_backend',
     ]
 
     def init(self):
         """!
         @brief Check that optional configuration is consistent.
         """
-        if self.env['EVA_OUTPUT_SERVICE_BACKEND'] in self.env['EVA_INPUT_SERVICE_BACKEND']:
-            raise eva.exceptions.InvalidConfigurationException('EVA_OUTPUT_SERVICE_BACKEND cannot be present in the list of EVA_INPUT_SERVICE_BACKEND, as that will result in an endless loop.')
+        if self.env['output_service_backend'] in self.env['input_service_backend']:
+            raise eva.exceptions.InvalidConfigurationException('output_service_backend cannot be present in the list of input_service_backend, as that will result in an endless loop.')
 
     def create_job(self, message_id, resource):
         """!
@@ -49,11 +49,11 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         job = eva.job.Job(message_id, self.globe)
         job.base_filename = os.path.basename(resource.url)
         job.input_file = eva.url_to_filename(resource.url)
-        job.output_url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], job.base_filename)
+        job.output_url = os.path.join(self.env['output_base_url'], job.base_filename)
         job.output_file = eva.url_to_filename(job.output_url)
 
         if self.post_to_productstatus():
-            job.service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
+            job.service_backend = self.api.servicebackend[self.env['output_service_backend']]
             # check if the destination file already exists
             qs = self.api.datainstance.objects.filter(url=job.output_url,
                                                       servicebackend=job.service_backend,

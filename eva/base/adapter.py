@@ -150,7 +150,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """!
         @brief Initialize the environment, then return this instance.
         """
-        self._post_to_productstatus = None
+        self._post_to_productstatus = False
         self._processing_failures = {}
         self.blacklist = set()
         self.required_uuids = set()
@@ -416,9 +416,9 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @brief Returns True if this adapter has sufficient configuration to be
         able to post to Productstatus, False otherwise.
         """
-        if self._post_to_productstatus is None:
-            required_keys = self._PRODUCTSTATUS_REQUIRED_CONFIG + self.PRODUCTSTATUS_REQUIRED_CONFIG
+        if self.productstatus.has_credentials():
             self._post_to_productstatus = True
+            required_keys = self._PRODUCTSTATUS_REQUIRED_CONFIG + self.PRODUCTSTATUS_REQUIRED_CONFIG
             for key in required_keys:
                 if not self.env[key]:
                     self._post_to_productstatus = False

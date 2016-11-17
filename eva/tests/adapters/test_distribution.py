@@ -10,19 +10,18 @@ import mock
 
 class TestDistributionAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.DistributionAdapter
-    environment = {
-        'EVA_INPUT_SERVICE_BACKEND': 'foo',
-        'EVA_OUTPUT_BASE_URL': 'file:///foo',
-        'EVA_OUTPUT_SERVICE_BACKEND': 'bar',
-        'EVA_PRODUCTSTATUS_API_KEY': 'foo',
-        'EVA_PRODUCTSTATUS_USERNAME': 'foo',
-    }
+    config_ini = \
+"""
+[adapter]
+input_service_backend = foo
+output_base_url = file:///foo
+"""  # NOQA
 
     def test_create_adapter_recursive(self):
         """!
         @brief Test that the adapter will not start if configured to run in a recursive loop.
         """
-        self.env['EVA_OUTPUT_SERVICE_BACKEND'] = 'foo'
+        self.config['adapter']['output_service_backend'] = 'foo'
         with self.assertRaises(eva.exceptions.InvalidConfigurationException):
             self.create_adapter()
 
@@ -30,11 +29,9 @@ class TestDistributionAdapter(eva.tests.BaseTestAdapter):
         """!
         @brief Test that job creation generates the correct command line.
         """
-        del self.env['EVA_PRODUCTSTATUS_API_KEY']
         self.create_adapter()
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
-        self.adapter.api = mock.MagicMock()
         job = self.create_job(resource)
         command_line_fragment = "cp --verbose /foo/bar/baz /foo/baz\n"
         self.assertTrue(command_line_fragment in job.command)
@@ -43,11 +40,9 @@ class TestDistributionAdapter(eva.tests.BaseTestAdapter):
         """!
         @brief Test that job finish works and doesn't throw any exceptions.
         """
-        del self.env['EVA_PRODUCTSTATUS_API_KEY']
         self.create_adapter()
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
-        self.adapter.api = mock.MagicMock()
         job = self.create_job(resource)
         job.service_backend = 'foo'
         job.set_status(eva.job.COMPLETE)
