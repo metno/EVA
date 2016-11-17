@@ -15,12 +15,6 @@ input_service_backend = foo
 input_with_hash = NO
 """  # NOQA
 
-    def test_init(self):
-        """!
-        @brief Test that regular instantiation with default parameters works.
-        """
-        self.create_adapter()
-
     def test_with_hash(self):
         """!
         @brief Test that the adapter requires input_with_hash=NO.

@@ -54,6 +54,12 @@ executor = foo
         self.config.read_string(self.config_ini)
         assert 'adapter' in self.config.sections()
 
+    def test_init(self):
+        """!
+        @brief Test that regular instantiation with default parameters works.
+        """
+        self.create_adapter()
+
     def random_uuid(self):
         return str(uuid.uuid4())
 
