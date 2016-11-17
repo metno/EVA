@@ -1,13 +1,8 @@
 import configparser
-import copy
-import httmock
 import logging
 import mock
 import unittest
 import uuid
-
-import productstatus
-import productstatus.api
 
 import eva.globe
 import eva.mail
@@ -47,7 +42,7 @@ class BaseTestAdapter(TestBase):
 """
 [defaults.adapter]
 executor = foo
-"""
+"""  # NOQA
     config_ini = ""
 
     def setUp(self):

@@ -1,5 +1,4 @@
 import mock
-import unittest
 
 import eva.tests
 import eva.adapter
@@ -14,7 +13,7 @@ class TestChecksumVerificationAdapter(eva.tests.BaseTestAdapter):
 [adapter]
 input_service_backend = foo
 input_with_hash = NO
-"""
+"""  # NOQA
 
     def test_init(self):
         """!

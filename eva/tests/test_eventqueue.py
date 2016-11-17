@@ -22,6 +22,7 @@ class TestEventBase(eva.tests.TestBase):
     def make_jobs(self, count=1):
         return [self.make_job(str(x)) for x in range(count)]
 
+
 class TestEventQueue(TestEventBase):
     def setUp(self):
         super().setUp()
