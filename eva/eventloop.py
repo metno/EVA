@@ -129,8 +129,11 @@ class EventQueue(eva.globe.GlobalMixin):
         active = 0
         for item in self:
             for job in item:
-                if job.started():
-                    active += 1
+                if job.adapter != adapter:
+                    continue
+                if not job.started():
+                    continue
+                active += 1
         return active
 
     def status_count(self):
