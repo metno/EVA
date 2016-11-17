@@ -165,7 +165,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @param environment_variables Dictionary of * environment variables
         """
         self.logger = self.create_logger(self.logger)
-        self.logger.critical('foo')
         self.setup_process_partial()
         self.setup_reference_time_threshold()
 

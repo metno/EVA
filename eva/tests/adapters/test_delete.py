@@ -10,11 +10,13 @@ import httmock
 
 class TestDeleteAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.DeleteAdapter
-    environment = {
-        'EVA_INPUT_SERVICE_BACKEND': 'foo',
-        'EVA_PRODUCTSTATUS_API_KEY': 'foo',
-        'EVA_PRODUCTSTATUS_USERNAME': 'foo',
-    }
+    config_ini = \
+"""
+[adapter]
+input_service_backend = foo
+productstatus_api_key = foo
+productstatus_username = foo
+"""  # NOQA
 
     def test_create_job(self):
         """!
@@ -22,9 +24,7 @@ class TestDeleteAdapter(eva.tests.BaseTestAdapter):
         """
         self.create_adapter()
         resource = mock.MagicMock()
-        self.adapter.api = mock.MagicMock()
-        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
-            self.create_job(resource)
+        self.create_job(resource)
         self.assertEqual(self.adapter.api.datainstance.objects.filter.call_count, 1)
 
     def test_finish_job_and_generate_resources(self):
@@ -34,9 +34,8 @@ class TestDeleteAdapter(eva.tests.BaseTestAdapter):
         """
         self.create_adapter()
         resource = mock.MagicMock()
-        self.adapter.api = mock.MagicMock()
-        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
-            job = self.create_job(resource)
+        job = self.create_job(resource)
+        self.setup_productstatus()
         job.set_status(eva.job.COMPLETE)
         self.adapter.finish_job(job)
         job.instance_list = [mock.MagicMock(), mock.MagicMock()]

@@ -1,4 +1,5 @@
 import configparser
+import httmock
 import logging
 import mock
 import unittest
@@ -70,7 +71,8 @@ executor = foo
         return str(uuid.uuid4())
 
     def create_job(self, resource):
-        job = self.adapter.create_job(self.random_uuid(), resource)
+        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
+            job = self.adapter.create_job(self.random_uuid(), resource)
         job.resource = resource
         return job
 

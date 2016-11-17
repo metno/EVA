@@ -7,7 +7,7 @@ import eva.job
 
 
 class DeleteAdapter(eva.base.adapter.BaseAdapter):
-    """
+    """!
     @brief Remove expired files from file system.
 
     Find the latest expired data instances for given criteria, and remove the
@@ -15,21 +15,23 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
     """
 
     REQUIRED_CONFIG = [
-        'EVA_INPUT_SERVICE_BACKEND',
+        'input_service_backend',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_INPUT_PARTIAL',
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_DATA_FORMAT',
+        'input_partial',
+        'input_product',
+        'input_data_format',
     ]
 
-    def init(self, *args, **kwargs):
-        self.require_productstatus_credentials()
-
     def create_job(self, message_id, resource):
-        """
-        @brief Look up and remove expired files.
+        """!
+        @brief Look up expired files in Productstatus, and create a job that deletes them.
+
+        One Job to rule them all,
+        One Job to find them,
+        One Job to bring them all and in the darkness bind them
+        In the land of /dev/null, where the shadows lie.
         """
 
         # Get all expired datainstances for the product
