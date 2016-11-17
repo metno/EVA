@@ -2,6 +2,7 @@ import unittest
 import logging
 import copy
 import uuid
+import mock
 import httmock
 
 import productstatus
@@ -13,6 +14,26 @@ import eva.base.adapter
 import eva.executor
 import eva.statsd
 import eva.tests.schemas
+
+
+class TestBase(unittest.TestCase):
+    def setUp(self):
+        self.group_id = 'group_id'
+        self.logger = logging.getLogger('root')
+        self.zookeeper = mock.MagicMock()
+        self.statsd = mock.MagicMock()
+        self.mailer = mock.MagicMock()
+        self.productstatus = mock.MagicMock()
+        self.setup_globe()
+
+    def setup_globe(self):
+        self.globe = eva.globe.Global(group_id=self.group_id,
+                                      logger=self.logger,
+                                      mailer=self.mailer,
+                                      productstatus=self.productstatus,
+                                      statsd=self.statsd,
+                                      zookeeper=self.zookeeper,
+                                      )
 
 
 class BaseTestAdapter(unittest.TestCase):
