@@ -4,14 +4,16 @@ import datetime
 import mock
 
 import eva
-import eva.mail
+import eva.adapter
 import eva.event
 import eva.eventloop
-import eva.adapter
+import eva.eventqueue
 import eva.executor
+import eva.mail
+import eva.tests
 
 
-class TestEventloop(TestBase):
+class TestEventloop(eva.tests.TestBase):
 
     def setUp(self):
         super().setUp()
@@ -25,9 +27,15 @@ class TestEventloop(TestBase):
         self.eventloop.set_globe(self.globe)
         self.eventloop.init()
 
-    @unittest.skip
     def test_init(self):
-        pass
+        """!
+        @brief Test that the Eventloop is properly initialized.
+        """
+        self.assertEqual(self.eventloop.adapters, self.adapters)
+        self.assertEqual(self.eventloop.listeners, self.listeners)
+        self.assertEqual(self.eventloop.health_check_server, self.health_check_server)
+        self.assertIsInstance(self.eventloop.event_queue, eva.eventqueue.EventQueue)
+        self.assertIsInstance(self.eventloop.message_timestamp_threshold, datetime.datetime)
 
     @unittest.skip
     def test_add_event_to_queue(self):

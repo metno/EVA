@@ -14,13 +14,39 @@ class TestEventQueue(eva.tests.TestBase):
         return eva.event.Event(data, data)
 
     def test_add_event(self):
+        """!
+        @brief Test that an event can be added to the event queue, and that the
+        object is added to the items dictionary.
+        """
         event = self.make_event()
         self.event_queue.add_event(event)
         self.assertEqual(len(self.event_queue), 1)
         self.assertTrue(event.id() in self.event_queue.items)
         self.assertIsInstance(self.event_queue.items[event.id()], eva.eventqueue.EventQueueItem)
 
+    def test_add_event_duplicate_event(self):
+        """!
+        @brief Test that adding an event already in the queue raises an exception.
+        """
+        event = self.make_event()
+        self.event_queue.add_event(event)
+        with self.assertRaises(eva.exceptions.DuplicateEventException):
+            self.event_queue.add_event(event)
+
+    def test_add_event_non_object(self):
+        """!
+        @brief Test that a variable not of type eva.event.Event cannot be added
+        to the event queue.
+        """
+        event = 'foo'
+        with self.assertRaises(AssertionError):
+            self.event_queue.add_event(event)
+
     def test_multi_event(self):
+        """!
+        @brief Test that multiple events can be added to the event queue, and
+        that the order is correct when iterating the queue.
+        """
         events = [self.make_event(data=str(x)) for x in range(10)]
         for event in events:
             self.event_queue.add_event(event)
@@ -28,6 +54,17 @@ class TestEventQueue(eva.tests.TestBase):
         for index, item in enumerate(self.event_queue):
             self.assertEqual(events[index].id(), item.id())
             self.assertEqual(item.event.data, str(index))
+
+    def test_event_keys(self):
+        """!
+        @brief Test that an ordered list of event keys are returned with item_keys().
+        """
+        events = [self.make_event(data=str(x)) for x in range(3)]
+        keys = [event.id() for event in events]
+        for event in events:
+            self.event_queue.add_event(event)
+        event_queue_keys = self.event_queue.item_keys()
+        self.assertListEqual(keys, event_queue_keys)
 
 
 class TestEventQueueItem(eva.tests.TestBase):
@@ -41,6 +78,11 @@ class TestEventQueueItem(eva.tests.TestBase):
         self.item.add_job(job)
         self.assertEqual(len(self.item), 1)
         self.assertTrue(job.id in self.item.jobs)
+
+    def test_add_job_non_object(self):
+        job = 'foo'
+        with self.assertRaises(AssertionError):
+            self.item.add_job(job)
 
     def test_multi_job(self):
         jobs = [eva.job.Job(str(x), self.globe) for x in range(10)]
