@@ -1,9 +1,10 @@
-import unittest
-import logging
+import configparser
 import copy
-import uuid
-import mock
 import httmock
+import logging
+import mock
+import unittest
+import uuid
 
 import productstatus
 import productstatus.api
@@ -36,29 +37,27 @@ class TestBase(unittest.TestCase):
                                       )
 
 
-class BaseTestAdapter(unittest.TestCase):
+class BaseTestAdapter(TestBase):
     """!
     @brief Base class for adapter tests.
     """
 
     adapter_class = eva.base.adapter.BaseAdapter
-    environment = {}
+    base_config_ini = \
+"""
+[defaults.adapter]
+executor = foo
+"""
+    config_ini = ""
 
     def setUp(self):
-        self.env = copy.copy(self.environment)
-        self.group_id = 'group-id'
-        self.productstatus_api = productstatus.api.Api('http://localhost:8000')
-        self.logger = logging.getLogger('root')
-        self.zookeeper = None
-        self.mailer = eva.mail.NullMailer()
-        self.statsd = eva.statsd.StatsDClient()
-        self.globe = eva.globe.Global(group_id=self.group_id,
-                                      logger=self.logger,
-                                      mailer=self.mailer,
-                                      statsd=self.statsd,
-                                      zookeeper=self.zookeeper,
-                                      )
-        self.executor = eva.executor.NullExecutor(None, self.env, self.globe)
+        super().setUp()
+        self.executor = eva.executor.NullExecutor()
+        self.executor.set_globe(self.globe)
+        self.config = configparser.ConfigParser()
+        self.config.read_string(self.base_config_ini)
+        self.config.read_string(self.config_ini)
+        assert 'adapter' in self.config.sections()
 
     def random_uuid(self):
         return str(uuid.uuid4())
@@ -73,6 +72,7 @@ class BaseTestAdapter(unittest.TestCase):
         self.adapter.generate_resources(job, resources)
         return resources
 
-    def create_adapter(self):
-        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
-            self.adapter = self.adapter_class(self.env, self.executor, self.productstatus_api, self.globe)
+    def create_adapter(self, key='adapter'):
+        incubator, self.adapter = self.adapter_class().factory(self.config, 'defaults.adapter', key)
+        self.adapter.set_globe(self.globe)
+        self.adapter.init()

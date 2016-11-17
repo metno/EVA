@@ -1,25 +1,32 @@
+import mock
+import unittest
+
 import eva.tests
 import eva.adapter
 import eva.exceptions
 import eva.job
 
-import mock
-
 
 class TestChecksumVerificationAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.ChecksumVerificationAdapter
-    environment = {
-        'EVA_INPUT_SERVICE_BACKEND': 'foo',
-        'EVA_INPUT_WITH_HASH': 'NO',
-        'EVA_PRODUCTSTATUS_API_KEY': 'foo',
-        'EVA_PRODUCTSTATUS_USERNAME': 'foo',
-    }
+    config_ini = \
+"""
+[adapter]
+input_service_backend = foo
+input_with_hash = NO
+"""
+
+    def test_init(self):
+        """!
+        @brief Test that regular instantiation with default parameters works.
+        """
+        self.create_adapter()
 
     def test_with_hash(self):
         """!
-        @brief Test that the adapter requires EVA_INPUT_WITH_HASH=NO.
+        @brief Test that the adapter requires input_with_hash=NO.
         """
-        self.env['EVA_INPUT_WITH_HASH'] = 'YES'
+        self.config['adapter']['input_with_hash'] = 'YES'
         with self.assertRaises(eva.exceptions.InvalidConfigurationException):
             self.create_adapter()
 

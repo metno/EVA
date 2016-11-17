@@ -17,23 +17,22 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
     """
 
     REQUIRED_CONFIG = [
-        'EVA_INPUT_SERVICE_BACKEND',
+        'input_service_backend',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_INPUT_DATA_FORMAT',
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_WITH_HASH',
+        'input_data_format',
+        'input_product',
+        'input_with_hash',
     ]
 
     def init(self):
         """!
         @brief This adapter requires Productstatus write access to be of any use.
         """
-        self.require_productstatus_credentials()
-        if self.env['EVA_INPUT_WITH_HASH'] is not False:
+        if self.env['input_with_hash'] is not False:
             raise eva.exceptions.InvalidConfigurationException(
-                'This adapter MUST be configured with EVA_INPUT_WITH_HASH=NO in order to avoid recursive loops.'
+                'This adapter MUST be configured with input_with_hash=NO in order to avoid recursive loops.'
             )
 
     def create_job(self, message_id, resource):

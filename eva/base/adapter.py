@@ -456,10 +456,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """!
         @brief Raise an exception if Productstatus credentials are not configured.
         """
-        if not self.has_productstatus_credentials():
-            raise eva.exceptions.MissingConfigurationException(
-                'Posting to Productstatus requires environment variables productstatus_username and productstatus_api_key.'
-            )
+        raise RuntimeError('This function is obsolete, please remove this requirement.')
 
     def has_output_lifetime(self):
         """!
