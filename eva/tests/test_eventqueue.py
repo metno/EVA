@@ -1,3 +1,5 @@
+import mock
+
 import eva.event
 import eva.eventqueue
 import eva.tests
@@ -70,7 +72,7 @@ class TestEventQueue(eva.tests.TestBase):
 class TestEventQueueItem(eva.tests.TestBase):
     def setUp(self):
         super().setUp()
-        self.event = eva.event.Event('', '')
+        self.event = eva.event.Event('foo-bar', 'foo-bar')
         self.item = eva.eventqueue.EventQueueItem(self.event)
 
     def test_add_job(self):
@@ -103,4 +105,22 @@ class TestEventQueueItem(eva.tests.TestBase):
             job.set_status(eva.job.FINISHED)
         self.assertTrue(self.item.finished())
 
-
+    def test_serialize(self):
+        jobs_serialized = {}
+        jobs = [eva.job.Job(str(x), self.globe) for x in range(2)]
+        for job in jobs:
+            job.adapter = mock.MagicMock()
+            job.adapter.config_id = 'foo'
+            self.item.add_job(job)
+            jobs_serialized[job.id] = {
+                'status': job.status,
+                'adapter': job.adapter.config_id,
+            }
+        keys = [job.id for job in jobs]
+        check = {
+            'message': 'foo-bar',
+            'job_keys': keys,
+            'jobs': jobs_serialized,
+        }
+        serialized = self.item.serialize()
+        self.assertDictEqual(serialized, check)
