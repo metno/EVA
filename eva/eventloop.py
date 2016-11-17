@@ -218,7 +218,8 @@ class Eventloop(eva.globe.GlobalMixin):
 
             for job in item:
                 try:
-                    if (not job.initialized()) or job.adapter.concurrency > self.event_queue.active_jobs_in_adapter(job.adapter):
+                    # Only process N active jobs at a time
+                    if (not job.initialized()) or job.adapter.concurrency > self.event_queue.adapter_active_job_count(job.adapter):
                         self.process_job(job)
                 except self.RECOVERABLE_EXCEPTIONS as e:
                     self.logger.error('Re-queueing failed event %s due to error: %s', item.event, e)
