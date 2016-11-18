@@ -17,17 +17,17 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
     """
 
     CONFIG = {
-        'EVA_THREDDS_POLL_INTERVAL': {
+        'thredds_poll_interval': {
             'type': 'int',
             'help': 'How often should Thredds server be checked.',
             'default': '20',
         },
-        'EVA_THREDDS_POLL_RETRIES': {
+        'thredds_poll_retries': {
             'type': 'int',
             'help': 'Number of times to check for the data on Thredds server.',
             'default': '6',
         },
-        'EVA_THREDDS_BASE_URL': {
+        'thredds_base_url': {
             'type': 'string',
             'help': 'Base URL to prepend to the filename from the input resource',
             'default': '',
@@ -35,25 +35,25 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
     }
 
     REQUIRED_CONFIG = [
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_SERVICE_BACKEND',
-        'EVA_THREDDS_BASE_URL',
+        'input_product',
+        'input_service_backend',
+        'output_service_backend',
+        'thredds_base_url',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_THREDDS_POLL_INTERVAL',
-        'EVA_THREDDS_POLL_RETRIES',
+        'thredds_poll_interval',
+        'thredds_poll_retries',
     ]
 
     def init(self):
         """!
         @brief Populate internal variables.
         """
-        self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        self.thredds_poll_interval = self.env['EVA_THREDDS_POLL_INTERVAL']
-        self.thredds_poll_retries = self.env['EVA_THREDDS_POLL_RETRIES']
-        self.thredds_base_url = self.env['EVA_THREDDS_BASE_URL']
+        self.output_service_backend = self.api.servicebackend[self.env['output_service_backend']]
+        self.thredds_poll_interval = self.env['thredds_poll_interval']
+        self.thredds_poll_retries = self.env['thredds_poll_retries']
+        self.thredds_base_url = self.env['thredds_base_url']
 
     def create_job(self, message_id, resource):
         """!

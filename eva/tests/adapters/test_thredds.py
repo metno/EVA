@@ -7,23 +7,17 @@ import eva.job
 import mock
 
 
-BLANK_UUID = '00000000-0000-0000-0000-000000000000'
-RANDOM_UUID = 'f194279e-dfa8-45ff-ab62-1b03d89e9705'
-RANDOM_USERNAME = 'nonamewrongname'
-RANDOM_KEY = 'nokeywrongkey'
-
-
 class TestThreddsAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.ThreddsAdapter
-    environment = {
-        'EVA_INPUT_DATA_FORMAT': BLANK_UUID,
-        'EVA_INPUT_PRODUCT': BLANK_UUID,
-        'EVA_INPUT_SERVICE_BACKEND': BLANK_UUID,
-        'EVA_OUTPUT_SERVICE_BACKEND': BLANK_UUID,
-        'EVA_PRODUCTSTATUS_USERNAME': RANDOM_USERNAME,
-        'EVA_PRODUCTSTATUS_API_KEY': RANDOM_KEY,
-        'EVA_THREDDS_BASE_URL': 'http://bar/baz',
-    }
+    config_ini = \
+"""
+[adapter]
+input_data_format = foo
+input_product = foo
+input_service_backend = foo
+output_service_backend = foo
+thredds_base_url = http://bar/baz
+"""  # NOQA
 
     def test_create_job(self):
         """!
