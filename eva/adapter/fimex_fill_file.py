@@ -55,10 +55,9 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
             raise eva.exceptions.InvalidConfigurationException(
                 'This adapter does not accept partial input files, and MUST be configured with input_partial=NO.'
             )
-        if self.post_to_productstatus():
-            self.output_data_format = self.api.dataformat[self.env['output_data_format']]
-            self.output_product = self.api.product[self.env['output_product']]
-            self.output_service_backend = self.api.servicebackend[self.env['output_service_backend']]
+        for key in ['output_data_format', 'output_product', 'output_service_backend']:
+            if key in self.env:
+                setattr(self, key, self.env[key])
         self.ncfill_path = self.env['fimex_fill_file_ncfill_path']
         self.template_directory = self.template.from_string(self.env['fimex_fill_file_template_directory'])
         self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
