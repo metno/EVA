@@ -12,21 +12,21 @@ import datetime
 
 class TestGridPPAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.GridPPAdapter
-    environment = {
-        'EVA_GRIDPP_GENERIC_OPTIONS': '--reftime {{reference_time|iso8601_compact}}',
-        'EVA_GRIDPP_INPUT_OPTIONS': 'inopts',
-        'EVA_GRIDPP_OUTPUT_OPTIONS': 'outopts',
-        'EVA_GRIDPP_THREADS': '4',
-        'EVA_INPUT_DATA_FORMAT': 'foo',
-        'EVA_INPUT_PRODUCT': 'foo',
-        'EVA_INPUT_SERVICE_BACKEND': 'foo',
-        'EVA_OUTPUT_FILENAME_PATTERN': '/out/{{reference_time|iso8601_compact}}',
-        'EVA_OUTPUT_DATA_FORMAT': 'foo',
-        'EVA_OUTPUT_PRODUCT': 'foo',
-        'EVA_OUTPUT_SERVICE_BACKEND': 'foo',
-        'EVA_PRODUCTSTATUS_API_KEY': 'foo',
-        'EVA_PRODUCTSTATUS_USERNAME': 'foo',
-    }
+    config_ini = \
+"""
+[adapter]
+gridpp_generic_options = --reftime {{reference_time|iso8601_compact}}
+gridpp_input_options = inopts
+gridpp_output_options = outopts
+gridpp_threads = 4
+input_data_format = foo
+input_product = foo
+input_service_backend = foo
+output_filename_pattern = /out/{{reference_time|iso8601_compact}}
+output_data_format = foo
+output_product = foo
+output_service_backend = foo
+"""  # NOQA
 
     def test_create_job(self):
         """!

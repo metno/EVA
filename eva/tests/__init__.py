@@ -50,7 +50,10 @@ class BaseTestAdapter(TestBase):
 [defaults.adapter]
 executor = foo
 """  # NOQA
-    config_ini = ""
+    config_ini = \
+"""
+[adapter]
+"""  # NOQA
 
     def setUp(self):
         super().setUp()
@@ -81,7 +84,9 @@ executor = foo
         self.adapter.generate_resources(job, resources)
         return resources
 
-    def create_adapter(self, key='adapter', adapter_class=adapter_class):
+    def create_adapter(self, key='adapter', adapter_class=None):
+        if not adapter_class:
+            adapter_class = self.adapter_class
         incubator, self.adapter = adapter_class().factory(self.config, 'defaults.adapter', key)
         self.adapter.set_globe(self.globe)
         self.adapter.init()

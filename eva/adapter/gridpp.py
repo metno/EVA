@@ -15,32 +15,32 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
     https://github.com/metno/gridpp
 
     After generating the file, the adapter will post the information to
-    Productstatus if the EVA_OUTPUT_* and EVA_PRODUCTSTATUS_* environments are
+    Productstatus if the output_* and productstatus_* environments are
     specified.
     """
 
     CONFIG = {
-        'EVA_GRIDPP_INPUT_OPTIONS': {
+        'gridpp_input_options': {
             'type': 'string',
             'help': 'GridPP command-line options for the input file.',
             'default': '',
         },
-        'EVA_GRIDPP_OUTPUT_OPTIONS': {
+        'gridpp_output_options': {
             'type': 'string',
             'help': 'GridPP command-line options for the output file.',
             'default': '',
         },
-        'EVA_GRIDPP_GENERIC_OPTIONS': {
+        'gridpp_generic_options': {
             'type': 'string',
             'help': 'GridPP command-line options.',
             'default': '',
         },
-        'EVA_GRIDPP_MODULES': {
+        'gridpp_modules': {
             'type': 'list_string',
             'help': 'Comma-separated list of modules to load before running.',
             'default': '',
         },
-        'EVA_GRIDPP_THREADS': {
+        'gridpp_threads': {
             'type': 'int',
             'help': 'How many threads to use during calculations.',
             'default': '1',
@@ -48,43 +48,42 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
     }
 
     REQUIRED_CONFIG = [
-        'EVA_INPUT_DATA_FORMAT',
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_FILENAME_PATTERN',
+        'input_data_format',
+        'input_product',
+        'input_service_backend',
+        'output_filename_pattern',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_GRIDPP_GENERIC_OPTIONS',
-        'EVA_GRIDPP_INPUT_OPTIONS',
-        'EVA_GRIDPP_MODULES',
-        'EVA_GRIDPP_OUTPUT_OPTIONS',
-        'EVA_GRIDPP_THREADS',
-        'EVA_INPUT_PARTIAL',
-        'EVA_OUTPUT_DATA_FORMAT',
-        'EVA_OUTPUT_LIFETIME',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'gridpp_generic_options',
+        'gridpp_input_options',
+        'gridpp_modules',
+        'gridpp_output_options',
+        'gridpp_threads',
+        'input_partial',
+        'output_data_format',
+        'output_lifetime',
+        'output_product',
+        'output_service_backend',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'EVA_OUTPUT_DATA_FORMAT',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'output_data_format',
+        'output_product',
+        'output_service_backend',
     ]
 
     def init(self):
         """!
         @brief Check that optional configuration is consistent.
         """
-        if self.post_to_productstatus():
-            self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
-            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
-            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        self.in_opts = self.template.from_string(self.env['EVA_GRIDPP_INPUT_OPTIONS'])
-        self.out_opts = self.template.from_string(self.env['EVA_GRIDPP_OUTPUT_OPTIONS'])
-        self.generic_opts = self.template.from_string(self.env['EVA_GRIDPP_GENERIC_OPTIONS'])
-        self.output_filename = self.template.from_string(self.env['EVA_OUTPUT_FILENAME_PATTERN'])
+        for key in ['output_data_format', 'output_product', 'output_service_backend']:
+            if key in self.env:
+                setattr(self, key, self.env[key])
+        self.in_opts = self.template.from_string(self.env['gridpp_input_options'])
+        self.out_opts = self.template.from_string(self.env['gridpp_output_options'])
+        self.generic_opts = self.template.from_string(self.env['gridpp_generic_options'])
+        self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
 
     def create_job(self, message_id, resource):
         """!
@@ -114,10 +113,10 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         command = ["#!/bin/bash"]
         command += ["#$ -S /bin/bash"]
         command += ["set -e"]
-        for module in self.env['EVA_GRIDPP_MODULES']:
+        for module in self.env['gridpp_modules']:
             command += ["module load %s" % module]
         command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
-        command += ["export OMP_NUM_THREADS=%d" % self.env['EVA_GRIDPP_THREADS']]
+        command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
         command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % job.gridpp_params]
         job.command = '\n'.join(command) + '\n'
 
