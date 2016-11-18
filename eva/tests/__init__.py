@@ -90,3 +90,34 @@ executor = foo
         incubator, self.adapter = adapter_class().factory(self.config, 'defaults.adapter', key)
         self.adapter.set_globe(self.globe)
         self.adapter.init()
+
+
+class BaseTestExecutor(TestBase):
+    """!
+    @brief Base class for executor tests.
+    """
+
+    executor_class = eva.base.executor.BaseExecutor
+    config_ini = \
+"""
+[executor]
+"""  # NOQA
+
+    def setUp(self):
+        super().setUp()
+        self.config = configparser.ConfigParser()
+        self.config.read_string(self.config_ini)
+        assert 'executor' in self.config.sections()
+
+    def test_init(self):
+        """!
+        @brief Test that regular instantiation with default parameters works.
+        """
+        self.create_executor()
+
+    def create_executor(self, key='executor', executor_class=None):
+        if not executor_class:
+            executor_class = self.executor_class
+        incubator, self.executor = executor_class().factory(self.config, 'defaults.executor', key)
+        self.executor.set_globe(self.globe)
+        self.executor.init()

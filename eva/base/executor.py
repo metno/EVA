@@ -4,6 +4,7 @@ import tempfile
 import eva
 import eva.config
 import eva.globe
+import eva.template
 
 
 class BaseExecutor(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
