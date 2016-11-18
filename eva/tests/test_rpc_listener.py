@@ -4,21 +4,11 @@ import unittest
 import logging
 
 import eva.listener
-import eva.globe
-import eva.mail
+import eva.tests
 
 
-class TestRPCListener(unittest.TestCase):
+class TestRPCListener(eva.tests.TestBase):
     def test_init(self):
-        self.group_id = 'group-id'
-        self.logger = logging
-        self.mailer = eva.mail.NullMailer()
-        self.statsd = eva.statsd.StatsDClient()
-        self.zookeeper = None
-        self.globe = eva.globe.Global(group_id=self.group_id,
-                                      logger=self.logger,
-                                      mailer=self.mailer,
-                                      statsd=self.statsd,
-                                      zookeeper=self.zookeeper,
-                                      )
-        eva.listener.RPCListener(self.globe, {})
+        listener = eva.listener.RPCListener()
+        listener.set_globe(self.globe)
+        listener.init()
