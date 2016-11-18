@@ -1,6 +1,3 @@
-import unittest
-import logging
-
 import eva
 import eva.job
 import eva.mail

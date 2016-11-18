@@ -1,8 +1,5 @@
 # coding: utf-8
 
-import unittest
-import logging
-
 import eva.listener
 import eva.tests
 

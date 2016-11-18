@@ -1,10 +1,5 @@
 # coding: utf-8
 
-import unittest
-import logging
-
-import productstatus.api
-
 import eva.mail
 import eva.statsd
 import eva.executor
