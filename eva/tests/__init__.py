@@ -26,7 +26,7 @@ class TestBase(unittest.TestCase):
         self.setup_globe()
 
     def setup_productstatus(self):
-        self.productstatus = productstatus.api.Api('http://127.0.0.1:900000')
+        self.productstatus = productstatus.api.Api('http://127.0.0.1:900000', username='foo', api_key='bar')
         self.setup_globe()
 
     def setup_globe(self):

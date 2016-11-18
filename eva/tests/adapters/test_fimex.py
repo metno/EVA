@@ -12,19 +12,19 @@ import datetime
 
 class TestFimexAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.FimexAdapter
-    environment = {
-        'EVA_FIMEX_PARAMETERS': '{{reference_time|iso8601_compact}} {{datainstance.url}} {{input_filename}}',
-        'EVA_INPUT_DATA_FORMAT': 'foo',
-        'EVA_INPUT_PRODUCT': 'foo',
-        'EVA_INPUT_SERVICE_BACKEND': 'foo',
-        'EVA_OUTPUT_BASE_URL': 'file:///foo',
-        'EVA_OUTPUT_DATA_FORMAT': 'netcdf',
-        'EVA_OUTPUT_FILENAME_PATTERN': '/foo/bar.nc',
-        'EVA_OUTPUT_PRODUCT': 'foo',
-        'EVA_OUTPUT_SERVICE_BACKEND': 'foo',
-        'EVA_PRODUCTSTATUS_API_KEY': 'foo',
-        'EVA_PRODUCTSTATUS_USERNAME': 'foo',
-    }
+    config_ini = \
+"""
+[adapter]
+fimex_parameters = {{reference_time|iso8601_compact}} {{datainstance.url}} {{input_filename}}
+input_data_format = foo
+input_product = foo
+input_service_backend = foo
+output_base_url = file:///foo
+output_data_format = netcdf
+output_filename_pattern = /foo/bar.nc
+output_product = foo
+output_service_backend = foo
+"""  # NOQA
 
     def test_create_job(self):
         """!

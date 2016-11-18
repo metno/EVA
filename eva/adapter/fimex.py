@@ -20,12 +20,12 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
       * A generic command-line option string
 
     After generating the file, the adapter will post the information to
-    Productstatus if the EVA_OUTPUT_* and EVA_PRODUCTSTATUS_* environments are
+    Productstatus if the output_* and productstatus_* environments are
     specified.
     """
 
     CONFIG = {
-        'EVA_FIMEX_PARAMETERS': {
+        'fimex_parameters': {
             'type': 'string',
             'help': 'FIMEX command-line parameters.',
             'default': '',
@@ -33,36 +33,35 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
     }
 
     REQUIRED_CONFIG = [
-        'EVA_FIMEX_PARAMETERS',
-        'EVA_INPUT_DATA_FORMAT',
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_FILENAME_PATTERN',
+        'fimex_parameters',
+        'input_data_format',
+        'input_product',
+        'input_service_backend',
+        'output_filename_pattern',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_INPUT_PARTIAL',
-        'EVA_OUTPUT_BASE_URL',
-        'EVA_OUTPUT_DATA_FORMAT',
-        'EVA_OUTPUT_LIFETIME',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'input_partial',
+        'output_base_url',
+        'output_data_format',
+        'output_lifetime',
+        'output_product',
+        'output_service_backend',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'EVA_OUTPUT_BASE_URL',
-        'EVA_OUTPUT_DATA_FORMAT',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'output_base_url',
+        'output_data_format',
+        'output_product',
+        'output_service_backend',
     ]
 
     def init(self):
-        if self.post_to_productstatus():
-            self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
-            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
-            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        self.fimex_parameters = self.template.from_string(self.env['EVA_FIMEX_PARAMETERS'])
-        self.output_filename = self.template.from_string(self.env['EVA_OUTPUT_FILENAME_PATTERN'])
+        for key in ['output_data_format', 'output_product', 'output_service_backend']:
+            if key in self.env:
+                setattr(self, key, self.env[key])
+        self.fimex_parameters = self.template.from_string(self.env['fimex_parameters'])
+        self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
 
     def create_job(self, message_id, resource):
         """!
@@ -141,7 +140,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
                 'expires': self.expiry_from_lifetime(),
                 'format': self.output_data_format,
                 'servicebackend': self.output_service_backend,
-                'url': os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.output_filename)),
+                'url': os.path.join(self.env['output_base_url'], os.path.basename(job.output_filename)),
             }
         )
         resources['datainstance'] = [datainstance]
