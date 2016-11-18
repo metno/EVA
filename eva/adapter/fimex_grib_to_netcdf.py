@@ -13,12 +13,12 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
     The adapter requires an external library called `eva-adapter-support`.
     """
     CONFIG = {
-        'EVA_FG2NC_LIB': {
+        'fg2nc_lib': {
             'type': 'string',
             'help': 'Path to .../eva-adapter-support/FimexGRIB2NetCDFAdapter',
             'default': '',
         },
-        'EVA_FG2NC_TEMPLATEDIR': {
+        'fg2nc_templatedir': {
             'type': 'string',
             'help': 'Path to the NetCDF template files required for this conversion',
             'default': '',
@@ -26,32 +26,32 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
     }
 
     REQUIRED_CONFIG = [
-        'EVA_FG2NC_LIB',
-        'EVA_FG2NC_TEMPLATEDIR',
-        'EVA_INPUT_DATA_FORMAT',
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_FILENAME_PATTERN',
+        'fg2nc_lib',
+        'fg2nc_templatedir',
+        'input_data_format',
+        'input_product',
+        'input_service_backend',
+        'output_filename_pattern',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_INPUT_PARTIAL',
-        'EVA_OUTPUT_BASE_URL',
-        'EVA_OUTPUT_LIFETIME',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'input_partial',
+        'output_base_url',
+        'output_lifetime',
+        'output_product',
+        'output_service_backend',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'EVA_OUTPUT_BASE_URL',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'output_base_url',
+        'output_product',
+        'output_service_backend',
     ]
 
-    def init(self, *args, **kwargs):
-        if self.post_to_productstatus():
-            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
-            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
+    def init(self):
+        for key in ['output_product', 'output_service_backend']:
+            if key in self.env:
+                setattr(self, key, self.env[key])
 
     def create_job(self, message_id, resource):
         """!
@@ -67,7 +67,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
             'version': resource.data.productinstance.version,
             'time_period_begin': resource.data.time_period_begin,
             'time_period_end': resource.data.time_period_end,
-            'filename': reftime.strftime(self.env['EVA_OUTPUT_FILENAME_PATTERN']),
+            'filename': reftime.strftime(self.env['output_filename_pattern']),
         }
 
         job.command = """#!/bin/bash
@@ -80,8 +80,8 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
 """.format(
             gribfile=eva.url_to_filename(resource.url),
             reftime=reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
-            lib_fg2nc=self.env['EVA_FG2NC_LIB'],
-            templatedir=self.env['EVA_FG2NC_TEMPLATEDIR'],
+            lib_fg2nc=self.env['fg2nc_lib'],
+            templatedir=self.env['fg2nc_templatedir'],
             destfile=job.data['filename'],
         )
 
@@ -129,5 +129,5 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         datainstance.expires = self.expiry_from_lifetime()
         datainstance.format = self.api.dataformat['netcdf']
         datainstance.servicebackend = self.output_service_backend
-        datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.data['filename']))
+        datainstance.url = os.path.join(self.env['output_base_url'], os.path.basename(job.data['filename']))
         resources['datainstance'] += [datainstance]

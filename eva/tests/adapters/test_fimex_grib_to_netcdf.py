@@ -12,19 +12,19 @@ import datetime
 
 class TestFimexGRIB2NetCDFAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.FimexGRIB2NetCDFAdapter
-    environment = {
-        'EVA_FG2NC_LIB': '/lib_fg2nc',
-        'EVA_FG2NC_TEMPLATEDIR': '/lib_fg2nc/template',
-        'EVA_INPUT_DATA_FORMAT': 'foo',
-        'EVA_INPUT_PRODUCT': 'foo',
-        'EVA_INPUT_SERVICE_BACKEND': 'foo',
-        'EVA_OUTPUT_BASE_URL': 'file:///path/to/new',
-        'EVA_OUTPUT_FILENAME_PATTERN': '/new/%Y%m%dT%H%M%SZ/foo',
-        'EVA_OUTPUT_PRODUCT': 'foo',
-        'EVA_OUTPUT_SERVICE_BACKEND': 'foo',
-        'EVA_PRODUCTSTATUS_API_KEY': 'foo',
-        'EVA_PRODUCTSTATUS_USERNAME': 'foo',
-    }
+    config_ini = \
+"""
+[adapter]
+fg2nc_lib = /lib_fg2nc
+fg2nc_templatedir = /lib_fg2nc/template
+input_data_format = foo
+input_product = foo
+input_service_backend = foo
+output_base_url = file:///path/to/new
+output_filename_pattern = /new/%%Y%%m%%dT%%H%%M%%SZ/foo
+output_product = foo
+output_service_backend = foo
+"""  # NOQA
 
     def test_create_job(self):
         """!
