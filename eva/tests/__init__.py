@@ -81,7 +81,7 @@ executor = foo
         self.adapter.generate_resources(job, resources)
         return resources
 
-    def create_adapter(self, key='adapter'):
-        incubator, self.adapter = self.adapter_class().factory(self.config, 'defaults.adapter', key)
+    def create_adapter(self, key='adapter', adapter_class=adapter_class):
+        incubator, self.adapter = adapter_class().factory(self.config, 'defaults.adapter', key)
         self.adapter.set_globe(self.globe)
         self.adapter.init()

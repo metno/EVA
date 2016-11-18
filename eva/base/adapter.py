@@ -90,49 +90,21 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
             'help': 'Productstatus Service Backend ID for the position of the finished product',
             'default': '',
         },
-        'productstatus_api_key': {
-            'type': 'string',
-            'help': 'Productstatus API key',
-            'default': '',
-        },
-        'productstatus_username': {
-            'type': 'string',
-            'help': 'Productstatus user name',
-            'default': '',
-        },
-        'queue_order': {
-            'type': 'string',
-            'help': 'Specify how to process incoming events; one of FIFO, LIFO, ADAPTIVE. See the documentation for implementation details',
-            'default': 'FIFO',
-        },
         'reference_time_threshold': {
             'type': 'int',
             'help': 'If non-zero, EVA will never process DataInstance resources that belong to a ProductInstance with a reference time older than N seconds.',
             'default': '0',
-        },
-        'single_instance': {
-            'type': 'bool',
-            'help': 'Allow only one EVA instance with the same group id running at the same time',
-            'default': 'NO',
         },
     }
 
     _OPTIONAL_CONFIG = [
         'concurrency',
         'input_with_hash',
-        'productstatus_api_key',
-        'productstatus_username',
         'reference_time_threshold',
-        'single_instance',
     ]
 
     _REQUIRED_CONFIG = [
         'executor',
-    ]
-
-    _PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'productstatus_username',
-        'productstatus_api_key',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = []
@@ -418,8 +390,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """
         if self.productstatus.has_credentials():
             self._post_to_productstatus = True
-            required_keys = self._PRODUCTSTATUS_REQUIRED_CONFIG + self.PRODUCTSTATUS_REQUIRED_CONFIG
-            for key in required_keys:
+            for key in self.PRODUCTSTATUS_REQUIRED_CONFIG:
                 if not self.env[key]:
                     self._post_to_productstatus = False
                     break
@@ -446,10 +417,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @return True if the adapter is configured with a user name and API key
         to Productstatus, False otherwise.
         """
-        return (
-            (len(self.env['productstatus_username']) > 0) and
-            (len(self.env['productstatus_api_key']) > 0)
-        )
+        return self.productstatus.has_credentials()
 
     def require_productstatus_credentials(self):
         """!
