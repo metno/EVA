@@ -1,8 +1,6 @@
 # coding: utf-8
 
-import unittest
 import datetime
-import logging
 
 import eva
 import eva.executor

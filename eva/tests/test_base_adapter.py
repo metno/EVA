@@ -1,11 +1,5 @@
-import unittest
-import logging
 import datetime
 import mock
-
-import productstatus
-import productstatus.api
-import productstatus.event
 
 import eva.adapter
 import eva.executor
