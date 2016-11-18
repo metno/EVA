@@ -6,9 +6,10 @@ import logging
 
 import eva
 import eva.executor
+import eva.tests
 
 
-class TestBase(unittest.TestCase):
+class TestBase(eva.tests.TestBase):
 
     def test_in_array_or_empty(self):
         array = ['a', 'b', 'c']
@@ -32,17 +33,6 @@ class TestBase(unittest.TestCase):
             eva.url_to_filename('https://example.com/foo.nc')
 
     def test_log_stdout_stderr(self):
-        self.group_id = 'group-id'
-        self.logger = logging.getLogger('root')
-        self.zookeeper = None
-        self.statsd = eva.statsd.StatsDClient()
-        self.mailer = eva.mail.NullMailer()
-        self.globe = eva.globe.Global(group_id=self.group_id,
-                                      logger=self.logger,
-                                      mailer=self.mailer,
-                                      statsd=self.statsd,
-                                      zookeeper=self.zookeeper,
-                                      )
         job = eva.job.Job('foo', self.globe)
         eva.executor.log_stdout_stderr(job, ['x'], [])
 
