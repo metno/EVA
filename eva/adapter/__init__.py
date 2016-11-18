@@ -9,7 +9,6 @@ from eva.adapter.checksum import ChecksumVerificationAdapter  # NOQA
 from eva.adapter.cwf import CWFAdapter  # NOQA
 from eva.adapter.delete import DeleteAdapter  # NOQA
 from eva.adapter.distribution import DistributionAdapter  # NOQA
-from eva.adapter.download import DownloadAdapter  # NOQA
 from eva.adapter.example import ExampleAdapter  # NOQA
 from eva.adapter.fimex import FimexAdapter  # NOQA
 from eva.adapter.fimex_fill_file import FimexFillFileAdapter  # NOQA
