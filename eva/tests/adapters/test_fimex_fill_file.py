@@ -12,26 +12,26 @@ import datetime
 
 class TestFimexAdapter(eva.tests.BaseTestAdapter):
     adapter_class = eva.adapter.FimexFillFileAdapter
-    environment = {
-        'EVA_FIMEX_FILL_FILE_NCFILL_PATH': '/path/to/ncfill',
-        'EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY': '/template',
-        'EVA_INPUT_DATA_FORMAT': 'foo',
-        'EVA_INPUT_PRODUCT': 'foo',
-        'EVA_INPUT_SERVICE_BACKEND': 'foo',
-        'EVA_OUTPUT_BASE_URL': 'file:///foo',
-        'EVA_OUTPUT_DATA_FORMAT': 'netcdf',
-        'EVA_OUTPUT_FILENAME_PATTERN': '/output/{{reference_time|iso8601_compact}}.nc',
-        'EVA_OUTPUT_PRODUCT': 'foo',
-        'EVA_OUTPUT_SERVICE_BACKEND': 'foo',
-        'EVA_PRODUCTSTATUS_API_KEY': 'foo',
-        'EVA_PRODUCTSTATUS_USERNAME': 'foo',
-    }
+    config_ini = \
+"""
+[adapter]
+fimex_fill_file_ncfill_path = /path/to/ncfill
+fimex_fill_file_template_directory = /template
+input_data_format = foo
+input_product = foo
+input_service_backend = foo
+output_base_url = file:///foo
+output_data_format = netcdf
+output_filename_pattern = /output/{{reference_time|iso8601_compact}}.nc
+output_product = foo
+output_service_backend = foo
+"""  # NOQA
 
     def test_with_partial(self):
         """!
-        @brief Test that the adapter requires EVA_INPUT_PARTIAL=NO.
+        @brief Test that the adapter requires input_partial=NO.
         """
-        self.env['EVA_INPUT_PARTIAL'] = 'YES'
+        self.config['adapter']['input_partial'] = 'YES'
         with self.assertRaises(eva.exceptions.InvalidConfigurationException):
             self.create_adapter()
 

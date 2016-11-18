@@ -13,12 +13,12 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
     """
 
     CONFIG = {
-        'EVA_FIMEX_FILL_FILE_NCFILL_PATH': {
+        'fimex_fill_file_ncfill_path': {
             'type': 'string',
             'help': 'Path to the "ncfill" binary that will perform the fill operation.',
             'default': '',
         },
-        'EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY': {
+        'fimex_fill_file_template_directory': {
             'type': 'string',
             'help': 'Path to template directory that is used for fill operation configuration.',
             'default': '',
@@ -26,42 +26,42 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
     }
 
     REQUIRED_CONFIG = [
-        'EVA_FIMEX_FILL_FILE_NCFILL_PATH',
-        'EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY',
-        'EVA_INPUT_DATA_FORMAT',
-        'EVA_INPUT_PRODUCT',
-        'EVA_INPUT_SERVICE_BACKEND',
-        'EVA_OUTPUT_FILENAME_PATTERN',
+        'fimex_fill_file_ncfill_path',
+        'fimex_fill_file_template_directory',
+        'input_data_format',
+        'input_product',
+        'input_service_backend',
+        'output_filename_pattern',
     ]
 
     OPTIONAL_CONFIG = [
-        'EVA_INPUT_PARTIAL',
-        'EVA_OUTPUT_BASE_URL',
-        'EVA_OUTPUT_DATA_FORMAT',
-        'EVA_OUTPUT_LIFETIME',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'input_partial',
+        'output_base_url',
+        'output_data_format',
+        'output_lifetime',
+        'output_product',
+        'output_service_backend',
     ]
 
     PRODUCTSTATUS_REQUIRED_CONFIG = [
-        'EVA_OUTPUT_BASE_URL',
-        'EVA_OUTPUT_DATA_FORMAT',
-        'EVA_OUTPUT_PRODUCT',
-        'EVA_OUTPUT_SERVICE_BACKEND',
+        'output_base_url',
+        'output_data_format',
+        'output_product',
+        'output_service_backend',
     ]
 
     def init(self):
-        if self.env['EVA_INPUT_PARTIAL'] is not False:
+        if self.env['input_partial'] is not False:
             raise eva.exceptions.InvalidConfigurationException(
-                'This adapter does not accept partial input files, and MUST be configured with EVA_INPUT_PARTIAL=NO.'
+                'This adapter does not accept partial input files, and MUST be configured with input_partial=NO.'
             )
         if self.post_to_productstatus():
-            self.output_data_format = self.api.dataformat[self.env['EVA_OUTPUT_DATA_FORMAT']]
-            self.output_product = self.api.product[self.env['EVA_OUTPUT_PRODUCT']]
-            self.output_service_backend = self.api.servicebackend[self.env['EVA_OUTPUT_SERVICE_BACKEND']]
-        self.ncfill_path = self.env['EVA_FIMEX_FILL_FILE_NCFILL_PATH']
-        self.template_directory = self.template.from_string(self.env['EVA_FIMEX_FILL_FILE_TEMPLATE_DIRECTORY'])
-        self.output_filename = self.template.from_string(self.env['EVA_OUTPUT_FILENAME_PATTERN'])
+            self.output_data_format = self.api.dataformat[self.env['output_data_format']]
+            self.output_product = self.api.product[self.env['output_product']]
+            self.output_service_backend = self.api.servicebackend[self.env['output_service_backend']]
+        self.ncfill_path = self.env['fimex_fill_file_ncfill_path']
+        self.template_directory = self.template.from_string(self.env['fimex_fill_file_template_directory'])
+        self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
 
     def create_job(self, message_id, resource):
         job = eva.job.Job(message_id, self.globe)
@@ -123,5 +123,5 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
         datainstance.expires = self.expiry_from_lifetime()
         datainstance.format = self.output_data_format
         datainstance.servicebackend = self.output_service_backend
-        datainstance.url = os.path.join(self.env['EVA_OUTPUT_BASE_URL'], os.path.basename(job.output_filename))
+        datainstance.url = os.path.join(self.env['output_base_url'], os.path.basename(job.output_filename))
         resources['datainstance'] += [datainstance]
