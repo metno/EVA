@@ -83,7 +83,7 @@ class ConfigurableObject(object):
     def factory(self, config, *args):
         """!
         @brief Load the specified configuration data, according to
-        load_configuration, and return a tuple of the incubator class and the
+        load_configuration(), and return a tuple of the incubator class and the
         instantiated class.
         """
         object_ = self()
@@ -120,15 +120,14 @@ class ConfigurableObject(object):
         """
         pass
 
-    @classmethod
-    def format_help(class_):
+    def format_help(self):
         """!
         @brief Format a help string with this class' configuration variables.
         """
-        output = ['%s configuration:' % class_.__name__]
-        for key in sorted(class_.CONFIG.keys()):
-            output += ['  %s  (default: %s)' % (key, class_.CONFIG[key]['default'])]
-            output += ['      %s' % class_.CONFIG[key]['help']]
+        output = ['%s configuration:' % self.__name__]
+        for key in sorted(self.CONFIG.keys()):
+            output += ['  %s  (default: %s)' % (key, self.CONFIG[key]['default'])]
+            output += ['      %s' % self.CONFIG[key]['help']]
         return '\n'.join(output)
 
     def normalize_config_string(self, value):
@@ -205,6 +204,9 @@ class ConfigurableObject(object):
         """!
         @brief Normalize input configuration based on the configuration
         definition: split strings into lists, convert to types.
+        @param config configparser.ConfigParser ConfigParser object.
+        @param *args str ConfigParser sections to read from. Latter arguments take
+        presedence and will overwrite values found in earlier sections.
         """
         ## Dictionary of normalized, configured variables.
         self.env = {}
@@ -215,7 +217,7 @@ class ConfigurableObject(object):
         for key in keys:
             if key not in self.CONFIG:
                 raise RuntimeError(
-                    "Missing configuration option '%s' in adapter CONFIG hash, please fix your code!" % key
+                    "Missing configuration option '%s' in class CONFIG hash, please fix your code!" % key
                 )
 
             # Read default value and enforce requirements
@@ -263,7 +265,7 @@ class ConfigurableObject(object):
     def format_config(self):
         """!
         @brief Return a list of strings with configuration options, formatted
-        in "key=value" format, and censored variables filtered out.
+        in `key=value` format, and censored variables filtered out.
         """
         strings = []
         for key, var in sorted(self.env.items()):
