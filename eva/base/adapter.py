@@ -99,6 +99,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
 
     _OPTIONAL_CONFIG = [
         'concurrency',
+        'input_product',
         'input_with_hash',
         'reference_time_threshold',
     ]
