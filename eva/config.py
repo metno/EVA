@@ -15,49 +15,68 @@ SECRET_CONFIGURATION = [
 
 
 class ConfigurableObject(object):
-    """
-    Base class that allows the subclass to define a list of required and
+    """!
+    @brief Base class that allows the subclass to define a list of required and
     optional configuration environment variables.
 
-    The subclass has the responsibility of populating `self.env` with a
-    dictionary of environment variables, and then call `read_configuration()`.
-
-    @brief Base class with a factory method, which instantiates an object and
-    configures it according to the given configuration.
-
     In order to use classes in your EVA configuration, they MUST be derived
-    from this class, and implement the _factory() method.
+    from this class. Optionally, they may reimplement the `_factory()` method,
+    which must return a configured class instance of any type.
+
+    Usage:
+
+        incubator, object_ = eva.config.ConfigurableObject().factory(
+            <configparser.ConfigParser instance>,
+            <section header>,
+            [<section header>],
+            [...]
+        )
+
+        # `incubator` is a reference to the ConfigurableObject instance, while
+        # `object_` is a reference to the object returned by _factory().
+        # Normally, you proceed with calling init() if your instantiated class
+        # is a ConfigurableObject instance:
+
+        object_.init()
 
     Configurable variables are defined with:
 
         CONFIG = {
-            'EVA_FOO': {
+            'foo': {
                 'type': 'list_int',
                 'help': 'Description of what this setting does',
                 'default': '1,2,3',
             },
-            'EVA_BAR': {
+            'foo': {
                 ...
             },
         },
 
     The types are defined as `normalize_config_<type>` functions in this class.
+    Subclasses might implement their own normalization functions as needed.
 
-    Then, to use them either as required or optional variables, you may do:
+    To define configuration options as required or optional, you may do:
 
-        REQUIRED_CONFIG = ['EVA_FOO']
-        OPTIONAL_CONFIG = ['EVA_BAR']
+        REQUIRED_CONFIG = ['foo']
+        OPTIONAL_CONFIG = ['bar']
+
+    Note that variables that are not in any of these two lists will be regarded
+    as invalid options, and trying to use them will throw an exception.
+
+    The normalized variables are made available in the `env` class member. For
+    instance:
+
+        assert object_.env['foo'] == [1, 2, 3]  # True
 
     """
 
-    # @brief Hash with available configuration variables.
-    CONFIG = {
-    }
+    ## Hash with available configuration variables.
+    CONFIG = {}
 
-    # @brief List of required configuration variables.
+    ## List of required configuration variables.
     REQUIRED_CONFIG = []
 
-    # @brief List of optional configuration variables.
+    ## List of optional configuration variables.
     OPTIONAL_CONFIG = []
 
     @classmethod
@@ -187,8 +206,10 @@ class ConfigurableObject(object):
         @brief Normalize input configuration based on the configuration
         definition: split strings into lists, convert to types.
         """
+        ## Dictionary of normalized, configured variables.
         self.env = {}
         keys = list(set(self.REQUIRED_CONFIG + self.OPTIONAL_CONFIG))
+        configured = []
 
         # Iterate through required and optional config, and read only those variables
         for key in keys:
@@ -229,6 +250,15 @@ class ConfigurableObject(object):
 
             # Write normalized value into configuration hash
             self.env[key] = value
+            configured += [key]
+
+        # Check for extraneous options, and raise an exception if a non-defined key is set
+        for section in args:
+            if section not in config:
+                continue
+            for key in config[section]:
+                if key not in configured:
+                    raise eva.exceptions.InvalidConfigurationException("Invalid configuration key '%s' for class '%s'" % (key, self.__class__.__name__))
 
     def format_config(self):
         """!
