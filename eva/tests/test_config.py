@@ -105,6 +105,7 @@ int = 2
         self.assertListEqual(self.object_.env['list_string'], ['c', 'd', '3'])
         self.assertListEqual(self.object_.env['list_int'], [1, 2, 3, 5])
         self.assertEqual(self.object_.env['config_class'].resolve(config_class), config_class['class.foo'])
+        self.assertEqual(self.object_.config_id, 'object')
 
     def test_inheritance(self):
         config = \
