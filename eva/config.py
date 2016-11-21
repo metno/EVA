@@ -47,7 +47,7 @@ class ConfigurableObject(object):
                 'help': 'Description of what this setting does',
                 'default': '1,2,3',
             },
-            'foo': {
+            'bar': {
                 ...
             },
         },

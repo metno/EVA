@@ -42,6 +42,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
+        'input_data_format',
         'thredds_poll_interval',
         'thredds_poll_retries',
     ]

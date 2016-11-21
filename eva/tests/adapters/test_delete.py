@@ -14,8 +14,6 @@ class TestDeleteAdapter(eva.tests.BaseTestAdapter):
 """
 [adapter]
 input_service_backend = foo
-productstatus_api_key = foo
-productstatus_username = foo
 """  # NOQA
 
     def test_create_job(self):
