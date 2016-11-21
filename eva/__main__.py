@@ -491,7 +491,6 @@ class Main(eva.config.ConfigurableObject):
                     evaloop.process_all_in_product_instance(product_instance)
                 elif self.args.process_data_instance:
                     evaloop.process_data_instance(self.args.process_data_instance)
-                evaloop.sort_queue()
                 while evaloop.process_all_events_once():
                     continue
             else:

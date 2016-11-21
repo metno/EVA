@@ -261,7 +261,6 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.set_no_drain()
             if not self.draining():
                 self.poll_listeners()
-            self.sort_queue()
             self.process_health_check()
             self.process_all_events_once()
             self.store_job_status_change()
@@ -472,15 +471,6 @@ class Eventloop(eva.globe.GlobalMixin):
             self.logger.debug('Setting health check heartbeat at timestamp %s', timestamp)
             self.health_check_server.heartbeat(timestamp)
 
-    def sort_queue(self):
-        """!
-        @brief Sort queue so that RPC events are executed first.
-        """
-        def sort_rpc(event):
-            return not isinstance(event, eva.event.RPCEvent)
-
-        self.event_queue.sort(key=sort_rpc)
-
     def register_job_failure(self, event):
         """!
         @brief Increase the number of failures for a specific event, for
@@ -571,14 +561,14 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.logger.info('[%d/%d] Adding to queue: %s', index, count, resource)
                 events += [eva.event.ProductstatusLocalEvent(
                     {},
-                    resource,
+                    resource.resource_uri,
                     timestamp=resource.modified,
                 )]
                 index += 1
         except self.RECOVERABLE_EXCEPTIONS as e:
             self.logger.error('An error occurred when retrieving Productstatus resources, aborting: %s', e)
             return
-        [self.add_event_to_queue(x) for x in events]
+        [self.event_queue.add_event(event) for event in events]
 
     def process_data_instance(self, data_instance_uuid):
         """!
@@ -587,11 +577,11 @@ class Eventloop(eva.globe.GlobalMixin):
         resource = self.productstatus.datainstance[data_instance_uuid]
         event = eva.event.ProductstatusLocalEvent(
             {},
-            resource,
+            resource.resource_uri,
             timestamp=resource.modified,
         )
         self.logger.info('Adding event with DataInstance %s to queue', resource)
-        self.add_event_to_queue(event)
+        self.event_queue.add_event(event)
 
     def blacklist_uuid(self, uuid):
         """!
