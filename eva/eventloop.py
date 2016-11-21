@@ -26,17 +26,6 @@ class Eventloop(eva.globe.GlobalMixin):
 
     RECOVERABLE_EXCEPTIONS = (eva.exceptions.RetryException, productstatus.exceptions.ServiceUnavailableException,)
 
-    # Queue orders, used in Eventloop.sort_queue()
-    QUEUE_ORDER_FIFO = 0
-    QUEUE_ORDER_LIFO = 1
-    QUEUE_ORDER_ADAPTIVE = 2
-
-    QUEUE_ORDERS = {
-        'FIFO': QUEUE_ORDER_FIFO,
-        'LIFO': QUEUE_ORDER_LIFO,
-        'ADAPTIVE': QUEUE_ORDER_ADAPTIVE,
-    }
-
     # Allow maximum 60 seconds since last heartbeat before reporting process unhealthy
     HEALTH_CHECK_HEARTBEAT_TIMEOUT = 60
 
@@ -50,7 +39,6 @@ class Eventloop(eva.globe.GlobalMixin):
         self.health_check_server = health_check_server
 
     def init(self):
-        #self.queue_order = self.parse_queue_order(self.env['EVA_QUEUE_ORDER'])
         self.drain = False
         self.event_queue = eva.eventqueue.EventQueue()
         self.event_queue.set_globe(self.globe)
@@ -63,18 +51,6 @@ class Eventloop(eva.globe.GlobalMixin):
             self.set_health_check_skip_heartbeat(False)
             self.set_health_check_heartbeat_interval(int(event_listener_configuration.heartbeat_interval))
             self.set_health_check_heartbeat_timeout(self.HEALTH_CHECK_HEARTBEAT_TIMEOUT)
-
-    def parse_queue_order(self, s):
-        """!
-        @brief Parse a configuration string into a queue order.
-        """
-        s = s.upper()
-        if s not in self.QUEUE_ORDERS:
-            raise eva.exceptions.InvalidConfigurationException(
-                'EVA_QUEUE_ORDER order must be one of: %s' %
-                ', '.join(sorted(self.QUEUE_ORDERS.keys()))
-            )
-        return self.QUEUE_ORDERS[s]
 
     def poll_listeners(self):
         """!
@@ -272,7 +248,6 @@ class Eventloop(eva.globe.GlobalMixin):
                 job.logger.warning('Job is not complete, skipping anyway.')
             job.logger.info('Adapter has finished processing the job.')
             job.set_status(eva.job.FINISHED)
-            #self.remove_event_from_queues(event)
 
     def __call__(self):
         """!
@@ -286,7 +261,7 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.set_no_drain()
             if not self.draining():
                 self.poll_listeners()
-            #self.sort_queue()
+            self.sort_queue()
             self.process_health_check()
             self.process_all_events_once()
             self.store_job_status_change()
@@ -450,29 +425,6 @@ class Eventloop(eva.globe.GlobalMixin):
         self.logger.info('Loading process list from ZooKeeper.')
         self.process_list = self.load_serialized_data(self.zookeeper_process_list_path())
 
-    def move_to_process_list(self, event):
-        """!
-        @brief Move an event from the event queue to the process list.
-        @returns True if the event was moved, False otherwise.
-        """
-        if event not in self.event_queue:
-            return False
-        self.process_list += [event]
-        self.event_queue.remove(event)
-        self.store_process_list()
-        self.store_event_queue()
-
-    def remove_event_from_queues(self, event):
-        """!
-        @brief Remove an event from the event queue and the process list.
-        """
-        if event in self.event_queue:
-            self.event_queue.remove(event)
-            self.store_event_queue()
-        if event in self.process_list:
-            self.process_list.remove(event)
-            self.store_process_list()
-
     def instantiate_productstatus_data(self, event):
         """!
         @brief Make sure a ProductstatusResourceEvent has a Productstatus resource in Event.data.
@@ -522,37 +474,11 @@ class Eventloop(eva.globe.GlobalMixin):
 
     def sort_queue(self):
         """!
-        @brief Sort queue according to EVA_QUEUE_ORDER.
-
-        This function guarantees that:
-
-        * RPC requests are put first in the queue in FIFO order
-        * If using the FIFO order, messages are put in chronological order
-        * If using the LIFO order, messages are put in reverse chronological order
-        * If using the ADAPTIVE order, messages are put in chronological order,
-          but messages with a more recent reference time are put first in the queue.
+        @brief Sort queue so that RPC events are executed first.
         """
-        def sort_timestamp(event):
-            return event.timestamp()
-
         def sort_rpc(event):
             return not isinstance(event, eva.event.RPCEvent)
 
-        def sort_reference_time(event):
-            if not isinstance(event, eva.event.ProductstatusResourceEvent):
-                return eva.epoch_with_timezone()
-            #self.instantiate_productstatus_data(event)
-            if event.resource._collection._resource_name != 'datainstance':
-                return eva.epoch_with_timezone()
-            return event.resource.data.productinstance.reference_time
-
-        #if self.queue_order == self.QUEUE_ORDER_FIFO:
-            #self.event_queue.sort(key=sort_timestamp)
-        #elif self.queue_order == self.QUEUE_ORDER_LIFO:
-            #self.event_queue.sort(key=sort_timestamp, reverse=True)
-        #elif self.queue_order == self.QUEUE_ORDER_ADAPTIVE:
-            #self.event_queue.sort(key=sort_timestamp)
-            #self.event_queue.sort(key=sort_reference_time, reverse=True)
         self.event_queue.sort(key=sort_rpc)
 
     def register_job_failure(self, event):
