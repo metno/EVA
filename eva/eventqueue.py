@@ -190,14 +190,14 @@ class EventQueue(eva.globe.GlobalMixin):
         when loading data while populating the event queue, and you do not want
         to touch existing data in the process.
         """
-        self.logger.warning('Disabled automatic event queue storing in ZooKeeper.')
+        self.logger.info('Disabled automatic event queue storing in ZooKeeper.')
         self.zk_store_immediately = False
 
     def zk_immediate_store_enable(self):
         """!
         @brief Enable automatic event queue storage in ZooKeeper.
         """
-        self.logger.warning('Enabled automatic event queue storing in ZooKeeper.')
+        self.logger.info('Enabled automatic event queue storing in ZooKeeper.')
         self.zk_store_immediately = True
 
     def get_stored_queue(self):

@@ -334,6 +334,7 @@ class Main(eva.config.ConfigurableObject):
                 continue
             section_defaults = 'defaults.' + section.split('.')[0]
             class_name = self.config.get(section, 'class')
+            del self.config[section]['class']
             self.logger.info("Instantiating '%s' from configuration section '%s'.", class_name, section)
             class_type = eva.import_module_class(class_name)
             if not issubclass(class_type, eva.config.ConfigurableObject):
@@ -459,6 +460,12 @@ class Main(eva.config.ConfigurableObject):
 
             # Start listener classes
             self.setup_listeners()
+
+            # Warn about configuration that might not be suitable
+            if len(self.adapters) == 0:
+                self.logger.warning('The current configuration does not include any adapter classes. Events will be processed, but no jobs will be generated!')
+            if len(self.listeners) == 0:
+                self.logger.warning('The current configuration does not include any listener classes. No events will reach EVA!')
 
         except eva.exceptions.ConfigurationException as e:
             self.logger.critical(str(e))

@@ -68,27 +68,30 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         self.logger.info('Restoring event queue from ZooKeeper...')
         cached_queue = self.event_queue.get_stored_queue()
-        self.event_queue.zk_immediate_store_disable()
 
-        # Iterate through events
-        for event_id, event_data in cached_queue.items():
-            message = productstatus.event.Message(event_data['message'])
-            event = eva.event.ProductstatusBaseEvent.factory(message)
-            item = self.event_queue.add_event(event)
-            self.statsd.incr('eva_restored_events')
+        if len(cached_queue) > 0:
+            self.event_queue.zk_immediate_store_disable()
 
-            # Iterate through event-generated jobs
-            for job_id, job_data in event_data['jobs'].items():
-                adapter = self.adapter_by_config_id(job_data['adapter'])
-                job = self.create_job_for_event_queue_item(item, adapter)
-                if not job:
-                    self.logger.warning('Empty Job object returned, discarding saved job.')
-                    continue
-                #job.set_status(job_data['status'])  ## FIXME
-                item.add_job(job)
-                self.statsd.incr('eva_restored_jobs')
+            # Iterate through events
+            for event_id, event_data in cached_queue.items():
+                message = productstatus.event.Message(event_data['message'])
+                event = eva.event.ProductstatusBaseEvent.factory(message)
+                item = self.event_queue.add_event(event)
+                self.statsd.incr('eva_restored_events')
 
-        self.event_queue.zk_immediate_store_enable()
+                # Iterate through event-generated jobs
+                for job_id, job_data in event_data['jobs'].items():
+                    adapter = self.adapter_by_config_id(job_data['adapter'])
+                    job = self.create_job_for_event_queue_item(item, adapter)
+                    if not job:
+                        self.logger.warning('Empty Job object returned, discarding saved job.')
+                        continue
+                    #job.set_status(job_data['status'])  ## FIXME
+                    item.add_job(job)
+                    self.statsd.incr('eva_restored_jobs')
+
+            self.event_queue.zk_immediate_store_enable()
+
         self.logger.info('Finished restoring event queue from ZooKeeper.')
 
     def poll_listeners(self):
