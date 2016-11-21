@@ -49,6 +49,11 @@ class MockConfigObject(eva.config.ConfigurableObject):
             'help': '',
             'default': '1,2,3,5',
         },
+        'config_class': {
+            'type': 'config_class',
+            'help': '',
+            'default': 'class.foo',
+        },
     }
     REQUIRED_CONFIG = ['string']
     OPTIONAL_CONFIG = [
@@ -59,6 +64,7 @@ class MockConfigObject(eva.config.ConfigurableObject):
         'list',
         'list_string',
         'list_int',
+        'config_class',
     ]
 
 
@@ -86,6 +92,9 @@ class TestConfig(eva.tests.TestBase):
 string = bar
 int = 2
 """  # NOQA
+        config_class = {
+            'class.foo': object(),
+        }
         self.setup_with_config(MockConfigObject, config, 'object')
         self.assertEqual(self.object_.env['string'], 'bar')
         self.assertEqual(self.object_.env['int'], 2)
@@ -95,6 +104,7 @@ int = 2
         self.assertListEqual(self.object_.env['list'], ['a', 'b', '2'])
         self.assertListEqual(self.object_.env['list_string'], ['c', 'd', '3'])
         self.assertListEqual(self.object_.env['list_int'], [1, 2, 3, 5])
+        self.assertEqual(self.object_.env['config_class'].resolve(config_class), config_class['class.foo'])
 
     def test_inheritance(self):
         config = \
