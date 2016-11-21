@@ -4,6 +4,7 @@
 
 
 import collections
+import json
 import os
 
 import eva.base.adapter
@@ -160,6 +161,66 @@ class EventQueue(eva.globe.GlobalMixin):
       The adapter that owns this job.
     """
 
+    def zk_get_serialized(self, path):
+        """!
+        @brief Read serialized JSON data from a ZooKeeper path, and return its contents unserialized.
+        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.
+        """
+        data = self.zk_get_str(path)
+        if data is None:
+            return data
+        return json.loads(data)
+
+    def zk_get_str(self, path):
+        """!
+        @brief Read data from a ZooKeeper path, and return its contents as a string.
+        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.
+        @returns str
+        """
+        data, stat = self.zookeeper.get(path)
+        if len(data) == 0:
+            return None
+        decoded = data.decode('utf-8')
+        self.logger.debug('Reading ZooKeeper node %s: %s', path, decoded)
+        return decoded
+
+    def zk_immediate_store_disable(self):
+        self.logger.warning('Disabled automatic event queue storing in ZooKeeper.')
+        self.zk_store_immediately = False
+
+    def zk_immediate_store_enable(self):
+        self.logger.warning('Enabled automatic event queue storing in ZooKeeper.')
+        self.zk_store_immediately = True
+
+    def get_stored_queue(self):
+        """!
+        @brief Return an ordered dictionary that contains a serialized, stored event queue from ZooKeeper.
+        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.
+        @returns collections.OrderedDict
+        """
+        items = collections.OrderedDict()
+        event_keys = self.zk_get_serialized(self.zk_base_path)
+        if not event_keys:
+            return items
+        for event_key in event_keys:
+            event_path = os.path.join(self.zk_base_path, event_key)
+            message_path = os.path.join(event_path, 'message')
+            jobs_path = os.path.join(event_path, 'jobs')
+            job_keys = self.zk_get_serialized(jobs_path)
+            items[event_key] = {}
+            items[event_key]['message'] = self.zk_get_serialized(message_path)
+            items[event_key]['jobs'] = collections.OrderedDict()
+            if not job_keys:
+                continue
+            for job_key in job_keys:
+                job_path = os.path.join(jobs_path, job_key)
+                status_path = os.path.join(job_path, 'status')
+                adapter_path = os.path.join(job_path, 'adapter')
+                items[event_key]['jobs'][job_key] = {}
+                items[event_key]['jobs'][job_key]['status'] = self.zk_get_serialized(status_path)
+                items[event_key]['jobs'][job_key]['adapter'] = self.zk_get_serialized(adapter_path)
+        return items
+
     def init(self):
         """!
         @brief Instantiate the event queue.
@@ -168,6 +229,10 @@ class EventQueue(eva.globe.GlobalMixin):
         self.items = collections.OrderedDict()
         ## Base ZooKeeper path of the event queue.
         self.zk_base_path = os.path.join(self.zookeeper.EVA_BASE_PATH, 'events')
+        ## If set to True, saved items will be stored in ZooKeeper immediately.
+        ## Toggled with zk_immediate_store_disable() and
+        ## zk_immediate_store_enable().
+        self.zk_store_immediately = True
         self.zookeeper.ensure_path(self.zk_base_path)
 
     def add_event(self, event):
@@ -187,7 +252,8 @@ class EventQueue(eva.globe.GlobalMixin):
             raise eva.exceptions.DuplicateEventException('Event %s already exists in the event queue.', id)
         item = EventQueueItem(event)
         self.items[id] = item
-        self.store_item(item)
+        if self.zk_store_immediately:
+            self.store_item(item)
         self.logger.debug('Event added to event queue: %s', event)
         return item
         #try:
@@ -239,7 +305,8 @@ class EventQueue(eva.globe.GlobalMixin):
         assert id in self.items
         text = 'Event removed from event queue: %s' % item.event
         del self.items[id]
-        self.delete_stored_item(id)
+        if self.zk_store_immediately:
+            self.delete_stored_item(id)
         self.logger.debug(text)
 
     def item_keys(self):
@@ -302,7 +369,6 @@ class EventQueue(eva.globe.GlobalMixin):
         @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.
         """
         assert isinstance(item_id, str)
-        assert item_id in self.items
 
         path = os.path.join(self.zk_base_path, item_id)
         self.zookeeper.delete(path, recursive=True)

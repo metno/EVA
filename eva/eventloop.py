@@ -52,6 +52,45 @@ class Eventloop(eva.globe.GlobalMixin):
             self.set_health_check_heartbeat_interval(int(event_listener_configuration.heartbeat_interval))
             self.set_health_check_heartbeat_timeout(self.HEALTH_CHECK_HEARTBEAT_TIMEOUT)
 
+    def adapter_by_config_id(self, config_id):
+        """!
+        @brief Given an adapter configuration ID, return an adapter object, or None if not found.
+        @returns eva.base.adapter.BaseAdapter
+        """
+        for adapter in self.adapters:
+            if adapter.config_id == config_id:
+                return adapter
+        return None
+
+    def restore_queue(self):
+        """!
+        @brief Load a serialized, saved queue from ZooKeeper into the EventQueue instance.
+        """
+        self.logger.info('Restoring event queue from ZooKeeper...')
+        cached_queue = self.event_queue.get_stored_queue()
+        self.event_queue.zk_immediate_store_disable()
+
+        # Iterate through events
+        for event_id, event_data in cached_queue.items():
+            message = productstatus.event.Message(event_data['message'])
+            event = eva.event.ProductstatusBaseEvent.factory(message)
+            item = self.event_queue.add_event(event)
+            self.statsd.incr('eva_restored_events')
+
+            # Iterate through event-generated jobs
+            for job_id, job_data in event_data['jobs'].items():
+                adapter = self.adapter_by_config_id(job_data['adapter'])
+                job = self.create_job_for_event_queue_item(item, adapter)
+                if not job:
+                    self.logger.warning('Empty Job object returned, discarding saved job.')
+                    continue
+                #job.set_status(job_data['status'])  ## FIXME
+                item.add_job(job)
+                self.statsd.incr('eva_restored_jobs')
+
+        self.event_queue.zk_immediate_store_enable()
+        self.logger.info('Finished restoring event queue from ZooKeeper.')
+
     def poll_listeners(self):
         """!
         @brief Poll for new messages from all message listeners.
@@ -139,7 +178,7 @@ class Eventloop(eva.globe.GlobalMixin):
         if not finished:
             return
         self.logger.debug('Removing finished events from queue...')
-        for item in finished:
+        for item in set(finished):
             self.logger.debug('Removing: %s', item)
             self.event_queue.remove_item(item)
         self.logger.debug('Finished removing finished events from queue.')
@@ -264,8 +303,8 @@ class Eventloop(eva.globe.GlobalMixin):
             self.process_health_check()
             self.process_all_events_once()
             self.store_job_status_change()
-            self.report_job_status_metrics()
             self.remove_finished_events()
+            self.report_job_status_metrics()
         self.logger.info('Exited main loop.')
 
     def report_job_status_metrics(self):
@@ -373,29 +412,6 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         return self.draining() and self.event_queue.empty()
 
-    def add_event_to_queue(self, event):
-        """!
-        @brief Add an event to the event queue.
-        @returns True if the event was successfully added, False otherwise.
-        """
-        assert isinstance(event, eva.event.Event)
-        self.event_queue += [event]
-        self.logger.debug('Adding event to queue: %s', event)
-        if self.store_event_queue():
-            self.logger.debug('Event added to queue: %s', event)
-            return True
-        else:
-            self.logger.debug('Event could not be added to queue: %s', event)
-            self.set_drain()
-            self.event_queue = self.event_queue[:-1]
-            return False
-
-    def zookeeper_process_list_path(self):
-        """!
-        @brief Return the ZooKeeper path to the store of process list messages.
-        """
-        return self.zookeeper_path('process_list')
-
     def load_serialized_data(self, path):
         """!
         @brief Load the stored event queue from ZooKeeper.
@@ -405,24 +421,6 @@ class Eventloop(eva.globe.GlobalMixin):
             return []
         data = eva.zk.load_serialized_data(self.zookeeper, path)
         return [eva.event.ProductstatusBaseEvent.factory(productstatus.event.Message(x)) for x in data if x]
-
-    def load_event_queue(self):
-        """!
-        @brief Load the event queue from ZooKeeper.
-        """
-        if not self.zookeeper:
-            return True
-        self.logger.info('Loading event queue from ZooKeeper.')
-        self.event_queue = self.load_serialized_data(self.zookeeper_event_queue_path())
-
-    def load_process_list(self):
-        """!
-        @brief Load the process list from ZooKeeper.
-        """
-        if not self.zookeeper:
-            return True
-        self.logger.info('Loading process list from ZooKeeper.')
-        self.process_list = self.load_serialized_data(self.zookeeper_process_list_path())
 
     def instantiate_productstatus_data(self, event):
         """!

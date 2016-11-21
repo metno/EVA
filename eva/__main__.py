@@ -484,6 +484,8 @@ class Main(eva.config.ConfigurableObject):
                                               )
             evaloop.set_globe(self.globe)
             evaloop.init()
+            evaloop.restore_queue()
+            evaloop.remove_finished_events()
 
             if self.args.process_all_in_product_instance or self.args.process_data_instance:
                 if self.args.process_all_in_product_instance:
