@@ -14,6 +14,40 @@ SECRET_CONFIGURATION = [
 ]
 
 
+def resolved_config_section(config, section, section_keys=[], ignore_defaults=False):
+    """!
+    @brief Recursively pull in includes and defaults for a configuration
+    section, and combine them into a single dictionary. Provides infinite
+    recursion protection.
+    """
+    resolved = {}
+    section_keys += [section]
+    section_keys.sort()
+
+    if sorted(list(set(section_keys))) != section_keys:
+        raise RuntimeError('Multiple inheritance of the same base object detected: %s' % section)
+
+    if 'include' in config[section]:
+        sections = eva.config.ConfigurableObject.normalize_config_list_string(config[section]['include'])
+        for base_section in sections:
+            resolved.update(resolved_config_section(config, base_section, section_keys=section_keys, ignore_defaults=True))
+
+    if not ignore_defaults:
+        section_defaults = 'defaults.' + section.split('.')[0]
+        if section_defaults in config:
+            resolved.update(resolved_config_section(config, section_defaults, section_keys=section_keys, ignore_defaults=True))
+
+    if 'abstract' in resolved:
+        del resolved['abstract']
+
+    resolved.update(config[section])
+
+    if 'include' in resolved:
+        del resolved['include']
+
+    return resolved
+
+
 class ConfigurableObject(object):
     """!
     @brief Base class that allows the subclass to define a list of required and
@@ -130,13 +164,15 @@ class ConfigurableObject(object):
             output += ['      %s' % self.CONFIG[key]['help']]
         return '\n'.join(output)
 
-    def normalize_config_string(self, value):
+    @staticmethod
+    def normalize_config_string(value):
         """!
         Coerce a type into a unicode string.
         """
         return str(value)
 
-    def normalize_config_int(self, value):
+    @staticmethod
+    def normalize_config_int(value):
         """!
         Coerce a type into an integer.
         """
@@ -144,49 +180,56 @@ class ConfigurableObject(object):
             return None
         return int(value)
 
-    def normalize_config_positive_int(self, value):
+    @staticmethod
+    def normalize_config_positive_int(value):
         """!
         Coerce a type into an integer.
         """
-        value = self.normalize_config_int(value)
+        value = ConfigurableObject.normalize_config_int(value)
         if value <= 0:
             raise eva.exceptions.InvalidConfigurationException('Invalid non-positive integer: %d' % value)
         return value
 
-    def normalize_config_null_bool(self, value):
+    @staticmethod
+    def normalize_config_null_bool(value):
         """!
         Coerce a type into a unicode string.
         """
         return eva.parse_boolean_string(value)
 
-    def normalize_config_bool(self, value):
+    @staticmethod
+    def normalize_config_bool(value):
         """!
         Coerce a type into a unicode string.
         """
-        v = self.normalize_config_null_bool(value)
+        v = ConfigurableObject.normalize_config_null_bool(value)
         if v is None:
             raise eva.exceptions.InvalidConfigurationException('Invalid boolean value')
         return v
 
-    def normalize_config_list(self, value):
+    @staticmethod
+    def normalize_config_list(value):
         """!
         Split a comma-separated string into a list.
         """
         return eva.split_comma_separated(value)
 
-    def normalize_config_list_string(self, value):
+    @staticmethod
+    def normalize_config_list_string(value):
         """!
         Split a comma-separated string into a list of unicode strings.
         """
-        return [self.normalize_config_string(x) for x in self.normalize_config_list(value) if len(x) > 0]
+        return [ConfigurableObject.normalize_config_string(x) for x in ConfigurableObject.normalize_config_list(value) if len(x) > 0]
 
-    def normalize_config_list_int(self, value):
+    @staticmethod
+    def normalize_config_list_int(value):
         """!
         Split a comma-separated string into a list of integers.
         """
-        return [self.normalize_config_int(x) for x in self.normalize_config_list(value)]
+        return [ConfigurableObject.normalize_config_int(x) for x in ConfigurableObject.normalize_config_list(value)]
 
-    def normalize_config_config_class(self, value):
+    @staticmethod
+    def normalize_config_config_class(value):
         """!
         @brief Set a dotted class name into a resolvable dependency.
         """

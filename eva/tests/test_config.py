@@ -120,6 +120,45 @@ int = 3
         self.assertEqual(self.object_.env['string'], 'test')
         self.assertEqual(self.object_.env['int'], 3)
 
+    def test_resolved_config_section(self):
+        config = \
+"""
+[defaults.object]
+abstract = true
+bool = no
+include = include.foo
+int = 1
+
+[include.foo]
+positive_int = 10
+include = include.more
+
+[include.bar]
+null_bool = yes
+
+[include.baz]
+string = test
+null_bool = no
+
+[include.more]
+list_int = 3, 4
+
+[object]
+int = 3
+include = include.bar, include.baz
+"""  # NOQA
+        self.config.read_string(config)
+        resolved = eva.config.resolved_config_section(self.config, 'object')
+        test = {
+            'bool': 'no',
+            'int': '3',
+            'list_int': '3, 4',
+            'null_bool': 'no',
+            'positive_int': '10',
+            'string': 'test',
+        }
+        self.assertDictEqual(resolved, test)
+
     def test_unsupported_option(self):
         config = \
 """
