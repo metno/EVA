@@ -357,6 +357,10 @@ class EventQueue(eva.globe.GlobalMixin):
         assert isinstance(item, EventQueueItem)
         assert item.id() in self.items
 
+        # Silently ignore ephemeral events
+        if item.event.ephemeral():
+            return
+
         base_path = os.path.join(self.zk_base_path, item.id())
         self.zookeeper.ensure_path(base_path)
         serialized = item.serialize()
