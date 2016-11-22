@@ -217,6 +217,7 @@ class Eventloop(eva.globe.GlobalMixin):
                 return
             for job in jobs:
                 self.logger.debug('Adding job %s to event queue item %s', job, item)
+                job.set_status(eva.job.READY)
                 item.add_job(job)
             self.event_queue.store_item(item)
 
@@ -251,7 +252,9 @@ class Eventloop(eva.globe.GlobalMixin):
         for job in item:
             try:
                 # Only process N active jobs at a time
-                if (not job.initialized()) or job.adapter.concurrency > self.event_queue.adapter_active_job_count(job.adapter):
+                job_active = (not job.initialized()) and (not job.ready())
+                has_capacity = job.adapter.concurrency > self.event_queue.adapter_active_job_count(job.adapter)
+                if job_active or has_capacity:
                     self.process_job(job)
                     if job.status_changed():
                         changed += [item]
@@ -283,14 +286,14 @@ class Eventloop(eva.globe.GlobalMixin):
         """
 
         # Start job if it is not running
-        if job.initialized():
+        if job.ready():
             job.logger.info('Sending job to executor for asynchronous execution...')
             job.timer.start()
             job.adapter.executor.execute_async(job)
             job.logger.info('Job has been sent successfully to the executor.')
 
         # Check status of the job
-        elif job.started():
+        elif job.running():  # TODO: check for STARTED as well?
             if not job.poll_time_reached():
                 return
             job.logger.debug('Job is running, polling executor for job status...')

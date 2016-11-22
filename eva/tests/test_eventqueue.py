@@ -109,8 +109,10 @@ class TestEventQueue(TestEventBase):
             for job in jobs:
                 job.adapter = adapter
                 item.add_job(job)
-            for i in range(3, 6):
+            for i in range(3, 4):
                 jobs[i].set_status(eva.job.STARTED)
+            for i in range(4, 6):
+                jobs[i].set_status(eva.job.RUNNING)
             for i in range(6, 9):
                 jobs[i].set_status(eva.job.COMPLETE)
         self.assertEqual(self.event_queue.adapter_active_job_count(adapter), 30)

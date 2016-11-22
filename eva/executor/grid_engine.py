@@ -272,7 +272,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             if exit_code == 0:
                 job.pid = get_job_id_from_qstat_output(stdout)
                 job.logger.warning('Job is already running with JOB_ID %d, will not submit a new job.', job.pid)
-                job.set_status(eva.job.STARTED)
+                job.set_status(eva.job.RUNNING)
                 skip_submit = True
             else:
                 job.logger.info('Job is not running, continuing with submission.')
@@ -326,7 +326,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                     )
                 job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
                 job.logger.info('Job has been submitted, JOB_ID = %d', job.pid)
-                job.set_status(eva.job.STARTED)
+                job.set_status(eva.job.RUNNING)
                 job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             except SSH_RETRY_EXCEPTIONS as e:
                 raise eva.exceptions.RetryException(e)

@@ -285,7 +285,7 @@ class EventQueue(eva.globe.GlobalMixin):
             for job in item:
                 if job.adapter != adapter:
                     continue
-                if not job.started():
+                if not job.started() and not job.running():
                     continue
                 active += 1
         return active

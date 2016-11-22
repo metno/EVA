@@ -6,14 +6,18 @@ import eva.globe
 
 
 INITIALIZED = "INITIALIZED"
+READY = "READY"
 STARTED = "STARTED"
+RUNNING = "RUNNING"
 COMPLETE = "COMPLETE"
 FAILED = "FAILED"
 FINISHED = "FINISHED"
 
 ALL_STATUSES = (
     INITIALIZED,
+    READY,
     STARTED,
+    RUNNING,
     COMPLETE,
     FAILED,
     FINISHED,
@@ -69,17 +73,36 @@ class Job(eva.globe.GlobalMixin):
         """
         return eva.now_with_timezone() >= self.next_poll_time
 
+    def create_logger(self, logger):
+        """!
+        @brief Returns a custom log adapter for logging contextual information
+        about jobs.
+        """
+        return eva.logger.JobLogAdapter(logger, {'JOB': self})
+
     def initialized(self):
         """!
         @brief Returns True if Job.status equals Job.INITIALIZED.
         """
         return self.status == INITIALIZED
 
+    def ready(self):
+        """!
+        @brief Returns True if Job.status equals Job.READY.
+        """
+        return self.status == READY
+
     def started(self):
         """!
         @brief Returns True if Job.status equals Job.STARTED.
         """
         return self.status == STARTED
+
+    def running(self):
+        """!
+        @brief Returns True if Job.status equals Job.RUNNING.
+        """
+        return self.status == RUNNING
 
     def complete(self):
         """!
@@ -98,10 +121,3 @@ class Job(eva.globe.GlobalMixin):
         @brief Returns True if Job.status equals Job.FINISHED.
         """
         return self.status == FINISHED
-
-    def create_logger(self, logger):
-        """!
-        @brief Returns a custom log adapter for logging contextual information
-        about jobs.
-        """
-        return eva.logger.JobLogAdapter(logger, {'JOB': self})

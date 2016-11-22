@@ -30,7 +30,7 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
             stderr=subprocess.PIPE,
         )
         job.logger.info("Script started with pid %d, waiting for process to finish...", job.proc.pid)
-        job.set_status(eva.job.STARTED)
+        job.set_status(eva.job.RUNNING)
         job.stdout, job.stderr = job.proc.communicate()
 
     def sync(self, job):

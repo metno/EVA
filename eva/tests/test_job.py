@@ -14,9 +14,17 @@ class TestJob(eva.tests.TestBase):
     def test_create_job_initialized(self):
         self.assertTrue(self.job.initialized())
 
+    def test_job_ready(self):
+        self.job.set_status(eva.job.READY)
+        self.assertTrue(self.job.ready())
+
     def test_job_started(self):
         self.job.set_status(eva.job.STARTED)
         self.assertTrue(self.job.started())
+
+    def test_job_running(self):
+        self.job.set_status(eva.job.RUNNING)
+        self.assertTrue(self.job.running())
 
     def test_job_complete(self):
         self.job.set_status(eva.job.COMPLETE)

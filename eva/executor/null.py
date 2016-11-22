@@ -10,8 +10,7 @@ class NullExecutor(eva.base.executor.BaseExecutor):
 
     def execute_async(self, job):
         job.logger.info("Faking job execution and setting exit code to zero.")
-        job.set_status(eva.job.INITIALIZED)
-        job.set_status(eva.job.STARTED)
+        job.set_status(eva.job.RUNNING)
 
     def sync(self, job):
         job.set_status(eva.job.COMPLETE)
