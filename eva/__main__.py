@@ -501,6 +501,7 @@ class Main(eva.config.ConfigurableObject):
             evaloop.restore_queue()
 
             if self.args.process_all_in_product_instance or self.args.process_data_instance:
+                evaloop.listeners = []
                 if self.args.process_all_in_product_instance:
                     product_instance = self.productstatus.productinstance[self.args.process_all_in_product_instance]
                     evaloop.process_all_in_product_instance(product_instance)

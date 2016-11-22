@@ -19,10 +19,14 @@ def resolved_config_section(config, section, section_keys=None, ignore_defaults=
     @brief Recursively pull in includes and defaults for a configuration
     section, and combine them into a single dictionary. Provides infinite
     recursion protection.
-    @param section configparser.ConfigParser A ConfigParser object instance.
-    @param section_keys list List of section keys already parsed, used for infinite recursion protection.
-    @param ignore_defaults bool Whether or not to include the 'defaults.<SECTION-BASENAME>' configuration section.
-    @returns dict Dictionary of configuration values.
+    @type section configparser.ConfigParser
+    @param section A ConfigParser object instance.
+    @type section_keys list
+    @param section_keys List of section keys already parsed, used for infinite recursion protection.
+    @type ignore_defaults bool
+    @param ignore_defaults Whether or not to include the 'defaults.<SECTION-BASENAME>' configuration section.
+    @rtype dict
+    @returns Dictionary of configuration values.
     """
     resolved = {}
     # Workaround greedy default parameter value

@@ -43,6 +43,7 @@ class Eventloop(eva.globe.GlobalMixin):
         self.event_queue = eva.eventqueue.EventQueue()
         self.event_queue.set_globe(self.globe)
         self.event_queue.init()
+        self.create_event_queue_timer()
         self.reset_event_queue_item_generator()
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
@@ -182,10 +183,19 @@ class Eventloop(eva.globe.GlobalMixin):
         for item in self.event_queue:
             yield item
 
+    def create_event_queue_timer(self):
+        """!
+        @brief Create a statsd timer object that measures the event queue processing time.
+        """
+        self.event_queue_timer = self.statsd.timer('eva_event_queue_process_time')
+        self.event_queue_timer.start()
+
     def reset_event_queue_item_generator(self):
         """!
         @brief Reset the event queue item generator.
         """
+        self.event_queue_timer.stop()
+        self.create_event_queue_timer()
         self.event_queue_item_generator = self.next_event_queue_item()
 
     def process_next_event(self):
