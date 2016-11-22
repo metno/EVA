@@ -43,6 +43,7 @@ class Eventloop(eva.globe.GlobalMixin):
         self.event_queue = eva.eventqueue.EventQueue()
         self.event_queue.set_globe(self.globe)
         self.event_queue.init()
+        self.reset_event_queue_item_generator()
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
@@ -169,83 +170,96 @@ class Eventloop(eva.globe.GlobalMixin):
 
         timer.stop()
 
-    def remove_finished_events(self):
+    def next_event_queue_item(self):
+        """!
+        @brief Generator of event queue items, for sequential processing.
+        @returns eva.eventqueue.EventQueueItem
+
+        This generator is needed in order to quickly iterate the main loop. If
+        a lot of events are in the event queue, it may take too much time to
+        run through them all, resulting in a timeout at the Kafka queue.
+        """
+        for item in self.event_queue:
+            yield item
+
+    def reset_event_queue_item_generator(self):
+        """!
+        @brief Reset the event queue item generator.
+        """
+        self.event_queue_item_generator = self.next_event_queue_item()
+
+    def process_next_event(self):
         """!
         @brief Process any events in the process list once.
-        @returns True if there is anything left to process, false otherwise.
         """
-        finished = []
-        for item in self.event_queue:
-            if item.finished():
-                finished += [item]
-        if not finished:
+        try:
+            item = self.event_queue_item_generator.__next__()
+        except StopIteration:
+            self.reset_event_queue_item_generator()
             return
-        self.logger.debug('Removing finished events from queue...')
-        for item in set(finished):
-            self.logger.debug('Removing: %s', item)
+
+        # Ask all adapters to create jobs for this event
+        if item.empty():
+            jobs = self.create_jobs_for_event_queue_item(item)
+            if not jobs:
+                self.logger.debug('No jobs generated for %s, discarding.', item)
+                self.event_queue.remove_item(item)
+                return
+            for job in jobs:
+                self.logger.debug('Adding job %s to event queue item %s', job, item)
+                item.add_job(job)
+            self.event_queue.store_item(item)
+
+        # Check if any jobs for this event has failed, and recreate them if necessary
+        failed_jobs = item.failed_jobs()
+        if failed_jobs:
+            jobs = []
+            for failed_job in item.failed_jobs():
+                jobs += [self.create_job_for_event_queue_item(self, item, failed_job.adapter)]
+                self.logger.debug('Removing failed job: %s', failed_job)
+                item.remove_job(failed_job)
+            for job in jobs:
+                self.logger.debug('Re-queueing failed job replacement: %s', job)
+                item.add_job(job)
+                self.statsd.incr('eva_requeued_jobs')
+            self.event_queue.store_item(item)
+
+        # Postpone processing of event if it has a delay
+        delay = item.event.get_processing_delay().total_seconds()
+        if delay > 0:
+            self.logger.info('Postponing processing of event due to %.1f seconds event delay', delay)
+            return
+
+        # Process RPC events
+        if isinstance(item.event, eva.event.RPCEvent):
+            item.event.data.set_executor_instance(self)
+            self.process_rpc_event(item.event)
+            return
+
+        # Process all jobs generated from this event
+        changed = []
+        for job in item:
+            try:
+                # Only process N active jobs at a time
+                if (not job.initialized()) or job.adapter.concurrency > self.event_queue.adapter_active_job_count(job.adapter):
+                    self.process_job(job)
+                    if job.status_changed():
+                        changed += [item]
+            except self.RECOVERABLE_EXCEPTIONS as e:
+                self.logger.error('Re-queueing failed event %s due to error: %s', item.event, e)
+                # reload event data in order to get fresh Productstatus data
+                del item.resource
+                self.instantiate_productstatus_data(item.event)
+
+        # Store renewed statuses of changed jobs
+        for item in set(changed):
+            self.statsd.incr('eva_job_status_change')
+            self.event_queue.store_item(item)
+
+        # Remove event if finished
+        if item.finished():
+            self.logger.debug('Removing finished event from event queue: %s', item)
             self.event_queue.remove_item(item)
-        self.logger.debug('Finished removing finished events from queue.')
-
-    def process_all_events_once(self):
-        """!
-        @brief Process any events in the process list once.
-        @returns True if there is anything left to process, false otherwise.
-        """
-        for item in self.event_queue:
-
-            # Answer health check requests
-            self.process_health_check()
-
-            # Ask all adapters to create jobs for this event
-            if item.empty():
-                jobs = self.create_jobs_for_event_queue_item(item)
-                if not jobs:
-                    self.logger.debug('No jobs generated for %s, discarding.', item)
-                    self.event_queue.remove_item(item)
-                    continue
-                for job in jobs:
-                    self.logger.debug('Adding job %s to event queue item %s', job, item)
-                    item.add_job(job)
-                self.event_queue.store_item(item)
-
-            # Check if any jobs for this event has failed, and recreate them if necessary
-            failed_jobs = item.failed_jobs()
-            if failed_jobs:
-                jobs = []
-                for failed_job in item.failed_jobs():
-                    jobs += [self.create_job_for_event_queue_item(self, item, failed_job.adapter)]
-                    self.logger.debug('Removing failed job: %s', failed_job)
-                    item.remove_job(failed_job)
-                for job in jobs:
-                    self.logger.debug('Re-queueing failed job replacement: %s', job)
-                    item.add_job(job)
-                    self.statsd.incr('eva_requeued_jobs')
-                self.event_queue.store_item(item)
-
-            # Postpone processing of event if it has a delay
-            delay = item.event.get_processing_delay().total_seconds()
-            if delay > 0:
-                self.logger.info('Postponing processing of event due to %.1f seconds event delay', delay)
-                continue
-
-            # Process RPC events
-            if isinstance(item.event, eva.event.RPCEvent):
-                item.event.data.set_executor_instance(self)
-                self.process_rpc_event(item.event)
-                continue
-
-            for job in item:
-                try:
-                    # Only process N active jobs at a time
-                    if (not job.initialized()) or job.adapter.concurrency > self.event_queue.adapter_active_job_count(job.adapter):
-                        self.process_job(job)
-                except self.RECOVERABLE_EXCEPTIONS as e:
-                    self.logger.error('Re-queueing failed event %s due to error: %s', item.event, e)
-                    # reload event data in order to get fresh Productstatus data
-                    del item.resource
-                    self.instantiate_productstatus_data(item.event)
-
-        return not self.event_queue.empty()
 
     def process_job(self, job):
         """!
@@ -291,23 +305,31 @@ class Eventloop(eva.globe.GlobalMixin):
             job.logger.info('Adapter has finished processing the job.')
             job.set_status(eva.job.FINISHED)
 
+    def main_loop_iteration(self):
+        """!
+        @brief A single iteration in the main loop.
+        @returns True if there are more events to process, False otherwise.
+        """
+        timer = self.statsd.timer('eva_main_loop')
+        timer.start()
+        if self.drained():
+            self.set_no_drain()
+        if not self.draining():
+            self.poll_listeners()
+        self.process_health_check()
+        self.process_next_event()
+        self.report_event_queue_metrics()
+        self.report_job_status_metrics()
+        timer.stop()
+        return not self.event_queue.empty()
+
     def __call__(self):
         """!
         @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
         """
         self.logger.info('Entering main loop.')
-        #self.load_process_list()
-        #self.load_event_queue()
         while not self.do_shutdown:
-            if self.drained():
-                self.set_no_drain()
-            if not self.draining():
-                self.poll_listeners()
-            self.process_health_check()
-            self.process_all_events_once()
-            self.store_job_status_change()
-            self.remove_finished_events()
-            self.report_job_status_metrics()
+            self.main_loop_iteration()
         self.logger.info('Exited main loop.')
 
     def report_job_status_metrics(self):
@@ -315,24 +337,14 @@ class Eventloop(eva.globe.GlobalMixin):
         @brief Report job status metrics to statsd.
         """
         status_count = self.event_queue.status_count()
-        #strs = ['%s=%d' % (status, count) for status, count in status_count.items()]
-        #self.logger.debug(' '.join(strs))
         for status, count in status_count.items():
             self.statsd.gauge('eva_job_status_count', count, tags={'status': status})
 
-    def store_job_status_change(self):
+    def report_event_queue_metrics(self):
         """!
-        @brief Check if any job statuses have changed, and store the new
-        statuses in the event queue's ZooKeeper instance.
+        @brief Report event queue count metrics to statsd.
         """
-        changed = []
-        for item in self.event_queue:
-            for job in item:
-                if job.status_changed():
-                    changed += [item]
-        for item in set(changed):
-            self.event_queue.store_item(item)
-            self.statsd.incr('eva_job_status_change')
+        self.statsd.gauge('eva_event_queue_count', len(self.event_queue))
 
     def create_job_for_event_queue_item(self, item, adapter):
         """!

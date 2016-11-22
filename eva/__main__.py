@@ -492,7 +492,6 @@ class Main(eva.config.ConfigurableObject):
             evaloop.set_globe(self.globe)
             evaloop.init()
             evaloop.restore_queue()
-            evaloop.remove_finished_events()
 
             if self.args.process_all_in_product_instance or self.args.process_data_instance:
                 if self.args.process_all_in_product_instance:
@@ -500,7 +499,7 @@ class Main(eva.config.ConfigurableObject):
                     evaloop.process_all_in_product_instance(product_instance)
                 elif self.args.process_data_instance:
                     evaloop.process_data_instance(self.args.process_data_instance)
-                while evaloop.process_all_events_once():
+                while evaloop.main_loop_iteration():
                     continue
             else:
                 evaloop()

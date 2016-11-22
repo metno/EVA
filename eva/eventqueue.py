@@ -310,10 +310,11 @@ class EventQueue(eva.globe.GlobalMixin):
         """
         assert isinstance(item, EventQueueItem)
         id = item.id()
+        ephemeral = item.event.ephemeral()
         assert id in self.items
         text = 'Event removed from event queue: %s' % item.event
         del self.items[id]
-        if self.zk_store_immediately:
+        if self.zk_store_immediately and not ephemeral:
             self.delete_stored_item(id)
         self.logger.debug(text)
 
@@ -375,8 +376,7 @@ class EventQueue(eva.globe.GlobalMixin):
 
     def delete_stored_item(self, item_id):
         """!
-        @brief Delete a EventQueueItem from ZooKeeper. The item must exist in
-        the event queue.
+        @brief Delete a EventQueueItem from ZooKeeper.
         @param item_id str The Event ID.
         @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.
         """
@@ -400,8 +400,8 @@ class EventQueue(eva.globe.GlobalMixin):
         self.logger.debug('Stored %d items of total %d bytes at ZooKeeper path %s', count, size, path)
         if not metric_base:
             return
-        self.statsd.gauge('eva_' + metric_base + '_count', count)
-        self.statsd.gauge('eva_' + metric_base + '_size', size)
+        self.statsd.gauge('eva_zk_' + metric_base + '_count', count)
+        self.statsd.gauge('eva_zk_' + metric_base + '_size', size)
 
     def empty(self):
         """!
