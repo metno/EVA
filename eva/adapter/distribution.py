@@ -41,14 +41,13 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         if self.env['output_service_backend'] in self.env['input_service_backend']:
             raise eva.exceptions.InvalidConfigurationException('output_service_backend cannot be present in the list of input_service_backend, as that will result in an endless loop.')
 
-    def create_job(self, message_id, resource):
+    def create_job(self, job):
         """!
         @brief Create a Job object that will copy a file to another
         destination, and optionally post the result to Productstatus.
         """
-        job = eva.job.Job(message_id, self.globe)
-        job.base_filename = os.path.basename(resource.url)
-        job.input_file = eva.url_to_filename(resource.url)
+        job.base_filename = os.path.basename(job.resource.url)
+        job.input_file = eva.url_to_filename(job.resource.url)
         job.output_url = os.path.join(self.env['output_base_url'], job.base_filename)
         job.output_file = eva.url_to_filename(job.output_url)
 
@@ -57,11 +56,10 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
             # check if the destination file already exists
             qs = self.api.datainstance.objects.filter(url=job.output_url,
                                                       servicebackend=job.service_backend,
-                                                      data=resource.data,
-                                                      format=resource.format)
+                                                      data=job.resource.data,
+                                                      format=job.resource.format)
             if qs.count() != 0:
-                job.logger.warning("Destination URL '%s' already exists in Productstatus; this file has already been distributed.", job.output_url)
-                return
+                raise eva.exceptions.JobNotGenerated("Destination URL '%s' already exists in Productstatus; this file has already been distributed." % job.output_url)
 
         lines = [
             "#!/bin/bash",
@@ -75,8 +73,6 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
 
         job.command = "\n".join(lines) + "\n"
         job.command = job.command % values
-
-        return job
 
     def finish_job(self, job):
         if not job.complete():

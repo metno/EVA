@@ -63,16 +63,14 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         self.fimex_parameters = self.template.from_string(self.env['fimex_parameters'])
         self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
 
-    def create_job(self, message_id, resource):
+    def create_job(self, job):
         """!
         @brief Create a generic FIMEX job.
         """
-        job = eva.job.Job(message_id, self.globe)
-
-        job.input_filename = eva.url_to_filename(resource.url)
-        job.reference_time = resource.data.productinstance.reference_time
+        job.input_filename = eva.url_to_filename(job.resource.url)
+        job.reference_time = job.resource.data.productinstance.reference_time
         job.template_variables = {
-            'datainstance': resource,
+            'datainstance': job.resource,
             'input_filename': os.path.basename(job.input_filename),
             'reference_time': job.reference_time,
         }
@@ -93,8 +91,6 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             'params': params,
         }]
         job.command = '\n'.join(command) + '\n'
-
-        return job
 
     def finish_job(self, job):
         """!

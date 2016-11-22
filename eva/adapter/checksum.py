@@ -35,13 +35,12 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
                 'This adapter MUST be configured with input_with_hash=NO in order to avoid recursive loops.'
             )
 
-    def create_job(self, message_id, resource):
+    def create_job(self, job):
         """!
         @brief Return a Job object that will check the file's md5sum against a
         stored hash in a corresponding file.
         """
-        job = eva.job.Job(message_id, self.globe)
-        job.dataset_filename = eva.url_to_filename(resource.url)
+        job.dataset_filename = eva.url_to_filename(job.resource.url)
         job.md5_filename = job.dataset_filename + '.md5'
         job.logger.info("Starting verification of file '%s' against md5sum file '%s'.", job.dataset_filename, job.md5_filename)
 
@@ -59,7 +58,6 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
 
         job.command = "\n".join(lines) + "\n"
         job.command = job.command % values
-        return job
 
     def finish_job(self, job):
         if not job.complete():

@@ -85,18 +85,16 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         self.generic_opts = self.template.from_string(self.env['gridpp_generic_options'])
         self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
 
-    def create_job(self, message_id, resource):
+    def create_job(self, job):
         """!
         @brief Download a file, and optionally post the result to Productstatus.
         """
-        filename = eva.url_to_filename(resource.url)
-        reference_time = resource.data.productinstance.reference_time
+        filename = eva.url_to_filename(job.resource.url)
+        reference_time = job.resource.data.productinstance.reference_time
         template_variables = {
             'reference_time': reference_time,
-            'datainstance': resource,
+            'datainstance': job.resource,
         }
-
-        job = eva.job.Job(message_id, self.globe)
 
         # Render the Jinja2 templates and report any errors
         try:
@@ -119,8 +117,6 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
         command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % job.gridpp_params]
         job.command = '\n'.join(command) + '\n'
-
-        return job
 
     def finish_job(self, job):
         """!

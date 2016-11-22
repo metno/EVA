@@ -370,12 +370,15 @@ class Eventloop(eva.globe.GlobalMixin):
             return None
 
         id = item.event.id() + '.' + adapter.config_id
-        job = adapter.create_job(id, resource)
+        job = eva.job.Job(id, self.globe)
+        job.resource = resource
 
-        if not job:
+        try:
+            adapter.create_job(job)
+        except eva.exceptions.JobNotGenerated as e:
+            self.logger.warning("Adapter '%s' did not generate a job: %s", adapter.config_id, e)
             return None
 
-        job.resource = resource
         job.timer = self.statsd.timer('eva_execution_time')
         job.logger.info('Created Job object: %s', job)
         job.adapter = adapter

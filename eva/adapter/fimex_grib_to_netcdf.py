@@ -53,20 +53,18 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
             if key in self.env:
                 setattr(self, key, self.env[key])
 
-    def create_job(self, message_id, resource):
+    def create_job(self, job):
         """!
         @brief Generate a Job which converts GRIB to NetCDF using the
         eva-adapter-support library.
         """
-        job = eva.job.Job(message_id, self.globe)
-
-        reftime = resource.data.productinstance.reference_time
+        reftime = job.resource.data.productinstance.reference_time
 
         job.data = {
             'reftime': reftime,
-            'version': resource.data.productinstance.version,
-            'time_period_begin': resource.data.time_period_begin,
-            'time_period_end': resource.data.time_period_end,
+            'version': job.resource.data.productinstance.version,
+            'time_period_begin': job.resource.data.time_period_begin,
+            'time_period_end': job.resource.data.time_period_end,
             'filename': reftime.strftime(self.env['output_filename_pattern']),
         }
 
@@ -78,14 +76,12 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
 --reference_time "{reftime}" \
 --template_directory "{templatedir}"
 """.format(
-            gribfile=eva.url_to_filename(resource.url),
+            gribfile=eva.url_to_filename(job.resource.url),
             reftime=reftime.strftime("%Y-%m-%dT%H:%M:%S%z"),
             lib_fg2nc=self.env['fg2nc_lib'],
             templatedir=self.env['fg2nc_templatedir'],
             destfile=job.data['filename'],
         )
-
-        return job
 
     def finish_job(self, job):
         if not job.complete():

@@ -38,6 +38,14 @@ class RetryException(EvaException):
     pass
 
 
+class JobNotGenerated(EvaException):
+    """!
+    @brief Thrown by an adapter when a resource event fits the processing
+    criteria, but does not need processing after all.
+    """
+    pass
+
+
 class JobNotCompleteException(EvaException):
     """!
     @brief Thrown when an operation is performed on a Job object that is not

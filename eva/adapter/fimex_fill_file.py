@@ -62,16 +62,14 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
         self.template_directory = self.template.from_string(self.env['fimex_fill_file_template_directory'])
         self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
 
-    def create_job(self, message_id, resource):
-        job = eva.job.Job(message_id, self.globe)
-
-        job.input_filename = eva.url_to_filename(resource.url)
+    def create_job(self, job):
+        job.input_filename = eva.url_to_filename(job.resource.url)
         job.template_variables = {
-            'datainstance': resource,
+            'datainstance': job.resource,
             'input_filename': os.path.basename(job.input_filename),
             'ncfill_path': self.ncfill_path,
             'template_directory': self.template_directory,
-            'reference_time': resource.data.productinstance.reference_time,
+            'reference_time': job.resource.data.productinstance.reference_time,
         }
 
         # Render the Jinja2 templates and report any errors
@@ -89,14 +87,12 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
         job.command = '\n'.join(command) + '\n'
         job.command = job.command % {
             'input': job.input_filename,
-            'input_format': resource.format.slug,
+            'input_format': job.resource.format.slug,
             'ncfill': self.ncfill_path,
             'output': job.output_filename,
-            'reference_time': eva.strftime_iso8601(resource.data.productinstance.reference_time),
+            'reference_time': eva.strftime_iso8601(job.resource.data.productinstance.reference_time),
             'template_directory': job.template_directory,
         }
-
-        return job
 
     def finish_job(self, job):
         """!

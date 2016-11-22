@@ -117,8 +117,8 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         """
         return data['extension'] == '.nml'
 
-    def create_job(self, message_id, resource):
-        reference_time = resource.data.productinstance.reference_time
+    def create_job(self, job):
+        reference_time = job.resource.data.productinstance.reference_time
 
         # Skip processing if the destination data set already exists. This
         # disables re-runs and duplicates unless the DataInstance objects are
@@ -129,10 +129,8 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
                                                       servicebackend=self.output_service_backend,
                                                       deleted=False)
             if qs.count() != 0:
-                self.logger.warning("Destination data set already exists in Productstatus, skipping processing.")
-                return
+                raise eva.exceptions.JobNotGenerated("Destination data set already exists in Productstatus, skipping processing.")
 
-        job = eva.job.Job(message_id, self.globe)
         job.output_directory_template = self.template.from_string(
             self.env['cwf_output_directory_pattern']
         )
@@ -154,7 +152,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             cmd += ['export ECDIS_PARALLEL=0']
         cmd += ['export DATE=%s' % reference_time.strftime('%Y%m%d')]
         cmd += ['export DOMAIN=%s' % self.env['cwf_domain']]
-        cmd += ['export ECDIS=%s' % eva.url_to_filename(resource.url)]
+        cmd += ['export ECDIS=%s' % eva.url_to_filename(job.resource.url)]
         cmd += ['export ECDIS_TMPDIR=%s' % os.path.join(job.output_directory, 'work')]
         cmd += ['export NDAYS_MAX=%d' % self.env['cwf_output_days']]
         cmd += ['export NREC_DAY_MIN=%d' % self.env['cwf_input_min_days']]
@@ -174,8 +172,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         cmd += ['done']
 
         job.command = "\n".join(cmd) + "\n"
-
-        return job
 
     def finish_job(self, job):
         if not job.complete():

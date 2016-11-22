@@ -56,15 +56,12 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         self.thredds_poll_retries = self.env['thredds_poll_retries']
         self.thredds_base_url = self.env['thredds_base_url']
 
-    def create_job(self, message_id, resource):
+    def create_job(self, job):
         """!
         @brief Check if the resource is reachable via the provided URL if not, sleep and try again
-        @fixme This job does not run on an executor, and is thus at least partially broken at the moment.
         """
-        job = eva.job.Job(message_id, self.globe)
-
         # Assuming that when the .html link is accessible so will be the dataset via OPeNDAP
-        basename = os.path.basename(resource.url)
+        basename = os.path.basename(job.resource.url)
         job.thredds_url = os.path.join(self.thredds_base_url, basename)
         job.thredds_html_url = job.thredds_url + ".html"
 
@@ -91,8 +88,6 @@ exit 1
             'url': job.thredds_html_url,
             'sleep': self.thredds_poll_interval,
         }
-
-        return job
 
     def finish_job(self, job):
         """!

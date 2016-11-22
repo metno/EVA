@@ -5,15 +5,19 @@ This adapter serves as a reusable example of how to write your own EVA jobs.
 
 To run this adapter on GridEngine, you might want to configure these environment variables:
 
-    export EVA_ADAPTER="eva.adapter.example.ExampleAdapter"
-    export EVA_EXECUTOR="eva.executor.GridEngineExecutor"
-    export EVA_GRIDENGINE_SSH_HOST="<gridengine-login-node>"
-    export EVA_GRIDENGINE_SSH_KEY_FILE="/home/<username>/.ssh/id_rsa"
-    export EVA_GRIDENGINE_SSH_USER="<username>"
-    export EVA_INPUT_DATA_FORMAT="netcdf"
-    export EVA_INPUT_PRODUCT="ecmwf-atmospheric-model-bc-surface"
-    export EVA_INPUT_SERVICE_BACKEND="lustre-b"
-    export EVA_OUTPUT_FILENAME_PATTERN="{{reference_time|timedelta(hours=6)|iso8601_compact}}"
+    [executor.gridengine]
+    class = eva.executor.GridEngineExecutor
+    ssh_host = <gridengine-login-node>
+    ssh_key_file = /home/<username>/.ssh/id_rsa
+    ssh_user = <username>
+
+    [adapter.example]
+    class = eva.adapter.example.ExampleAdapter
+    executor = executor.gridengine
+    input_data_format = netcdf
+    input_product = ecmwf-atmospheric-model-bc-surface
+    input_service_backend = lustre-b
+    output_filename_pattern = {{reference_time|timedelta(hours=6)|iso8601_compact}}
 
 Then, run EVA:
 
@@ -42,22 +46,22 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
 
         # Define the output filename of your data process. This variable will
         # be processed by the EVA template engine later on in the script.
-        'EVA_OUTPUT_FILENAME_PATTERN',
+        'output_filename_pattern',
 
         # Define the input product. Products are defined in Productstatus by
         # the IT-GEO team. You will most certainly want to select one or more
         # products so that your script only processed files that have your
         # required input data.
-        'EVA_INPUT_PRODUCT',
+        'input_product',
 
         # Define the service backend. Service backends are physical storage
         # devices such as Lustre store A or Opdata. They are defined in
         # Productstatus by the IT-GEO team.
-        'EVA_INPUT_SERVICE_BACKEND',
+        'input_service_backend',
 
         # Define the file format of our input data set. File formats are
         # defined in Productstatus by the IT-GEO team.
-        'EVA_INPUT_DATA_FORMAT',
+        'input_data_format',
     ]
 
     # This function is called every time a data instance (an actual data entry)
@@ -66,25 +70,26 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
     #
     # The function must either:
     #
-    # * Return normally with a Job object, which defines what should be run in the Executor.
+    #   * Return normally.
     #
-    # * Throw `eva.exceptions.RetryException` with an error message. The error
-    #   message will appear in the log. In production, this log will be
-    #   recorded and is searchable. Processing will be delayed by a short time,
-    #   then retried.
+    #   * Raise `eva.exceptions.JobNotGenerated`, with a message indicating why
+    #     a job was not generated. The job will not be sent to the adapter
+    #     again for further processing.
     #
-    # * Any other exception will result in a termination of EVA.
+    #   * Raise `eva.exceptions.RetryException` with an error message. The
+    #     error message will appear in the log. In production, this log will be
+    #     recorded and is searchable. Processing will be delayed by a short
+    #     interval, then retried.
     #
-    def create_job(self, message_id, resource):
+    #   * Any other exception will result in a termination of EVA.
+    #
+    def create_job(self, job):
 
-        # Don't write any data to Productstatus.
-        self.post_to_productstatus = False
-
-        # Create a string template based on the EVA_OUTPUT_FILENAME_PATTERN
+        # Create a string template based on the output_filename_pattern
         # environment variable. This allows us to do string substitution and
         # filtering later on.
         output_filename_template = self.template.from_string(
-            self.env['EVA_OUTPUT_FILENAME_PATTERN']
+            self.env['output_filename_pattern']
         )
 
         # Run string substitution and filtering. The template language is
@@ -96,12 +101,8 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
         # when reference_time is April 14th, 2016, 06:00:00 UTC, will yield
         #  20160414T120000Z
         output_filename = output_filename_template.render(
-            reference_time=resource.data.productinstance.reference_time,
+            reference_time=job.resource.data.productinstance.reference_time,
         )
-
-        # Instantiate a Job object, required if you are going to run an
-        # external process, e.g. on GridEngine.
-        job = eva.job.Job(message_id, self.globe)
 
         # The Job object contains a logger object, which you can use to print
         # status or debugging information. DO NOT USE "print", the output will
@@ -150,32 +151,5 @@ echo convert_my_data \
         job.output_filename = output_filename
 
         # Our job is ready for execution. This command will run the job on an
-        # Executor object, defined in the environment variable EVA_EXECUTOR. To
-        # run jobs on GridEngine, use EVA_EXECUTOR=eva.executor.GridEngineExecutor.
-        return job
-
-    # This function will be called after the Executor has run the job generated
-    # by create_job(). The job will have either "COMPLETE" or "FAILED" status.
-    # Returning from this function signifies completed and successful processing
-    # of the input data, and guarantees that the output data has been
-    # successfully created. If you want to reprocess the data, you must throw an
-    # `eva.exceptions.RetryException` exception with an error message.
-    #
-    def finish_job(self, job):
-        # Running the job populated `job.status`. You should always check this variable.
-        # Throwing a RetryException will ensure that processing is retried.
-        if not job.complete():
-            raise eva.exceptions.RetryException(
-                "Processing of '%s' failed." % job.output_filename
-            )
-
-        # We might want to register our completed data instance with Productstatus.
-        # It is, however, not required. We can skip this step for now.
-        if not self.post_to_productstatus:
-            return
-
-        # Here ends your responsibility. The code for registering new products
-        # with Productstatus is added by IT-GEO.
-        self.require_productstatus_credentials()
-
-        # ...
+        # Executor object, defined in the environment variable executor. To
+        # run jobs on GridEngine, use executor=eva.executor.GridEngineExecutor.

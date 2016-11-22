@@ -74,9 +74,10 @@ executor = foo
         return str(uuid.uuid4())
 
     def create_job(self, resource):
-        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
-            job = self.adapter.create_job(self.random_uuid(), resource)
+        job = eva.job.Job(self.random_uuid(), self.globe)
         job.resource = resource
+        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
+            self.adapter.create_job(job)
         return job
 
     def generate_resources(self, job):

@@ -24,7 +24,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         'input_data_format',
     ]
 
-    def create_job(self, message_id, resource):
+    def create_job(self, job):
         """!
         @brief Look up expired files in Productstatus, and create a job that deletes them.
 
@@ -37,20 +37,17 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         # Get all expired datainstances for the product
         now = datetime.datetime.now().replace(tzinfo=dateutil.tz.tzutc())
         datainstances = self.api.datainstance.objects.filter(
-            data__productinstance__product=resource.data.productinstance.product,
-            format=resource.format,
-            servicebackend=resource.servicebackend,
+            data__productinstance__product=job.resource.data.productinstance.product,
+            format=job.resource.format,
+            servicebackend=job.resource.servicebackend,
             expires__lte=now,
             deleted=False,
         ).order_by('-expires')
 
         count = datainstances.count()
         if count == 0:
-            self.logger.info("No expired data instances matching this Data Instance's product, format, and service backend.")
-            return
+            raise eva.exceptions.JobNotGenerated("No expired data instances matching this Data Instance's product, format, and service backend.")
 
-        # Create Job object and log startup info
-        job = eva.job.Job(message_id, self.globe)
         job.logger.info("Found %d expired data instances", count)
 
         job.command = ["#!/bin/bash"]
@@ -70,8 +67,6 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         job.command += ["exit 0"]
 
         job.command = '\n'.join(job.command) + '\n'
-
-        return job
 
     def finish_job(self, job):
         """!
