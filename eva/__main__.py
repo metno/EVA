@@ -337,11 +337,15 @@ class Main(eva.config.ConfigurableObject):
 
         sections = self.config.sections()
         for section in sections:
-            if 'class' not in self.config[section]:
+            config = eva.config.resolved_config_section(self.config, section)
+            if 'class' not in config:
                 self.logger.info("Ignoring non-class configuration section '%s'.", section)
                 continue
-            class_name = self.config.get(section, 'class')
-            config = eva.config.resolved_config_section(self.config, section)
+            if 'abstract' in config and eva.config.ConfigurableObject.normalize_config_bool(config['abstract']):
+                self.logger.info("Ignoring abstract configuration section '%s'.", section)
+                continue
+            class_name = config['class']
+            del config['class']
             self.logger.info("Instantiating '%s' from configuration section '%s'.", class_name, section)
             class_type = eva.import_module_class(class_name)
             if not issubclass(class_type, eva.config.ConfigurableObject):

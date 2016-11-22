@@ -49,12 +49,13 @@ def resolved_config_section(config, section, section_keys=None, ignore_defaults=
         if section_defaults in config:
             resolved.update(resolved_config_section(config, section_defaults, section_keys=section_keys, ignore_defaults=True))
 
-    if 'abstract' in resolved:
-        del resolved['abstract']
+    for key in ['abstract']:
+        if key in resolved:
+            del resolved[key]
 
     resolved.update(config[section])
 
-    for key in ['class', 'include']:
+    for key in ['include']:
         if key in resolved:
             del resolved[key]
 
