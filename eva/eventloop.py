@@ -208,6 +208,12 @@ class Eventloop(eva.globe.GlobalMixin):
             self.reset_event_queue_item_generator()
             return
 
+        # Postpone processing of event if it has a delay
+        delay = item.event.get_processing_delay().total_seconds()
+        if delay > 0:
+            self.logger.info('Postponing processing of event queue item %s due to %.1f seconds event delay.', item, delay)
+            return
+
         # Ask all adapters to create jobs for this event
         if item.empty():
             jobs = self.create_jobs_for_event_queue_item(item)
@@ -216,30 +222,27 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.event_queue.remove_item(item)
                 return
             for job in jobs:
-                self.logger.debug('Adding job %s to event queue item %s', job, item)
+                self.logger.debug('Adding job %s to event queue item %s.', job, item)
                 job.set_status(eva.job.READY)
                 item.add_job(job)
             self.event_queue.store_item(item)
 
         # Check if any jobs for this event has failed, and recreate them if necessary
-        failed_jobs = item.failed_jobs()
-        if failed_jobs:
-            jobs = []
-            for failed_job in item.failed_jobs():
-                jobs += [self.create_job_for_event_queue_item(self, item, failed_job.adapter)]
-                self.logger.debug('Removing failed job: %s', failed_job)
-                item.remove_job(failed_job)
-            for job in jobs:
-                self.logger.debug('Re-queueing failed job replacement: %s', job)
-                item.add_job(job)
-                self.statsd.incr('eva_requeued_jobs')
-            self.event_queue.store_item(item)
+        for job in item.failed_jobs():
 
-        # Postpone processing of event if it has a delay
-        delay = item.event.get_processing_delay().total_seconds()
-        if delay > 0:
-            self.logger.info('Postponing processing of event due to %.1f seconds event delay', delay)
-            return
+            job.logger.info('Re-queueing previously failed job.')
+
+            # Reload Productstatus resource
+            job.resource = self.productstatus[item.event.data]
+
+            if not job.adapter.validate_resource(job.resource):
+                job.logger.warning('Adapter did not revalidate reloaded resource %s, discarding!', job.resource)
+                item.remove_job(job)
+
+            job.adapter.create_job(job)
+            job.set_status(eva.job.READY)
+            job.timer = self.statsd.timer('eva_execution_time')
+            self.statsd.incr('eva_requeued_jobs')
 
         # Process RPC events
         if isinstance(item.event, eva.event.RPCEvent):
@@ -259,10 +262,9 @@ class Eventloop(eva.globe.GlobalMixin):
                     if job.status_changed():
                         changed += [item]
             except self.RECOVERABLE_EXCEPTIONS as e:
-                self.logger.error('Re-queueing failed event %s due to error: %s', item.event, e)
-                # reload event data in order to get fresh Productstatus data
-                del item.resource
-                self.instantiate_productstatus_data(item.event)
+                self.logger.error('Job %s suffered from a recoverable error: %s', job, e)
+                job.set_status(eva.job.FAILED)
+                changed += [item]
 
         # Store renewed statuses of changed jobs
         for item in set(changed):

@@ -43,6 +43,9 @@ class Job(eva.globe.GlobalMixin):
         self._status_changed = False
         self._failures = 0
 
+    def __repr__(self):
+        return '<Job: %s>' % self.id
+
     def set_status(self, status):
         """!
         @brief Verify and set a new Job.status variable, and log the event.
