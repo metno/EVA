@@ -83,6 +83,18 @@ class TestEventQueue(TestEventBase):
         event_queue_keys = self.event_queue.item_keys()
         self.assertListEqual(keys, event_queue_keys)
 
+    def test_event_keys_ephemeral(self):
+        """!
+        @brief Test that ephemeral events are not returned an ordered list of event keys are returned with item_keys().
+        """
+        events = self.make_events(2)
+        keys = [event.id() for event in events]
+        for event in events:
+            self.event_queue.add_event(event)
+        self.event_queue.add_event(eva.event.ProductstatusLocalEvent({}, 'http://foo/bar'))
+        event_queue_keys = self.event_queue.item_keys()
+        self.assertListEqual(keys, event_queue_keys)
+
     def test_adapter_active_job_count(self):
         """!
         @brief Test that the event queue returns the number of active jobs for
