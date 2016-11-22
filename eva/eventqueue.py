@@ -321,9 +321,9 @@ class EventQueue(eva.globe.GlobalMixin):
         """!
         @brief Return the list of eva.event.Event ID's currently in the event
         queue. The list is guaranteed to have the same order as they were
-        added.
+        added. Note that ephemeral events are not included in this list.
         """
-        return list(self.items.keys())
+        return [key for key in self.items.keys() if not self.items[key].event.ephemeral()]
 
     def store_list(self):
         """!

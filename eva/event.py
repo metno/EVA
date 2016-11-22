@@ -25,6 +25,12 @@ class Event(object):
         """
         return self.message
 
+    def ephemeral(self):
+        """!
+        @brief Returns True if the message is unsuitable for persistence, False otherwise.
+        """
+        return len(self.message) == 0
+
     @staticmethod
     def factory(self, serialized):
         """!
