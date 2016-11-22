@@ -72,10 +72,12 @@ class TestConfig(eva.tests.TestBase):
     def setUp(self):
         super().setUp()
         self.config = configparser.ConfigParser()
+        self.config_dict = {}
 
-    def setup_with_config(self, object_class, config, *args):
+    def setup_with_config(self, object_class, config, section):
         self.config.read_string(config)
-        incubator, self.object_ = object_class().factory(self.config, *args)
+        self.config_dict = eva.config.resolved_config_section(self.config, section)
+        incubator, self.object_ = object_class().factory(self.config_dict, section)
         self.object_.init()
 
     def test_clean_init(self):
@@ -107,16 +109,16 @@ int = 2
         self.assertEqual(self.object_.env['config_class'].resolve(config_class), config_class['class.foo'])
         self.assertEqual(self.object_.config_id, 'object')
 
-    def test_inheritance(self):
+    def test_defaults(self):
         config = \
 """
-[inherit]
+[defaults.object]
 string = test
 
 [object]
 int = 3
 """  # NOQA
-        self.setup_with_config(MockConfigObject, config, 'inherit', 'object')
+        self.setup_with_config(MockConfigObject, config, 'object')
         self.assertEqual(self.object_.env['string'], 'test')
         self.assertEqual(self.object_.env['int'], 3)
 

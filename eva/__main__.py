@@ -248,6 +248,13 @@ class Main(eva.config.ConfigurableObject):
         for section in sorted(self.config.sections()):
             self.logger.debug('Found configuration section: %s', section)
 
+    def setup_eva_configuration(self):
+        """!
+        @brief Read configuration parameters from the 'eva' section.
+        """
+        config = eva.config.resolved_config_section(self.config, 'eva')
+        self.load_configuration(config, 'eva')
+
     def setup_client_group_id(self):
         """!
         @brief Set up Kafka client and group id.
@@ -331,10 +338,10 @@ class Main(eva.config.ConfigurableObject):
         sections = self.config.sections()
         for section in sections:
             if 'class' not in self.config[section]:
+                self.logger.info("Ignoring non-class configuration section '%s'.", section)
                 continue
-            section_defaults = 'defaults.' + section.split('.')[0]
             class_name = self.config.get(section, 'class')
-            del self.config[section]['class']
+            config = eva.config.resolved_config_section(self.config, section)
             self.logger.info("Instantiating '%s' from configuration section '%s'.", class_name, section)
             class_type = eva.import_module_class(class_name)
             if not issubclass(class_type, eva.config.ConfigurableObject):
@@ -342,7 +349,7 @@ class Main(eva.config.ConfigurableObject):
                     "The class '%s' is not a subclass of eva.config.ConfigurableObject." % class_name
                 )
             incubator_class = class_type()
-            incubator, instance = incubator_class.factory(self.config, section_defaults, section)
+            incubator, instance = incubator_class.factory(config, section)
             self.incubator_class[section] = incubator
             self.config_class[section] = instance
 
@@ -438,7 +445,7 @@ class Main(eva.config.ConfigurableObject):
 
             # Read all configuration from files
             self.setup_configuration()
-            self.load_configuration(self.config, 'eva')
+            self.setup_eva_configuration()
 
             # Start the health check server
             self.setup_health_check_server()

@@ -14,13 +14,21 @@ SECRET_CONFIGURATION = [
 ]
 
 
-def resolved_config_section(config, section, section_keys=[], ignore_defaults=False):
+def resolved_config_section(config, section, section_keys=None, ignore_defaults=False):
     """!
     @brief Recursively pull in includes and defaults for a configuration
     section, and combine them into a single dictionary. Provides infinite
     recursion protection.
+    @param section configparser.ConfigParser A ConfigParser object instance.
+    @param section_keys list List of section keys already parsed, used for infinite recursion protection.
+    @param ignore_defaults bool Whether or not to include the 'defaults.<SECTION-BASENAME>' configuration section.
+    @returns dict Dictionary of configuration values.
     """
     resolved = {}
+    # Workaround greedy default parameter value
+    # http://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument
+    if section_keys is None:
+        section_keys = []
     section_keys += [section]
     section_keys.sort()
 
@@ -42,8 +50,9 @@ def resolved_config_section(config, section, section_keys=[], ignore_defaults=Fa
 
     resolved.update(config[section])
 
-    if 'include' in resolved:
-        del resolved['include']
+    for key in ['class', 'include']:
+        if key in resolved:
+            del resolved[key]
 
     return resolved
 
@@ -60,10 +69,7 @@ class ConfigurableObject(object):
     Usage:
 
         incubator, object_ = eva.config.ConfigurableObject().factory(
-            <configparser.ConfigParser instance>,
-            <section header>,
-            [<section header>],
-            [...]
+            <dictionary with configuration options>
         )
 
         # `incubator` is a reference to the ConfigurableObject instance, while
@@ -114,15 +120,15 @@ class ConfigurableObject(object):
     OPTIONAL_CONFIG = []
 
     @classmethod
-    def factory(self, config, *args):
+    def factory(self, config, config_id):
         """!
         @brief Load the specified configuration data, according to
         load_configuration(), and return a tuple of the incubator class and the
         instantiated class.
         """
         object_ = self()
-        object_.load_configuration(config, *args)
-        object_.set_config_id(args[-1])
+        object_.load_configuration(config)
+        object_.set_config_id(config_id)
         return (object_, object_._factory())
 
     def _factory(self):
@@ -264,14 +270,9 @@ class ConfigurableObject(object):
                 )
 
             # Read default value and enforce requirements
-            found = False
-            for section in args:
-                if section not in config:
-                    continue
-                if key not in config[section]:
-                    continue
-                value = config.get(section, key)
-                found = True
+            found = key in config
+            if found:
+                value = config[key]
 
             if not found:
                 if key in self.REQUIRED_CONFIG:
@@ -298,12 +299,9 @@ class ConfigurableObject(object):
             configured += [key]
 
         # Check for extraneous options, and raise an exception if a non-defined key is set
-        for section in args:
-            if section not in config:
-                continue
-            for key in config[section]:
-                if key not in configured:
-                    raise eva.exceptions.InvalidConfigurationException("Invalid configuration key '%s' for class '%s'" % (key, self.__class__.__name__))
+        for key in config:
+            if key not in configured:
+                raise eva.exceptions.InvalidConfigurationException("Invalid configuration key '%s' for class '%s'" % (key, self.__class__.__name__))
 
     def format_config(self):
         """!

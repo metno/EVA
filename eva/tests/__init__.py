@@ -87,7 +87,8 @@ executor = foo
     def create_adapter(self, key='adapter', adapter_class=None):
         if not adapter_class:
             adapter_class = self.adapter_class
-        incubator, self.adapter = adapter_class().factory(self.config, 'defaults.adapter', key)
+        config_dict = eva.config.resolved_config_section(self.config, key)
+        incubator, self.adapter = adapter_class().factory(config_dict, key)
         self.adapter.set_globe(self.globe)
         self.adapter.init()
 
@@ -118,6 +119,7 @@ class BaseTestExecutor(TestBase):
     def create_executor(self, key='executor', executor_class=None):
         if not executor_class:
             executor_class = self.executor_class
-        incubator, self.executor = executor_class().factory(self.config, 'defaults.executor', key)
+        config_dict = eva.config.resolved_config_section(self.config, key)
+        incubator, self.executor = executor_class().factory(config_dict, key)
         self.executor.set_globe(self.globe)
         self.executor.init()
