@@ -415,6 +415,7 @@ class Main(eva.config.ConfigurableObject):
         """
         self.globe = eva.globe.Global(group_id=self.group_id,
                                       logger=self.logger,
+                                      mailer=self.mailer,
                                       productstatus=self.productstatus,
                                       statsd=self.statsd,
                                       zookeeper=self.zookeeper,

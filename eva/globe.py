@@ -4,6 +4,7 @@ import eva.exceptions
 PROPERTIES = [
     'group_id',
     'logger',
+    'mailer',
     'productstatus',
     'statsd',
     'zookeeper',
@@ -23,6 +24,9 @@ class Global(object):
                 setattr(self, prop, kwargs[prop])
         except KeyError:
             raise eva.exceptions.EvaException("Expected to receive '%s' as a keyword argument to class initialization" % prop)
+        for key in kwargs:
+            if key not in PROPERTIES:
+                raise eva.exceptions.EvaException("The Globe object does not accept '%s' as a keyword argument, please see eva.globe.PROPERTIES" % key)
 
 
 class GlobalMixin(object):
@@ -39,5 +43,5 @@ class GlobalMixin(object):
 
     def __getattr__(self, name):
         if name not in PROPERTIES:
-            raise AttributeError("No attribute %s found in Global configuration" % name)
+            raise AttributeError(name)
         return getattr(self.globe, name)

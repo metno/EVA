@@ -42,3 +42,12 @@ class TestJob(eva.tests.TestBase):
     def test_poll_time_reached(self):
         self.job.set_next_poll_time(-1)
         self.assertTrue(self.job.poll_time_reached())
+
+    def test_failures(self):
+        self.assertEqual(self.job.failures(), 0)
+        self.job.incr_failures()
+        self.assertEqual(self.job.failures(), 1)
+        self.job.incr_failures()
+        self.assertEqual(self.job.failures(), 2)
+        self.job.set_failures(44)
+        self.assertEqual(self.job.failures(), 44)

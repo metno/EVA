@@ -304,10 +304,10 @@ class Eventloop(eva.globe.GlobalMixin):
         elif job.complete() or job.failed():
             job.timer.stop()
             job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', job.timer.total_time_msec() / 1000.0)
-            #if not job.complete():
-                #self.register_job_failure(job)
-            #else:
-                #self.register_job_success(job)
+            if not job.complete() and job.failures() == 1:
+                self.notify_job_failure(job)
+            elif job.complete() and job.failures() > 0:
+                self.notify_job_success(job)
             job.adapter.finish_job(job)
             try:
                 job.adapter.generate_and_post_resources(job)
@@ -500,45 +500,33 @@ class Eventloop(eva.globe.GlobalMixin):
             self.logger.debug('Setting health check heartbeat at timestamp %s', timestamp)
             self.health_check_server.heartbeat(timestamp)
 
-    def register_job_failure(self, event):
+    def notify_job_failure(self, job):
         """!
-        @brief Increase the number of failures for a specific event, for
-        statistic and mail purposes.
+        @brief Send an email notifying about a failed job.
         """
-        failures = self.adapter.incr_processing_failures(event.id())
-        self.logger.warning('Job %s failed, total fail count: %d.', event.id(), failures)
-
-        # Only send mail on the first failure
-        if failures != 1:
-            return
-
         template_params = {
-            'event_id': event.id(),
+            'job_id': job.id,
+            'adapter': job.adapter.config_id,
+            'failures': job.failures(),
+            'status': job.status,
         }
         subject = eva.mail.text.JOB_FAIL_SUBJECT % template_params
         text = eva.mail.text.JOB_FAIL_TEXT % template_params
-
         self.mailer.send_email(subject, text)
 
-    def register_job_success(self, event):
+    def notify_job_success(self, job):
         """!
         @brief Set the number of failures for a specific event to zero, and
         send out an e-mail in case it recovered from a non-zero error count.
         """
-        failures = self.adapter.processing_failures(event.id())
-        self.adapter.set_processing_failures(event.id(), 0)
-
-        # Skip sending mail for healthy jobs
-        if failures == 0:
-            return
-
         template_params = {
-            'event_id': event.id(),
-            'failures': failures,
+            'job_id': job.id,
+            'adapter': job.adapter.config_id,
+            'failures': job.failures(),
+            'status': job.status,
         }
         subject = eva.mail.text.JOB_RECOVER_SUBJECT % template_params
         text = eva.mail.text.JOB_RECOVER_TEXT % template_params
-
         self.mailer.send_email(subject, text)
 
     def event_matches_object_version(self, event):

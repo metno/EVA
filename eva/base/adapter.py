@@ -124,7 +124,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @brief Initialize the environment, then return this instance.
         """
         self._post_to_productstatus = False
-        self._processing_failures = {}
         self.blacklist = set()
         self.required_uuids = set()
         self.reference_time_threshold_delta = None
@@ -240,35 +239,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         in that set.
         """
         return (len(self.required_uuids) == 0) or (uuid in self.required_uuids)
-
-    def set_processing_failures(self, uuid, failures):
-        """!
-        @brief Set the number of processing failures for the given UUID.
-        @returns The number of failures registered.
-        """
-        if failures == 0:
-            if uuid in self._processing_failures:
-                del self._processing_failures[uuid]
-        else:
-            self._processing_failures[uuid] = failures
-        self.statsd.gauge('consecutive_processing_failures', failures, {'event_id': str(uuid)})
-        return failures
-
-    def incr_processing_failures(self, uuid):
-        """!
-        @brief Increase the number of processing failures for the given UUID.
-        @returns The number of failures registered.
-        """
-        failures = self.processing_failures(uuid) + 1
-        return self.set_processing_failures(uuid, failures)
-
-    def processing_failures(self, uuid):
-        """!
-        @brief Return the number of processing failures for the given UUID.
-        """
-        if uuid not in self._processing_failures:
-            return 0
-        return self._processing_failures[uuid]
 
     def datainstance_has_required_uuids(self, datainstance):
         """!

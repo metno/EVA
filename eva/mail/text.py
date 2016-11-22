@@ -19,15 +19,20 @@ you will get an e-mail as soon as the job succeeds.
 
 Note that you will not receive e-mails about further failures of this event.
 
-Event ID: %(event_id)s
+Job ID:        %(job_id)s
+Adapter:       %(adapter)s
+Failure count: %(failures)d
+Job status:    %(status)s
 """
 
 # Message sent when a job recovers
 JOB_RECOVER_SUBJECT = 'Job succeeded after %(failures)d failures'
 JOB_RECOVER_TEXT = """Your previously failing job has finally succeeded.
 
-Event ID:      %(event_id)s
+Job ID:        %(job_id)s
+Adapter:       %(adapter)s
 Failure count: %(failures)d
+Job status:    %(status)s
 """
 
 # Message sent upon a critical error

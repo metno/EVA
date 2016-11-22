@@ -41,6 +41,7 @@ class Job(eva.globe.GlobalMixin):
         self.set_status(INITIALIZED)  # what state the job is in
         self.next_poll_time = eva.now_with_timezone()
         self._status_changed = False
+        self._failures = 0
 
     def set_status(self, status):
         """!
@@ -49,7 +50,8 @@ class Job(eva.globe.GlobalMixin):
         assert status in ALL_STATUSES
         self.status = status
         self.logger.info('Setting job status to %s', self.status)
-        self.statsd.incr('job_%s' % status.lower())
+        if status == FAILED:
+            self.incr_failures()
         self._status_changed = True
 
     def status_changed(self):
@@ -79,6 +81,33 @@ class Job(eva.globe.GlobalMixin):
         about jobs.
         """
         return eva.logger.JobLogAdapter(logger, {'JOB': self})
+
+    def set_failures(self, failures):
+        """!
+        @brief Set the number of processing failures for this job.
+        @rtype int
+        @returns The number of failures registered.
+        """
+        self._failures = failures
+        self.statsd.incr('eva_job_failures')
+        return failures
+
+    def incr_failures(self):
+        """!
+        @brief Increase the number of processing failures for this job.
+        @rtype int
+        @returns The number of failures registered.
+        """
+        failures = self.failures() + 1
+        return self.set_failures(failures)
+
+    def failures(self):
+        """!
+        @brief Return the number of processing failures for this job.
+        @rtype int
+        @returns The number of failures registered.
+        """
+        return self._failures
 
     def initialized(self):
         """!
