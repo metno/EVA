@@ -2,6 +2,10 @@
 @brief Classes related to event queue handling.
 """
 
+#.. py:function:: lol(foo)
+#
+#   Run the LOL
+
 
 import collections
 import json

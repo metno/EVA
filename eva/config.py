@@ -214,7 +214,11 @@ class ConfigurableObject(object):
         """!
         Coerce a type into a unicode string.
         """
-        return eva.parse_boolean_string(value)
+        if value in ['yes', 'YES', 'true', 'TRUE', 'True', '1']:
+            return True
+        if value in ['no', 'NO', 'false', 'FALSE', 'False', '0']:
+            return False
+        return None
 
     @staticmethod
     def normalize_config_bool(value):
