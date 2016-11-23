@@ -30,6 +30,7 @@ config = {
         'httmock==1.2.4',
         'jinja2==2.8',
         'kazoo==2.2.1',
+        'Sphinx==1.4.8',
     ],
     'packages': [],
     'scripts': [],
