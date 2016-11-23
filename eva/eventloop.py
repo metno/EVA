@@ -260,6 +260,7 @@ class Eventloop(eva.globe.GlobalMixin):
                 if job_active or has_capacity:
                     self.process_job(job)
                     if job.status_changed():
+                        self.statsd.incr('eva_job_%s' % job.status.lower(), tags={'adapter': job.adapter.config_id})
                         changed += [item]
             except self.RECOVERABLE_EXCEPTIONS as e:
                 self.logger.error('Job %s suffered from a recoverable error: %s', job, e)
