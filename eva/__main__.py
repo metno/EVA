@@ -254,6 +254,7 @@ class Main(eva.config.ConfigurableObject):
         """
         config = eva.config.resolved_config_section(self.config, 'eva')
         self.load_configuration(config, 'eva')
+        self.set_config_id('eva')
 
     def setup_client_group_id(self):
         """!
@@ -338,12 +339,17 @@ class Main(eva.config.ConfigurableObject):
         sections = self.config.sections()
         for section in sections:
             config = eva.config.resolved_config_section(self.config, section)
+            abstract = ('abstract' in config and eva.config.ConfigurableObject.normalize_config_bool(config['abstract']))
             if 'class' not in config:
                 self.logger.info("Ignoring non-class configuration section '%s'.", section)
                 continue
-            if 'abstract' in config and eva.config.ConfigurableObject.normalize_config_bool(config['abstract']):
+            elif abstract:
                 self.logger.info("Ignoring abstract configuration section '%s'.", section)
                 continue
+            else:
+                raise eva.exceptions.InvalidConfigurationException(
+                    "Invalid configuration section '%s': not a class instance, and not defined as abstract" % section
+                )
             class_name = config['class']
             del config['class']
             self.logger.info("Instantiating '%s' from configuration section '%s'.", class_name, section)
@@ -438,6 +444,13 @@ class Main(eva.config.ConfigurableObject):
             self.logger.info(line)
         self.logger.info('*** END OF CONFIGURATION VARIABLES ***')
 
+    def print_adapters(self):
+        """!
+        @brief Print configured adapters to log.
+        """
+        for adapter in self.adapters:
+            self.logger.info('Configured adapter: %s', adapter)
+
     def setup(self):
         try:
             # Basic pre-flight setup: argument parsing, signals, logging setup
@@ -466,6 +479,7 @@ class Main(eva.config.ConfigurableObject):
             self.resolve_config_class_dependencies()
             self.setup_globe()
             self.init_config_classes()
+            self.print_adapters()
 
             # Abort if EVA is already running
             self.setup_instance_lock()

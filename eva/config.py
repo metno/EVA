@@ -124,6 +124,12 @@ class ConfigurableObject(object):
     ## List of optional configuration variables.
     OPTIONAL_CONFIG = []
 
+    def __repr__(self):
+        """!
+        @brief Return a string representation of the class.
+        """
+        return '<%s: %s>' % (self.__class__.__name__, self.config_id)
+
     @classmethod
     def factory(self, config, config_id):
         """!
@@ -157,6 +163,8 @@ class ConfigurableObject(object):
         """!
         @brief Return the configuration ID of this class.
         """
+        if not hasattr(self, '_config_id'):
+            return '(NO CONFIGURATION ID)'
         return self._config_id
 
     def init(self):
