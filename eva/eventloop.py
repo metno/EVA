@@ -1,6 +1,7 @@
+import copy
 import datetime
 import dateutil.tz
-import copy
+import kazoo.exceptions
 import traceback
 
 import eva
@@ -348,7 +349,13 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         self.logger.info('Entering main loop.')
         while not self.do_shutdown:
-            self.main_loop_iteration()
+            try:
+                self.main_loop_iteration()
+            except kazoo.exceptions.ZookeeperError as e:
+                self.logger.error('There is a problem with the ZooKeeper connection: %s', str(e))
+                self.logger.error('EVA cannot continue to operate in this state, thanks for all the fish.')
+                self.statsd.incr('eva_zookeeper_connection_loss')
+                self.shutdown()
         self.logger.info('Exited main loop.')
 
     def report_job_status_metrics(self):

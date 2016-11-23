@@ -264,13 +264,6 @@ class EventQueue(eva.globe.GlobalMixin):
             self.store_item(item)
         self.logger.debug('Event added to event queue: %s', event)
         return item
-        #try:
-        #except eva.exceptions.ZooKeeperDataTooLargeException as e:
-            #self.logger.warning(str(e))
-            #return False
-        #except kazoo.exceptions.ZooKeeperError as e:
-            #self.logger.warning(str(e))
-            #return False
         return item
 
     def adapter_active_job_count(self, adapter):
