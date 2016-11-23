@@ -12,6 +12,8 @@ Contents:
    :maxdepth: 2
 
    intro
+   development
+   configuration
    tutorial
    api/index
 
