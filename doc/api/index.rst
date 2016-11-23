@@ -6,3 +6,4 @@ API documentation
 
    eva
    exceptions
+   config

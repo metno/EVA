@@ -1,7 +1,5 @@
-Exceptions
-==========
-
-These are exceptions thrown by EVA under various circumstances.
+eva.exceptions
+==============
 
 .. automodule:: eva.exceptions
    :members:

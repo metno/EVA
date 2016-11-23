@@ -1,32 +1,30 @@
-"""!
-@brief Configuration module.
-
-This module contains classes necessary for automatic configuration of objects
-from a configuration file.
+"""
+Configuration module, containing classes necessary for automatic configuration
+of objects from a configuration file.
 """
 
 import eva.exceptions
 
 
-# Environment variables in this list will be censored in the log output.
+#: list of configuration options that shall be censored from log output.
 SECRET_CONFIGURATION = [
     'api_key',
 ]
 
 
 def resolved_config_section(config, section, section_keys=None, ignore_defaults=False):
-    """!
-    @brief Recursively pull in includes and defaults for a configuration
-    section, and combine them into a single dictionary. Provides infinite
-    recursion protection.
-    @type section configparser.ConfigParser
-    @param section A ConfigParser object instance.
-    @type section_keys list
-    @param section_keys List of section keys already parsed, used for infinite recursion protection.
-    @type ignore_defaults bool
-    @param ignore_defaults Whether or not to include the 'defaults.<SECTION-BASENAME>' configuration section.
-    @rtype dict
-    @returns Dictionary of configuration values.
+    """
+    Recursively pull in includes and defaults for a configuration section, and
+    combine them into a single dictionary.
+    
+    This function provides infinite recursion protection, guaranteeing that a
+    single configuration section will be read only once.
+
+    :param configparser.ConfigParser section: reference to a configuration parser.
+    :param list section_keys: list of section keys already parsed, used for infinite recursion protection.
+    :param bool ignore_defaults: whether or not to include the 'defaults.<SECTION-BASENAME>' configuration section.
+    :rtype: dict
+    :returns: dictionary of configuration values.
     """
     resolved = {}
     # Workaround greedy default parameter value
@@ -63,47 +61,71 @@ def resolved_config_section(config, section, section_keys=None, ignore_defaults=
 
 
 class ConfigurableObject(object):
-    """!
-    @brief Base class that allows the subclass to define a list of required and
-    optional configuration environment variables.
+    """
+    Base class that allows the subclass to define configuration options that
+    can be populated from an INI file, along with a list of required and
+    optional configuration variables.
 
-    In order to use classes in your EVA configuration, they MUST be derived
-    from this class. Optionally, they may reimplement the `_factory()` method,
-    which must return a configured class instance of any type.
+    In order to use configuration classes in your EVA configuration, they MUST
+    be derived from this class. Optionally, they may reimplement the
+    :meth:`_factory()` method, which must return a configured class instance of
+    any type.
 
     Usage:
 
-        incubator, object_ = eva.config.ConfigurableObject().factory(
-            <dictionary with configuration options>
-        )
+    .. code-block:: python
 
-        # `incubator` is a reference to the ConfigurableObject instance, while
-        # `object_` is a reference to the object returned by _factory().
-        # Normally, you proceed with calling init() if your instantiated class
-        # is a ConfigurableObject instance:
+       incubator, object_ = eva.config.ConfigurableObject().factory(
+           {
+               'foo': '1, 2, 3, 5, 7, 11',
+               'bar': 'baz',
+           }
+       )
 
-        object_.init()
+       # `incubator` is a reference to the ConfigurableObject instance, while
+       # `object_` is a reference to the object returned by _factory().
+       # Normally, you proceed with calling init() if your instantiated class
+       # is a ConfigurableObject instance:
 
-    Configurable variables are defined with:
+       object_.init()
 
-        CONFIG = {
-            'foo': {
-                'type': 'list_int',
-                'help': 'Description of what this setting does',
-                'default': '1,2,3',
-            },
-            'bar': {
-                ...
-            },
-        },
+    Configurable variables are defined with the :const:`CONFIG` dictionary.
 
-    The types are defined as `normalize_config_<type>` functions in this class.
-    Subclasses might implement their own normalization functions as needed.
+    .. code-block:: python
+
+       class MyClass(ConfigurableObject):
+           CONFIG = {
+               'foo': {
+                   'type': 'list_int',
+                   'help': 'Description of what this setting does',
+                   'default': '1,2,3',
+               },
+               'bar': {
+                   ...
+               },
+           },
+
+    The types are defined as ``normalize_config_<type>`` functions in this
+    class. Subclasses might implement their own normalization functions as
+    needed. A list of provided configuration normalizers are provided below:
+
+        * :meth:`normalize_config_string`
+        * :meth:`normalize_config_int`
+        * :meth:`normalize_config_positive_int`
+        * :meth:`normalize_config_null_bool`
+        * :meth:`normalize_config_bool`
+        * :meth:`normalize_config_list`
+        * :meth:`normalize_config_list_string`
+        * :meth:`normalize_config_list_int`
+        * :meth:`normalize_config_config_class`
 
     To define configuration options as required or optional, you may do:
 
-        REQUIRED_CONFIG = ['foo']
-        OPTIONAL_CONFIG = ['bar']
+    .. code-block:: python
+
+       class MyClass(ConfigurableObject):
+           REQUIRED_CONFIG = ['foo']
+           OPTIONAL_CONFIG = ['bar']
 
     Note that variables that are not in any of these two lists will be regarded
     as invalid options, and trying to use them will throw an exception.
@@ -111,31 +133,37 @@ class ConfigurableObject(object):
     The normalized variables are made available in the `env` class member. For
     instance:
 
-        assert object_.env['foo'] == [1, 2, 3]  # True
+    .. code-block:: python
 
+       assert object_.env['foo'] == [1, 2, 3]  # True
     """
 
-    ## Hash with available configuration variables.
+    #: dictionary of possible configuration variables.
     CONFIG = {}
 
-    ## List of required configuration variables.
+    #: list of required configuration variables.
     REQUIRED_CONFIG = []
 
-    ## List of optional configuration variables.
+    #: list of optional configuration variables.
     OPTIONAL_CONFIG = []
 
     def __repr__(self):
-        """!
-        @brief Return a string representation of the class.
+        """
+        Return a string representation of the class.
+
+        :rtype: str
         """
         return '<%s: %s>' % (self.__class__.__name__, self.config_id)
 
     @classmethod
     def factory(self, config, config_id):
-        """!
-        @brief Load the specified configuration data, according to
-        load_configuration(), and return a tuple of the incubator class and the
-        instantiated class.
+        """
+        Load the specified configuration data, according to :meth:`load_configuration()`.
+        
+        :param dict config: dictionary of configuration variables.
+        :param str config_id: configuration section ID used to configure this class.
+        :rtype: tuple
+        :returns: a tuple of the incubator class instance, and the final instantiated class.
         """
         object_ = self()
         object_.load_configuration(config)
@@ -143,16 +171,24 @@ class ConfigurableObject(object):
         return (object_, object_._factory())
 
     def _factory(self):
-        """!
-        @brief Return a class instance. Override this method in order to return
-        a different object than the eva.ConfigurableObject instance.
-        @returns object
+        """
+        Return a class instance. Override this method in order to return a
+        different object than the :class:`ConfigurableObject` instance. This is
+        useful if external objects are going to be instantiated.
+
+        This method is called after :meth:`load_configuration`, so you can use
+        the :attr:`env` dictionary for your object configuration.
+
+        :rtype: object
         """
         return self
 
     def set_config_id(self, id):
-        """!
-        @brief Set the configuration ID of this class.
+        """
+        Set the configuration ID of this class.
+
+        :param str id: configuration ID to set.
+        :raises RuntimeError: when the configuration ID is already set.
         """
         if hasattr(self, '_config_id'):
             raise RuntimeError('Configuration ID for this class already set!')
@@ -160,22 +196,27 @@ class ConfigurableObject(object):
 
     @property
     def config_id(self):
-        """!
-        @brief Return the configuration ID of this class.
+        """
+        Return the configuration ID of this class.
+
+        :rtype: str
         """
         if not hasattr(self, '_config_id'):
             return '(NO CONFIGURATION ID)'
         return self._config_id
 
     def init(self):
-        """!
-        @brief Provides a place for subclasses to run their own initialization.
+        """
+        Provides a place for subclasses to run their own initialization. By
+        default, this method does nothing.
         """
         pass
 
     def format_help(self):
-        """!
-        @brief Format a help string with this class' configuration variables.
+        """
+        Generate a help string with this class' configuration variables.
+
+        :rtype: str
         """
         output = ['%s configuration:' % self.__name__]
         for key in sorted(self.CONFIG.keys()):
@@ -185,15 +226,19 @@ class ConfigurableObject(object):
 
     @staticmethod
     def normalize_config_string(value):
-        """!
-        Coerce a type into a unicode string.
+        """
+        Convert a value of any type into a unicode string.
+
+        :rtype: str
         """
         return str(value)
 
     @staticmethod
     def normalize_config_int(value):
-        """!
-        Coerce a type into an integer.
+        """
+        Convert a value of any type into an integer.
+
+        :rtype: int|None
         """
         if len(value) == 0:
             return None
@@ -201,8 +246,11 @@ class ConfigurableObject(object):
 
     @staticmethod
     def normalize_config_positive_int(value):
-        """!
-        Coerce a type into an integer.
+        """
+        Convert a value of any type into a positive integer.
+
+        :raises eva.exceptions.InvalidConfigurationException: when the integer is `<= 0`.
+        :rtype: int
         """
         value = ConfigurableObject.normalize_config_int(value)
         if value <= 0:
@@ -211,19 +259,25 @@ class ConfigurableObject(object):
 
     @staticmethod
     def normalize_config_null_bool(value):
-        """!
-        Coerce a type into a unicode string.
         """
-        if value in ['yes', 'YES', 'true', 'TRUE', 'True', '1']:
+        Convert a value of any type into a nullable boolean.
+
+        :rtype: bool|None
+        """
+        value = value.lower()
+        if value in ['yes', 'true', 'on', '1']:
             return True
-        if value in ['no', 'NO', 'false', 'FALSE', 'False', '0']:
+        if value in ['no', 'false', 'off', '0']:
             return False
         return None
 
     @staticmethod
     def normalize_config_bool(value):
-        """!
-        Coerce a type into a unicode string.
+        """
+        Convert a value of any type into boolean.
+
+        :raises eva.exceptions.InvalidConfigurationException: when a boolean value can not be derived.
+        :rtype: bool
         """
         v = ConfigurableObject.normalize_config_null_bool(value)
         if v is None:
@@ -232,49 +286,66 @@ class ConfigurableObject(object):
 
     @staticmethod
     def normalize_config_list(value):
-        """!
+        """
         Split a comma-separated string into a list.
+
+        :rtype: list
         """
         return eva.split_comma_separated(value)
 
     @staticmethod
     def normalize_config_list_string(value):
-        """!
-        Split a comma-separated string into a list of unicode strings.
+        """
+        Split a comma-separated string into a list of unicode strings. Empty
+        values are ignored.
+
+        :rtype: list
         """
         return [ConfigurableObject.normalize_config_string(x) for x in ConfigurableObject.normalize_config_list(value) if len(x) > 0]
 
     @staticmethod
     def normalize_config_list_int(value):
-        """!
+        """
         Split a comma-separated string into a list of integers.
+
+        :rtype: list
         """
         return [ConfigurableObject.normalize_config_int(x) for x in ConfigurableObject.normalize_config_list(value)]
 
     @staticmethod
     def normalize_config_config_class(value):
-        """!
-        @brief Set a dotted class name into a resolvable dependency.
+        """
+        Convert a dotted class name into a :class:`ResolvableDependency` object.
+
+        :rtype: ResolvableDependency
         """
         return ResolvableDependency(value)
 
     def resolve_dependencies(self, config_classes):
-        """!
-        @brief Replace all configuration objects with their true class reference.
+        """
+        Replace all configuration objects of type :class:`ResolvableDependency`
+        with their true class reference.
+
+        :param dict config_classes: dictionary with configuration IDs (see
+               :attr:`config_id`) as keys pointing to
+               :class:`ResolvableDependency` objects.
+        :rtype: class
         """
         for key in self.env.keys():
             if isinstance(self.env[key], ResolvableDependency):
                 self.env[key] = self.env[key].resolve(config_classes)
 
-    def load_configuration(self, config, *args):
-        """!
-        @brief Normalize input configuration based on the configuration
-        definition: split strings into lists, convert to types.
-        @param config configparser.ConfigParser ConfigParser object.
-        @param *args str ConfigParser sections to read from. Latter arguments take
-        presedence and will overwrite values found in earlier sections.
+    def load_configuration(self, config):
         """
-        ## Dictionary of normalized, configured variables.
+        Normalize input configuration based on the configuration definition:
+        split strings into lists, convert to types.
+
+        :param dict config: dictionary with configuration variables.
+        :raises eva.exceptions.InvalidConfigurationException: when a configuration value is invalid (normalizer function raised an exception).
+        :raises eva.exceptions.MissingConfigurationException: when a configuration value defined in :attr:`REQUIRED_CONFIG` is missing from the configuration dictionary.
+        :raises RuntimeError: when a configuration variable is missing from the :attr:`CONFIG` hash, or has defined a normalization function that is not defined as a class member. This error indicates a bug in a subclass.
+        """
+        #: dictionary of normalized configuration variables, as read from the configuration file.
         self.env = {}
         keys = list(set(self.REQUIRED_CONFIG + self.OPTIONAL_CONFIG))
         configured = []
@@ -321,9 +392,12 @@ class ConfigurableObject(object):
                 raise eva.exceptions.InvalidConfigurationException("Invalid configuration key '%s' for class '%s'" % (key, self.__class__.__name__))
 
     def format_config(self):
-        """!
-        @brief Return a list of strings with configuration options, formatted
-        in `key=value` format, and censored variables filtered out.
+        """
+        Generate a list of strings with configuration options, formatted in
+        ``key=value`` format, and with censored variables defined in
+        :attr:`SECRET_CONFIGURATION` filtered out.
+
+        :rtype: list
         """
         strings = []
         for key, var in sorted(self.env.items()):
@@ -334,15 +408,27 @@ class ConfigurableObject(object):
 
 
 class ResolvableDependency(object):
-    """!
-    @brief A string representation of a configuration key, which will be
-    converted into an object as soon as all the configuration keys have been
-    loaded.
     """
+    This class provides a future resolvable representation of a class defined
+    in a configuration key, which will be converted into an object as soon as
+    all the configuration keys have been loaded.
+
+    :param str key: configuration ID (see :attr:`ConfigurableObject.config_id`) of the resolvable object.
+    """
+
     def __init__(self, key):
+        """
+        """
         self.key = key
 
     def resolve(self, config_classes):
+        """
+        Instantiate the class, using the pre-defined :attr:`key` to look up the
+        object in the :param:`config_classes` dictionary.
+
+        :param dict config_classes: dictionary of classes.
+        :rtype: class
+        """
         try:
             return config_classes[self.key]
         except KeyError:

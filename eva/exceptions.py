@@ -1,3 +1,8 @@
+"""
+Exceptions thrown by EVA under various circumstances.
+"""
+
+
 class EvaException(Exception):
     """
     Base exception for all exceptions thrown by EVA.
