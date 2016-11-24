@@ -92,7 +92,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         'output_data_format',
     ]
 
-    def init(self, *args, **kwargs):
+    def adapter_init(self, *args, **kwargs):
         if self.env['cwf_parallel'] < 1:
             raise eva.exceptions.InvalidConfigurationException(
                 'Number of instances in cwf_parallel must be equal to or higher than 1.'

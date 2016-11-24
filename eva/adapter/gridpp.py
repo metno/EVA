@@ -73,7 +73,7 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         'output_service_backend',
     ]
 
-    def init(self):
+    def adapter_init(self):
         """!
         @brief Check that optional configuration is consistent.
         """

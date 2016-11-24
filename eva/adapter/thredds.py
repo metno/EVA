@@ -47,7 +47,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         'thredds_poll_retries',
     ]
 
-    def init(self):
+    def adapter_init(self):
         """!
         @brief Populate internal variables.
         """

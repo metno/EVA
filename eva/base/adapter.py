@@ -145,6 +145,15 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         else:
             self.logger.warning('Posting to Productstatus is DISABLED due to insufficient configuration.')
 
+        self.adapter_init()
+
+    def adapter_init(self):
+        """
+        Provides a place for subclasses to initialize themselves. By default,
+        this function does nothing.
+        """
+        pass
+
     @property
     def executor(self):
         return self.env['executor']
@@ -162,6 +171,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @brief Returns a custom log adapter for logging contextual information
         about jobs.
         """
+        import pdb; pdb.set_trace()
         return eva.logger.AdapterLogAdapter(logger, {'ADAPTER': self})
 
     def setup_process_partial(self):
@@ -310,32 +320,14 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
 
         return False
 
-    def print_datainstance_info(self, datainstance, loglevel=logging.DEBUG):
-        """!
-        @brief Print information about a DataInstance to the debug log.
-        """
-        self.logger.log(loglevel,
-                        'Product: %s [%s]',
-                        datainstance.data.productinstance.product.name,
-                        datainstance.data.productinstance.product.slug)
-        self.logger.log(loglevel, 'ProductInstance: %s', datainstance.data.productinstance.id)
-        self.logger.log(loglevel, 'Reference time: %s', eva.strftime_iso8601(datainstance.data.productinstance.reference_time, null_string=True))
-        self.logger.log(loglevel, 'Time step: from %s to %s', eva.strftime_iso8601(datainstance.data.time_period_begin, null_string=True), eva.strftime_iso8601(datainstance.data.time_period_end, null_string=True))
-        self.logger.log(loglevel, 'Data format: %s', datainstance.format.name)
-        self.logger.log(loglevel, 'Service backend: %s', datainstance.servicebackend.name)
-
     def validate_resource(self, resource):
-        """!
-        @brief Check if the Resource fits this adapter, and send it to `process_resource`.
-        @param resource A Productstatus resource.
         """
-        print_info = bool(resource._collection._resource_name == 'datainstance')
-        if not self.resource_matches_input_config(resource):
-            if print_info:
-                self.print_datainstance_info(resource, logging.DEBUG)
-            return False
-        self.print_datainstance_info(resource, logging.INFO)
-        return True
+        Check if the provided Resource matches this adapter's processing criteria.
+
+        :param productstatus.api.Resource resource: a Productstatus resource instance.
+        :rtype: bool
+        """
+        return self.resource_matches_input_config(resource)
 
     def create_job(self, job):
         """!

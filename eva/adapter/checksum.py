@@ -26,7 +26,7 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
         'input_with_hash',
     ]
 
-    def init(self):
+    def adapter_init(self):
         """!
         @brief This adapter requires Productstatus write access to be of any use.
         """

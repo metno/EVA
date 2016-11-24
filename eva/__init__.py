@@ -231,3 +231,25 @@ def convert_to_bytes(value, notation):
             continue
         return int((1024 ** exp) * float(value))
     raise ValueError('Invalid data size notation %s' % notation)
+
+
+def log_productstatus_resource_info(resource, logger, loglevel=logging.DEBUG):
+    """
+    Print information about a Productstatus resource to the log.
+
+    :param productstatus.api.Resource resource: a Productstatus resource instance.
+    :param logging.Logger logger: a Logger instance.
+    :param int loglevel: a :mod:`logging` module loglevel.
+    """
+    logger.log(loglevel, 'Resource: %s', resource)
+    if not resource._collection._resource_name == 'datainstance':
+        return
+    logger.log(loglevel,
+               'Product: %s [%s]',
+               resource.data.productinstance.product.name,
+               resource.data.productinstance.product.slug)
+    logger.log(loglevel, 'ProductInstance: %s', resource.data.productinstance.id)
+    logger.log(loglevel, 'Reference time: %s', strftime_iso8601(resource.data.productinstance.reference_time, null_string=True))
+    logger.log(loglevel, 'Time step: from %s to %s', eva.strftime_iso8601(resource.data.time_period_begin, null_string=True), strftime_iso8601(resource.data.time_period_end, null_string=True))
+    logger.log(loglevel, 'Data format: %s', resource.format.name)
+    logger.log(loglevel, 'Service backend: %s', resource.servicebackend.name)

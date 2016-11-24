@@ -2,6 +2,7 @@ import copy
 import datetime
 import dateutil.tz
 import kazoo.exceptions
+import logging
 import traceback
 
 import eva
@@ -83,6 +84,7 @@ class Eventloop(eva.globe.GlobalMixin):
                 event = eva.event.ProductstatusBaseEvent.factory(message)
                 item = self.event_queue.add_event(event)
                 self.statsd.incr('eva_restored_events')
+                self.instantiate_resource(item)
 
                 # Iterate through event-generated jobs
                 for job_id, job_data in event_data['jobs'].items():
@@ -217,6 +219,12 @@ class Eventloop(eva.globe.GlobalMixin):
             self.logger.info('Postponing processing of event queue item %s due to %.1f seconds event delay.', item, delay)
             return
 
+        # (Re-)instantiate Productstatus resource if no jobs exist, or there are failed jobs
+        failed_jobs = item.failed_jobs()
+        if item.empty() or len(failed_jobs) > 0:
+            self.instantiate_resource(item)
+            eva.log_productstatus_resource_info(item.resource, self.logger, loglevel=logging.INFO)
+
         # Ask all adapters to create jobs for this event
         if item.empty():
             jobs = self.create_jobs_for_event_queue_item(item)
@@ -231,12 +239,12 @@ class Eventloop(eva.globe.GlobalMixin):
             self.event_queue.store_item(item)
 
         # Check if any jobs for this event has failed, and recreate them if necessary
-        for job in item.failed_jobs():
+        for job in failed_jobs:
 
             job.logger.info('Re-queueing previously failed job.')
 
             # Reload Productstatus resource
-            job.resource = self.productstatus[item.event.data]
+            job.resource = item.resource
 
             if not job.adapter.validate_resource(job.resource):
                 job.logger.warning('Adapter did not revalidate reloaded resource %s, discarding!', job.resource)
@@ -360,6 +368,14 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.shutdown()
         self.logger.info('Exited main loop.')
 
+    def instantiate_resource(self, item):
+        """
+        Retrieve a :class:`productstatus.api.Resource` object using the event data.
+
+        :param eva.eventqueue.EventQueueItem item: event queue item.
+        """
+        item.resource = self.productstatus[item.event.data]
+
     def report_job_status_metrics(self):
         """!
         @brief Report job status metrics to statsd.
@@ -379,14 +395,12 @@ class Eventloop(eva.globe.GlobalMixin):
         @brief Given an EventQueueItem object, create a job based on its Event.
         @returns eva.job.Job
         """
-        resource = self.productstatus[item.event.data]
-
-        if not adapter.validate_resource(resource):
+        if not adapter.validate_resource(item.resource):
             return None
 
         id = item.event.id() + '.' + adapter.config_id
         job = eva.job.Job(id, self.globe)
-        job.resource = resource
+        job.resource = item.resource
 
         try:
             adapter.create_job(job)

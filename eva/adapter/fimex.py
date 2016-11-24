@@ -56,7 +56,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         'output_service_backend',
     ]
 
-    def init(self):
+    def adapter_init(self):
         for key in ['output_data_format', 'output_product', 'output_service_backend']:
             if key in self.env:
                 setattr(self, key, self.env[key])

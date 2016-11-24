@@ -48,7 +48,7 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         'output_service_backend',
     ]
 
-    def init(self):
+    def adapter_init(self):
         for key in ['output_product', 'output_service_backend']:
             if key in self.env:
                 setattr(self, key, self.env[key])

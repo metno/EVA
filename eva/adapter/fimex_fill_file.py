@@ -50,7 +50,7 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
         'output_service_backend',
     ]
 
-    def init(self):
+    def adapter_init(self):
         if self.env['input_partial'] is not False:
             raise eva.exceptions.InvalidConfigurationException(
                 'This adapter does not accept partial input files, and MUST be configured with input_partial=NO.'
