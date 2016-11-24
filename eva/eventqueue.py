@@ -266,8 +266,7 @@ class EventQueue(eva.globe.GlobalMixin):
         self.items[id] = item
         if self.zk_store_immediately:
             self.store_item(item)
-        self.logger.debug('Event added to event queue: %s', event)
-        return item
+        self.logger.info('%s: added to event queue', event)
         return item
 
     def adapter_active_job_count(self, adapter):
@@ -309,11 +308,11 @@ class EventQueue(eva.globe.GlobalMixin):
         id = item.id()
         ephemeral = item.event.ephemeral()
         assert id in self.items
-        text = 'Event removed from event queue: %s' % item.event
+        text = '%s: event removed from event queue.' % item
         del self.items[id]
         if self.zk_store_immediately and not ephemeral:
             self.delete_stored_item(id)
-        self.logger.debug(text)
+        self.logger.info(text)
 
     def item_keys(self):
         """!

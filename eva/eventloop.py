@@ -84,7 +84,7 @@ class Eventloop(eva.globe.GlobalMixin):
                 event = eva.event.ProductstatusBaseEvent.factory(message)
                 item = self.event_queue.add_event(event)
                 self.statsd.incr('eva_restored_events')
-                self.instantiate_resource(item)
+                self.instantiate_productstatus_data(item.event)
 
                 # Iterate through event-generated jobs
                 for job_id, job_data in event_data['jobs'].items():
@@ -99,7 +99,7 @@ class Eventloop(eva.globe.GlobalMixin):
 
             self.event_queue.zk_immediate_store_enable()
 
-        self.logger.info('Finished restoring event queue from ZooKeeper.')
+        self.logger.info('Finished restoring event queue from ZooKeeper, size is %d items.', len(self.event_queue))
 
     def poll_listeners(self):
         """!
@@ -125,10 +125,14 @@ class Eventloop(eva.globe.GlobalMixin):
 
             # Accept heartbeats without adding them to queue
             if isinstance(event, eva.event.ProductstatusHeartbeatEvent):
+                self.logger.debug('%s: heartbeat received', event)
                 listener.acknowledge()
                 self.statsd.incr('eva_event_heartbeat')
                 self.set_health_check_timestamp(eva.now_with_timezone())
                 continue
+
+            # Print to log
+            self.logger.info('%s: event received', event)
 
             # Reject messages that are too old
             if event.timestamp() < self.message_timestamp_threshold:
@@ -219,32 +223,31 @@ class Eventloop(eva.globe.GlobalMixin):
             self.logger.info('Postponing processing of event queue item %s due to %.1f seconds event delay.', item, delay)
             return
 
-        # (Re-)instantiate Productstatus resource if no jobs exist, or there are failed jobs
-        failed_jobs = item.failed_jobs()
-        if item.empty() or len(failed_jobs) > 0:
-            self.instantiate_resource(item)
-            eva.log_productstatus_resource_info(item.resource, self.logger, loglevel=logging.INFO)
-
         # Ask all adapters to create jobs for this event
         if item.empty():
             jobs = self.create_jobs_for_event_queue_item(item)
             if not jobs:
-                self.logger.debug('No jobs generated for %s, discarding.', item)
                 self.event_queue.remove_item(item)
                 return
+            self.logger.info("%s: %d jobs generated, adding to queue...", item, len(jobs))
             for job in jobs:
-                self.logger.debug('Adding job %s to event queue item %s.', job, item)
+                self.logger.info('%s: adding job %s', item, job)
                 job.set_status(eva.job.READY)
                 item.add_job(job)
+            self.logger.info("%s: finished adding jobs to queue.", item)
             self.event_queue.store_item(item)
 
         # Check if any jobs for this event has failed, and recreate them if necessary
+        failed_jobs = item.failed_jobs()
+        if len(failed_jobs) > 0:
+            self.logger.warning("%s: %d failed jobs; reloading Productstatus metadata and reinitializing jobs.", item, len(failed_jobs))
+            self.instantiate_productstatus_data(item.event)
+
+        # Reinitialize failed jobs
         for job in failed_jobs:
 
-            job.logger.info('Re-queueing previously failed job.')
-
-            # Reload Productstatus resource
-            job.resource = item.resource
+            job.logger.info('Reinitializing and requeueing previously failed job.')
+            job.resource = item.event.resource
 
             if not job.adapter.validate_resource(job.resource):
                 job.logger.warning('Adapter did not revalidate reloaded resource %s, discarding!', job.resource)
@@ -292,7 +295,7 @@ class Eventloop(eva.globe.GlobalMixin):
 
         # Remove event if finished
         if item.finished():
-            self.logger.debug('Removing finished event from event queue: %s', item)
+            self.logger.info('%s: removing finished event from event queue.', item)
             self.event_queue.remove_item(item)
 
     def process_job(self, job):
@@ -308,7 +311,7 @@ class Eventloop(eva.globe.GlobalMixin):
 
         # Start job if it is not running
         if job.ready():
-            job.logger.info('Sending job to executor for asynchronous execution...')
+            job.logger.info('Ready to start; sending job to executor for asynchronous execution...')
             job.timer.start()
             job.adapter.executor.execute_async(job)
             job.logger.info('Job has been sent successfully to the executor.')
@@ -317,7 +320,7 @@ class Eventloop(eva.globe.GlobalMixin):
         elif job.running():  # TODO: check for STARTED as well?
             if not job.poll_time_reached():
                 return
-            job.logger.debug('Job is running, polling executor for job status...')
+            job.logger.debug('Polling executor for job status...')
             job.adapter.executor.sync(job)
             job.logger.debug('Finished polling executor for job status.')
 
@@ -368,14 +371,6 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.shutdown()
         self.logger.info('Exited main loop.')
 
-    def instantiate_resource(self, item):
-        """
-        Retrieve a :class:`productstatus.api.Resource` object using the event data.
-
-        :param eva.eventqueue.EventQueueItem item: event queue item.
-        """
-        item.resource = self.productstatus[item.event.data]
-
     def report_job_status_metrics(self):
         """!
         @brief Report job status metrics to statsd.
@@ -395,21 +390,20 @@ class Eventloop(eva.globe.GlobalMixin):
         @brief Given an EventQueueItem object, create a job based on its Event.
         @returns eva.job.Job
         """
-        if not adapter.validate_resource(item.resource):
+        if not adapter.validate_resource(item.event.resource):
             return None
 
         id = item.event.id() + '.' + adapter.config_id
         job = eva.job.Job(id, self.globe)
-        job.resource = item.resource
+        job.resource = item.event.resource
 
         try:
             adapter.create_job(job)
         except eva.exceptions.JobNotGenerated as e:
-            self.logger.warning("Adapter '%s' did not generate a job: %s", adapter.config_id, e)
+            self.logger.warning("%s: no jobs generated by %s: %s", item, adapter, e)
             return None
 
         job.timer = self.statsd.timer('eva_execution_time')
-        job.logger.info('Created Job object: %s', job)
         job.adapter = adapter
 
         return job
@@ -422,17 +416,15 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         jobs = []
 
-        self.logger.debug('Start generating jobs for %s', item)
+        self.logger.info('Start generating jobs for %s', item)
 
         for adapter in self.adapters:
             job = self.create_job_for_event_queue_item(item, adapter)
 
             if job is None:
-                self.logger.debug('Adapter did not generate a job: %s', adapter.config_id)
                 self.statsd.incr('eva_event_rejected', tags={'adapter': adapter.config_id})
                 continue
 
-            self.logger.debug('Adapter accepted event: %s', adapter.config_id)
             self.statsd.incr('eva_event_accepted', tags={'adapter': adapter.config_id})
 
             jobs += [job]
@@ -483,12 +475,18 @@ class Eventloop(eva.globe.GlobalMixin):
         return [eva.event.ProductstatusBaseEvent.factory(productstatus.event.Message(x)) for x in data if x]
 
     def instantiate_productstatus_data(self, event):
-        """!
-        @brief Make sure a ProductstatusResourceEvent has a Productstatus resource in Event.data.
+        """
+        Make sure a ProductstatusResourceEvent has a Productstatus resource in Event.data.
+
+        Retrieves a :class:`productstatus.api.Resource` object using the event data.
+
+        :param eva.event.Event event: event object.
         """
         if type(event) is not eva.event.ProductstatusResourceEvent:
             return None
+        self.logger.info('%s: loading resource data', event)
         event.resource = self.productstatus[event.data]
+        eva.log_productstatus_resource_info(event.resource, self.logger, loglevel=logging.INFO)
 
     def process_health_check(self):
         """!

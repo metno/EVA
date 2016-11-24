@@ -171,7 +171,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         @brief Returns a custom log adapter for logging contextual information
         about jobs.
         """
-        import pdb; pdb.set_trace()
         return eva.logger.AdapterLogAdapter(logger, {'ADAPTER': self})
 
     def setup_process_partial(self):
@@ -283,39 +282,71 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         processing criteria.
         """
         if resource._collection._resource_name != 'datainstance':
-            self.logger.debug('Resource is not of type DataInstance, ignoring.')
+            self.logger.debug("%s: resource is not of type DataInstance, ignoring.", resource)
+
         elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'input_product'):
-            self.logger.debug('DataInstance belongs to Product "%s", ignoring.',
-                              resource.data.productinstance.product.name)
+            self.logger.debug("%s: belongs to Product '%s', ignoring.",
+                              resource,
+                              resource.data.productinstance.product.slug)
+
         elif not self.in_array_or_empty(resource.servicebackend.slug, 'input_service_backend'):
-            self.logger.debug('DataInstance is hosted on service backend %s, ignoring.',
+            self.logger.debug("%s: hosted on service backend '%s', ignoring.",
+                              resource,
                               resource.servicebackend.name)
+
         elif not self.in_array_or_empty(resource.format.slug, 'input_data_format'):
-            self.logger.debug('DataInstance file type is %s, ignoring.',
+            self.logger.debug("%s: file type is '%s', ignoring.",
+                              resource,
                               resource.format.name)
+
         elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'input_reference_hours'):
-            self.logger.debug('ProductInstance reference hour does not match any of %s, ignoring.', list(set(self.env['input_reference_hours'])))
+            self.logger.debug("%s: ProductInstance reference hour does not match any of %s, ignoring.",
+                              resource,
+                              list(set(self.env['input_reference_hours'])))
+
         elif self.reference_time_threshold() > resource.data.productinstance.reference_time:
-            self.logger.debug('ProductInstance reference time is older than threshold of %s, ignoring.', self.reference_time_threshold())
+            self.logger.debug("%s: ProductInstance reference time is older than threshold of %s, ignoring.",
+                              resource,
+                              self.reference_time_threshold())
+
         elif resource.deleted:
-            self.logger.debug('DataInstance is marked as deleted, ignoring.')
+            self.logger.debug("%s: marked as deleted, ignoring.",
+                              resource)
+
         elif not self.resource_matches_hash_config(resource):
-            self.logger.debug('DataInstance has hash and adapter is configured to not process instances with hashes, or vice versa. Ignoring.')
+            self.logger.debug("%s: resource has hash, and adapter is configured to not process instances with hashes, or vice versa; ignoring.",
+                              resource)
+
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_NO and not productstatus.datainstance_has_complete_file_count(resource):
-            self.logger.debug('DataInstance is not complete, ignoring.')
+            self.logger.debug("%s: resource is incomplete; ignoring.",
+                              resource)
+
         elif resource.partial and self.process_partial == self.PROCESS_PARTIAL_ONLY and productstatus.datainstance_has_complete_file_count(resource):
-            self.logger.debug('DataInstance is complete, ignoring.')
+            self.logger.debug("%s: resource is complete; ignoring.",
+                              resource)
+
         elif self.is_blacklisted(resource.id):
-            self.logger.debug('DataInstance %s is blacklisted, ignoring.', resource)
+            self.logger.debug("%s: resource is blacklisted, ignoring.",
+                              resource)
+
         elif self.is_blacklisted(resource.data.id):
-            self.logger.debug('Data %s is blacklisted, ignoring.', resource.data)
+            self.logger.debug("%s: resource Data %s is blacklisted, ignoring.",
+                              resource,
+                              resource.data)
+
         elif self.is_blacklisted(resource.data.productinstance.id):
-            self.logger.debug('ProductInstance %s is blacklisted, ignoring.', resource.data.productinstance)
+            self.logger.debug("%s: ProductInstance %s is blacklisted, ignoring.",
+                              resource,
+                              resource.data.productinstance)
+
         elif not self.datainstance_has_required_uuids(resource):
-            self.logger.debug('DataInstance %s does not have any relationships to required UUIDs %s, ignoring.', resource.data.productinstance, list(self.required_uuids))
+            self.logger.debug("%s: resource does not have any relationships to required UUIDs %s, ignoring.",
+                              resource,
+                              list(self.required_uuids))
+
         else:
             self.clear_required_uuids()
-            self.logger.debug('DataInstance %s matches all configured criteria.', resource)
+            self.logger.info("%s matches all configured criteria.", resource)
             return True
 
         return False

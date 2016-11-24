@@ -13,9 +13,6 @@ class Event(object):
         self.data = data
         self.kwargs = kwargs
 
-    def __str__(self):
-        return str(self.id())
-
     def __repr__(self):
         return '<Event: id=%s>' % str(self.id())
 

@@ -248,8 +248,9 @@ def log_productstatus_resource_info(resource, logger, loglevel=logging.DEBUG):
                'Product: %s [%s]',
                resource.data.productinstance.product.name,
                resource.data.productinstance.product.slug)
+    logger.log(loglevel, 'Data: %s', resource.data.id)
     logger.log(loglevel, 'ProductInstance: %s', resource.data.productinstance.id)
+    logger.log(loglevel, 'Data format: %s', resource.format.slug)
+    logger.log(loglevel, 'Service backend: %s', resource.servicebackend.slug)
     logger.log(loglevel, 'Reference time: %s', strftime_iso8601(resource.data.productinstance.reference_time, null_string=True))
     logger.log(loglevel, 'Time step: from %s to %s', eva.strftime_iso8601(resource.data.time_period_begin, null_string=True), strftime_iso8601(resource.data.time_period_end, null_string=True))
-    logger.log(loglevel, 'Data format: %s', resource.format.name)
-    logger.log(loglevel, 'Service backend: %s', resource.servicebackend.name)
