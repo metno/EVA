@@ -169,3 +169,23 @@ string = bar
 """  # NOQA
         with self.assertRaises(eva.exceptions.InvalidConfigurationException):
             self.setup_with_config(eva.config.ConfigurableObject, config, 'object')
+
+    def test_parse_boolean_string_true(self):
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('yes'))
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('YES'))
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('true'))
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('TRUE'))
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('True'))
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('ON'))
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('on'))
+        self.assertTrue(eva.config.ConfigurableObject.normalize_config_bool('1'))
+
+    def test_parse_boolean_string_false(self):
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('no'))
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('NO'))
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('false'))
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('FALSE'))
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('False'))
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('OFF'))
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('off'))
+        self.assertFalse(eva.config.ConfigurableObject.normalize_config_bool('0'))
