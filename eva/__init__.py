@@ -126,7 +126,7 @@ def split_comma_separated(string):
 def url_to_filename(url):
     """
     Convert a file:// URL to a path name.
-    
+
     :param str url: URL starting with `file://`.
     :raises RuntimeError: when the URL does not start with `file://`.
     """

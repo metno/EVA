@@ -17,7 +17,7 @@ class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
 #$ -S /bin/bash
 echo %(url)s
         """ % {
-            'url': resource.url,
+            'url': job.resource.url,
         }
 
     def finish_job(self, job):

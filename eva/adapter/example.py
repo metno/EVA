@@ -110,7 +110,7 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
         #
         # Please read the Python logging tutorial:
         # https://docs.python.org/2/howto/logging.html#logging-basic-tutorial
-        job.logger.info('Job resource: %s', resource)
+        job.logger.info('Job resource: %s', job.resource)
 
         # Here, you write your processing script. There are no environment
         # variables; you must insert your variables using string interpolation.
@@ -129,7 +129,7 @@ echo convert_my_data \
 
             # The input filename always comes from Productstatus, and is always
             # an URL. Use `url_to_filename` to strip away the protocol.
-            'input': eva.url_to_filename(resource.url),
+            'input': eva.url_to_filename(job.resource.url),
 
             # The output filename has already been put into a variable, now we
             # just supply it to the string interpolation hash.
@@ -139,11 +139,11 @@ echo convert_my_data \
             # instance. This information is available from Productstatus. To
             # access it, we traverse the objects until we find the required
             # DateTime object, and then format it using strftime.
-            'date': resource.data.productinstance.reference_time.strftime('%Y-%m-%dT%H'),
+            'date': job.resource.data.productinstance.reference_time.strftime('%Y-%m-%dT%H'),
 
             # For example purposes, we include more metadata information here.
             # In this example, we include the name of our storage backend.
-            'backend': resource.servicebackend.name,
+            'backend': job.resource.servicebackend.name,
 
         }
 

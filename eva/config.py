@@ -16,7 +16,7 @@ def resolved_config_section(config, section, section_keys=None, ignore_defaults=
     """
     Recursively pull in includes and defaults for a configuration section, and
     combine them into a single dictionary.
-    
+
     This function provides infinite recursion protection, guaranteeing that a
     single configuration section will be read only once.
 
@@ -159,7 +159,7 @@ class ConfigurableObject(object):
     def factory(self, config, config_id):
         """
         Load the specified configuration data, according to :meth:`load_configuration()`.
-        
+
         :param dict config: dictionary of configuration variables.
         :param str config_id: configuration section ID used to configure this class.
         :rtype: tuple
