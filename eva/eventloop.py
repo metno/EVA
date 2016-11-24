@@ -49,6 +49,8 @@ class Eventloop(eva.globe.GlobalMixin):
         self.do_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
+        self.statsd.gauge('eva_adapter_count', len(self.adapters))
+
         event_listener_configuration = self.productstatus.get_event_listener_configuration()
         if hasattr(event_listener_configuration, 'heartbeat_interval'):
             self.set_health_check_skip_heartbeat(False)

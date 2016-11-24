@@ -253,7 +253,7 @@ class Main(eva.config.ConfigurableObject):
         @brief Read configuration parameters from the 'eva' section.
         """
         config = eva.config.resolved_config_section(self.config, 'eva')
-        self.load_configuration(config, 'eva')
+        self.load_configuration(config)
         self.set_config_id('eva')
 
     def setup_client_group_id(self):
@@ -338,18 +338,21 @@ class Main(eva.config.ConfigurableObject):
 
         sections = self.config.sections()
         for section in sections:
+            if section == 'eva':
+                # FIXME
+                continue
             config = eva.config.resolved_config_section(self.config, section)
             abstract = ('abstract' in config and eva.config.ConfigurableObject.normalize_config_bool(config['abstract']))
+            if 'class' not in config and not abstract:
+                raise eva.exceptions.InvalidConfigurationException(
+                    "Invalid configuration section '%s': not a class instance, and not defined as abstract" % section
+                )
             if 'class' not in config:
                 self.logger.info("Ignoring non-class configuration section '%s'.", section)
                 continue
             elif abstract:
                 self.logger.info("Ignoring abstract configuration section '%s'.", section)
                 continue
-            else:
-                raise eva.exceptions.InvalidConfigurationException(
-                    "Invalid configuration section '%s': not a class instance, and not defined as abstract" % section
-                )
             class_name = config['class']
             del config['class']
             self.logger.info("Instantiating '%s' from configuration section '%s'.", class_name, section)
