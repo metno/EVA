@@ -31,11 +31,5 @@ EVA is structured as three main, logical parts. These parts are:
     is available for log output and further processing.
 
 
-
-## Writing adapters
-
-See the file [eva/adapter/example.py] for an example.
-
-
 .. _Productstatus: https://github.com/metno/productstatus
 .. _Kafka: https://kafka.apache.org/
