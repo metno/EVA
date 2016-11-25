@@ -34,6 +34,7 @@ class Job(eva.globe.GlobalMixin):
         self.id = id
         self.globe = globe
         self.logger = self.create_logger(self.logger)
+        self.adapter = None  # reference to adapter class that owns the job
         self.command = ""  # a multi-line string containing the commands to be run
         self.exit_code = None  # process exit code
         self.stdout = []  # multi-line standard output
@@ -55,6 +56,11 @@ class Job(eva.globe.GlobalMixin):
         self.logger.info('Setting job status to %s', self.status)
         if status == FAILED:
             self.incr_failures()
+        if self.adapter:
+            self.statsd.incr('eva_job_status_change', tags={
+                'status': self.status,
+                'adapter': self.adapter.config_id,
+            })
         self._status_changed = True
 
     def status_changed(self):

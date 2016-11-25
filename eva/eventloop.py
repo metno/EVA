@@ -267,15 +267,14 @@ class Eventloop(eva.globe.GlobalMixin):
         # Process all jobs generated from this event
         changed = []
         for job in item:
+
             try:
                 # Only process N active jobs at a time
                 job_active = (not job.initialized()) and (not job.ready())
                 has_capacity = job.adapter.concurrency > self.event_queue.adapter_active_job_count(job.adapter)
                 if job_active or has_capacity:
                     self.process_job(job)
-                    if job.status_changed():
-                        self.statsd.incr('eva_job_%s' % job.status.lower(), tags={'adapter': job.adapter.config_id})
-                        changed += [item]
+
             except self.RECOVERABLE_EXCEPTIONS as e:
                 self.logger.error('Job %s suffered from a recoverable error: %s', job, e)
                 job.set_status(eva.job.FAILED)
@@ -288,9 +287,11 @@ class Eventloop(eva.globe.GlobalMixin):
             if job.complete():
                 job.set_status(eva.job.FINISHED)
 
+            if job.status_changed():
+                changed += [item]
+
         # Store renewed statuses of changed jobs
         for item in set(changed):
-            self.statsd.incr('eva_job_status_change')
             self.event_queue.store_item(item)
 
         # Remove event if finished
