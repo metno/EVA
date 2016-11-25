@@ -1,3 +1,11 @@
+"""
+The Adapter is the single most important component of EVA. Adapters define how
+to convert a message about created or changed metadata into meaningful work.
+They are also responsible for creating metadata that should be posted back to
+Productstatus.
+"""
+
+
 import datetime
 
 import eva
@@ -12,12 +20,67 @@ import productstatus.api
 
 
 class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
-    """!
-    Adapters contain all the information and configuration needed to translate
-    a Productstatus resource into job execution.
+    """
+    This is the base class for all adapters, which they must inherit.
+
+    By deriving from this class, you may also use the following configuration
+    variables. For a description of `types`, see the documentation for
+    :class:`~eva.config.ConfigurableObject`.
+
+    Variables marked as `required` **must** be configured, and `optional`
+    **can** be configured. `explicit` variables are defined here for
+    convenience, so that they can be re-used in subclasses with minimal code
+    duplication.
+
+    Variables starting with ``input_`` will be used to
+    determine whether or not the adapter should process the incoming resource.
+
+    .. table:: Base configuration for all adapters
+
+       ==========================  ==============  ==============  ==========  ===========
+       Variable                    Type            Default         Inclusion   Description
+       ==========================  ==============  ==============  ==========  ===========
+       concurrency                 |int|           1               optional    How many tasks that may run concurrently.
+       executor                    |config_class|  (empty)         required    Which :class:`eva.base.executor.BaseExecutor` to use.
+       input_data_format           |list_string|   (empty)         optional    Only process resources with the specified data format(s).
+       input_partial               |null_bool|     NO              optional    Only process resources that are either
+                                                                               marked as partial (`YES`) or
+                                                                               *not* marked as partial (`NO`).
+                                                                               A null value means that the partial flag is ignored.
+       input_product               |list_string|   (empty)         optional    Only process resources derived from the specified product(s).
+       input_reference_hours       |list_int|      (empty)         optional    Only process resources where the ProductInstance reference hour
+                                                                               matches any of the input values. An empty value will ignore
+                                                                               the reference hour.
+       input_service_backend       |list_string|   (empty)         optional    Only process resources with th e specified service backend(s).
+       input_with_hash             |null_bool|     NULL            optional    Only process resources that either
+                                                                               have a checksum hash stored (`YES`) or
+                                                                               does *not* have a checksum hash stored (`NO`).
+                                                                               A null value means that the hash is ignored.
+       output_base_url             |string|        (empty)         explicit    The base URL for any output files generated.
+                                                                               **THIS VARIABLE IS DEPRECATED.**
+       output_data_format          |string|        (empty)         explicit    The data format for any output files generated.
+       output_filename_pattern     |string|        (empty)         explicit    The filename pattern for any output files generated.
+       output_lifetime             |int|           (empty)         explicit    Lifetime, in hours, for any output files generated.
+                                                                               Defines how long the output files *must* live.
+                                                                               A null value specifies that the output files must live forever.
+       output_product              |string|        (empty)         explicit    The product name for any output files generated.
+       output_service_backend      |string|        (empty)         explicit    The service backend for any output files generated.
+       reference_time_threshold    |int|           0               optional    Never process resources whose reference time is older than N seconds.
+                                                                               A value of zero specifies that the reference time is ignored.
+       ==========================  ==============  ==============  ==========  ===========
+
+    .. |string| replace:: :meth:`string <eva.config.ConfigurableObject.normalize_config_string>`
+    .. |int| replace:: :meth:`int <eva.config.ConfigurableObject.normalize_config_int>`
+    .. |positive_int| replace:: :meth:`positive_int <eva.config.ConfigurableObject.normalize_config_positive_int>`
+    .. |null_bool| replace:: :meth:`null_bool <eva.config.ConfigurableObject.normalize_config_null_bool>`
+    .. |bool| replace:: :meth:`bool <eva.config.ConfigurableObject.normalize_config_bool>`
+    .. |list| replace:: :meth:`list <eva.config.ConfigurableObject.normalize_config_list>`
+    .. |list_string| replace:: :meth:`list_string <eva.config.ConfigurableObject.normalize_config_list_string>`
+    .. |list_int| replace:: :meth:`list_int <eva.config.ConfigurableObject.normalize_config_list_int>`
+    .. |config_class| replace:: :meth:`config_class <eva.config.ConfigurableObject.normalize_config_config_class>`
     """
 
-    # @brief Common configuration variables all subclasses may use.
+    #! Common configuration variables all subclasses may use.
     _COMMON_ADAPTER_CONFIG = {
         'concurrency': {
             'type': 'int',

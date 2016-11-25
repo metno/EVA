@@ -6,4 +6,5 @@ API documentation
 
    eva
    exceptions
+   baseadapter
    config
