@@ -97,7 +97,6 @@ class ConfigurableObject(object):
            CONFIG = {
                'foo': {
                    'type': 'list_int',
-                   'help': 'Description of what this setting does',
                    'default': '1,2,3',
                },
                'bar': {
@@ -211,18 +210,6 @@ class ConfigurableObject(object):
         default, this method does nothing.
         """
         pass
-
-    def format_help(self):
-        """
-        Generate a help string with this class' configuration variables.
-
-        :rtype: str
-        """
-        output = ['%s configuration:' % self.__name__]
-        for key in sorted(self.CONFIG.keys()):
-            output += ['  %s  (default: %s)' % (key, self.CONFIG[key]['default'])]
-            output += ['      %s' % self.CONFIG[key]['help']]
-        return '\n'.join(output)
 
     @staticmethod
     def normalize_config_string(value):
@@ -365,7 +352,7 @@ class ConfigurableObject(object):
             if not found:
                 if key in self.REQUIRED_CONFIG:
                     raise eva.exceptions.MissingConfigurationException(
-                        'Missing required environment variable %s (%s)' % (key, self.CONFIG[key]['help'])
+                        "Missing required configuration variable '%s'" % key
                     )
                 if key in self.OPTIONAL_CONFIG:
                     value = self.CONFIG[key]['default']

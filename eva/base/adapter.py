@@ -94,7 +94,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         },
         'input_data_format': {
             'type': 'list_string',
-            'help': 'Comma-separated input Productstatus data format slugs',
+            'help': '',
             'default': '',
         },
         'input_partial': {

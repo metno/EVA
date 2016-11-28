@@ -93,7 +93,13 @@ class Eventloop(eva.globe.GlobalMixin):
                     if not job:
                         self.logger.warning('Empty Job object returned, discarding saved job.')
                         continue
-                    #job.set_status(job_data['status'])  ## FIXME
+
+                    # FIXME: use better algorithm, or serialize data needed to restore to any state
+                    if job_data['status'] == eva.job.COMPLETE or job_data['status'] == eva.job.FINISHED:
+                        job.set_status(job_data['status'])
+                    else:
+                        job.set_status(eva.job.READY)
+
                     item.add_job(job)
                     self.statsd.incr('eva_restored_jobs')
 
@@ -251,7 +257,7 @@ class Eventloop(eva.globe.GlobalMixin):
 
             if not job.adapter.validate_resource(job.resource):
                 job.logger.warning('Adapter did not revalidate reloaded resource %s, discarding!', job.resource)
-                item.remove_job(job)
+                item.remove_job(job.id)
 
             job.adapter.create_job(job)
             job.set_status(eva.job.READY)
@@ -280,15 +286,15 @@ class Eventloop(eva.globe.GlobalMixin):
                 job.set_status(eva.job.FAILED)
                 changed += [item]
 
-            if not job.complete() and job.failures() == 1:
-                self.notify_job_failure(job)
-            elif job.complete() and job.failures() > 0:
-                self.notify_job_success(job)
             if job.complete():
                 job.set_status(eva.job.FINISHED)
 
             if job.status_changed():
                 changed += [item]
+                if not job.finished() and job.failures() == 1:
+                    self.notify_job_failure(job)
+                elif job.finished() and job.failures() > 0:
+                    self.notify_job_success(job)
 
         # Store renewed statuses of changed jobs
         for item in set(changed):
