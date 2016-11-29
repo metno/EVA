@@ -100,6 +100,9 @@ class Eventloop(eva.globe.GlobalMixin):
                     else:
                         job.set_status(eva.job.READY)
 
+                    # Restore process ID
+                    job.pid = job_data['pid']
+
                     item.add_job(job)
                     self.statsd.incr('eva_restored_jobs')
 

@@ -110,6 +110,10 @@ def parse_qacct_metrics(stdout_lines):
     }
 
 
+class JobNotFinishedException(eva.exceptions.EvaException):
+    pass
+
+
 class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """!
     Execute programs on Sun OpenGridEngine via an SSH connection to a submit host.
@@ -254,106 +258,113 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         @brief Execute a job on Grid Engine.
         """
 
-        skip_submit = False
-
         # Create SSH connection
         try:
             self.ensure_ssh_connection(job)
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
 
+        # Generate a GridEngine job name for this job
+        job.job_name = create_job_unique_id(self.group_id, job.id)
+
+        # Generate paths
+        job.stdout_path = self.create_job_filename(job.job_name, 'stdout')
+        job.stderr_path = self.create_job_filename(job.job_name, 'stderr')
+        job.submit_script_path = self.create_job_filename(job.job_name, 'sh')
+
         # Check whether a GridEngine task is already running for this job. If
         # it is, we skip submitting the job and jump right to the qacct polling.
         job.logger.info('Querying if job is already running.')
-        job_id = create_job_unique_id(self.group_id, job.id)
-        command = 'qstat -j %s' % job_id
+        command = 'qstat -j %s' % job.job_name
         try:
-            exit_code, stdout, stderr = self.execute_ssh_command(command)
-            if exit_code == 0:
-                job.pid = get_job_id_from_qstat_output(stdout)
+            if job.pid is None:
+                exit_code, stdout, stderr = self.execute_ssh_command(command)
+                if exit_code == 0:
+                    job.pid = get_job_id_from_qstat_output(stdout)
+            if job.pid is not None:
                 job.logger.warning('Job is already running with JOB_ID %d, will not submit a new job.', job.pid)
                 job.set_status(eva.job.RUNNING)
-                skip_submit = True
+                return
             else:
                 job.logger.info('Job is not running, continuing with submission.')
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
 
-        # Generate paths
-        job.stdout_path = self.create_job_filename(job_id, 'stdout')
-        job.stderr_path = self.create_job_filename(job_id, 'stderr')
-        job.submit_script_path = self.create_job_filename(job_id, 'sh')
+        # Create a submit script
+        try:
+            with self.sftp_client.open(job.submit_script_path, 'w') as submit_script:
+                script_content = job.command
+                submit_script.write(script_content)
+        except SSH_RETRY_EXCEPTIONS as e:
+            raise eva.exceptions.RetryException(e)
 
-        # Skip submitting the job if it already exists
-        if not skip_submit:
+        # Print the job script to the log
+        eva.executor.log_job_script(job)
 
-            # Create a submit script
-            try:
-                with self.sftp_client.open(job.submit_script_path, 'w') as submit_script:
-                    script_content = job.command
-                    submit_script.write(script_content)
-            except SSH_RETRY_EXCEPTIONS as e:
-                raise eva.exceptions.RetryException(e)
+        # Submit the job using qsub
+        command = ['qsub',
+                   '-N', job.job_name,
+                   '-b', 'n',
+                   '-sync', 'n',
+                   '-o', job.stdout_path,
+                   '-e', job.stderr_path,
+                   ]
 
-            # Print the job script to the log
-            eva.executor.log_job_script(job)
+        # Run jobs in a specified queue
+        if self.env['queue']:
+            command += ['-q', self.env['queue']]
 
-            # Submit the job using qsub
-            command = ['qsub',
-                       '-N', job_id,
-                       '-b', 'n',
-                       '-sync', 'n',
-                       '-o', job.stdout_path,
-                       '-e', job.stderr_path,
-                       ]
+        command += [job.submit_script_path]
 
-            # Run jobs in a specified queue
-            if self.env['queue']:
-                command += ['-q', self.env['queue']]
+        command = ' '.join(command)
+        job.logger.info('Submitting job to GridEngine: %s', command)
 
-            command += [job.submit_script_path]
+        # Execute command asynchronously
+        try:
+            exit_code, stdout, stderr = self.execute_ssh_command(command)
+            if exit_code != EXIT_OK:
+                raise eva.exceptions.RetryException(
+                    'Failed to submit the job to GridEngine, exit code %d' %
+                    exit_code
+                )
+            job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
+            job.logger.info('Job has been submitted, JOB_ID = %d', job.pid)
+            job.set_status(eva.job.RUNNING)
+            job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
+        except SSH_RETRY_EXCEPTIONS as e:
+            raise eva.exceptions.RetryException(e)
 
-            command = ' '.join(command)
-            job.logger.info('Submitting job to GridEngine: %s', command)
+    def poll_qacct_job(self, job):
+        """
+        Run qacct to check if a job has completed.
 
-            # Execute command asynchronously
-            try:
-                exit_code, stdout, stderr = self.execute_ssh_command(command)
-                if exit_code != EXIT_OK:
-                    raise eva.exceptions.RetryException(
-                        'Failed to submit the job to GridEngine, exit code %d' %
-                        exit_code
-                    )
-                job.pid = get_job_id_from_qsub_output(eva.executor.get_std_lines(stdout)[0])
-                job.logger.info('Job has been submitted, JOB_ID = %d', job.pid)
-                job.set_status(eva.job.RUNNING)
-                job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
-            except SSH_RETRY_EXCEPTIONS as e:
-                raise eva.exceptions.RetryException(e)
+        :param eva.job.Job job: the Job object to check.
+        :raises JobNotFinishedException: when the job is not present in qacct output.
+        :rtype: tuple
+        :returns: Tuple of ``(exit_code, stdout, stderr)``. Note that the return values are those of the qacct poll command, and not the job submitted via qsub.
+        """
+        check_command = self.create_qacct_command(job.pid)
+        job.logger.debug('Running: %s', check_command)
+        exit_code, stdout, stderr = self.execute_ssh_command(check_command)
+        if exit_code != EXIT_OK:
+            raise JobNotFinishedException('Job %d is not present in qacct output.' % job.pid)
+        return (exit_code, stdout, stderr)
 
     def sync(self, job):
         """!
         @brief Poll Grid Engine for job completion.
         """
 
-        # Create SSH connection
+        # Create SSH connection and poll for job completion
         try:
             self.ensure_ssh_connection(job)
+            exit_code, stdout, stderr = self.poll_qacct_job(job)
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
-
-        # Poll for job completion
-        check_command = self.create_qacct_command(job.pid)
-        try:
-            job.logger.debug('Running: %s', check_command)
-            exit_code, stdout, stderr = self.execute_ssh_command(check_command)
-        except SSH_RETRY_EXCEPTIONS as e:
-            raise eva.exceptions.RetryException(e)
-        if exit_code != EXIT_OK:
-            job.logger.debug('Job %d has not completed yet.', job.pid)
+        except JobNotFinishedException as e:
+            self.logger.debug(e)
             job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             return False
-        job.exit_code = get_exit_code_from_qacct_output(stdout)
 
         # Submit job metrics
         stats = parse_qacct_metrics(stdout.splitlines())
@@ -372,6 +383,8 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             )
 
         # Set job exit status
+        job.exit_code = get_exit_code_from_qacct_output(stdout)
+        job.pid = None
         if job.exit_code == EXIT_OK:
             job.set_status(eva.job.COMPLETE)
         else:

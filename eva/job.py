@@ -37,6 +37,7 @@ class Job(eva.globe.GlobalMixin):
         self.adapter = None  # reference to adapter class that owns the job
         self.command = ""  # a multi-line string containing the commands to be run
         self.exit_code = None  # process exit code
+        self.pid = None  # process id, executor dependent
         self.stdout = []  # multi-line standard output
         self.stderr = []  # multi-line standard error
         self.set_status(INITIALIZED)  # what state the job is in

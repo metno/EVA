@@ -108,8 +108,9 @@ class EventQueueItem(object):
         serialized['jobs'] = {}
         for key, job in self.jobs.items():
             serialized['jobs'][key] = {
-                'status': job.status,
                 'adapter': job.adapter.config_id,
+                'pid': job.pid,
+                'status': job.status,
             }
         return serialized
 
@@ -159,6 +160,10 @@ class EventQueue(eva.globe.GlobalMixin):
     * `/events/<EVENT_UUID>/<JOB_UUID>/status`
 
       The job status of this job.
+
+    * `/events/<EVENT_UUID>/<JOB_UUID>/pid`
+
+      The process ID of this job.
 
     * `/events/<EVENT_UUID>/<JOB_UUID>/adapter`
 
@@ -226,11 +231,10 @@ class EventQueue(eva.globe.GlobalMixin):
                 continue
             for job_key in job_keys:
                 job_path = os.path.join(jobs_path, job_key)
-                status_path = os.path.join(job_path, 'status')
-                adapter_path = os.path.join(job_path, 'adapter')
                 items[event_key]['jobs'][job_key] = {}
-                items[event_key]['jobs'][job_key]['status'] = self.zk_get_serialized(status_path)
-                items[event_key]['jobs'][job_key]['adapter'] = self.zk_get_serialized(adapter_path)
+                for field_key in ['status', 'adapter', 'pid']:
+                    field_path = os.path.join(job_path, field_key)
+                    items[event_key]['jobs'][job_key][field_key] = self.zk_get_serialized(field_path)
         return items
 
     def init(self):
@@ -366,8 +370,8 @@ class EventQueue(eva.globe.GlobalMixin):
         for key, job in serialized['jobs'].items():
             path = os.path.join(base_path, 'jobs', key)
             self.zookeeper.ensure_path(path)
-            self.store_serialized_data(os.path.join(path, 'adapter'), job['adapter'])
-            self.store_serialized_data(os.path.join(path, 'status'), job['status'])
+            for field_key in ['adapter', 'status', 'pid']:
+                self.store_serialized_data(os.path.join(path, field_key), job[field_key])
         self.store_list()
 
     def delete_stored_item(self, item_id):

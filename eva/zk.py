@@ -37,4 +37,8 @@ def store_serialized_data(zookeeper, path, data):
         zookeeper.create(path, serialized)
     else:
         zookeeper.set(path, serialized)
-    return (len(data), serialized_byte_size,)
+    try:
+        length = len(data)
+    except:
+        length = len(str(data))
+    return (length, serialized_byte_size,)
