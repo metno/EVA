@@ -1,7 +1,7 @@
 import configparser
 import httmock
 import logging
-import mock
+from unittest import mock
 import unittest
 import uuid
 

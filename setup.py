@@ -26,7 +26,6 @@ config = {
         'python-dateutil==2.5.0',
         'productstatus-client==6.4.0',
         'paramiko==1.16.0',
-        'mock==1.3.0',
         'httmock==1.2.4',
         'jinja2==2.8',
         'kazoo==2.2.1',

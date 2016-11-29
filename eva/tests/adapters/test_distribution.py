@@ -5,7 +5,7 @@ import eva.adapter
 import eva.exceptions
 import eva.job
 
-import mock
+from unittest import mock
 
 
 class TestDistributionAdapter(eva.tests.BaseTestAdapter):
