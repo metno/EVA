@@ -426,7 +426,7 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         jobs = []
 
-        self.logger.info('Start generating jobs for %s', item)
+        self.logger.info('%s: start generating jobs', item)
 
         for adapter in self.adapters:
             job = self.create_job_for_event_queue_item(item, adapter)
@@ -438,6 +438,8 @@ class Eventloop(eva.globe.GlobalMixin):
             self.statsd.incr('eva_event_accepted', tags={'adapter': adapter.config_id})
 
             jobs += [job]
+
+        self.logger.info('%s: total of %d jobs generated', item, len(jobs))
 
         return jobs
 
