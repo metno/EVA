@@ -162,8 +162,9 @@ class TestEventQueueItem(TestEventBase):
             job.adapter.config_id = 'foo'
             self.item.add_job(job)
             jobs_serialized[job.id] = {
-                'status': job.status,
                 'adapter': job.adapter.config_id,
+                'pid': job.pid,
+                'status': job.status,
             }
         keys = [job.id for job in jobs]
         check = {
