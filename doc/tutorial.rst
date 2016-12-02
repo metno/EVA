@@ -60,7 +60,7 @@ section for your adapter instance:
    :caption: ``eva-config/checksumadapter.ini``
 
    [adapter.test.checksum]
-   class = eva.adapters.checksum.ChecksumAdapter
+   class = eva.adapter.checksum.ChecksumAdapter
 
 Now start EVA, loading the configuration directory (and, thus, your newly
 created configuration file). You should see evidence of your adapter being
@@ -114,7 +114,7 @@ the default value of ``md5``.
    :caption: ``eva-config/checksumadapter.ini``
 
    [adapter.test.checksum]
-   class = eva.adapters.checksum.ChecksumAdapter
+   class = eva.adapter.checksum.ChecksumAdapter
    algorithm = sha256
 
 You can access the variable from within your code, like this:
