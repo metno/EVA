@@ -73,12 +73,12 @@ class Main(eva.config.ConfigurableObject):
     OPTIONAL_CONFIG = [
         'listeners',
         'statsd',
-        'zookeeper',
     ]
 
     REQUIRED_CONFIG = [
         'mailer',
         'productstatus',
+        'zookeeper',
     ]
 
     def __init__(self):
