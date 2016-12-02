@@ -23,6 +23,7 @@ def resolved_config_section(config, section, section_keys=None, ignore_defaults=
     :param configparser.ConfigParser section: reference to a configuration parser.
     :param list section_keys: list of section keys already parsed, used for infinite recursion protection.
     :param bool ignore_defaults: whether or not to include the 'defaults.<SECTION-BASENAME>' configuration section.
+    :raises eva.exceptions.MissingConfigurationSectionException: when the configuration section does not exist.
     :rtype: dict
     :returns: dictionary of configuration values.
     """
@@ -36,6 +37,9 @@ def resolved_config_section(config, section, section_keys=None, ignore_defaults=
 
     if sorted(list(set(section_keys))) != section_keys:
         raise RuntimeError('Multiple inheritance of the same base object detected: %s' % section)
+
+    if section not in config:
+        raise eva.exceptions.MissingConfigurationSectionException("Configuration section '%s' was not found." % section)
 
     if 'include' in config[section]:
         sections = eva.config.ConfigurableObject.normalize_config_list_string(config[section]['include'])

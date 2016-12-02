@@ -38,6 +38,14 @@ class InvalidConfigurationException(ConfigurationException):
     pass
 
 
+class MissingConfigurationSectionException(MissingConfigurationException):
+    """
+    Thrown when a configuration section is requested from a ConfigParser
+    object, but does not exist.
+    """
+    pass
+
+
 class RetryException(EvaException):
     """
     Thrown when event processing cannot be completed due to a transient error

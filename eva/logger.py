@@ -5,10 +5,9 @@
 import logging
 
 
-class TaskIdLogFilter(logging.Filter):
+class WildcardLogFilter(logging.Filter):
     """
-    @brief This log filter injects the application instance identifiers into
-    the log record.
+    This log filter injects any kind of data into the log record.
     """
     def __init__(self, **kwargs):
         self.extra = kwargs
@@ -23,7 +22,7 @@ class AdapterLogAdapter(logging.LoggerAdapter):
     @brief This adapter prepends the job adapter ID in brackets to all log messages.
     """
     def process(self, msg, kwargs):
-        return u'[%s] %s' % (self.extra['ADAPTER'].config_id, msg), kwargs
+        return u'{%s} %s' % (self.extra['ADAPTER'].config_id, msg), kwargs
 
 
 class JobLogAdapter(logging.LoggerAdapter):

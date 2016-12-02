@@ -207,6 +207,26 @@ class Main(eva.config.ConfigurableObject):
             logging.config.fileConfig(self.args.log_config, disable_existing_loggers=False)
             self.logger = logging.getLogger('root')
 
+        # Inject certain variables into all log records
+        log_filter = eva.logger.WildcardLogFilter(
+            client_id=self.group_id,
+            group_id=self.group_id,
+            #app_id=self.environment['MARATHON_APP_ID'],
+            #task_id=self.environment['MESOS_TASK_ID'],
+        )
+
+        # Add logging filter into any existing loggers so that all output will
+        # be correctly filtered.
+        self.logger.addFilter(log_filter)
+        for key in sorted(logging.Logger.manager.loggerDict.keys()):
+            #if key == 'root':
+                #continue
+            logger = logging.Logger.manager.loggerDict[key]
+            if not isinstance(logger, logging.Logger):
+                continue
+            self.logger.debug('Adding logging filter to logger: %s', key)
+            logger.addFilter(log_filter)
+
         # Set DEBUG loglevel if --debug passed
         if self.args.debug:
             self.logger.setLevel(logging.DEBUG)
@@ -262,8 +282,6 @@ class Main(eva.config.ConfigurableObject):
         """
         self.client_id = str(uuid.uuid4())
         self.group_id = str(uuid.uuid4()) if not self.args.group_id else self.args.group_id
-        self.logger.info('Using client ID: %s', self.client_id)
-        self.logger.info('Using group ID: %s', self.group_id)
 
     def setup_health_check_server(self):
         """!
@@ -460,9 +478,12 @@ class Main(eva.config.ConfigurableObject):
             self.setup_basic_logging()
             self.setup_signals()
             self.parse_args()
+            self.setup_client_group_id()
             self.setup_logging()
 
             self.logger.info('Starting EVA: the EVent Adapter.')
+            self.logger.info('Using client ID: %s', self.client_id)
+            self.logger.info('Using group ID: %s', self.group_id)
 
             # Read all configuration from files
             self.setup_configuration()
@@ -472,7 +493,6 @@ class Main(eva.config.ConfigurableObject):
             self.setup_health_check_server()
 
             # Set up objects required for the Global class
-            self.setup_client_group_id()
             self.setup_statsd_client()
             self.setup_zookeeper()
 
