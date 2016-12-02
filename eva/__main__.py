@@ -209,18 +209,16 @@ class Main(eva.config.ConfigurableObject):
 
         # Inject certain variables into all log records
         log_filter = eva.logger.WildcardLogFilter(
-            client_id=self.group_id,
+            client_id=self.client_id,
             group_id=self.group_id,
-            #app_id=self.environment['MARATHON_APP_ID'],
-            #task_id=self.environment['MESOS_TASK_ID'],
+            app_id=os.environ.get('MARATHON_APP_ID', 'NO_MARATHON_APP_ID'),
+            task_id=os.environ.get('MESOS_TASK_ID', 'NO_MESOS_TASK_ID'),
         )
 
         # Add logging filter into any existing loggers so that all output will
         # be correctly filtered.
         self.logger.addFilter(log_filter)
         for key in sorted(logging.Logger.manager.loggerDict.keys()):
-            #if key == 'root':
-                #continue
             logger = logging.Logger.manager.loggerDict[key]
             if not isinstance(logger, logging.Logger):
                 continue
