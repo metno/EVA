@@ -289,9 +289,6 @@ class Eventloop(eva.globe.GlobalMixin):
                 job.set_status(eva.job.FAILED)
                 changed += [item]
 
-            if job.complete():
-                job.set_status(eva.job.FINISHED)
-
             if job.status_changed():
                 changed += [item]
                 if not job.finished() and job.failures() == 1:
@@ -344,9 +341,9 @@ class Eventloop(eva.globe.GlobalMixin):
             except eva.exceptions.JobNotCompleteException as e:
                 # ignore non-fatal errors
                 job.logger.error(e)
-                job.logger.warning('Job failed, but marking as complete due to adapter policy.')
-                job.set_status(eva.job.COMPLETE)
+                job.logger.warning('Job failed, but marking as finished due to adapter policy.')
             job.logger.info('Adapter has finished processing the job.')
+            job.set_status(eva.job.FINISHED)
 
     def main_loop_iteration(self):
         """!
