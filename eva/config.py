@@ -208,6 +208,12 @@ class ConfigurableObject(object):
             return '(NO CONFIGURATION ID)'
         return self._config_id
 
+    def isset(self, variable):
+        """
+        Returns True if ``variable`` is found in :attr:`env`, and its value is set.
+        """
+        return variable in self.env and bool(self.env[variable])
+
     def init(self):
         """
         Provides a place for subclasses to run their own initialization. By

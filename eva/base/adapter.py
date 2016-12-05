@@ -188,7 +188,8 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         self.reference_time_threshold_delta = None
         self.template = eva.template.Environment()
 
-        self.setup_process_partial()
+        self._setup_process_partial()
+        self._init_productstatus_output_resources()
 
         if self.env['reference_time_threshold'] != 0:
             self.reference_time_threshold_delta = datetime.timedelta(seconds=self.env['reference_time_threshold'])
@@ -206,6 +207,17 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         this function does nothing.
         """
         pass
+
+    def _init_productstatus_output_resources(self):
+        """
+        Instantiate Productstatus resources referenced in output configuration.
+        """
+        self.output_data_format = self.api.dataformat[self.env['output_data_format']] \
+            if self.isset('output_data_format') else None
+        self.output_product = self.api.product[self.env['output_product']] \
+            if self.isset('output_product') else None
+        self.output_service_backend = self.api.servicebackend[self.env['output_service_backend']] \
+            if self.isset('output_service_backend') else None
 
     @property
     def executor(self):
@@ -239,7 +251,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """
         return eva.logger.AdapterLogAdapter(logger, {'ADAPTER': self})
 
-    def setup_process_partial(self):
+    def _setup_process_partial(self):
         """
         Set up the `process_partial` variable.
         """

@@ -77,9 +77,6 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Check that optional configuration is consistent.
         """
-        for key in ['output_data_format', 'output_product', 'output_service_backend']:
-            if key in self.env:
-                setattr(self, key, self.env[key])
         self.in_opts = self.template.from_string(self.env['gridpp_input_options'])
         self.out_opts = self.template.from_string(self.env['gridpp_output_options'])
         self.generic_opts = self.template.from_string(self.env['gridpp_generic_options'])
