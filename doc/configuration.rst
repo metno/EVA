@@ -72,7 +72,7 @@ uses section inheritance and default parameters.
    ssh_key_file = /home/user/.ssh/id_rsa
    ssh_user = user
 
-   [adapter.defaults]
+   [defaults.adapter]
    abstract = true
    executor = executor.grid_engine
 

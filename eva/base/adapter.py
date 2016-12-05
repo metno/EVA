@@ -21,7 +21,8 @@ import productstatus.api
 
 class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """
-    This is the base class for all adapters, which they must inherit.
+    This is the adapter base class. All adapters must inherit this base class
+    in order to function correctly.
 
     By deriving from this class, you may also use the following configuration
     variables. For a description of `types`, see the documentation for
@@ -41,7 +42,7 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
        Variable                    Type            Default         Inclusion   Description
        ==========================  ==============  ==============  ==========  ===========
        concurrency                 |int|           1               optional    How many tasks that may run concurrently.
-       executor                    |config_class|  (empty)         required    Which :class:`eva.base.executor.BaseExecutor` to use.
+       executor                    |config_class|  (empty)         required    Which :class:`Executor <eva.base.executor.BaseExecutor>` to use.
        input_data_format           |list_string|   (empty)         optional    Only process resources with the specified data format(s).
        input_partial               |null_bool|     NO              optional    Only process resources that are either
                                                                                marked as partial (`YES`) or
@@ -166,6 +167,10 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     PROCESS_PARTIAL_BOTH = 2
 
     def __init__(self):
+        """
+        Class initialization will merge common configuration options with
+        subclass-defined configuration.
+        """
         self.CONFIG.update(self._COMMON_ADAPTER_CONFIG)
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
         self.REQUIRED_CONFIG = self.REQUIRED_CONFIG + self._REQUIRED_CONFIG
@@ -204,27 +209,42 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
 
     @property
     def executor(self):
+        """
+        Returns the :class:`Executor <eva.base.executor.BaseExecutor>` instance for this adapter.
+        """
         return self.env['executor']
 
     @property
     def api(self):
+        """
+        Returns the Productstatus API instance that is used by this adapter.
+        """
         return self.globe.productstatus
 
     @property
     def concurrency(self):
+        """
+        Returns the number of jobs that this adapter should run concurrently.
+        """
         return self.env['concurrency']
 
     def create_logger(self, logger):
-        """!
-        @brief Returns a custom log adapter for logging contextual information
-        about jobs.
+        """
+        Instantiates and returns a custom log adapter that will be used for log
+        output by this adapter.
+
+        :param logging.Logger logger: parent logging object.
+        :rtype: logging.Logger
+        :returns: a new log adapter.
         """
         return eva.logger.AdapterLogAdapter(logger, {'ADAPTER': self})
 
     def setup_process_partial(self):
-        """!
-        @brief Set up the `process_partial` variable.
         """
+        Set up the `process_partial` variable.
+        """
+
+        # FIXME: is this constant variable needed? Substitute for a function?
         if 'input_partial' not in self.env:
             self.process_partial = self.PROCESS_PARTIAL_NO
         elif self.env['input_partial'] is None:
