@@ -362,7 +362,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
         except JobNotFinishedException as e:
-            self.logger.debug(e)
+            job.logger.debug(e)
             job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             return False
 

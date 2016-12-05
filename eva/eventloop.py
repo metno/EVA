@@ -285,7 +285,7 @@ class Eventloop(eva.globe.GlobalMixin):
                     self.process_job(job)
 
             except self.RECOVERABLE_EXCEPTIONS as e:
-                self.logger.error('Job %s suffered from a recoverable error: %s', job, e)
+                job.logger.error('Setting failed due to a recoverable error: %s', e)
                 job.set_status(eva.job.FAILED)
                 changed += [item]
 
