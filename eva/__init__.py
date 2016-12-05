@@ -120,6 +120,8 @@ def split_comma_separated(string):
     :param str string: string with comma-separated values.
     :rtype: list
     """
+    if len(string) == 0:
+        return []
     return [x.strip() for x in string.strip().split(',')]
 
 

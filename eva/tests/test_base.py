@@ -39,6 +39,11 @@ class TestBase(eva.tests.TestBase):
         list_ = eva.split_comma_separated(string)
         self.assertListEqual(list_, ['foo', 'bar', 'baz'])
 
+    def test_split_comma_separated_empty(self):
+        string = ''
+        list_ = eva.split_comma_separated(string)
+        self.assertListEqual(list_, [])
+
     def test_zookeeper_group_id(self):
         self.assertEqual(eva.zookeeper_group_id(u'/this/~isaán/\000ID'), 'this.~isan..id')
         with self.assertRaises(eva.exceptions.InvalidGroupIdException):
