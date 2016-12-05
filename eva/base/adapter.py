@@ -84,84 +84,73 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     _COMMON_ADAPTER_CONFIG = {
         'concurrency': {
             'type': 'int',
-            'help': 'How many Executor tasks to run at the same time',
             'default': '1',
         },
         'executor': {
             'type': 'config_class',
-            'help': 'Executor name from configuration files',
             'default': '',
         },
         'input_data_format': {
             'type': 'list_string',
-            'help': '',
             'default': '',
         },
         'input_partial': {
             'type': 'null_bool',
-            'help': 'Whether or not to process partial data instances',
             'default': 'NO',
         },
         'input_product': {
             'type': 'list_string',
-            'help': 'Comma-separated input Productstatus product slugs',
             'default': '',
         },
         'input_service_backend': {
             'type': 'list_string',
-            'help': 'Comma-separated input Productstatus service backend slugs',
             'default': '',
         },
         'input_reference_hours': {
             'type': 'list_int',
-            'help': 'Comma-separated reference hours to process data for',
             'default': '',
         },
         'input_with_hash': {
             'type': 'null_bool',
-            'help': 'Whether or not to process DataInstance resources containing a hash',
             'default': '',
         },
         'output_base_url': {
             'type': 'string',
-            'help': 'Base URL for DataInstances posted to Productstatus',
             'default': '',
         },
         'output_data_format': {
             'type': 'string',
-            'help': 'Productstatus Data Format ID for the finished product',
             'default': '',
         },
         'output_filename_pattern': {
             'type': 'string',
-            'help': 'strftime pattern for output data instance filename',
             'default': '',
         },
         'output_lifetime': {
             'type': 'int',
-            'help': 'Lifetime of output data instance, in hours, before it can be deleted',
             'default': '',
         },
         'output_product': {
             'type': 'string',
-            'help': 'Productstatus Product ID for the finished product',
             'default': '',
         },
         'output_service_backend': {
             'type': 'string',
-            'help': 'Productstatus Service Backend ID for the position of the finished product',
             'default': '',
         },
         'reference_time_threshold': {
             'type': 'int',
-            'help': 'If non-zero, EVA will never process DataInstance resources that belong to a ProductInstance with a reference time older than N seconds.',
             'default': '0',
         },
     }
 
     _OPTIONAL_CONFIG = [
         'concurrency',
+        'input_data_format',
+        'input_partial',
         'input_product',
+        'input_reference_hours',
+        'input_service_backend',
         'input_with_hash',
         'reference_time_threshold',
     ]
@@ -181,26 +170,23 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         self.OPTIONAL_CONFIG = self.OPTIONAL_CONFIG + self._OPTIONAL_CONFIG
         self.REQUIRED_CONFIG = self.REQUIRED_CONFIG + self._REQUIRED_CONFIG
 
-    def _factory(self):
-        """!
-        @brief Initialize the environment, then return this instance.
+    def init(self):
         """
+        Initialize base adapter functionality such as logging, blacklist,
+        template environment, and so forth.
+        """
+        self.logger = self.create_logger(self.logger)
+
         self._post_to_productstatus = False
         self.blacklist = set()
         self.required_uuids = set()
         self.reference_time_threshold_delta = None
         self.template = eva.template.Environment()
-        return self
 
-    def init(self):
-        """!
-        @param id an identifier for the adapter; must be constant across program restart
-        @param api Productstatus API object
-        @param environment_variables Dictionary of * environment variables
-        """
-        self.logger = self.create_logger(self.logger)
         self.setup_process_partial()
-        self.setup_reference_time_threshold()
+
+        if self.env['reference_time_threshold'] != 0:
+            self.reference_time_threshold_delta = datetime.timedelta(seconds=self.env['reference_time_threshold'])
 
         if self.post_to_productstatus():
             self.logger.info('Posting to Productstatus is ENABLED.')
@@ -247,28 +233,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
             self.process_partial = self.PROCESS_PARTIAL_ONLY
         else:
             self.process_partial = self.PROCESS_PARTIAL_NO
-
-    def setup_reference_time_threshold(self):
-        """!
-        @brief Define the BaseAdapter.reference_time_threshold variable, which
-        is either a datetime.timedelta object representing the difference from
-        current time, or None. The variable is used to determine whether or not
-        to process a specific dataset.
-        """
-        if self.env['reference_time_threshold'] != 0:
-            self.reference_time_threshold_delta = datetime.timedelta(seconds=self.env['reference_time_threshold'])
-
-    def in_array_or_empty(self, data, env):
-        """!
-        @brief Filter input events by filter list. If a filter is not defined,
-        then it is skipped and treated as matching. If a filter array is empty,
-        it is also treated as matching.
-        @returns True if `env` is not found in `self.env`, or if
-        `self.env[env]` is empty, or if `env` is found in `self.env`.
-        """
-        if env not in self.env:
-            return True
-        return eva.in_array_or_empty(data, self.env[env])
 
     def blacklist_add(self, uuid):
         """!
@@ -346,22 +310,22 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         if resource._collection._resource_name != 'datainstance':
             self.logger.debug("%s: resource is not of type DataInstance, ignoring.", resource)
 
-        elif not self.in_array_or_empty(resource.data.productinstance.product.slug, 'input_product'):
+        elif not eva.in_array_or_empty(resource.data.productinstance.product.slug, self.env['input_product']):
             self.logger.debug("%s: belongs to Product '%s', ignoring.",
                               resource,
                               resource.data.productinstance.product.slug)
 
-        elif not self.in_array_or_empty(resource.servicebackend.slug, 'input_service_backend'):
+        elif not eva.in_array_or_empty(resource.servicebackend.slug, self.env['input_service_backend']):
             self.logger.debug("%s: hosted on service backend '%s', ignoring.",
                               resource,
                               resource.servicebackend.name)
 
-        elif not self.in_array_or_empty(resource.format.slug, 'input_data_format'):
+        elif not eva.in_array_or_empty(resource.format.slug, self.env['input_data_format']):
             self.logger.debug("%s: file type is '%s', ignoring.",
                               resource,
                               resource.format.name)
 
-        elif not self.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), 'input_reference_hours'):
+        elif not eva.in_array_or_empty(resource.data.productinstance.reference_time.strftime('%H'), self.env['input_reference_hours']):
             self.logger.debug("%s: ProductInstance reference hour does not match any of %s, ignoring.",
                               resource,
                               list(set(self.env['input_reference_hours'])))
