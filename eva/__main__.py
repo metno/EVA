@@ -268,7 +268,7 @@ class Main(eva.config.ConfigurableObject):
             self.logger.info('Found configuration file: %s', filename)
         self.config = configparser.ConfigParser()
         self.logger.info('Reading all configuration files...')
-        self.config.read(filenames)
+        self.config.read(filenames, encoding='utf-8')
         self.logger.info('Successfully read and parsed all configuration files.')
         for section in sorted(self.config.sections()):
             self.logger.debug('Found configuration section: %s', section)
