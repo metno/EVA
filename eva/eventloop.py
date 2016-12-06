@@ -291,7 +291,7 @@ class Eventloop(eva.globe.GlobalMixin):
 
             if job.status_changed():
                 changed += [item]
-                if not job.finished() and job.failures() == 1:
+                if job.failed() and job.failures() == 1:
                     self.notify_job_failure(job)
                 elif job.finished() and job.failures() > 0:
                     self.notify_job_success(job)
