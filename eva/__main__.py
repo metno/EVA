@@ -87,6 +87,13 @@ class Main(eva.config.ConfigurableObject):
         self.incubator_class = {}
         self.logger = logging.getLogger('root')
         self.zookeeper = None
+        self.globe = eva.globe.Global(group_id=None,
+                                      logger=self.logger,
+                                      mailer=eva.mail.NullMailer(),
+                                      productstatus=None,
+                                      statsd=None,
+                                      zookeeper=self.zookeeper,
+                                      )
 
     @property
     def config_classes(self):

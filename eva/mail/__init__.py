@@ -70,3 +70,8 @@ class Mailer(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         except smtplib.SMTPException:
             # silently ignore errors
             pass
+
+
+class NullMailer(Mailer):
+    def send_email(self, *args, **kwargs):
+        pass
