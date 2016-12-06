@@ -158,6 +158,8 @@ class StatsDTimer(object):
         """!
         @brief Stop the timer, and report the data to StatsD.
         """
+        if self.start_time is None:
+            raise RuntimeError('Timer has not been started.')
         if self.stop_time is not None:
             raise RuntimeError('Timer has already been stopped.')
         self.stop_time = timeit.default_timer()
