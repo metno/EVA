@@ -165,6 +165,12 @@ class StatsDTimer(object):
         self.stop_time = timeit.default_timer()
         self.send()
 
+    def running(self):
+        """
+        Returns True if timer is running, False otherwise.
+        """
+        return self.start_time is not None and self.stop_time is None
+
     def total_time_msec(self):
         """!
         @brief Return the total time elapsed in milliseconds.
