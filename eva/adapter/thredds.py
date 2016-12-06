@@ -51,7 +51,6 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Populate internal variables.
         """
-        self.output_service_backend = self.api.servicebackend[self.env['output_service_backend']]
         self.thredds_poll_interval = self.env['thredds_poll_interval']
         self.thredds_poll_retries = self.env['thredds_poll_retries']
         self.thredds_base_url = self.env['thredds_base_url']

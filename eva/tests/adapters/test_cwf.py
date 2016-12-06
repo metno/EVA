@@ -31,12 +31,17 @@ input_service_backend = nil
         super().setUp()
         self.setup_productstatus()
 
+    def test_init(self):
+        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
+            return super().test_init()
+
     def test_parse_file_recognition_output(self):
         stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;',
                   '/tmp/meteo20160606_01.nc  time = "2016-06-08" ;',
                   '/tmp/meteo20160606_00.nml',
                   ]
-        self.create_adapter()
+        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
+            self.create_adapter()
         output = self.adapter.parse_file_recognition_output(stdout)
         self.assertEqual(len(output), 3)
         self.assertEqual(output[0]['path'], '/tmp/meteo20160606_00.nc')
@@ -53,7 +58,8 @@ input_service_backend = nil
         self.assertEqual(output[2]['extension'], '.nml')
 
     def test_generate_resources(self):
-        self.create_adapter()
+        with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
+            self.create_adapter()
 
         self.adapter.output_product = mock.MagicMock()
         self.adapter.output_data_format = mock.MagicMock()

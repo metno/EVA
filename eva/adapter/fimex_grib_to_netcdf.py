@@ -48,11 +48,6 @@ class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
         'output_service_backend',
     ]
 
-    def adapter_init(self):
-        for key in ['output_product', 'output_service_backend']:
-            if key in self.env:
-                setattr(self, key, self.env[key])
-
     def create_job(self, job):
         """!
         @brief Generate a Job which converts GRIB to NetCDF using the

@@ -57,9 +57,6 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     def adapter_init(self):
-        for key in ['output_data_format', 'output_product', 'output_service_backend']:
-            if key in self.env:
-                setattr(self, key, self.env[key])
         self.fimex_parameters = self.template.from_string(self.env['fimex_parameters'])
         self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
 

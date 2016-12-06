@@ -97,11 +97,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             raise eva.exceptions.InvalidConfigurationException(
                 'Number of instances in cwf_parallel must be equal to or higher than 1.'
             )
-        if self.post_to_productstatus():
-            self.output_product = self.api.product[self.env['output_product']]
-            self.output_service_backend = self.api.servicebackend[self.env['output_service_backend']]
-            self.output_data_format = self.api.dataformat[self.env['output_data_format']]
-            self.nml_data_format = self.api.dataformat[self.env['cwf_nml_data_format']]
+        self.nml_data_format = self.api.dataformat[self.env['cwf_nml_data_format']]
 
     def is_netcdf_data_output(self, data):
         """!
