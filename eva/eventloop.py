@@ -333,8 +333,13 @@ class Eventloop(eva.globe.GlobalMixin):
 
         # Tell adapter that the job has finished
         elif job.complete() or job.failed():
-            job.timer.stop()
-            job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', job.timer.total_time_msec() / 1000.0)
+            if job.timer.running():
+                job.timer.stop()
+                job.logger.info('Finished with total time %.1fs; sending to adapter for finishing.', job.timer.total_time_msec() / 1000.0)
+            else:
+                job.logger.error('Job timer is not running. This is probably the result of a program recovery situation.')
+                job.logger.error('Timer information for this job will NOT be submitted to StatsD.')
+                job.logger.info('Finished with unknown runtime; sending to adapter for finishing.')
             job.adapter.finish_job(job)
             try:
                 job.adapter.generate_and_post_resources(job)
