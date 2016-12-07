@@ -41,15 +41,15 @@ def resolved_config_section(config, section, section_keys=None, ignore_defaults=
     if section not in config:
         raise eva.exceptions.MissingConfigurationSectionException("Configuration section '%s' was not found." % section)
 
-    if 'include' in config[section]:
-        sections = eva.config.ConfigurableObject.normalize_config_list_string(config[section]['include'])
-        for base_section in sections:
-            resolved.update(resolved_config_section(config, base_section, section_keys=section_keys, ignore_defaults=True))
-
     if not ignore_defaults:
         section_defaults = 'defaults.' + section.split('.')[0]
         if section_defaults in config:
             resolved.update(resolved_config_section(config, section_defaults, section_keys=section_keys, ignore_defaults=True))
+
+    if 'include' in config[section]:
+        sections = eva.config.ConfigurableObject.normalize_config_list_string(config[section]['include'])
+        for base_section in sections:
+            resolved.update(resolved_config_section(config, base_section, section_keys=section_keys, ignore_defaults=True))
 
     for key in ['abstract']:
         if key in resolved:
