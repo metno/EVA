@@ -54,6 +54,14 @@ class RetryException(EvaException):
     pass
 
 
+class ResourceTooOldException(EvaException):
+    """
+    Thrown when an event is outdated because the Productstatus resource it
+    refers to has been overwritten with more recent data.
+    """
+    pass
+
+
 class JobNotGenerated(EvaException):
     """
     Thrown by an adapter when a resource event fits the processing

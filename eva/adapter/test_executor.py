@@ -4,8 +4,8 @@ import eva.exceptions
 
 
 class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    An adapter that echoes the URL of the received DataInstance.
+    """
+    An adapter that echoes the URL of the received DataInstance, and then sleeps for 10 seconds.
     """
 
     def create_job(self, job):
@@ -16,6 +16,7 @@ class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
 #!/bin/bash
 #$ -S /bin/bash
 echo %(url)s
+sleep 10
         """ % {
             'url': job.resource.url,
         }

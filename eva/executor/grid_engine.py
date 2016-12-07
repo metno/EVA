@@ -366,6 +366,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             return False
 
+        # Reset process ID, it will interfere with re-running
+        job.pid = None
+
         # Submit job metrics
         stats = parse_qacct_metrics(stdout.splitlines())
         for metric, value in stats['metrics'].items():
@@ -384,7 +387,6 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
 
         # Set job exit status
         job.exit_code = get_exit_code_from_qacct_output(stdout)
-        job.pid = None
         if job.exit_code == EXIT_OK:
             job.set_status(eva.job.COMPLETE)
         else:

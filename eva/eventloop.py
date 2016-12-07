@@ -84,7 +84,12 @@ class Eventloop(eva.globe.GlobalMixin):
                 event = eva.event.ProductstatusBaseEvent.factory(message)
                 item = self.event_queue.add_event(event)
                 self.statsd.incr('eva_restored_events')
-                self.instantiate_productstatus_data(item.event)
+
+                # Try restoring event data indefinitely.
+                eva.retry_n(self.instantiate_productstatus_data,
+                            args=[item.event],
+                            give_up=0,
+                            logger=self.logger)
 
                 # Iterate through event-generated jobs
                 for job_id, job_data in event_data['jobs'].items():
@@ -156,24 +161,10 @@ class Eventloop(eva.globe.GlobalMixin):
 
                 self.statsd.incr('eva_event_productstatus')
 
-                # Make sure we get a Productstatus object from this resource
-                eva.retry_n(self.instantiate_productstatus_data,
-                            args=[event],
-                            exceptions=self.RECOVERABLE_EXCEPTIONS,
-                            give_up=0,
-                            logger=self.logger)
-
                 # Only process messages with the correct version
                 if event.protocol_version()[0] != 1:
                     self.logger.warning('Event version is %s, but I am only accepting major version 1. Discarding message.', '.'.join(event.protocol_version()))
                     self.statsd.incr('eva_event_version_unsupported')
-                    listener.acknowledge()
-                    continue
-
-                # Discard messages that date from an earlier Resource version
-                if not self.event_matches_object_version(event):
-                    self.logger.warning('Resource object version is %d, expecting it to be equal to the Event object version %d. The message is too old, discarding.', event.resource.object_version, event.object_version())
-                    self.statsd.incr('eva_resource_object_version_too_old')
                     listener.acknowledge()
                     continue
 
@@ -216,6 +207,48 @@ class Eventloop(eva.globe.GlobalMixin):
         self.create_event_queue_timer()
         self.event_queue_item_generator = self.next_event_queue_item()
 
+    def initialize_event_queue_item(self, item):
+
+        # Instantiate Productstatus object from event resource URI
+        if type(item.event) is eva.event.ProductstatusResourceEvent:
+            try:
+                self.instantiate_productstatus_data(item.event)
+            except eva.exceptions.ResourceTooOldException:
+                self.event_queue.remove_item(item)
+                return False
+
+        # Ask all adapters to create jobs for this event queue item
+        jobs = self.create_jobs_for_event_queue_item(item)
+        if not jobs:
+            self.event_queue.remove_item(item)
+            return False
+
+        # Add generated jobs to event queue item
+        self.logger.info("%s: %d jobs generated, adding to queue...", item, len(jobs))
+        for job in jobs:
+            self.logger.info('%s: adding job %s', item, job)
+            job.set_status(eva.job.READY)
+            item.add_job(job)
+
+        self.logger.info("%s: finished adding jobs to queue.", item)
+        self.event_queue.store_item(item)
+
+        return True
+
+    def reinitialize_job(self, item, job):
+        job.logger.info('Reinitializing and requeueing previously failed job.')
+
+        job.resource = item.event.resource
+
+        if not job.adapter.validate_resource(job.resource):
+            job.logger.warning('Adapter did not revalidate reloaded resource %s, discarding!', job.resource)
+            item.remove_job(job.id)
+
+        job.adapter.create_job(job)
+        job.set_status(eva.job.READY)
+        job.timer = self.statsd.timer('eva_execution_time')
+        self.statsd.incr('eva_requeued_jobs')
+
     def process_next_event(self):
         """!
         @brief Process any events in the process list once.
@@ -232,40 +265,24 @@ class Eventloop(eva.globe.GlobalMixin):
             self.logger.info('Postponing processing of event queue item %s due to %.1f seconds event delay.', item, delay)
             return
 
-        # Ask all adapters to create jobs for this event
+        # Try initializing this event queue item with data and jobs
         if item.empty():
-            jobs = self.create_jobs_for_event_queue_item(item)
-            if not jobs:
-                self.event_queue.remove_item(item)
+            if not self.initialize_event_queue_item(item):
                 return
-            self.logger.info("%s: %d jobs generated, adding to queue...", item, len(jobs))
-            for job in jobs:
-                self.logger.info('%s: adding job %s', item, job)
-                job.set_status(eva.job.READY)
-                item.add_job(job)
-            self.logger.info("%s: finished adding jobs to queue.", item)
-            self.event_queue.store_item(item)
 
         # Check if any jobs for this event has failed, and recreate them if necessary
         failed_jobs = item.failed_jobs()
         if len(failed_jobs) > 0:
             self.logger.warning("%s: %d failed jobs; reloading Productstatus metadata and reinitializing jobs.", item, len(failed_jobs))
-            self.instantiate_productstatus_data(item.event)
+            try:
+                self.instantiate_productstatus_data(item.event)
+            except eva.exceptions.ResourceTooOldException:
+                self.event_queue.remove_item(item)
+                return
 
         # Reinitialize failed jobs
         for job in failed_jobs:
-
-            job.logger.info('Reinitializing and requeueing previously failed job.')
-            job.resource = item.event.resource
-
-            if not job.adapter.validate_resource(job.resource):
-                job.logger.warning('Adapter did not revalidate reloaded resource %s, discarding!', job.resource)
-                item.remove_job(job.id)
-
-            job.adapter.create_job(job)
-            job.set_status(eva.job.READY)
-            job.timer = self.statsd.timer('eva_execution_time')
-            self.statsd.incr('eva_requeued_jobs')
+            self.reinitialize_job(item, job)
 
         # Process RPC events
         if isinstance(item.event, eva.event.RPCEvent):
@@ -362,7 +379,11 @@ class Eventloop(eva.globe.GlobalMixin):
         if not self.draining():
             self.poll_listeners()
         self.process_health_check()
-        self.process_next_event()
+        try:
+            self.process_next_event()
+        except self.RECOVERABLE_EXCEPTIONS as e:
+            self.logger.warning('Job processing aborted due to recoverable error: %s', e)
+            time.sleep(0.25)
         self.report_event_queue_metrics()
         self.report_job_status_metrics()
         timer.stop()
@@ -495,12 +516,18 @@ class Eventloop(eva.globe.GlobalMixin):
         Retrieves a :class:`productstatus.api.Resource` object using the event data.
 
         :param eva.event.Event event: event object.
+        :raises eva.exceptions.ResourceTooOldException: when the Productstatus resource differs from the version referred to in the Event data.
+        :rtype: None
         """
         if type(event) is not eva.event.ProductstatusResourceEvent:
-            return None
+            return
+
         self.logger.info('%s: loading resource data', event)
         event.resource = self.productstatus[event.data]
         eva.log_productstatus_resource_info(event.resource, self.logger, loglevel=logging.INFO)
+
+        # Assert that Productstatus resource is the correct version, as referred to in the event
+        self.assert_event_matches_object_version(event)
 
     def process_health_check(self):
         """!
@@ -570,13 +597,22 @@ class Eventloop(eva.globe.GlobalMixin):
         text = eva.mail.text.JOB_RECOVER_TEXT % template_params
         self.mailer.send_email(subject, text)
 
-    def event_matches_object_version(self, event):
-        """!
-        @brief Return True if Event.object_version() equals Resource.object_version, False otherwise.
+    def assert_event_matches_object_version(self, event):
+        """
+        Check if the Productstatus resource version matches the version referred to by the Event.
+
+        :raises eva.exceptions.ResourceTooOldException: when the Productstatus resource differs from the version referred to in the Event data.
+        :raises AssertionError: when the Productstatus resource has not been initialized.
+        :rtype: None
         """
         if not isinstance(event, eva.event.ProductstatusResourceEvent):
-            return False
-        return event.object_version() == event.resource.object_version
+            return
+        assert isinstance(event.resource, productstatus.api.Resource)
+        if event.object_version() == event.resource.object_version:
+            return
+        self.logger.warning('%s: object version is %d, expecting version %d from Event object. The message is too old, discarding.', event, event.resource.object_version, event.object_version())
+        self.statsd.incr('eva_resource_object_version_too_old')
+        raise eva.exceptions.ResourceTooOldException('Resource version is too old')
 
     def process_rpc_event(self, event):
         """!
