@@ -1,6 +1,8 @@
 import unittest
 import logging
 import datetime
+import httmock
+
 from unittest import mock
 
 import eva
@@ -36,6 +38,24 @@ class TestEventloop(eva.tests.TestBase):
         self.assertEqual(self.eventloop.health_check_server, self.health_check_server)
         self.assertIsInstance(self.eventloop.event_queue, eva.eventqueue.EventQueue)
         self.assertIsInstance(self.eventloop.message_timestamp_threshold, datetime.datetime)
+
+    def test_initialize_job(self):
+        incubator, adapter = eva.adapter.NullAdapter().factory({'executor': 'foo'}, 'id')
+        adapter.set_globe(self.globe)
+        adapter.init()
+        event = eva.event.ProductstatusLocalEvent(None, {})
+        event.resource = mock.MagicMock()
+        event.resource._collection._resource_name = 'datainstance'
+        event.resource.data.productinstance.reference_time = eva.now_with_timezone()
+        event.resource.deleted = False
+        item = eva.eventqueue.EventQueueItem(event)
+
+        job = eva.job.Job('id', self.globe)
+
+        self.eventloop.initialize_job(adapter, item, job)
+        self.assertEqual(job.adapter, adapter)
+        self.assertEqual(job.resource, event.resource)
+        #self.assertIsInstance(job.timer, eva.statsd.StatsDTimer)
 
     @unittest.skip
     def test_add_event_to_queue(self):

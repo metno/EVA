@@ -207,48 +207,6 @@ class Eventloop(eva.globe.GlobalMixin):
         self.create_event_queue_timer()
         self.event_queue_item_generator = self.next_event_queue_item()
 
-    def initialize_event_queue_item(self, item):
-
-        # Instantiate Productstatus object from event resource URI
-        if type(item.event) is eva.event.ProductstatusResourceEvent:
-            try:
-                self.instantiate_productstatus_data(item.event)
-            except eva.exceptions.ResourceTooOldException:
-                self.event_queue.remove_item(item)
-                return False
-
-        # Ask all adapters to create jobs for this event queue item
-        jobs = self.create_jobs_for_event_queue_item(item)
-        if not jobs:
-            self.event_queue.remove_item(item)
-            return False
-
-        # Add generated jobs to event queue item
-        self.logger.info("%s: %d jobs generated, adding to queue...", item, len(jobs))
-        for job in jobs:
-            self.logger.info('%s: adding job %s', item, job)
-            job.set_status(eva.job.READY)
-            item.add_job(job)
-
-        self.logger.info("%s: finished adding jobs to queue.", item)
-        self.event_queue.store_item(item)
-
-        return True
-
-    def reinitialize_job(self, item, job):
-        job.logger.info('Reinitializing and requeueing previously failed job.')
-
-        job.resource = item.event.resource
-
-        if not job.adapter.validate_resource(job.resource):
-            job.logger.warning('Adapter did not revalidate reloaded resource %s, discarding!', job.resource)
-            item.remove_job(job.id)
-
-        job.adapter.create_job(job)
-        job.set_status(eva.job.READY)
-        job.timer = self.statsd.timer('eva_execution_time')
-        self.statsd.incr('eva_requeued_jobs')
-
     def process_next_event(self):
         """!
         @brief Process any events in the process list once.
@@ -267,8 +225,11 @@ class Eventloop(eva.globe.GlobalMixin):
 
         # Try initializing this event queue item with data and jobs
         if item.empty():
-            if not self.initialize_event_queue_item(item):
+            self.initialize_event_queue_item(item)
+            if item.empty():
+                self.event_queue.remove_item(item)
                 return
+            self.event_queue.store_item(item)
 
         # Check if any jobs for this event has failed, and recreate them if necessary
         failed_jobs = item.failed_jobs()
@@ -418,26 +379,89 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         self.statsd.gauge('eva_event_queue_count', len(self.event_queue))
 
-    def create_job_for_event_queue_item(self, item, adapter):
-        """!
-        @brief Given an EventQueueItem object, create a job based on its Event.
-        @returns eva.job.Job
+    def initialize_event_queue_item(self, item):
+        """
+        This function will instantiate the Productstatus resource belonging to,
+        and generate jobs for, an event queue item.
+
+        :param eva.eventqueue.EventQueueItem item: an event queue item.
+        """
+
+        # Instantiate Productstatus object from event resource URI
+        if type(item.event) is eva.event.ProductstatusResourceEvent:
+            try:
+                self.instantiate_productstatus_data(item.event)
+            except eva.exceptions.ResourceTooOldException:
+                return
+
+        # Ask all adapters to create jobs for this event queue item
+        jobs = self.create_jobs_for_event_queue_item(item)
+        if not jobs:
+            return
+
+        # Add generated jobs to event queue item
+        self.logger.info("%s: %d jobs generated, adding to event queue item...", item, len(jobs))
+        for job in jobs:
+            self.logger.info('%s: adding job %s', item, job)
+            job.set_status(eva.job.READY)
+            item.add_job(job)
+
+        self.logger.info("%s: finished adding jobs to event queue item.", item)
+
+    def initialize_job(self, adapter, item, job):
+        """
+        Populate a Job object using a specific adapter.
+
+        :param eva.base.adapter.BaseAdapter adapter: the adapter that should generate a job.
+        :param eva.eventqueue.EventQueueItem item: the event queue item that should be used as a job source.
+        :param eva.job.Job job: the Job object that should be populated.
         """
         if not adapter.validate_resource(item.event.resource):
-            return None
+            job.logger.warning('Adapter did not validate resource %s', item.event.resource)
+            return False
 
-        id = item.event.id() + '.' + adapter.config_id
-        job = eva.job.Job(id, self.globe)
         job.resource = item.event.resource
+        job.adapter = adapter
+        job.timer = self.statsd.timer('eva_execution_time', tags={'adapter': job.adapter.config_id})
 
         try:
             adapter.create_job(job)
         except eva.exceptions.JobNotGenerated as e:
-            self.logger.warning("%s: no jobs generated by %s: %s", item, adapter, e)
-            return None
+            job.logger.warning("Adapter did not generate job data: %s", e)
+            return False
 
-        job.timer = self.statsd.timer('eva_execution_time')
-        job.adapter = adapter
+        return True
+
+    def reinitialize_job(self, item, job):
+        """
+        Re-initialize a previously failed job.
+
+        :param eva.eventqueue.EventQueueItem item: the event queue item owning the failed job.
+        :param eva.job.Job job: the Job object that should be reinitialized.
+        """
+        job.logger.info('Reinitializing and requeueing previously failed job.')
+
+        if not self.initialize_job(job.adapter, item, job):
+            job.logger.warning('Reinitialization failed; removing job from event queue item.')
+            item.remove_job(job.id)
+            self.statsd.incr('eva_requeue_rejected')
+            return
+
+        job.set_status(eva.job.READY)
+        self.statsd.incr('eva_requeued_jobs')
+
+    def create_job_for_event_queue_item(self, item, adapter):
+        """
+        Create a Job object based on an event queue item, using a specific adapter.
+
+        :rtype: eva.job.Job|None
+        :returns: Job object if successfully validated and created, or None otherwise.
+        """
+        id = item.event.id() + '.' + adapter.config_id
+        job = eva.job.Job(id, self.globe)
+
+        if not self.initialize_job(adapter, item, job):
+            return None
 
         return job
 
