@@ -344,6 +344,7 @@ class Eventloop(eva.globe.GlobalMixin):
             try:
                 self.poll_listeners()
             except kafka.errors.CommitFailedError as e:
+                self.statsd.incr('eva_kafka_commit_failed')
                 self.logger.warning('Kafka error: %s', e)
                 self.logger.warning('Will try to restart all Kafka consumers.')
                 self.restart_listeners()
