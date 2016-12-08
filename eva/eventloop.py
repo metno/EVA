@@ -460,11 +460,11 @@ class Eventloop(eva.globe.GlobalMixin):
         if not self.initialize_job(job.adapter, item, job):
             job.logger.warning('Reinitialization failed; removing job from event queue item.')
             item.remove_job(job.id)
-            self.statsd.incr('eva_requeue_rejected')
+            self.statsd.incr('eva_requeue_rejected', tags={'adapter': job.adapter.config_id})
             return
 
         job.set_status(eva.job.READY)
-        self.statsd.incr('eva_requeued_jobs')
+        self.statsd.incr('eva_requeued_jobs', tags={'adapter': job.adapter.config_id})
 
     def create_job_for_event_queue_item(self, item, adapter):
         """

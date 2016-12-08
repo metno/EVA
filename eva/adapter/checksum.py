@@ -62,7 +62,7 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
     def finish_job(self, job):
         if not job.complete():
             job.logger.error("md5sum checking of '%s' failed, skipping further processing!", job.resource.url)
-            self.statsd.incr('md5sum_fail')
+            self.statsd.incr('eva_md5sum_fail')
             return
         job.logger.info('DataInstance %s has md5sum hash %s.', job.resource, job.resource.hash)
 

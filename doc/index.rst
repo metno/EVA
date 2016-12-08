@@ -15,6 +15,7 @@ Contents:
    development
    configuration
    tutorial
+   metrics
    api/index
 
 
@@ -24,4 +25,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

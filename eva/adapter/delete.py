@@ -75,7 +75,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
         if not job.complete():
             raise eva.exceptions.RetryException("%s: deleting files failed." % job.resource)
 
-        self.statsd.incr('deleted_datainstances', len(job.instance_list))
+        self.statsd.incr('eva_deleted_datainstances', len(job.instance_list))
 
     def generate_resources(self, job, resources):
         """!

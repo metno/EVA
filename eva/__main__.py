@@ -563,7 +563,7 @@ class Main(eva.config.ConfigurableObject):
             self.logger.info(str(e))
         except kazoo.exceptions.ConnectionLoss as e:
             self.logger.critical('Shutting down EVA due to ZooKeeper connection loss: %s', str(e))
-            self.statsd.incr('zookeeper_connection_loss')
+            self.statsd.incr('eva_zookeeper_connection_loss')
         except Exception as e:
             eva.print_and_mail_exception(e, self.logger, self.mailer)
             self.exit(EXIT_BUG)
