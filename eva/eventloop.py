@@ -355,6 +355,7 @@ class Eventloop(eva.globe.GlobalMixin):
         try:
             self.process_next_event()
         except self.RECOVERABLE_EXCEPTIONS as e:
+            self.statsd.incr('eva_recoverable_exceptions')
             self.logger.warning('Job processing aborted due to recoverable error: %s', e)
             time.sleep(0.25)
 
