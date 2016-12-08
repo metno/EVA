@@ -9,3 +9,5 @@ API documentation
    baseadapter
    baseexecutor
    config
+   eventloop
+   eventqueue
