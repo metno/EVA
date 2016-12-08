@@ -1,6 +1,7 @@
 import copy
 import datetime
 import dateutil.tz
+import kafka.errors
 import kazoo.exceptions
 import logging
 import traceback
@@ -335,19 +336,32 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         timer = self.statsd.timer('eva_main_loop')
         timer.start()
+
         if self.drained():
             self.set_no_drain()
+
         if not self.draining():
-            self.poll_listeners()
+            try:
+                self.poll_listeners()
+            except kafka.errors.CommitFailedError as e:
+                self.logger.warning('Kafka error: %s', e)
+                self.logger.warning('Will try to restart all Kafka consumers.')
+                self.restart_listeners()
+                self.logger.info('All Kafka consumers have been restarted, good riddance.')
+
         self.process_health_check()
+
         try:
             self.process_next_event()
         except self.RECOVERABLE_EXCEPTIONS as e:
             self.logger.warning('Job processing aborted due to recoverable error: %s', e)
             time.sleep(0.25)
+
         self.report_event_queue_metrics()
         self.report_job_status_metrics()
+
         timer.stop()
+
         return not self.event_queue.empty()
 
     def __call__(self):
@@ -489,6 +503,15 @@ class Eventloop(eva.globe.GlobalMixin):
         self.logger.info('%s: total of %d jobs generated', item, len(jobs))
 
         return jobs
+
+    def restart_listeners(self):
+        """
+        Restart all event listeners.
+        """
+        for listener in self.listeners:
+            self.logger.info('Restarting listener: %s', listener)
+            listener.close_listener()
+            listener.setup_listener()
 
     def set_drain(self):
         """!

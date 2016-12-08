@@ -265,7 +265,7 @@ class EventQueue(eva.globe.GlobalMixin):
 
         id = event.id()
         if id in self.items:
-            raise eva.exceptions.DuplicateEventException('Event %s already exists in the event queue.', id)
+            raise eva.exceptions.DuplicateEventException('Event %s already exists in the event queue.' % id)
         item = EventQueueItem(event)
         self.items[id] = item
         if self.zk_store_immediately:
