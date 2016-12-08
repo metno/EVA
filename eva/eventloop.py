@@ -417,7 +417,7 @@ class Eventloop(eva.globe.GlobalMixin):
         :param eva.job.Job job: the Job object that should be populated.
         """
         if not adapter.validate_resource(item.event.resource):
-            job.logger.warning('Adapter did not validate resource %s', item.event.resource)
+            job.logger.info('Adapter did not validate resource %s', item.event.resource)
             return False
 
         job.resource = item.event.resource
