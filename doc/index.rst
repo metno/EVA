@@ -14,6 +14,7 @@ Contents:
    intro
    development
    configuration
+   variables
    tutorial
    metrics
    api/index

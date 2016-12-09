@@ -8,9 +8,9 @@ configuration file location, so it must be specified using the command line:
 
    python -m eva --config <PATH> [--config <PATH>] [...]
 
-`PATH` can be either a file or a directory. In case `PATH` is a directory, the
-entire directory is recursively scanned for configuration files. All
-configuration files must end with `.ini`, all other files are ignored.
+``PATH`` can be either a file or a directory. In case ``PATH`` is a directory,
+the entire directory is recursively scanned for configuration files. All
+configuration files must end with ``.ini``, all other files are ignored.
 
 When all the configuration file paths have been resolved, they are merged
 internally into one big configuration file. This implies that section names
@@ -126,15 +126,12 @@ The rendered configuration that EVA will see, looks like this:
    input_service_backend = backend-b
    output_service_backend = backend-b
 
-Some notes on syntax:
+For an explanation of the ``abstract``, ``class``, and ``include`` directives,
+please see :doc:`variables`.
 
-  * ``abstract``: specifies that a section should ONLY be used for inheritance,
-    and not instantiated when reading the configuration. You *MUST* define
-    either ``class`` or ``abstract`` when writing a configuration section,
-    otherwise EVA will refuse to start.
-
-  * ``class``: full Python class name, in dotted notation, referring to a class
-    derived from :class:`eva.config.ConfigurableObject`.
+Please see the official Python documentation on `INI file structure`_ in order
+to find information about formatting, comments, whitespace, and so forth.
 
 
 .. _StatsD: https://github.com/influxdata/telegraf/tree/master/plugins/inputs/statsd
+.. _`INI file structure`: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
