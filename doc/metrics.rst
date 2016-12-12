@@ -36,5 +36,5 @@ section for how to set up configuration for StatsD.
    eva_restored_jobs                        counter                         Jobs restored from the ZooKeeper cache upon starting EVA from a crashed state.
    eva_shutdown                             counter                         EVA program shutdowns.
    eva_start                                counter                         EVA program startups.
-   eva_zookeeper_connection_loss            counter                         Times the ZooKeeper connection was irreversibly lost.
+   eva_zookeeper_connection_loss            counter                         Times the ZooKeeper connection was irrecoverably lost.
    =======================================  ==============  ==============  ===========
