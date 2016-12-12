@@ -402,9 +402,8 @@ class Eventloop(eva.globe.GlobalMixin):
 
         :param eva.eventqueue.EventQueueItem item: an event queue item.
         """
-
         # Instantiate Productstatus object from event resource URI
-        if type(item.event) is eva.event.ProductstatusResourceEvent:
+        if isinstance(item.event, eva.event.ProductstatusBaseEvent):
             try:
                 self.instantiate_productstatus_data(item.event)
             except eva.exceptions.ResourceTooOldException:
@@ -548,27 +547,19 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         return self.draining() and self.event_queue.empty()
 
-    def load_serialized_data(self, path):
-        """!
-        @brief Load the stored event queue from ZooKeeper.
-        @returns The loaded data.
-        """
-        if not self.zookeeper:
-            return []
-        data = eva.zk.load_serialized_data(self.zookeeper, path)
-        return [eva.event.ProductstatusBaseEvent.factory(productstatus.event.Message(x)) for x in data if x]
-
     def instantiate_productstatus_data(self, event):
         """
-        Make sure a ProductstatusResourceEvent has a Productstatus resource in Event.data.
+        Make sure a ProductstatusResourceEvent has a Productstatus resource in
+        :attr:`Event.resource`.
 
-        Retrieves a :class:`productstatus.api.Resource` object using the event data.
+        Retrieves a :class:`productstatus.api.Resource` object using the
+        resource URI in the event data.
 
         :param eva.event.Event event: event object.
         :raises eva.exceptions.ResourceTooOldException: when the Productstatus resource differs from the version referred to in the Event data.
         :rtype: None
         """
-        if type(event) is not eva.event.ProductstatusResourceEvent:
+        if not isinstance(event, eva.event.ProductstatusBaseEvent):
             return
 
         self.logger.info('%s: loading resource data', event)
@@ -576,7 +567,8 @@ class Eventloop(eva.globe.GlobalMixin):
         eva.log_productstatus_resource_info(event.resource, self.logger, loglevel=logging.INFO)
 
         # Assert that Productstatus resource is the correct version, as referred to in the event
-        self.assert_event_matches_object_version(event)
+        if type(event) is eva.event.ProductstatusResourceEvent:
+            self.assert_event_matches_object_version(event)
 
     def process_health_check(self):
         """!
