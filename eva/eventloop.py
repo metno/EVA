@@ -472,6 +472,11 @@ class Eventloop(eva.globe.GlobalMixin):
         :rtype: eva.job.Job|None
         :returns: Job object if successfully validated and created, or None otherwise.
         """
+        # TODO: this is a pre-emptive validation of the resource, done solely
+        # because too much logging output would be generated otherwise. Refactor?
+        if not adapter.validate_resource(item.event.resource):
+            return None
+
         id = item.event.id() + '.' + adapter.config_id
         job = eva.job.Job(id, self.globe)
 
