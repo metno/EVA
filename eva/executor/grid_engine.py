@@ -51,7 +51,7 @@ def get_job_id_from_qstat_output(output):
         matches = regex.match(line)
         if matches:
             return int(matches.group(1))
-    raise eva.exceptions.GridEngineParseException('Could not parse job_number from qstat output, perhaps the format changed?')
+    raise eva.exceptions.GridEngineParseException('Could not parse job_number from qstat output.')
 
 
 def get_exit_code_from_qacct_output(output):
@@ -63,7 +63,7 @@ def get_exit_code_from_qacct_output(output):
         matches = regex.match(line)
         if matches:
             return int(matches.group(1))
-    raise eva.exceptions.GridEngineParseException('Could not parse exit_code from qacct output, perhaps the format changed?')
+    raise eva.exceptions.GridEngineParseException('Could not parse exit_code from qacct output.')
 
 
 def parse_qacct_metrics(stdout_lines):
@@ -197,7 +197,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 self.ssh_client.exec_command('true')
                 job.logger.debug('SSH connection seems usable, proceeding.')
                 return
-            except SSH_RETRY_EXCEPTIONS as e:
+            except Exception as e:
                 job.logger.debug('SSH connection not working, trying to establish a working connection: %s', e)
         self.create_ssh_connection(job)
 
