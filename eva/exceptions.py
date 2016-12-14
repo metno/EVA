@@ -153,3 +153,10 @@ class DuplicateEventException(EvaException):
     Thrown when trying to add an event to the event queue and it already exists.
     """
     pass
+
+
+class GridEngineParseException(EvaException):
+    """
+    Thrown when output parsing from GridEngine commands yields unexpected results.
+    """
+    pass

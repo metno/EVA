@@ -38,7 +38,7 @@ def get_job_id_from_qsub_output(output):
     """
     matches = re.search('\d+', output)
     if not matches:
-        raise TypeError('Unparseable output from qsub: expected job id, but no digits in output: %s' % output)
+        raise eva.exceptions.GridEngineParseException('Unparseable output from qsub: expected job id, but no digits in output: %s' % output)
     return int(matches.group(0))
 
 
@@ -51,7 +51,7 @@ def get_job_id_from_qstat_output(output):
         matches = regex.match(line)
         if matches:
             return int(matches.group(1))
-    raise RuntimeError('Could not parse job_number from qstat output, perhaps the format changed?')
+    raise eva.exceptions.GridEngineParseException('Could not parse job_number from qstat output, perhaps the format changed?')
 
 
 def get_exit_code_from_qacct_output(output):
@@ -63,7 +63,7 @@ def get_exit_code_from_qacct_output(output):
         matches = regex.match(line)
         if matches:
             return int(matches.group(1))
-    raise RuntimeError('Could not parse exit_code from qacct output, perhaps the format changed?')
+    raise eva.exceptions.GridEngineParseException('Could not parse exit_code from qacct output, perhaps the format changed?')
 
 
 def parse_qacct_metrics(stdout_lines):
@@ -366,6 +366,14 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             job.set_next_poll_time(QACCT_CHECK_INTERVAL_MSECS)
             return False
 
+        # Parse job exit code
+        try:
+            job.exit_code = get_exit_code_from_qacct_output(stdout)
+        except eva.exceptions.GridEngineParseException as e:
+            raise eva.exceptions.RetryException(
+                "Error while parsing exit code: %s" % e
+            )
+
         # Reset process ID, it will interfere with re-running
         job.pid = None
 
@@ -385,8 +393,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                 'Unable to retrieve stdout and stderr from finished Grid Engine job.'
             )
 
-        # Set job exit status
-        job.exit_code = get_exit_code_from_qacct_output(stdout)
+        # Set job status based on exit code
         if job.exit_code == EXIT_OK:
             job.set_status(eva.job.COMPLETE)
         else:
