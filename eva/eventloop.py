@@ -5,7 +5,6 @@ import kafka.errors
 import kazoo.exceptions
 import logging
 import time
-import traceback
 
 import eva
 import eva.config
@@ -14,7 +13,6 @@ import eva.eventqueue
 import eva.exceptions
 import eva.globe
 import eva.mail.text
-import eva.rpc
 import eva.zk
 
 import productstatus.exceptions
@@ -246,12 +244,6 @@ class Eventloop(eva.globe.GlobalMixin):
         # Reinitialize failed jobs
         for job in failed_jobs:
             self.reinitialize_job(item, job)
-
-        # Process RPC events
-        if isinstance(item.event, eva.event.RPCEvent):
-            item.event.data.set_executor_instance(self)
-            self.process_rpc_event(item.event)
-            return
 
         # Process all jobs generated from this event
         changed = []
@@ -660,21 +652,6 @@ class Eventloop(eva.globe.GlobalMixin):
         self.logger.warning('%s: object version is %d, expecting version %d from Event object. The message is too old, discarding.', event, event.resource.object_version, event.object_version())
         self.statsd.incr('eva_resource_object_version_too_old')
         raise eva.exceptions.ResourceTooOldException('Resource version is too old')
-
-    def process_rpc_event(self, event):
-        """!
-        @brief Process the latest RPC message in the RPC queue.
-        """
-        self.logger.info('Processing RPC request: %s', str(event))
-        try:
-            event.data()
-        except eva.exceptions.RPCFailedException as e:
-            self.logger.error('Error while executing RPC request: %s', e)
-            backtrace = traceback.format_exc().split("\n")
-            for line in backtrace:
-                self.logger.critical(line)
-        self.logger.info('Finished processing RPC request: %s', str(event))
-        self.remove_event_from_queues(event)
 
     def set_message_timestamp_threshold(self, timestamp):
         """!

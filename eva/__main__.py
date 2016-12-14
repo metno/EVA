@@ -46,7 +46,7 @@ class Main(eva.config.ConfigurableObject):
         'listeners': {
             'type': 'list_string',
             'help': 'Comma separated Python class names of listeners that should be run',
-            'default': 'eva.listener.RPCListener,eva.listener.ProductstatusListener',
+            'default': 'eva.listener.ProductstatusListener',
         },
         'mailer': {
             'type': 'config_class',
