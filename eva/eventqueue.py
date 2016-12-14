@@ -2,11 +2,6 @@
 @brief Classes related to event queue handling.
 """
 
-#.. py:function:: lol(foo)
-#
-#   Run the LOL
-
-
 import collections
 import json
 import os
@@ -36,9 +31,9 @@ class EventQueueItem(object):
         """
         assert isinstance(event, eva.event.Event)
 
-        ## An ordered dictionary of eva.job.Job objects associated with this event.
+        #! An ordered dictionary of eva.job.Job objects associated with this event.
         self.jobs = collections.OrderedDict()
-        ## The eva.event.Event object assigned during class construction.
+        #! The eva.event.Event object assigned during class construction.
         self.event = event
 
     def id(self):
@@ -241,13 +236,13 @@ class EventQueue(eva.globe.GlobalMixin):
         """!
         @brief Instantiate the event queue.
         """
-        ## An ordered dictionary of EventQueueItem objects.
+        #! An ordered dictionary of EventQueueItem objects.
         self.items = collections.OrderedDict()
-        ## Base ZooKeeper path of the event queue.
+        #! Base ZooKeeper path of the event queue.
         self.zk_base_path = os.path.join(self.zookeeper.EVA_BASE_PATH, 'events')
-        ## If set to True, saved items will be stored in ZooKeeper immediately.
-        ## Toggled with zk_immediate_store_disable() and
-        ## zk_immediate_store_enable().
+        #! If set to True, saved items will be stored in ZooKeeper immediately.
+        #! Toggled with zk_immediate_store_disable() and
+        #! zk_immediate_store_enable().
         self.zk_store_immediately = True
         self.zookeeper.ensure_path(self.zk_base_path)
 
