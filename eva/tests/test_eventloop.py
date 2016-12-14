@@ -1,7 +1,6 @@
 import unittest
 import logging
 import datetime
-import httmock
 
 from unittest import mock
 
