@@ -42,6 +42,7 @@ class Eventloop(eva.globe.GlobalMixin):
 
     def init(self):
         self.drain = False
+        self.rest_api_server.set_eventloop_instance(self)
         self.event_queue = eva.eventqueue.EventQueue()
         self.event_queue.set_globe(self.globe)
         self.event_queue.init()
@@ -695,20 +696,6 @@ class Eventloop(eva.globe.GlobalMixin):
         )
         self.logger.info('Adding event with DataInstance %s to queue', resource)
         self.event_queue.add_event(event)
-
-    def blacklist_uuid(self, uuid):
-        """!
-        @brief Omit processing a specific DataInstance for the lifetime of this EVA process.
-        """
-        self.adapter.blacklist_add(uuid)
-
-    def forward_to_uuid(self, uuid):
-        """!
-        @brief Skip all Productstatus messages where parents or children do not
-        contain the specified UUID. That includes Product, ProductInstance,
-        Data, DataInstance, ServiceBackend and Format resources.
-        """
-        self.adapter.forward_to_uuid(uuid)
 
     def shutdown(self):
         """!
