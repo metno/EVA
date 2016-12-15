@@ -14,9 +14,9 @@ import eva.config
 import eva.eventloop
 import eva.executor
 import eva.globe
-import eva.health
 import eva.logger
 import eva.mail
+import eva.rest
 import eva.statsd
 
 
@@ -165,10 +165,10 @@ class Main(eva.config.ConfigurableObject):
             help='Manually set the EVA group id (DANGEROUS!)',
         )
         parser.add_argument(
-            '--health-check-port',
+            '--rest-server-port',
             action='store',
             type=int,
-            help='Run a HTTP health check server on all interfaces at the specified port',
+            help='Run a HTTP REST server offering remote control of EVA, on all interfaces at the specified port',
         )
         parser.add_argument(
             '--config',
@@ -288,16 +288,16 @@ class Main(eva.config.ConfigurableObject):
         self.client_id = str(uuid.uuid4())
         self.group_id = str(uuid.uuid4()) if not self.args.group_id else self.args.group_id
 
-    def setup_health_check_server(self):
+    def setup_rest_server(self):
         """!
-        @brief Set up a simple HTTP server to answer health checks.
+        @brief Set up a the HTTP REST API server.
         """
-        if self.args.health_check_port:
-            self.health_check_server = eva.health.HealthCheckServer('0.0.0.0', self.args.health_check_port)
-            self.logger.info('Started health check server on 0.0.0.0:%d', self.args.health_check_port)
+        if self.args.rest_server_port:
+            self.rest_server = eva.rest.Server(self.globe, '0.0.0.0', self.args.rest_server_port)
+            self.logger.info('Started HTTP REST API server on 0.0.0.0:%d', self.args.rest_server_port)
         else:
-            self.health_check_server = None
-            self.logger.warning('Not running health check server!')
+            self.rest_server = eva.rest.Server(self.globe)
+            self.logger.warning('Not running HTTP REST API server!')
 
     def setup_statsd_client(self):
         """!
@@ -494,12 +494,12 @@ class Main(eva.config.ConfigurableObject):
             self.setup_configuration()
             self.setup_eva_configuration()
 
-            # Start the health check server
-            self.setup_health_check_server()
-
             # Set up objects required for the Global class
             self.setup_statsd_client()
             self.setup_zookeeper()
+
+            # Start the HTTP REST API server
+            self.setup_rest_server()
 
             # Instantiate, link and initialize everything
             self.instantiate_config_classes()
@@ -541,7 +541,7 @@ class Main(eva.config.ConfigurableObject):
         try:
             evaloop = eva.eventloop.Eventloop(self.adapters,
                                               self.listeners,
-                                              self.health_check_server,
+                                              self.rest_server,
                                               )
             evaloop.set_globe(self.globe)
             evaloop.init()

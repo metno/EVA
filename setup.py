@@ -30,6 +30,7 @@ config = {
         'jinja2==2.8',
         'kazoo==2.2.1',
         'Sphinx==1.4.8',
+        'falcon==1.1.0',
     ],
     'packages': [],
     'scripts': [],

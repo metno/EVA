@@ -11,6 +11,7 @@ import eva.eventloop
 import eva.eventqueue
 import eva.executor
 import eva.mail
+import eva.rest
 import eva.tests
 
 
@@ -20,10 +21,10 @@ class TestEventloop(eva.tests.TestBase):
         super().setUp()
         self.adapters = []
         self.listeners = []
-        self.health_check_server = None
+        self.rest_api_server = eva.rest.Server(self.globe)
         self.eventloop = eva.eventloop.Eventloop(self.adapters,
                                                  self.listeners,
-                                                 self.health_check_server,
+                                                 self.rest_api_server,
                                                  )
         self.eventloop.set_globe(self.globe)
         self.eventloop.init()
@@ -34,7 +35,7 @@ class TestEventloop(eva.tests.TestBase):
         """
         self.assertEqual(self.eventloop.adapters, self.adapters)
         self.assertEqual(self.eventloop.listeners, self.listeners)
-        self.assertEqual(self.eventloop.health_check_server, self.health_check_server)
+        self.assertEqual(self.eventloop.rest_api_server, self.rest_api_server)
         self.assertIsInstance(self.eventloop.event_queue, eva.eventqueue.EventQueue)
         self.assertIsInstance(self.eventloop.message_timestamp_threshold, datetime.datetime)
 

@@ -34,11 +34,11 @@ class Eventloop(eva.globe.GlobalMixin):
     def __init__(self,
                  adapters,
                  listeners,
-                 health_check_server,
+                 rest_api_server,
                  ):
         self.adapters = adapters
         self.listeners = listeners
-        self.health_check_server = health_check_server
+        self.rest_api_server = rest_api_server
 
     def init(self):
         self.drain = False
@@ -343,8 +343,6 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.restart_listeners()
                 self.logger.info('All Kafka consumers have been restarted, good riddance.')
 
-        self.process_health_check()
-
         try:
             self.process_next_event()
         except self.RECOVERABLE_EXCEPTIONS as e:
@@ -354,6 +352,8 @@ class Eventloop(eva.globe.GlobalMixin):
 
         self.report_event_queue_metrics()
         self.report_job_status_metrics()
+
+        self.process_rest_api()
 
         timer.stop()
 
@@ -568,44 +568,39 @@ class Eventloop(eva.globe.GlobalMixin):
         if type(event) is eva.event.ProductstatusResourceEvent:
             self.assert_event_matches_object_version(event)
 
-    def process_health_check(self):
+    def process_rest_api(self):
         """!
         @brief Make sure health check requests are processed.
         """
-        if self.health_check_server:
-            self.health_check_server.respond_to_next_request()
+        self.rest_api_server.respond_to_next_request()
 
     def set_health_check_skip_heartbeat(self, skip):
         """!
         @brief Tell the health check server to report healthy if heartbeats are skipped.
         """
-        if self.health_check_server:
-            self.logger.debug('Setting health check heartbeat skip: %s', str(skip))
-            self.health_check_server.set_skip_heartbeat(bool(skip))
+        self.logger.debug('Setting health check heartbeat skip: %s', str(skip))
+        self.rest_api_server.health.set_skip_heartbeat(bool(skip))
 
     def set_health_check_heartbeat_interval(self, interval):
         """!
         @brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.
         """
-        if self.health_check_server:
-            self.logger.debug('Setting health check heartbeat interval to %d seconds', interval)
-            self.health_check_server.set_heartbeat_interval(interval)
+        self.logger.debug('Setting health check heartbeat interval to %d seconds', interval)
+        self.rest_api_server.health.set_heartbeat_interval(interval)
 
     def set_health_check_heartbeat_timeout(self, timeout):
         """!
         @brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.
         """
-        if self.health_check_server:
-            self.logger.debug('Setting health check heartbeat timeout to %d seconds', timeout)
-            self.health_check_server.set_heartbeat_timeout(timeout)
+        self.logger.debug('Setting health check heartbeat timeout to %d seconds', timeout)
+        self.rest_api_server.health.set_heartbeat_timeout(timeout)
 
     def set_health_check_timestamp(self, timestamp):
         """!
         @brief Give a heartbeat to the health check server.
         """
-        if self.health_check_server:
-            self.logger.debug('Setting health check heartbeat at timestamp %s', timestamp)
-            self.health_check_server.heartbeat(timestamp)
+        self.logger.debug('Setting health check heartbeat at timestamp %s', timestamp)
+        self.rest_api_server.health.heartbeat(timestamp)
 
     def notify_job_failure(self, job):
         """!
