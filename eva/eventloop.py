@@ -324,7 +324,7 @@ class Eventloop(eva.globe.GlobalMixin):
         # Remove job from executors
         elif job.deleted():
             job.logger.error('Job is scheduled for deletion, trying to terminate with executors...')
-            # FIXME
+            job.adapter.executor.abort(job)
             job.set_status(eva.job.FINISHED)
 
         # Tell adapter that the job has finished

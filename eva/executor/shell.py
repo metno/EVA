@@ -31,10 +31,10 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         )
         job.logger.info("Script started with pid %d, waiting for process to finish...", job.proc.pid)
         job.set_status(eva.job.RUNNING)
-        job.stdout, job.stderr = job.proc.communicate()
 
     def sync(self, job):
         # Log script status, stdout and stderr
+        job.stdout, job.stderr = job.proc.communicate()
         job.exit_code = job.proc.returncode
         job.stdout = eva.executor.get_std_lines(job.stdout)
         job.stderr = eva.executor.get_std_lines(job.stderr)
@@ -48,3 +48,7 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
 
         # Delete the temporary file
         self.delete_temporary_script(job.script)
+
+    def abort(self, job):
+        if hasattr(job, 'proc'):
+            del job.proc

@@ -402,7 +402,36 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         # Print stdout and stderr
         eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
 
-        # Remove job script, stdout, and stderr caches
+        # Remove temporary cache files
+        self.cleanup_job_data(job)
+
+    def abort(self, job):
+        """
+        Try to delete the job from GridEngine, and delete the job files.
+        """
+        if job.pid is None:
+            job.logger.info('Job does not have a JOB_ID, no deletion from GridEngine necessary.')
+            return
+
+        command = 'qdel %d' % job.pid
+        try:
+            exit_code, stdout, stderr = self.execute_ssh_command(command)
+        except SSH_RETRY_EXCEPTIONS + (IOError,) as e:
+            raise eva.exceptions.RetryException("Unable to submit job for deletion: %s" % e)
+
+        if exit_code == 0:
+            job.logger.info('Job successfully submitted for deletion.')
+        else:
+            job.logger.warning('Job deletion failed with exit code %d.' % exit_code)
+            job.logger.warning('Ignoring error condition. Standand output and standard error of delete command follows.')
+            eva.executor.log_stdout_stderr(job, job.stdout, job.stderr)
+
+        self.cleanup_job_data(job)
+
+    def cleanup_job_data(self, job):
+        """
+        Remove job script, stdout, and stderr caches.
+        """
         try:
             self.sftp_client.unlink(job.submit_script_path)
             self.sftp_client.unlink(job.stdout_path)

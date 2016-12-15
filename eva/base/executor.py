@@ -33,6 +33,12 @@ class BaseExecutor(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
         """
         raise NotImplementedError()
 
+    def abort(self, job):
+        """
+        Abort a job and clean up after it.
+        """
+        raise NotImplementedError()
+
     def create_temporary_script(self, content):
         """!
         @brief Generate a temporary file and fill it with the specified content.

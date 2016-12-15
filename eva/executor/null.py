@@ -17,3 +17,6 @@ class NullExecutor(eva.base.executor.BaseExecutor):
         job.exit_code = 0
         job.stdout = []
         job.stderr = []
+
+    def abort(self, job):
+        pass
