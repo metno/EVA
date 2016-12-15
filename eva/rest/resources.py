@@ -65,7 +65,7 @@ class HealthResource(BaseResource):
             resp.status = falcon.HTTP_200
             self.set_response_message(req, 'Last heartbeat was received %s' % str(self.heartbeat_timestamp))
         else:
-            resp.status = falcon.HTTP_503
+            resp.status = '555 Heart Has Stopped'
             self.set_response_message(req, 'Last heartbeat was received %s; over age threshold of %d seconds' % (str(self.heartbeat_timestamp), self.heartbeat_threshold()))
 
 
