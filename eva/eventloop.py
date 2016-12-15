@@ -69,6 +69,19 @@ class Eventloop(eva.globe.GlobalMixin):
                 return adapter
         return None
 
+    def job_by_id(self, id):
+        """
+        Return a Job object with the given ``id`` if found in the event queue, or None if not found.
+
+        :param str id:
+        :rtype: eva.job.Job
+        """
+        for item in self.event_queue:
+            for job in item:
+                if job.id == id:
+                    return job
+        return None
+
     def restore_queue(self):
         """!
         @brief Load a serialized, saved queue from ZooKeeper into the EventQueue instance.
@@ -307,6 +320,12 @@ class Eventloop(eva.globe.GlobalMixin):
             job.logger.debug('Polling executor for job status...')
             job.adapter.executor.sync(job)
             job.logger.debug('Finished polling executor for job status.')
+
+        # Remove job from executors
+        elif job.deleted():
+            job.logger.error('Job is scheduled for deletion, trying to terminate with executors...')
+            # FIXME
+            job.set_status(eva.job.FINISHED)
 
         # Tell adapter that the job has finished
         elif job.complete() or job.failed():

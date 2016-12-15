@@ -11,6 +11,7 @@ STARTED = "STARTED"
 RUNNING = "RUNNING"
 COMPLETE = "COMPLETE"
 FAILED = "FAILED"
+DELETED = "DELETED"
 FINISHED = "FINISHED"
 
 ALL_STATUSES = (
@@ -20,6 +21,7 @@ ALL_STATUSES = (
     RUNNING,
     COMPLETE,
     FAILED,
+    DELETED,
     FINISHED,
 )
 
@@ -154,6 +156,12 @@ class Job(eva.globe.GlobalMixin):
         @brief Returns True if Job.status equals Job.FAILED.
         """
         return self.status == FAILED
+
+    def deleted(self):
+        """!
+        @brief Returns True if Job.status equals Job.DELETED.
+        """
+        return self.status == DELETED
 
     def finished(self):
         """!

@@ -1,5 +1,6 @@
 import eva
 import eva.globe
+import eva.job
 import eva.rest.resources
 
 import productstatus.exceptions
@@ -13,7 +14,10 @@ class BaseResource(eva.globe.GlobalMixin):
         self.eventloop = eventloop
 
     def set_response_message(self, req, message):
-        req.context['result'] = {'message': message}
+        self.set_result(req, {'message': message})
+
+    def set_result(self, req, result):
+        req.context['result'] = result
 
     def exec_functions(self, req, resp, method, functions):
         if method in functions:
@@ -84,6 +88,39 @@ class ControlResource(BaseResource):
 
     def on_post(self, req, resp, method=None):
         return self.exec_functions(req, resp, method, ['shutdown', 'drain'])
+
+
+class JobResource(BaseResource):
+    """
+    Provides an endpoint to list jobs.
+    """
+
+    def on_delete(self, req, resp, job_id=None):
+        job = self.eventloop.job_by_id(job_id)
+        if not job:
+            raise falcon.HTTPNotFound()
+        job.set_status(eva.job.DELETED)
+        self.set_response_message(resp, "The job '%s' has been marked for deletion.")
+
+
+class JobsResource(BaseResource):
+    """
+    Provides an endpoint to list jobs.
+    """
+
+    def on_get(self, req, resp):
+        jobs = []
+        for item in self.eventloop.event_queue:
+            for job in item:
+                jobs += [{
+                    'adapter_id': job.adapter.config_id,
+                    'event_id': item.id(),
+                    'failures': job.failures(),
+                    'job_id': job.id,
+                    'resource_uri': '/jobs/%s' % job.id,
+                    'status': job.status,
+                }]
+        self.set_result(req, jobs)
 
 
 class ProcessResource(BaseResource):

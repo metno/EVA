@@ -67,8 +67,10 @@ class Server(eva.globe.GlobalMixin):
         self.server.timeout = 0.001
 
     def _setup_resources(self):
-        self._add_resource('health', '/health', eva.rest.resources.HealthResource())
         self._add_resource('control', '/control/{method}', eva.rest.resources.ControlResource())
+        self._add_resource('health',  '/health', eva.rest.resources.HealthResource())
+        self._add_resource('job',     '/jobs/{job_id}', eva.rest.resources.JobResource())
+        self._add_resource('jobs',    '/jobs', eva.rest.resources.JobsResource())
         self._add_resource('process', '/process/{method}', eva.rest.resources.ProcessResource())
 
     def _add_resource(self, name, path, resource):
