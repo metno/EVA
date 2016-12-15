@@ -550,8 +550,7 @@ class Main(eva.config.ConfigurableObject):
             if self.args.process_all_in_product_instance or self.args.process_data_instance:
                 evaloop.listeners = []
                 if self.args.process_all_in_product_instance:
-                    product_instance = self.productstatus.productinstance[self.args.process_all_in_product_instance]
-                    evaloop.process_all_in_product_instance(product_instance)
+                    evaloop.process_all_in_product_instance(self.args.process_all_in_product_instance)
                 elif self.args.process_data_instance:
                     evaloop.process_data_instance(self.args.process_data_instance)
                 while evaloop.main_loop_iteration():

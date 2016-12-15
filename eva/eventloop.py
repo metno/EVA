@@ -660,28 +660,25 @@ class Eventloop(eva.globe.GlobalMixin):
         self.message_timestamp_threshold = copy.copy(ts)
         self.logger.info('Forwarding message queue threshold timestamp to %s', self.message_timestamp_threshold)
 
-    def process_all_in_product_instance(self, product_instance):
+    def process_all_in_product_instance(self, product_instance_uuid):
         """!
         @brief Process all child DataInstance objects of a ProductInstance.
         """
         events = []
+        product_instance = self.productstatus.productinstance[product_instance_uuid]
         self.logger.info('Processing all DataInstance resources descended from %s', product_instance)
-        try:
-            instances = self.productstatus.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
-            index = 1
-            count = instances.count()
-            self.logger.info('Adding %d DataInstance resources to queue...', count)
-            for resource in instances:
-                self.logger.info('[%d/%d] Adding to queue: %s', index, count, resource)
-                events += [eva.event.ProductstatusLocalEvent(
-                    {},
-                    resource.resource_uri,
-                    timestamp=resource.modified,
-                )]
-                index += 1
-        except self.RECOVERABLE_EXCEPTIONS as e:
-            self.logger.error('An error occurred when retrieving Productstatus resources, aborting: %s', e)
-            return
+        instances = self.productstatus.datainstance.objects.filter(data__productinstance=product_instance).order_by('created')
+        index = 1
+        count = instances.count()
+        self.logger.info('Adding %d DataInstance resources to queue...', count)
+        for resource in instances:
+            self.logger.info('[%d/%d] Adding to queue: %s', index, count, resource)
+            events += [eva.event.ProductstatusLocalEvent(
+                {},
+                resource.resource_uri,
+                timestamp=resource.modified,
+            )]
+            index += 1
         [self.event_queue.add_event(event) for event in events]
 
     def process_data_instance(self, data_instance_uuid):
