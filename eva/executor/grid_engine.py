@@ -437,4 +437,4 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             self.sftp_client.unlink(job.stdout_path)
             self.sftp_client.unlink(job.stderr_path)
         except SSH_RETRY_EXCEPTIONS + (IOError,) as e:
-            job.logger.warning('Could not remove script file, stdout and stderr')
+            job.logger.warning('Could not remove script file, stdout and stderr: %s', e)
