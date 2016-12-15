@@ -35,12 +35,23 @@ class EventQueueItem(object):
         self.jobs = collections.OrderedDict()
         #! The eva.event.Event object assigned during class construction.
         self.event = event
+        self.adapters = []
 
     def id(self):
         """!
         @brief Return the event ID.
         """
         return self.event.id()
+
+    def set_adapters(self, adapters):
+        """
+        Set the list of adapters that should process this event.
+
+        :param list adapters: list of :class:`adapter <eva.base.adapter.BaseAdapter>` instances.
+        """
+        for adapter in adapters:
+            assert isinstance(adapter, eva.base.adapter.BaseAdapter)
+        self.adapters = adapters
 
     def add_job(self, job):
         """!

@@ -171,7 +171,11 @@ class Eventloop(eva.globe.GlobalMixin):
 
             # Add message to event queue
             try:
-                self.event_queue.add_event(event)
+                item = self.event_queue.add_event(event)
+
+                # All adapters should process this event by default
+                item.set_adapters(self.adapters)
+
             except eva.exceptions.DuplicateEventException as e:
                 self.statsd.incr('eva_event_duplicate')
                 self.logger.warning(e)
@@ -489,7 +493,7 @@ class Eventloop(eva.globe.GlobalMixin):
 
         self.logger.info('%s: start generating jobs', item)
 
-        for adapter in self.adapters:
+        for adapter in item.adapters:
             job = self.create_job_for_event_queue_item(item, adapter)
 
             if job is None:
@@ -660,10 +664,15 @@ class Eventloop(eva.globe.GlobalMixin):
         self.message_timestamp_threshold = copy.copy(ts)
         self.logger.info('Forwarding message queue threshold timestamp to %s', self.message_timestamp_threshold)
 
-    def process_all_in_product_instance(self, product_instance_uuid):
-        """!
-        @brief Process all child DataInstance objects of a ProductInstance.
+    def process_all_in_product_instance(self, product_instance_uuid, adapters=None):
         """
+        Process all child DataInstance objects of a ProductInstance.
+
+        :param str product_instance_uuid: the UUID of a ProductInstance to be searched for DataInstance resources.
+        :param str adapters: if set, contains the list of the only adapters that should generate jobs for these events.
+        """
+        if adapters is None:
+            adapters = self.adapters
         events = []
         product_instance = self.productstatus.productinstance[product_instance_uuid]
         self.logger.info('Processing all DataInstance resources descended from %s', product_instance)
@@ -673,18 +682,26 @@ class Eventloop(eva.globe.GlobalMixin):
         self.logger.info('Adding %d DataInstance resources to queue...', count)
         for resource in instances:
             self.logger.info('[%d/%d] Adding to queue: %s', index, count, resource)
-            events += [eva.event.ProductstatusLocalEvent(
+            event = eva.event.ProductstatusLocalEvent(
                 {},
                 resource.resource_uri,
                 timestamp=resource.modified,
-            )]
+            )
+            events += [event]
             index += 1
-        [self.event_queue.add_event(event) for event in events]
+        for event in events:
+            item = self.event_queue.add_event(event)
+            item.set_adapters(adapters)
 
-    def process_data_instance(self, data_instance_uuid):
-        """!
-        @brief Process a single DataInstance resource.
+    def process_data_instance(self, data_instance_uuid, adapters=None):
         """
+        Process a single DataInstance resource.
+
+        :param str data_instance_uuid: the UUID of a DataInstance resource.
+        :param str adapters: if set, contains the list of the only adapters that should generate jobs for this event.
+        """
+        if adapters is None:
+            adapters = self.adapters
         resource = self.productstatus.datainstance[data_instance_uuid]
         event = eva.event.ProductstatusLocalEvent(
             {},
@@ -692,7 +709,8 @@ class Eventloop(eva.globe.GlobalMixin):
             timestamp=resource.modified,
         )
         self.logger.info('Adding event with DataInstance %s to queue', resource)
-        self.event_queue.add_event(event)
+        item = self.event_queue.add_event(event)
+        item.set_adapters(adapters)
 
     def shutdown(self):
         """!
