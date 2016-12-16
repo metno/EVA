@@ -108,6 +108,10 @@ class Eventloop(eva.globe.GlobalMixin):
                 # Iterate through event-generated jobs
                 for job_id, job_data in event_data['jobs'].items():
                     adapter = self.adapter_by_config_id(job_data['adapter'])
+                    if not adapter:
+                        self.logger.error("Stored job '%s' refers to unconfigured adapter '%s', this job will be discarded!", job_id, job_data['adapter'])
+                        continue
+
                     job = self.create_job_for_event_queue_item(item, adapter)
                     if not job:
                         self.logger.warning('Empty Job object returned, discarding saved job.')
