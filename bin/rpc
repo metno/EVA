@@ -133,6 +133,10 @@ class EVARPC(object):
         parser_jobs_group.add_argument('--list', action='store_true', help='List all jobs.')
         parser_jobs_group.add_argument('--delete', metavar='JOBID', help='Remove a job from the process queue.')
 
+        # http://stackoverflow.com/questions/18282403/argparse-with-required-subcommands
+        subparsers.required = True
+        subparsers.dest = 'command'
+
         return parser
 
     def main(self):
