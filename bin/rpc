@@ -1,55 +1,132 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+"""
+This utility sends a remote procedure call to the EVA HTTP REST API.
+"""
 
 import logging
-import kafka
 import argparse
-import uuid
 import json
+import os
+import requests
+import subprocess
+import sys
+
+
+class EVARPC(object):
+    def sign_payload(self, payload):
+        cmd = ['gpg', '--sign', '--armor', '--detach-sign', '--no-tty']
+
+        logging.debug('Signing payload with GPG.')
+        logging.debug('Payload: %s', payload)
+        logging.debug('Command: %s', ' '.join(cmd))
+
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        stdout, stderr = proc.communicate(input=payload)
+        if proc.returncode != 0:
+            logging.critical('GPG signing failed!')
+            for line in stderr.strip().splitlines():
+                logging.critical(line)
+            raise Exception('GPG signing failed')
+
+        signature = stdout.strip().splitlines()
+        for line in signature:
+            logging.debug(line)
+
+        return signature
+
+    def signature_headers(self, signature):
+        return {'X-EVA-Request-Signature-%03d' % (i + 1): s for i, s in enumerate(signature)}
+
+    def serialize_payload(self, data):
+        return json.dumps(data)
+
+    def build_url(self, *args):
+        return os.path.join(self.args.server, *args)
+
+    def make_signed_request(self, url, data={}, method='post'):
+        assert method in ['get', 'post', 'put', 'patch', 'delete']
+        func = getattr(requests, method)
+        payload = self.serialize_payload(data)
+        signature = self.sign_payload(payload)
+        headers = self.signature_headers(signature)
+        headers['Content-Type'] = 'application/json'
+        return func(url, data=payload, headers=headers)
+
+    def req_health(self):
+        url = self.build_url('health')
+        return requests.get(url)
+
+    def req_control(self):
+        if self.args.shutdown:
+            url = self.build_url('control', 'shutdown')
+        elif self.args.drain:
+            url = self.build_url('control', 'drain')
+        return self.make_signed_request(url)
+
+    def req_process(self):
+        data = {'adapter': self.args.adapter}
+        if self.args.productinstance:
+            url = self.build_url('process', 'productinstance')
+            data['uuid'] = self.args.productinstance
+        elif self.args.datainstance:
+            url = self.build_url('process', 'datainstance')
+            data['uuid'] = self.args.datainstance
+        return self.make_signed_request(url, data=data)
+
+    def finish_request(self, r):
+        data = r.json()
+        for key in ['title', 'message', 'error']:
+            if key in data:
+                message = 'Response from server: %s' % data[key]
+        if r.status_code >= 200 and r.status_code < 300:
+            logging.info(message)
+            return 0
+        logging.error(message)
+        return 1
+
+    def get_parser(self):
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument('--server', type=str, default='http://localhost:8080', required=False,
+                            help='HTTP server address where EVA is running.')
+        subparsers = parser.add_subparsers(help='sub-command help')
+
+        parser_health = subparsers.add_parser('health', help='Send a health check request.')
+        parser_health.set_defaults(func=self.req_health)
+
+        parser_control = subparsers.add_parser('control', help='Control the main EVA process.')
+        parser_control.set_defaults(func=self.req_control)
+        parser_control_group = parser_control.add_mutually_exclusive_group(required=True)
+        parser_control_group.add_argument('--shutdown', action='store_true', help='Shut down EVA immediately.')
+        parser_control_group.add_argument('--drain', action='store_true', help='Temporarily stop accepting new events until all events in the queue have been completely processed.')
+
+        parser_process = subparsers.add_parser('process', help='Add Productstatus resources manually to process queue.')
+        parser_process.set_defaults(func=self.req_process)
+        parser_process.add_argument('--adapter', required=True, help='Which adapter to run processing for.')
+        parser_process_group = parser_process.add_mutually_exclusive_group(required=True)
+        parser_process_group.add_argument('--productinstance', help='Process all DataInstances under this specific ProductInstance.')
+        parser_process_group.add_argument('--datainstance', help='Process a specific DataInstance.')
+
+        return parser
+
+    def main(self):
+        logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
+                            datefmt='%Y-%m-%dT%H:%M:%S%Z',
+                            level=logging.INFO)
+
+        parser = self.get_parser()
+        self.args = parser.parse_args()
+
+        try:
+            request = self.args.func()
+        except requests.exceptions.ConnectionError as e:
+            logging.critical(e)
+            sys.exit(2)
+
+        exit_code = self.finish_request(request)
+        sys.exit(exit_code)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s: (%(levelname)s) %(message)s',
-                        datefmt='%Y-%m-%dT%H:%M:%S%Z',
-                        level=logging.INFO)
-
-    helptext = "This utility sends a remote procedure call to EVA instances through a Kafka topic. Specify which EVA you want to manipulate by using the `instance_id` regular expression. Note that this is a one-way operation and you will not get any reply from the EVA instances; you must monitor the EVA logs to know the result of the RPC request."
-
-    parser = argparse.ArgumentParser(description=helptext)
-    parser.add_argument('--broker', type=str, action='append', required=True,
-                        help='Which broker to publish the message to. Can be specified multiple times.')
-    parser.add_argument('--instance_id', type=str, required=True,
-                        help='Regular expression matching the EVA instance ID you want to send the RPC to.')
-    parser.add_argument('--function', type=str, required=True,
-                        help='The remote function to run.')
-    parser.add_argument('--arg', type=str, action='append', default=[],
-                        help='Positional argument to the remote function. Can be specified multiple times.')
-    parser.add_argument('--kwarg', type=lambda kv: kv.split("="), action='append',
-                        help='Keyword argument to the remote function, in the form of key=value. ' +
-                             'Can be specified multiple times.')
-    parser.add_argument('--topic', type=str, default='eva.rpc',
-                        help='Which topic to publish the RPC request through. ' +
-                             'EVA will listen on the "eva.rpc" queue.')
-    args = parser.parse_args()
-    args.kwarg = dict(args.kwarg) if args.kwarg else {}
-
-    rpc = {
-        'type': 'rpc',
-        'instance_id': args.instance_id,
-        'function': args.function,
-        'args': args.arg,
-        'kwargs': args.kwarg,
-    }
-
-    logging.info('Sending RPC to topic %s: %s', args.topic, rpc)
-
-    producer = kafka.KafkaProducer(bootstrap_servers=args.broker,
-                                   client_id=str(uuid.uuid4()),
-                                   value_serializer=lambda m: json.dumps(m).encode('utf-8'))
-
-    future = producer.send(args.topic, rpc)
-    record = future.get(timeout=5000)
-
-    logging.info("Published message to Kafka (topic: %s, partition: %s, offset: %s)"
-                 % (record.topic, record.partition, record.offset))
-
-    logging.info('RPC has been sent successfully.')
+    evarpc = EVARPC()
+    evarpc.main()
