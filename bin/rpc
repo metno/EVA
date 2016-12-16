@@ -74,11 +74,31 @@ class EVARPC(object):
             data['uuid'] = self.args.datainstance
         return self.make_signed_request(url, data=data)
 
+    def req_jobs(self):
+        if self.args.list:
+            url = self.build_url('jobs')
+            r = requests.get(url)
+            jobs = r.json()
+            for i, job in enumerate(jobs):
+                logging.info('--------------- Job %d ---------------', i + 1)
+                logging.info('Job ID........: %s', job['job_id'])
+                logging.info('Event ID......: %s', job['event_id'])
+                logging.info('Adapter.......: %s', job['adapter_id'])
+                logging.info('Status........: %s', job['status'])
+                logging.info('Failures......: %d', job['failures'])
+            return r
+        if self.args.delete:
+            url = self.build_url('jobs', self.args.delete)
+            return self.make_signed_request(url, method='delete')
+
     def finish_request(self, r):
-        data = r.json()
-        for key in ['title', 'message', 'error']:
-            if key in data:
-                message = 'Response from server: %s' % data[key]
+        message = r.text
+        if len(r.text) > 0:
+            data = r.json()
+            for key in ['title', 'message', 'error']:
+                if key in data:
+                    message = data[key]
+        message = 'Response from server: %d %s' % (r.status_code, message)
         if r.status_code >= 200 and r.status_code < 300:
             logging.info(message)
             return 0
@@ -106,6 +126,12 @@ class EVARPC(object):
         parser_process_group = parser_process.add_mutually_exclusive_group(required=True)
         parser_process_group.add_argument('--productinstance', help='Process all DataInstances under this specific ProductInstance.')
         parser_process_group.add_argument('--datainstance', help='Process a specific DataInstance.')
+
+        parser_jobs = subparsers.add_parser('jobs', help='Control the list of jobs.')
+        parser_jobs.set_defaults(func=self.req_jobs)
+        parser_jobs_group = parser_jobs.add_mutually_exclusive_group(required=True)
+        parser_jobs_group.add_argument('--list', action='store_true', help='List all jobs.')
+        parser_jobs_group.add_argument('--delete', metavar='JOBID', help='Remove a job from the process queue.')
 
         return parser
 
