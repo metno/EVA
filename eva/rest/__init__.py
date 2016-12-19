@@ -25,6 +25,8 @@ class RequireJSON(object):
 
 
 class RequireGPGSignedRequests(eva.globe.GlobalMixin):
+    TIME_DIFF_THRESHOLD = 2.0
+
     def __init__(self, gpg_key_ids):
         self.gpg_key_ids = gpg_key_ids
         self.header_regex = re.compile(r'^X-EVA-Request-Signature-\d+$', re.IGNORECASE)
@@ -46,13 +48,23 @@ class RequireGPGSignedRequests(eva.globe.GlobalMixin):
             for line in result.stderr:
                 self.logger.warning(line)
             raise falcon.HTTPUnauthorized('GPG verification of request failed.')
+
         if result.key_id is None:
             self.logger.warning('GPG key ID not parsed correctly from GPG output, dropping request.')
             raise falcon.HTTPUnauthorized('GPG verification of request failed.')
+
         self.logger.info('Request is signed by %s with %s key %s at %s', result.signer, result.key_type, result.key_id, eva.strftime_iso8601(result.timestamp))
+
         if result.key_id not in self.gpg_key_ids:
             self.logger.warning("GPG key ID '%s' is not in whitelist, dropping request.", result.key_id)
             raise falcon.HTTPUnauthorized('Only few of mere mortals may try to enter the twilight zone.')
+
+        time_diff = eva.now_with_timezone() - result.timestamp
+        time_diff_secs = abs(time_diff.total_seconds())
+        if time_diff_secs > self.TIME_DIFF_THRESHOLD:
+            self.logger.warning("GPG signature differs from local time with %.1f seconds, over threshold of %.1f seconds, dropping request.", time_diff_secs, self.TIME_DIFF_THRESHOLD)
+            raise falcon.HTTPUnauthorized('Too high time difference between server and client; is your clock correct?')
+
         self.logger.info('Permitting access to %s with %s key %s', result.signer, result.key_type, result.key_id)
 
     def process_request(self, req, resp):
