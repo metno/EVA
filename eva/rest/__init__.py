@@ -25,7 +25,8 @@ class RequireJSON(object):
 
 
 class RequireGPGSignedRequests(eva.globe.GlobalMixin):
-    def __init__(self):
+    def __init__(self, gpg_key_ids):
+        self.gpg_key_ids = gpg_key_ids
         self.header_regex = re.compile(r'^X-EVA-Request-Signature-\d+$', re.IGNORECASE)
 
     def _gpg_signature_from_headers(self, headers):
@@ -45,7 +46,14 @@ class RequireGPGSignedRequests(eva.globe.GlobalMixin):
             for line in result.stderr:
                 self.logger.warning(line)
             raise falcon.HTTPUnauthorized('GPG verification of request failed.')
-        self.logger.info('Request is properly signed by %s with %s key %s at %s', result.signer, result.key_type, result.key_id, eva.strftime_iso8601(result.timestamp))
+        if result.key_id is None:
+            self.logger.warning('GPG key ID not parsed correctly from GPG output, dropping request.')
+            raise falcon.HTTPUnauthorized('GPG verification of request failed.')
+        self.logger.info('Request is signed by %s with %s key %s at %s', result.signer, result.key_type, result.key_id, eva.strftime_iso8601(result.timestamp))
+        if result.key_id not in self.gpg_key_ids:
+            self.logger.warning("GPG key ID '%s' is not in whitelist, dropping request.", result.key_id)
+            raise falcon.HTTPUnauthorized('Only few of mere mortals may try to enter the twilight zone.')
+        self.logger.info('Permitting access to %s with %s key %s', result.signer, result.key_type, result.key_id)
 
     def process_request(self, req, resp):
         if req.method == 'GET':
@@ -83,15 +91,25 @@ class JSONTranslator(object):
         resp.body = json.dumps(req.context['result'])
 
 
-class Server(eva.globe.GlobalMixin):
+class Server(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
     """
     Run a HTTP REST API based on Falcon web framework.
     """
 
-    def __init__(self, globe, host=None, port=None):
-        self.set_globe(globe)
-        gpg_middleware = RequireGPGSignedRequests()
-        gpg_middleware.set_globe(globe)
+    CONFIG = {
+        'gpg_key_ids': {
+            'type': 'list_string',
+            'default': '',
+        }
+    }
+
+    OPTIONAL_CONFIG = [
+        'gpg_key_ids',
+    ]
+
+    def init(self):
+        gpg_middleware = RequireGPGSignedRequests(self.env['gpg_key_ids'])
+        gpg_middleware.set_globe(self.globe)
         self.app = falcon.API(middleware=[
             RequireJSON(),
             JSONTranslator(),
@@ -99,9 +117,9 @@ class Server(eva.globe.GlobalMixin):
         ])
         self._resources = []
         self._setup_resources()
-        if host is None and port is None:
-            self.server = None
-            return
+        self.server = None
+
+    def start(self, host, port):
         self.server = wsgiref.simple_server.make_server(host, port, self.app)
         self.server.timeout = 0.001
 

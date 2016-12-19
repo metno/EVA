@@ -58,6 +58,10 @@ class Main(eva.config.ConfigurableObject):
             'help': 'Configured Productstatus instance',
             'default': '',
         },
+        'rest_server': {
+            'type': 'config_class',
+            'default': '',
+        },
         'statsd': {
             'type': 'list_string',
             'help': 'Comma-separated list of StatsD endpoints in the form <host>:<port>',
@@ -78,6 +82,7 @@ class Main(eva.config.ConfigurableObject):
     REQUIRED_CONFIG = [
         'mailer',
         'productstatus',
+        'rest_server',
         'zookeeper',
     ]
 
@@ -133,6 +138,10 @@ class Main(eva.config.ConfigurableObject):
     @property
     def mailer(self):
         return self.env['mailer']
+
+    @property
+    def rest_server(self):
+        return self.env['rest_server']
 
     def parse_args(self):
         parser = argparse.ArgumentParser()  # FIXME: epilog
@@ -293,10 +302,9 @@ class Main(eva.config.ConfigurableObject):
         @brief Set up a the HTTP REST API server.
         """
         if self.args.rest_server_port:
-            self.rest_server = eva.rest.Server(self.globe, '0.0.0.0', self.args.rest_server_port)
+            self.rest_server.start('0.0.0.0', self.args.rest_server_port)
             self.logger.info('Started HTTP REST API server on 0.0.0.0:%d', self.args.rest_server_port)
         else:
-            self.rest_server = eva.rest.Server(self.globe)
             self.logger.warning('Not running HTTP REST API server!')
 
     def setup_statsd_client(self):
@@ -498,9 +506,6 @@ class Main(eva.config.ConfigurableObject):
             self.setup_statsd_client()
             self.setup_zookeeper()
 
-            # Start the HTTP REST API server
-            self.setup_rest_server()
-
             # Instantiate, link and initialize everything
             self.instantiate_config_classes()
             self.print_configuration()
@@ -511,6 +516,9 @@ class Main(eva.config.ConfigurableObject):
 
             # Abort if EVA is already running
             self.setup_instance_lock()
+
+            # Start the HTTP REST API server
+            self.setup_rest_server()
 
             # Start listener classes
             self.setup_listeners()
