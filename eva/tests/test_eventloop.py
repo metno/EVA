@@ -21,13 +21,18 @@ class TestEventloop(eva.tests.TestBase):
         super().setUp()
         self.adapters = []
         self.listeners = []
-        self.rest_api_server = eva.rest.Server(self.globe)
+        self.setup_rest_api_server()
         self.eventloop = eva.eventloop.Eventloop(self.adapters,
                                                  self.listeners,
                                                  self.rest_api_server,
                                                  )
         self.eventloop.set_globe(self.globe)
         self.eventloop.init()
+
+    def setup_rest_api_server(self):
+        incubator, self.rest_api_server = eva.rest.Server().factory({}, 'rest.api')
+        self.rest_api_server.set_globe(self.globe)
+        self.rest_api_server.init()
 
     def test_init(self):
         """!
