@@ -32,8 +32,12 @@ cross-referenced where applicable.
    listeners = listener.productstatus
    mailer = mailer.default
    productstatus = productstatus.localhost
+   rest_server = rest.api
    statsd = 127.0.0.1:8125
    zookeeper = 127.0.0.1:2181/eva
+
+   [rest.api]
+   class = eva.rest.Server
 
    [productstatus.localhost]
    class = eva.incubator.Productstatus

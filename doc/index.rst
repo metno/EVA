@@ -17,6 +17,7 @@ Contents:
    variables
    tutorial
    metrics
+   restapi
    api/index
 
 
