@@ -5,14 +5,12 @@ RESTful API for controlling and monitoring EVA.
 
 import eva
 import eva.globe
+import eva.gpg
 import eva.rest.resources
 
 import falcon
 import json
-import os
 import re
-import subprocess
-import tempfile
 import wsgiref.simple_server
 
 
@@ -27,41 +25,27 @@ class RequireJSON(object):
 
 
 class RequireGPGSignedRequests(eva.globe.GlobalMixin):
+    def __init__(self):
+        self.header_regex = re.compile(r'^X-EVA-Request-Signature-\d+$', re.IGNORECASE)
+
     def _gpg_signature_from_headers(self, headers):
         signature = []
         keys = sorted(headers.keys())
         for key in keys:
-            if not re.match(r'^X-EVA-Request-Signature-\d+$', key, re.IGNORECASE):
+            if not self.header_regex.match(key):
                 continue
             signature += [headers[key]]
         return signature
 
-    def _metadata_from_signature(self):
-        pass
-
     def _check_signature(self, payload, signature):
-        directory = tempfile.TemporaryDirectory()
-        payload_file = os.path.join(directory.name, 'request')
-        signature_file = os.path.join(directory.name, 'request.asc')
-        with open(payload_file, 'wb') as f:
-            f.write(payload.encode('utf-8'))
-        with open(signature_file, 'wb') as f:
-            for line in signature:
-                data = '%s\n' % line
-                f.write(data.encode('utf-8'))
-
-        cmd = ['gpg', '--verify', signature_file]
-        self.logger.info('Running command: %s', ' '.join(cmd))
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            self.logger.warning('GPG verification of request failed.')
-            for line in stderr.strip().splitlines():
+        checker = eva.gpg.GPGSignatureChecker(payload, signature)
+        result = checker.verify()
+        if result.exit_code != 0:
+            self.logger.warning('GPG verification of request failed: %s', result.stderr[0])
+            for line in result.stderr:
                 self.logger.warning(line)
             raise falcon.HTTPUnauthorized('GPG verification of request failed.')
-        self.logger.info('Request verification succeeded:')
-        for line in stderr.strip().splitlines():
-            self.logger.info(line)
+        self.logger.info('Request is properly signed by %s with %s key %s at %s', result.signer, result.key_type, result.key_id, eva.strftime_iso8601(result.timestamp))
 
     def process_request(self, req, resp):
         if req.method == 'GET':
@@ -74,6 +58,7 @@ class RequireGPGSignedRequests(eva.globe.GlobalMixin):
 
 class JSONTranslator(object):
     def process_request(self, req, resp):
+        req.context['body'] = ''
         if req.content_length in (None, 0):
             return
 
