@@ -69,6 +69,9 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
     }
 
     REQUIRED_CONFIG = [
+        'gridpp_mask_options',
+        'gridpp_missing_radar_file',
+        'gridpp_preprocess_script',
         'input_data_format',
         'input_product',
         'input_service_backend',
@@ -81,9 +84,6 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
         'gridpp_modules',
         'gridpp_output_options',
         'gridpp_threads',
-        'gridpp_missing_radar_file',
-        'gridpp_preprocess_script',
-        'gridpp_mask_options',
         'input_partial',
         'output_data_format',
         'output_lifetime',
