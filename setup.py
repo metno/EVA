@@ -12,14 +12,13 @@
 # extensions to the MAJOR.MINOR.PATCH format.
 #
 
-VERSION = [1, 0, 0]
+VERSION = [2, 0, 0]
 
 config = {
-    'description': 'Event Adapter',
-    'author': 'MET Norway',
-    'url': 'https://github.com/metno/productstatus-eva',
-    'download_url': 'https://github.com/metno/productstatus-eva',
-    'author_email': 'it-geo-tf@met.no',
+    'description': 'The Event Adapter',
+    'author': 'Team IT Modellprod @ MET Norway',
+    'url': 'https://github.com/metno/eva',
+    'download_url': 'https://github.com/metno/eva',
     'version': '.'.join([str(x) for x in VERSION]),
     'install_requires': [
         'nose==1.3.7',
