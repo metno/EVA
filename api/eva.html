@@ -1,0 +1,358 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="up" title="API documentation" href="index.html" />
+    <link rel="next" title="eva.exceptions" href="exceptions.html" />
+    <link rel="prev" title="API documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">API documentation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="exceptions.html">eva.exceptions</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-eva">
+<span id="eva"></span><h1>eva<a class="headerlink" href="#module-eva" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="eva.coerce_to_utc">
+<code class="descclassname">eva.</code><code class="descname">coerce_to_utc</code><span class="sig-paren">(</span><em>dt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#coerce_to_utc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.coerce_to_utc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a copy of a DateTime object, where the timezone is set to UTC.</p>
+<p>Any existing timezone information is lost in the conversion process.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dt</strong> (<em>datetime.datetime.DateTime</em>) &#8211; DateTime object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">datetime.datetime.Datetime</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.convert_to_bytes">
+<code class="descclassname">eva.</code><code class="descname">convert_to_bytes</code><span class="sig-paren">(</span><em>value</em>, <em>notation</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#convert_to_bytes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.convert_to_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a number into a string, representing a value in bytes, kilobytes,
+megabytes, gigabytes, or terabytes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>value</strong> (<em>int|float</em>) &#8211; number to convert.</li>
+<li><strong>notation</strong> (<em>str</em>) &#8211; size wanted, one of B, K, M, G, T</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>ValueError</strong> &#8211; when the notation parameter is not one of the pre-defined variables.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.epoch_with_timezone">
+<code class="descclassname">eva.</code><code class="descname">epoch_with_timezone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#epoch_with_timezone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.epoch_with_timezone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a timezone-aware DateTime object with timestamp zero.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">datetime.datetime.Datetime</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.format_exception_as_bug">
+<code class="descclassname">eva.</code><code class="descname">format_exception_as_bug</code><span class="sig-paren">(</span><em>exception</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#format_exception_as_bug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.format_exception_as_bug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format an exception backtrace into a list of lines.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>exception</strong> (<em>Exception</em>) &#8211; the exception to return a backtrace from.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of strings from the exception backtrace.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.import_module_class">
+<code class="descclassname">eva.</code><code class="descname">import_module_class</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#import_module_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.import_module_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import a Python module and return it to the caller.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<em>str</em>) &#8211; full dotted name to a Python module.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">module</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the imported module.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.in_array_or_empty">
+<code class="descclassname">eva.</code><code class="descname">in_array_or_empty</code><span class="sig-paren">(</span><em>id</em>, <em>array</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#in_array_or_empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.in_array_or_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <cite>id</cite> is found in <cite>array</cite>, or <cite>array</cite> is empty.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> &#8211; the member to check.</li>
+<li><strong>array</strong> (<em>list</em>) &#8211; the list to check.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.log_productstatus_resource_info">
+<code class="descclassname">eva.</code><code class="descname">log_productstatus_resource_info</code><span class="sig-paren">(</span><em>resource</em>, <em>logger</em>, <em>loglevel=10</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#log_productstatus_resource_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.log_productstatus_resource_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print information about a Productstatus resource to the log.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>resource</strong> (<em>productstatus.api.Resource</em>) &#8211; a Productstatus resource instance.</li>
+<li><strong>logger</strong> (<em>logging.Logger</em>) &#8211; a Logger instance.</li>
+<li><strong>loglevel</strong> (<em>int</em>) &#8211; a <code class="xref py py-mod docutils literal"><span class="pre">logging</span></code> module loglevel.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.netcdf_time_to_timestamp">
+<code class="descclassname">eva.</code><code class="descname">netcdf_time_to_timestamp</code><span class="sig-paren">(</span><em>time_string</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#netcdf_time_to_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.netcdf_time_to_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses the &#8220;ncdump -v -t time&#8221; time string output to a DateTime object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time_string</strong> (<em>str</em>) &#8211; single line of <cite>ncdump</cite> time string output.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">datetime.datetime.Datetime</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.now_with_timezone">
+<code class="descclassname">eva.</code><code class="descname">now_with_timezone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#now_with_timezone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.now_with_timezone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a timezone-aware UTC DateTime object with the current time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">datetime.datetime.Datetime</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.print_and_mail_exception">
+<code class="descclassname">eva.</code><code class="descname">print_and_mail_exception</code><span class="sig-paren">(</span><em>exception</em>, <em>logger</em>, <em>mailer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#print_and_mail_exception"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.print_and_mail_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print an exception with backtrace to a logging object, and send it as an
+e-mail as well.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>exception</strong> (<em>Exception</em>) &#8211; the exception instance.</li>
+<li><strong>logger</strong> (<em>logging.Logger</em>) &#8211; a Logger object used for printing the backtrace.</li>
+<li><strong>mailer</strong> (<em>eva.mail.Mailer</em>) &#8211; a Mailer object used for sending the backtrace.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.retry_n">
+<code class="descclassname">eva.</code><code class="descname">retry_n</code><span class="sig-paren">(</span><em>func</em>, <em>args=()</em>, <em>kwargs={}</em>, <em>interval=5</em>, <em>exceptions=(&lt;class 'Exception'&gt;</em>, <em>)</em>, <em>warning=1</em>, <em>error=3</em>, <em>give_up=5</em>, <em>logger=&lt;module 'logging' from '/usr/lib/python3.4/logging/__init__.py'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#retry_n"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.retry_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call <cite>func(*args, **kwargs)</cite> and, if it throws anything listed in
+<cite>exceptions</cite>, catch it and retry again, up to <cite>give_up</cite> times. If <cite>give_up</cite>
+is <cite>&lt;= 0</cite>, retry indefinitely.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>func</strong> (<em>function</em>) &#8211; the function to call.</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; positional arguments to send with the function call.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) &#8211; keyword arguments to send with the function call.</li>
+<li><strong>interval</strong> (<em>int</em>) &#8211; how long to wait between function calls.</li>
+<li><strong>exceptions</strong> (<em>tuple</em>) &#8211; tuple of exceptions to catch.</li>
+<li><strong>warning</strong> (<em>int</em>) &#8211; how many failures before escalating logging output to <cite>WARNING</cite>.</li>
+<li><strong>error</strong> (<em>int</em>) &#8211; how many failures before escalating logging output to <cite>ERROR</cite>.</li>
+<li><strong>give_up</strong> (<em>int</em>) &#8211; how many failures to tolerate before giving up.</li>
+<li><strong>logger</strong> (<em>logging.Logger</em>) &#8211; Logger object where failure messages are sent.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>AssertionError</strong> &#8211; if either <cite>(error &gt; warning &gt; 0)</cite> or <cite>(give_up &gt; error or give_up &lt;= 0)</cite> are False.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.split_comma_separated">
+<code class="descclassname">eva.</code><code class="descname">split_comma_separated</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#split_comma_separated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.split_comma_separated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a comma-separated string into a list of strings.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> (<em>str</em>) &#8211; string with comma-separated values.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.strftime_iso8601">
+<code class="descclassname">eva.</code><code class="descname">strftime_iso8601</code><span class="sig-paren">(</span><em>dt</em>, <em>null_string=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#strftime_iso8601"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.strftime_iso8601" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a DateTime object into an ISO8601 formatted string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dt</strong> (<em>datetime.datetime.DateTime</em>) &#8211; DateTime object.</li>
+<li><strong>null_string</strong> (<em>bool</em>) &#8211; if True, print &#8220;NULL&#8221; instead of timestamp if not passed a DateTime object.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.url_to_filename">
+<code class="descclassname">eva.</code><code class="descname">url_to_filename</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#url_to_filename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.url_to_filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a <a class="reference external" href="file://">file://</a> URL to a path name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>url</strong> (<em>str</em>) &#8211; URL starting with <cite>file://</cite>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>RuntimeError</strong> &#8211; when the URL does not start with <cite>file://</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.zookeeper_group_id">
+<code class="descclassname">eva.</code><code class="descname">zookeeper_group_id</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva.html#zookeeper_group_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.zookeeper_group_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up a string so that it can be used as a Zookeeper path component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> (<em>str</em>) &#8211; the string to convert.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><a class="reference internal" href="exceptions.html#eva.exceptions.InvalidGroupIdException" title="eva.exceptions.InvalidGroupIdException"><strong>eva.exceptions.InvalidGroupIdException</strong></a> &#8211; when the converted string is not suitable for use in ZooKeeper.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">API documentation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="exceptions.html">eva.exceptions</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

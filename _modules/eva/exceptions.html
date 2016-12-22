@@ -1,0 +1,225 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.exceptions &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../index.html" />
+    <link rel="up" title="eva" href="../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.exceptions</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.exceptions</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Exceptions thrown by EVA under various circumstances.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="EvaException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.EvaException">[docs]</a><span class="k">class</span> <span class="nc">EvaException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base exception for all exceptions thrown by EVA.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ShutdownException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.ShutdownException">[docs]</a><span class="k">class</span> <span class="nc">ShutdownException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when EVA is sent a `SIGINT` or `SIGTERM` signal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ConfigurationException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.ConfigurationException">[docs]</a><span class="k">class</span> <span class="nc">ConfigurationException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for configuration related exceptions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MissingConfigurationException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.MissingConfigurationException">[docs]</a><span class="k">class</span> <span class="nc">MissingConfigurationException</span><span class="p">(</span><span class="n">ConfigurationException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when a configuration variable is missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="InvalidConfigurationException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.InvalidConfigurationException">[docs]</a><span class="k">class</span> <span class="nc">InvalidConfigurationException</span><span class="p">(</span><span class="n">ConfigurationException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when configuration does not make sense.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MissingConfigurationSectionException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.MissingConfigurationSectionException">[docs]</a><span class="k">class</span> <span class="nc">MissingConfigurationSectionException</span><span class="p">(</span><span class="n">MissingConfigurationException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when a configuration section is requested from a ConfigParser</span>
+<span class="sd">    object, but does not exist.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="RetryException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.RetryException">[docs]</a><span class="k">class</span> <span class="nc">RetryException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when event processing cannot be completed due to a transient error</span>
+<span class="sd">    on an underlying resource, typically a network or service outage.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ResourceTooOldException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.ResourceTooOldException">[docs]</a><span class="k">class</span> <span class="nc">ResourceTooOldException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when an event is outdated because the Productstatus resource it</span>
+<span class="sd">    refers to has been overwritten with more recent data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="JobNotGenerated"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.JobNotGenerated">[docs]</a><span class="k">class</span> <span class="nc">JobNotGenerated</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown by an adapter when a resource event fits the processing</span>
+<span class="sd">    criteria, but does not need processing after all.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="JobNotCompleteException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.JobNotCompleteException">[docs]</a><span class="k">class</span> <span class="nc">JobNotCompleteException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when an operation is performed on a Job object that is not</span>
+<span class="sd">    complete, but should be. Treat this exception as a BUG!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="InvalidEventException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.InvalidEventException">[docs]</a><span class="k">class</span> <span class="nc">InvalidEventException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when a received event is not valid for processing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="EventTimeoutException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.EventTimeoutException">[docs]</a><span class="k">class</span> <span class="nc">EventTimeoutException</span><span class="p">(</span><span class="n">InvalidEventException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when the next event did not arrive in the expected time period.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="InvalidRPCException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.InvalidRPCException">[docs]</a><span class="k">class</span> <span class="nc">InvalidRPCException</span><span class="p">(</span><span class="n">InvalidEventException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when an RPC call contains invalid data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="RPCWrongInstanceIDException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.RPCWrongInstanceIDException">[docs]</a><span class="k">class</span> <span class="nc">RPCWrongInstanceIDException</span><span class="p">(</span><span class="n">InvalidEventException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when the RPC message does not match our configured EVA instance ID.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="RPCInvalidRegexException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.RPCInvalidRegexException">[docs]</a><span class="k">class</span> <span class="nc">RPCInvalidRegexException</span><span class="p">(</span><span class="n">InvalidEventException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown then the instance_id in a RPC message is not a valid regular expression.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="RPCException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.RPCException">[docs]</a><span class="k">class</span> <span class="nc">RPCException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for RPC exceptions.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="RPCFailedException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.RPCFailedException">[docs]</a><span class="k">class</span> <span class="nc">RPCFailedException</span><span class="p">(</span><span class="n">RPCException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when an RPC call fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="InvalidGroupIdException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.InvalidGroupIdException">[docs]</a><span class="k">class</span> <span class="nc">InvalidGroupIdException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when a group_id is incompatible with Zookeeper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="AlreadyRunningException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.AlreadyRunningException">[docs]</a><span class="k">class</span> <span class="nc">AlreadyRunningException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when EVA is configured to run as a single instance, but it is</span>
+<span class="sd">    already running according to Zookeeper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ZooKeeperDataTooLargeException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.ZooKeeperDataTooLargeException">[docs]</a><span class="k">class</span> <span class="nc">ZooKeeperDataTooLargeException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when trying to store a message in ZooKeeper that is too big.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="DuplicateEventException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.DuplicateEventException">[docs]</a><span class="k">class</span> <span class="nc">DuplicateEventException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when trying to add an event to the event queue and it already exists.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="GridEngineParseException"><a class="viewcode-back" href="../../api/exceptions.html#eva.exceptions.GridEngineParseException">[docs]</a><span class="k">class</span> <span class="nc">GridEngineParseException</span><span class="p">(</span><span class="n">EvaException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thrown when output parsing from GridEngine commands yields unexpected results.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

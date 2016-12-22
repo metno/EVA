@@ -1,0 +1,485 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.eventqueue &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../index.html" />
+    <link rel="up" title="eva" href="../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.eventqueue</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.eventqueue</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">@brief Classes related to event queue handling.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">eva.base.adapter</span>
+<span class="kn">import</span> <span class="nn">eva.event</span>
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+<span class="kn">import</span> <span class="nn">eva.globe</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.zk</span>
+
+
+<div class="viewcode-block" id="EventQueueItem"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem">[docs]</a><span class="k">class</span> <span class="nc">EventQueueItem</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">    @brief Wrapper around eva.event.Event, maintaining a list of jobs for a</span>
+<span class="sd">    specific event.</span>
+
+<span class="sd">    This class is a wrapper around the eva.event.Event object, maintaining an</span>
+<span class="sd">    ordered list of eva.job.Job objects. The class can be iterated to retrieve</span>
+<span class="sd">    a list of the job objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Initialize a EventQueueItem based on an eva.event.Event object.</span>
+<span class="sd">        @param event eva.event.Event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span>
+
+        <span class="c1">#! An ordered dictionary of eva.job.Job objects associated with this event.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="c1">#! The eva.event.Event object assigned during class construction.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">=</span> <span class="n">event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adapters</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="EventQueueItem.id"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.id">[docs]</a>    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Return the event ID.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.set_adapters"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.set_adapters">[docs]</a>    <span class="k">def</span> <span class="nf">set_adapters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adapters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the list of adapters that should process this event.</span>
+
+<span class="sd">        :param list adapters: list of :class:`adapter &lt;eva.base.adapter.BaseAdapter&gt;` instances.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="n">adapters</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">adapter</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adapters</span> <span class="o">=</span> <span class="n">adapters</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.add_job"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.add_job">[docs]</a>    <span class="k">def</span> <span class="nf">add_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Add a eva.job.Job object to this event queue item.</span>
+<span class="sd">        @param job eva.job.Job</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.remove_job"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.remove_job">[docs]</a>    <span class="k">def</span> <span class="nf">remove_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Remove a eva.job.Job object from this event queue item.</span>
+<span class="sd">        @param job_id str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.empty"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.empty">[docs]</a>    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns True if there are no eva.job.Job objects connected to</span>
+<span class="sd">        this event queue item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.job_keys"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.job_keys">[docs]</a>    <span class="k">def</span> <span class="nf">job_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns an ordered list of job ID&#39;s.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.failed_jobs"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.failed_jobs">[docs]</a>    <span class="k">def</span> <span class="nf">failed_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns a list of jobs that have failed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">job</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">failed</span><span class="p">()]</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.finished"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.finished">[docs]</a>    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns True if all jobs have finished, False otherwise.</span>
+<span class="sd">        @throws RuntimeError Thrown if this function is called on an event</span>
+<span class="sd">        queue item with zero associated jobs.</span>
+
+<span class="sd">        This function must only be called if this EventQueueItem object</span>
+<span class="sd">        contains jobs, otherwise an exception will be thrown.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;finished() should not be called on an EventQueueItem with zero jobs&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">finished</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="EventQueueItem.serialize"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueueItem.serialize">[docs]</a>    <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns a serialized representation of this event queue item,</span>
+<span class="sd">        suitable for storage in ZooKeeper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">serialized</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">serialized</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">message</span>
+        <span class="n">serialized</span><span class="p">[</span><span class="s1">&#39;job_keys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_keys</span><span class="p">()</span>
+        <span class="n">serialized</span><span class="p">[</span><span class="s1">&#39;jobs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">serialized</span><span class="p">[</span><span class="s1">&#39;jobs&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">,</span>
+                <span class="s1">&#39;pid&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span>
+                <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">serialized</span></div>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns an iterator to this event queue item&#39;s eva.job.Job</span>
+<span class="sd">        objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns the total number of jobs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns a string representation of this object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;EventQueueItem: event.id=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="EventQueue"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue">[docs]</a><span class="k">class</span> <span class="nc">EventQueue</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">globe</span><span class="o">.</span><span class="n">GlobalMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">    @brief Manages events under processing, in a queue mirrored to ZooKeeper.</span>
+
+<span class="sd">    ZooKeeper paths:</span>
+
+<span class="sd">    * `/events`</span>
+
+<span class="sd">      A list of event IDs referring to individual ZooKeeper paths. This list</span>
+<span class="sd">      exists only in order to detect which events are in the processing list.</span>
+
+<span class="sd">    * `/events/&lt;EVENT_UUID&gt;`</span>
+
+<span class="sd">      A list of jobs IDs, referring to jobs that have been initialized from</span>
+<span class="sd">      this particular event. This list exists only in order to detect which</span>
+<span class="sd">      jobs are in the processing list.</span>
+
+<span class="sd">    * `/events/&lt;EVENT_UUID&gt;/message`</span>
+
+<span class="sd">      The raw message string for an event, as received on the wire. Used for</span>
+<span class="sd">      reconstructing event objects in case of a program crash or adapter</span>
+<span class="sd">      failure.</span>
+
+<span class="sd">    * `/events/&lt;EVENT_UUID&gt;/&lt;JOB_UUID&gt;/status`</span>
+
+<span class="sd">      The job status of this job.</span>
+
+<span class="sd">    * `/events/&lt;EVENT_UUID&gt;/&lt;JOB_UUID&gt;/pid`</span>
+
+<span class="sd">      The process ID of this job.</span>
+
+<span class="sd">    * `/events/&lt;EVENT_UUID&gt;/&lt;JOB_UUID&gt;/adapter`</span>
+
+<span class="sd">      The adapter that owns this job.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EventQueue.zk_get_serialized"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.zk_get_serialized">[docs]</a>    <span class="k">def</span> <span class="nf">zk_get_serialized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Read serialized JSON data from a ZooKeeper path, and return its contents unserialized.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EventQueue.zk_get_str"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.zk_get_str">[docs]</a>    <span class="k">def</span> <span class="nf">zk_get_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Read data from a ZooKeeper path, and return its contents as a string.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+<span class="sd">        @returns str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">stat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zookeeper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">decoded</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Reading ZooKeeper node </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">decoded</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">decoded</span></div>
+
+<div class="viewcode-block" id="EventQueue.zk_immediate_store_disable"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.zk_immediate_store_disable">[docs]</a>    <span class="k">def</span> <span class="nf">zk_immediate_store_disable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Disable automatic event queue storage in ZooKeeper. Use this</span>
+<span class="sd">        when loading data while populating the event queue, and you do not want</span>
+<span class="sd">        to touch existing data in the process.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Disabled automatic event queue storing in ZooKeeper.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zk_store_immediately</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="EventQueue.zk_immediate_store_enable"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.zk_immediate_store_enable">[docs]</a>    <span class="k">def</span> <span class="nf">zk_immediate_store_enable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Enable automatic event queue storage in ZooKeeper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Enabled automatic event queue storing in ZooKeeper.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zk_store_immediately</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="EventQueue.get_stored_queue"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.get_stored_queue">[docs]</a>    <span class="k">def</span> <span class="nf">get_stored_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Return an ordered dictionary that contains a serialized, stored event queue from ZooKeeper.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+<span class="sd">        @returns collections.OrderedDict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">event_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_serialized</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zk_base_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">event_keys</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">items</span>
+        <span class="k">for</span> <span class="n">event_key</span> <span class="ow">in</span> <span class="n">event_keys</span><span class="p">:</span>
+            <span class="n">event_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zk_base_path</span><span class="p">,</span> <span class="n">event_key</span><span class="p">)</span>
+            <span class="n">message_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">event_path</span><span class="p">,</span> <span class="s1">&#39;message&#39;</span><span class="p">)</span>
+            <span class="n">jobs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">event_path</span><span class="p">,</span> <span class="s1">&#39;jobs&#39;</span><span class="p">)</span>
+            <span class="n">job_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_serialized</span><span class="p">(</span><span class="n">jobs_path</span><span class="p">)</span>
+            <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_serialized</span><span class="p">(</span><span class="n">message_path</span><span class="p">)</span>
+            <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;jobs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">job_keys</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">job_key</span> <span class="ow">in</span> <span class="n">job_keys</span><span class="p">:</span>
+                <span class="n">job_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">jobs_path</span><span class="p">,</span> <span class="n">job_key</span><span class="p">)</span>
+                <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;jobs&#39;</span><span class="p">][</span><span class="n">job_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">field_key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;adapter&#39;</span><span class="p">,</span> <span class="s1">&#39;pid&#39;</span><span class="p">]:</span>
+                    <span class="n">field_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job_path</span><span class="p">,</span> <span class="n">field_key</span><span class="p">)</span>
+                    <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;jobs&#39;</span><span class="p">][</span><span class="n">job_key</span><span class="p">][</span><span class="n">field_key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_serialized</span><span class="p">(</span><span class="n">field_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">items</span></div>
+
+<div class="viewcode-block" id="EventQueue.init"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Instantiate the event queue.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#! An ordered dictionary of EventQueueItem objects.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="c1">#! Base ZooKeeper path of the event queue.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zk_base_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zookeeper</span><span class="o">.</span><span class="n">EVA_BASE_PATH</span><span class="p">,</span> <span class="s1">&#39;events&#39;</span><span class="p">)</span>
+        <span class="c1">#! If set to True, saved items will be stored in ZooKeeper immediately.</span>
+        <span class="c1">#! Toggled with zk_immediate_store_disable() and</span>
+        <span class="c1">#! zk_immediate_store_enable().</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zk_store_immediately</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zookeeper</span><span class="o">.</span><span class="n">ensure_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zk_base_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EventQueue.add_event"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.add_event">[docs]</a>    <span class="k">def</span> <span class="nf">add_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Add an event to the event queue.</span>
+<span class="sd">        @param event eva.event.Event</span>
+<span class="sd">        @throws eva.exceptions.DuplicateEventException Thrown when the event already exists in the event queue.</span>
+<span class="sd">        @throws eva.exceptions.ZooKeeperDataTooLargeException Thrown when the payload is too large for ZooKeeper storage.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+
+<span class="sd">        The event will be stored in ZooKeeper as soon as it is added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span>
+
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">DuplicateEventException</span><span class="p">(</span><span class="s1">&#39;Event </span><span class="si">%s</span><span class="s1"> already exists in the event queue.&#39;</span> <span class="o">%</span> <span class="nb">id</span><span class="p">)</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">EventQueueItem</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_store_immediately</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: added to event queue&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">item</span></div>
+
+<div class="viewcode-block" id="EventQueue.adapter_active_job_count"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.adapter_active_job_count">[docs]</a>    <span class="k">def</span> <span class="nf">adapter_active_job_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adapter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns the number of active jobs for a specific adapter.</span>
+<span class="sd">        @param adapter eva.base.adapter.BaseAdapter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">adapter</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">)</span>
+
+        <span class="n">active</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span> <span class="o">!=</span> <span class="n">adapter</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">started</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">running</span><span class="p">():</span>
+                    <span class="k">continue</span>
+                <span class="n">active</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">active</span></div>
+
+<div class="viewcode-block" id="EventQueue.status_count"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.status_count">[docs]</a>    <span class="k">def</span> <span class="nf">status_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Return a dictionary with status codes and the total number of</span>
+<span class="sd">        jobs in the event queue having that specific status.</span>
+<span class="sd">        @return dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">status_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">ALL_STATUSES</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">ALL_STATUSES</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+                <span class="n">status_map</span><span class="p">[</span><span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">status_map</span></div>
+
+<div class="viewcode-block" id="EventQueue.remove_item"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.remove_item">[docs]</a>    <span class="k">def</span> <span class="nf">remove_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Remove an EventQueueItem from the event queue.</span>
+<span class="sd">        @param item eva.eventqueue.EventQueueItem</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">EventQueueItem</span><span class="p">)</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">id</span><span class="p">()</span>
+        <span class="n">ephemeral</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ephemeral</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: event removed from event queue.&#39;</span> <span class="o">%</span> <span class="n">item</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_store_immediately</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ephemeral</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete_stored_item</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EventQueue.item_keys"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.item_keys">[docs]</a>    <span class="k">def</span> <span class="nf">item_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Return the list of eva.event.Event ID&#39;s currently in the event</span>
+<span class="sd">        queue. The list is guaranteed to have the same order as they were</span>
+<span class="sd">        added. Note that ephemeral events are not included in this list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ephemeral</span><span class="p">()]</span></div>
+
+<div class="viewcode-block" id="EventQueue.store_list"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.store_list">[docs]</a>    <span class="k">def</span> <span class="nf">store_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Store the list of event ID&#39;s in ZooKeeper.</span>
+<span class="sd">        @throws eva.exceptions.ZooKeeperDataTooLargeException Thrown when the payload is too large for ZooKeeper storage.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+
+<span class="sd">        EVA stores events in ZooKeeper under separate paths. ZooKeeper can not</span>
+<span class="sd">        provide a list of paths to the Kazoo client. Thus, a list of paths is</span>
+<span class="sd">        necessary for proper processing. This method ensures that this list is</span>
+<span class="sd">        stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_serialized_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zk_base_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_keys</span><span class="p">(),</span> <span class="n">metric_base</span><span class="o">=</span><span class="s1">&#39;event_queue&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EventQueue.store_item"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.store_item">[docs]</a>    <span class="k">def</span> <span class="nf">store_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Store a specific EventQueueItem in ZooKeeper. The EventQueueItem must already exist in the event queue.</span>
+<span class="sd">        @param item eva.eventqueue.EventQueueItem</span>
+<span class="sd">        @throws eva.exceptions.ZooKeeperDataTooLargeException Thrown when the payload is too large for ZooKeeper storage.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+
+<span class="sd">        The following information is stored:</span>
+
+<span class="sd">          * The initial Event message, useful for reconstructing the</span>
+<span class="sd">            eva.event.Event object.</span>
+<span class="sd">          * The list of job ID&#39;s connected to the event.</span>
+<span class="sd">          * An entry for each job that has been generated, containing the</span>
+<span class="sd">            adapter that generated the job, as well as the job&#39;s status code.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">EventQueueItem</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">item</span><span class="o">.</span><span class="n">id</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span>
+
+        <span class="c1"># Silently ignore ephemeral events</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ephemeral</span><span class="p">():</span>
+            <span class="k">return</span>
+
+        <span class="n">base_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zk_base_path</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">id</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zookeeper</span><span class="o">.</span><span class="n">ensure_path</span><span class="p">(</span><span class="n">base_path</span><span class="p">)</span>
+        <span class="n">serialized</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">serialize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_serialized_data</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="s1">&#39;message&#39;</span><span class="p">),</span> <span class="n">serialized</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_serialized_data</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="s1">&#39;jobs&#39;</span><span class="p">),</span> <span class="n">serialized</span><span class="p">[</span><span class="s1">&#39;job_keys&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">serialized</span><span class="p">[</span><span class="s1">&#39;jobs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="s1">&#39;jobs&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zookeeper</span><span class="o">.</span><span class="n">ensure_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field_key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;adapter&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;pid&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">store_serialized_data</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">field_key</span><span class="p">),</span> <span class="n">job</span><span class="p">[</span><span class="n">field_key</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_list</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EventQueue.delete_stored_item"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.delete_stored_item">[docs]</a>    <span class="k">def</span> <span class="nf">delete_stored_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Delete a EventQueueItem from ZooKeeper.</span>
+<span class="sd">        @param item_id str The Event ID.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zk_base_path</span><span class="p">,</span> <span class="n">item_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zookeeper</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Recursively deleted ZooKeeper path: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_list</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EventQueue.store_serialized_data"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.store_serialized_data">[docs]</a>    <span class="k">def</span> <span class="nf">store_serialized_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metric_base</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Store structured data in ZooKeeper.</span>
+<span class="sd">        @throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</span>
+
+<span class="sd">        In addition to ZooKeeper storage, this function will log the event to</span>
+<span class="sd">        the debug log, as well as report metrics for the stored item if</span>
+<span class="sd">        metric_base is not None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">count</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">zk</span><span class="o">.</span><span class="n">store_serialized_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zookeeper</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Stored </span><span class="si">%d</span><span class="s1"> items of total </span><span class="si">%d</span><span class="s1"> bytes at ZooKeeper path </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">metric_base</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">gauge</span><span class="p">(</span><span class="s1">&#39;eva_zk_&#39;</span> <span class="o">+</span> <span class="n">metric_base</span> <span class="o">+</span> <span class="s1">&#39;_count&#39;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">gauge</span><span class="p">(</span><span class="s1">&#39;eva_zk_&#39;</span> <span class="o">+</span> <span class="n">metric_base</span> <span class="o">+</span> <span class="s1">&#39;_size&#39;</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EventQueue.empty"><a class="viewcode-back" href="../../api/eventqueue.html#eva.eventqueue.EventQueue.empty">[docs]</a>    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns True if the event queue list is empty.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">)</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

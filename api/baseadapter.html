@@ -1,0 +1,466 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.base.adapter &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="up" title="API documentation" href="index.html" />
+    <link rel="next" title="eva.base.executor" href="baseexecutor.html" />
+    <link rel="prev" title="eva.exceptions" href="exceptions.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.base.adapter</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="exceptions.html">eva.exceptions</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="baseexecutor.html">eva.base.executor</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-eva.base.adapter">
+<span id="eva-base-adapter"></span><h1>eva.base.adapter<a class="headerlink" href="#module-eva.base.adapter" title="Permalink to this headline">¶</a></h1>
+<p>The Adapter is the single most important component of EVA. Adapters define how
+to convert a message about created or changed metadata into meaningful work.
+They are also responsible for creating metadata that should be posted back to
+Productstatus.</p>
+<dl class="class">
+<dt id="eva.base.adapter.BaseAdapter">
+<em class="property">class </em><code class="descclassname">eva.base.adapter.</code><code class="descname">BaseAdapter</code><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the adapter base class. All adapters must inherit this base class
+in order to function correctly.</p>
+<p>By deriving from this class, you may also use the following configuration
+variables. For a description of <cite>types</cite>, see the documentation for
+<a class="reference internal" href="config.html#eva.config.ConfigurableObject" title="eva.config.ConfigurableObject"><code class="xref py py-class docutils literal"><span class="pre">ConfigurableObject</span></code></a>.</p>
+<p>Variables marked as <cite>required</cite> <strong>must</strong> be configured, and <cite>optional</cite>
+<strong>can</strong> be configured. <cite>explicit</cite> variables are defined here for
+convenience, so that they can be re-used in subclasses with minimal code
+duplication.</p>
+<p>Variables starting with <code class="docutils literal"><span class="pre">input_</span></code> will be used to
+determine whether or not the adapter should process the incoming resource.</p>
+<table border="1" class="docutils" id="id1">
+<caption><span class="caption-text">Base configuration for all adapters</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="20%" />
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Inclusion</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>concurrency</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>1</td>
+<td>optional</td>
+<td>How many tasks that may run concurrently.</td>
+</tr>
+<tr class="row-odd"><td>executor</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_config_class" title="eva.config.ConfigurableObject.normalize_config_config_class"><code class="xref py py-meth docutils literal"><span class="pre">config_class</span></code></a></td>
+<td>(empty)</td>
+<td>required</td>
+<td>Which <a class="reference internal" href="baseexecutor.html#eva.base.executor.BaseExecutor" title="eva.base.executor.BaseExecutor"><code class="xref py py-class docutils literal"><span class="pre">Executor</span></code></a> to use.</td>
+</tr>
+<tr class="row-even"><td>input_data_format</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_list_string" title="eva.config.ConfigurableObject.normalize_config_list_string"><code class="xref py py-meth docutils literal"><span class="pre">list_string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>Only process resources with the specified data format(s).</td>
+</tr>
+<tr class="row-odd"><td>input_partial</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_null_bool" title="eva.config.ConfigurableObject.normalize_config_null_bool"><code class="xref py py-meth docutils literal"><span class="pre">null_bool</span></code></a></td>
+<td>NO</td>
+<td>optional</td>
+<td>Only process resources that are either
+marked as partial (<cite>YES</cite>) or
+<em>not</em> marked as partial (<cite>NO</cite>).
+A null value means that the partial flag is ignored.</td>
+</tr>
+<tr class="row-even"><td>input_product</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_list_string" title="eva.config.ConfigurableObject.normalize_config_list_string"><code class="xref py py-meth docutils literal"><span class="pre">list_string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>Only process resources derived from the specified product(s).</td>
+</tr>
+<tr class="row-odd"><td>input_reference_hours</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_list_int" title="eva.config.ConfigurableObject.normalize_config_list_int"><code class="xref py py-meth docutils literal"><span class="pre">list_int</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>Only process resources where the ProductInstance reference hour
+matches any of the input values. An empty value will ignore
+the reference hour.</td>
+</tr>
+<tr class="row-even"><td>input_service_backend</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_list_string" title="eva.config.ConfigurableObject.normalize_config_list_string"><code class="xref py py-meth docutils literal"><span class="pre">list_string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>Only process resources with th e specified service backend(s).</td>
+</tr>
+<tr class="row-odd"><td>input_with_hash</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_null_bool" title="eva.config.ConfigurableObject.normalize_config_null_bool"><code class="xref py py-meth docutils literal"><span class="pre">null_bool</span></code></a></td>
+<td>NULL</td>
+<td>optional</td>
+<td>Only process resources that either
+have a checksum hash stored (<cite>YES</cite>) or
+does <em>not</em> have a checksum hash stored (<cite>NO</cite>).
+A null value means that the hash is ignored.</td>
+</tr>
+<tr class="row-even"><td>output_base_url</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>explicit</td>
+<td>The base URL for any output files generated.
+<strong>THIS VARIABLE IS DEPRECATED.</strong></td>
+</tr>
+<tr class="row-odd"><td>output_data_format</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>explicit</td>
+<td>The data format for any output files generated.</td>
+</tr>
+<tr class="row-even"><td>output_filename_pattern</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>explicit</td>
+<td>The filename pattern for any output files generated.</td>
+</tr>
+<tr class="row-odd"><td>output_lifetime</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>(empty)</td>
+<td>explicit</td>
+<td>Lifetime, in hours, for any output files generated.
+Defines how long the output files <em>must</em> live.
+A null value specifies that the output files must live forever.</td>
+</tr>
+<tr class="row-even"><td>output_product</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>explicit</td>
+<td>The product name for any output files generated.</td>
+</tr>
+<tr class="row-odd"><td>output_service_backend</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>explicit</td>
+<td>The service backend for any output files generated.</td>
+</tr>
+<tr class="row-even"><td>reference_time_threshold</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>0</td>
+<td>optional</td>
+<td>Never process resources whose reference time is older than N seconds.
+A value of zero specifies that the reference time is ignored.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.adapter_init">
+<code class="descname">adapter_init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.adapter_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.adapter_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a place for subclasses to initialize themselves. By default,
+this function does nothing.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eva.base.adapter.BaseAdapter.api">
+<code class="descname">api</code><a class="headerlink" href="#eva.base.adapter.BaseAdapter.api" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Productstatus API instance that is used by this adapter.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.blacklist_add">
+<code class="descname">blacklist_add</code><span class="sig-paren">(</span><em>uuid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.blacklist_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.blacklist_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Add a resource UUID to the blacklist. Once added to the
+blacklist, no ProductInstance with this UUID will be processed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.clear_required_uuids">
+<code class="descname">clear_required_uuids</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.clear_required_uuids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.clear_required_uuids" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Delete all UUIDs from the required UUID set.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eva.base.adapter.BaseAdapter.concurrency">
+<code class="descname">concurrency</code><a class="headerlink" href="#eva.base.adapter.BaseAdapter.concurrency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of jobs that this adapter should run concurrently.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.create_job">
+<code class="descname">create_job</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.create_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.create_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Perform any action based on a Productstatus resource. The
+resource is guaranteed to be validated against input configuration.
+&#64;type job eva.job.Job
+&#64;param job The Job object to be operated on.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.create_logger">
+<code class="descname">create_logger</code><span class="sig-paren">(</span><em>logger</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.create_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.create_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiates and returns a custom log adapter that will be used for log
+output by this adapter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>logger</strong> (<em>logging.Logger</em>) &#8211; parent logging object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">logging.Logger</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a new log adapter.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.datainstance_has_required_uuids">
+<code class="descname">datainstance_has_required_uuids</code><span class="sig-paren">(</span><em>datainstance</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.datainstance_has_required_uuids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.datainstance_has_required_uuids" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns True if the DataInstance or any of its parents or children
+have the specified UUID as their primary key.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.base.adapter.BaseAdapter.default_resource_dictionary">
+<em class="property">static </em><code class="descname">default_resource_dictionary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.default_resource_dictionary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.default_resource_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns a dictionary of resource types that will be populated with generate_resources().</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eva.base.adapter.BaseAdapter.executor">
+<code class="descname">executor</code><a class="headerlink" href="#eva.base.adapter.BaseAdapter.executor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the <a class="reference internal" href="baseexecutor.html#eva.base.executor.BaseExecutor" title="eva.base.executor.BaseExecutor"><code class="xref py py-class docutils literal"><span class="pre">Executor</span></code></a> instance for this adapter.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.expiry_from_hours">
+<code class="descname">expiry_from_hours</code><span class="sig-paren">(</span><em>hours</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.expiry_from_hours"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.expiry_from_hours" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns a DateTime object representing an absolute DataInstance expiry
+time, calculated from the current time.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.expiry_from_lifetime">
+<code class="descname">expiry_from_lifetime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.expiry_from_lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.expiry_from_lifetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns a DateTime object representing an absolute DataInstance expiry
+time, based on the output_lifetime environment variable. If the
+variable is not set, this function returns None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.finish_job">
+<code class="descname">finish_job</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.finish_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.finish_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief After a task has been executed by the Executor, call this
+function in order to take action based on the data generated by the
+finished job.
+&#64;type job eva.job.Job
+&#64;param job The Job object to be operated on.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.forward_to_uuid">
+<code class="descname">forward_to_uuid</code><span class="sig-paren">(</span><em>uuid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.forward_to_uuid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.forward_to_uuid" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Instruct the adapter to ignore messages that do not refer to the
+specified UUID through either its own ID or any child or parent IDs.
+This parameter is deleted once a valid message is accepted for
+processing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.generate_and_post_resources">
+<code class="descname">generate_and_post_resources</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.generate_and_post_resources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.generate_and_post_resources" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Given a finished Job object, post information to Productstatus
+about newly created resources. Performs a number of sanity checks
+before posting any information.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.generate_resources">
+<code class="descname">generate_resources</code><span class="sig-paren">(</span><em>job</em>, <em>resources</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.generate_resources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.generate_resources" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Generate Productstatus resources based on finished job output.
+&#64;param resources Dictionary with resource types that can be populated by the subclass implementation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.has_output_lifetime">
+<code class="descname">has_output_lifetime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.has_output_lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.has_output_lifetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns True if a DataInstance lifetime is specified, false otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.has_productstatus_credentials">
+<code class="descname">has_productstatus_credentials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.has_productstatus_credentials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.has_productstatus_credentials" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;return True if the adapter is configured with a user name and API key
+to Productstatus, False otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.init">
+<code class="descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize base adapter functionality such as logging, blacklist,
+template environment, and so forth.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.is_blacklisted">
+<code class="descname">is_blacklisted</code><span class="sig-paren">(</span><em>uuid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.is_blacklisted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.is_blacklisted" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns True if a resource UUID is blacklisted, False otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.is_in_required_uuids">
+<code class="descname">is_in_required_uuids</code><span class="sig-paren">(</span><em>uuid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.is_in_required_uuids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.is_in_required_uuids" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns True if self.required_uuids is empty or the specified UUID is
+in that set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.post_resources">
+<code class="descname">post_resources</code><span class="sig-paren">(</span><em>job</em>, <em>resources</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.post_resources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.post_resources" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Post information about a finished job to Productstatus. Takes a
+dictionary of arrays of Resource or EvaluatedResource objects.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.post_to_productstatus">
+<code class="descname">post_to_productstatus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.post_to_productstatus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.post_to_productstatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns True if this adapter has sufficient configuration to be
+able to post to Productstatus, False otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.reference_time_threshold">
+<code class="descname">reference_time_threshold</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.reference_time_threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.reference_time_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Return a DateTime object which represent the oldest reference time that will be processed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.remove_required_uuid">
+<code class="descname">remove_required_uuid</code><span class="sig-paren">(</span><em>uuid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.remove_required_uuid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.remove_required_uuid" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Delete an UUID from the required UUID set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.require_productstatus_credentials">
+<code class="descname">require_productstatus_credentials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.require_productstatus_credentials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.require_productstatus_credentials" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Raise an exception if Productstatus credentials are not configured.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.resource_matches_hash_config">
+<code class="descname">resource_matches_hash_config</code><span class="sig-paren">(</span><em>resource</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.resource_matches_hash_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.resource_matches_hash_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+Returns true if one of the following criteria matches:</p>
+<ul class="simple">
+<li>DataInstance.hash is NULL, and input_with_hash is set to NO</li>
+<li>DataInstance.hash populated, and input_with_hash is set to YES</li>
+<li>input_with_hash is unset</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.resource_matches_input_config">
+<code class="descname">resource_matches_input_config</code><span class="sig-paren">(</span><em>resource</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.resource_matches_input_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.resource_matches_input_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Check that a Productstatus resource matches the configured
+processing criteria.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.base.adapter.BaseAdapter.validate_resource">
+<code class="descname">validate_resource</code><span class="sig-paren">(</span><em>resource</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/base/adapter.html#BaseAdapter.validate_resource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.base.adapter.BaseAdapter.validate_resource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the provided Resource matches this adapter&#8217;s processing criteria.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>resource</strong> (<em>productstatus.api.Resource</em>) &#8211; a Productstatus resource instance.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="exceptions.html">eva.exceptions</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="baseexecutor.html">eva.base.executor</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

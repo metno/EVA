@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Metrics &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="index.html" />
+    <link rel="next" title="HTTP REST API" href="restapi.html" />
+    <link rel="prev" title="Tutorial" href="tutorial.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>Metrics</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="tutorial.html">Tutorial</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="restapi.html">HTTP REST API</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="metrics">
+<h1>Metrics<a class="headerlink" href="#metrics" title="Permalink to this headline">¶</a></h1>
+<p>EVA regularly reports metrics to a StatsD server. See the <a class="reference internal" href="configuration.html"><span class="doc">Configuration</span></a>
+section for how to set up configuration for StatsD.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="7%" />
+<col width="7%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Metric</th>
+<th class="head">Type</th>
+<th class="head">Tags</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>eva_adapter_count</td>
+<td>gauge</td>
+<td>&nbsp;</td>
+<td>Adapters that are configured to run, and accepting events.</td>
+</tr>
+<tr class="row-odd"><td>eva_event_queue_count</td>
+<td>gauge</td>
+<td>&nbsp;</td>
+<td>Events present in the event queue, either pending processing, or having jobs that are being processed.</td>
+</tr>
+<tr class="row-even"><td>eva_job_status_count</td>
+<td>gauge</td>
+<td>status</td>
+<td>Jobs that are instantiated.</td>
+</tr>
+<tr class="row-odd"><td>eva_zk_*_count</td>
+<td>gauge</td>
+<td>&nbsp;</td>
+<td>Items stored as ZooKeeper serialized data, for the specific variable.</td>
+</tr>
+<tr class="row-even"><td>eva_zk_*_size</td>
+<td>gauge</td>
+<td>&nbsp;</td>
+<td>Bytes stored in ZooKeeper, for the specific variable.</td>
+</tr>
+<tr class="row-odd"><td>eva_deleted_datainstances</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>DataInstance resources marked as <em>deleted</em> by <code class="xref py py-class docutils literal"><span class="pre">DeleteAdapter</span></code>.</td>
+</tr>
+<tr class="row-even"><td>eva_event_accepted</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Events that resulted in one or more jobs being generated.</td>
+</tr>
+<tr class="row-odd"><td>eva_event_duplicate</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Events received that was already present in the event queue at the time of arrival.</td>
+</tr>
+<tr class="row-even"><td>eva_event_heartbeat</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Heartbeat events received.</td>
+</tr>
+<tr class="row-odd"><td>eva_event_productstatus</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Productstatus events received.</td>
+</tr>
+<tr class="row-even"><td>eva_event_received</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Events received, regardless of type.</td>
+</tr>
+<tr class="row-odd"><td>eva_event_rejected</td>
+<td>counter</td>
+<td>adapter</td>
+<td>Events that did not result in any job generation.</td>
+</tr>
+<tr class="row-even"><td>eva_event_too_old</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Events that were older than the <em>message timestamp threshold</em>.</td>
+</tr>
+<tr class="row-odd"><td>eva_event_version_unsupported</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Events discarded because of a mismatch in message protocol version.</td>
+</tr>
+<tr class="row-even"><td>eva_job_failures</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Jobs that had some kind of processing failure.</td>
+</tr>
+<tr class="row-odd"><td>eva_job_status_change</td>
+<td>counter</td>
+<td>status,
+adapter</td>
+<td>Status changes for a job belonging to a specific <code class="docutils literal"><span class="pre">adapter</span></code>, to the status reported in <code class="docutils literal"><span class="pre">status</span></code>.</td>
+</tr>
+<tr class="row-even"><td>eva_kafka_commit_failed</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Kafka message queue position commit errors.</td>
+</tr>
+<tr class="row-odd"><td>eva_kafka_no_brokers_available</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Connection loss against all Kafka message queue brokers.</td>
+</tr>
+<tr class="row-even"><td>eva_md5sum_fail</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Files on filesystem that had a mis-match with their md5sum counterpart. Reported by <code class="xref py py-class docutils literal"><span class="pre">ChecksumVerificationAdapter</span></code>.</td>
+</tr>
+<tr class="row-odd"><td>eva_recoverable_exceptions</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Times job processing was aborted internally in some way because of a network or other transient error.</td>
+</tr>
+<tr class="row-even"><td>eva_requeue_rejected</td>
+<td>counter</td>
+<td>adapter</td>
+<td>Jobs that was attempted re-queued, but rejected for re-processing by the owning adapter.</td>
+</tr>
+<tr class="row-odd"><td>eva_requeued_jobs</td>
+<td>counter</td>
+<td>adapter</td>
+<td>Jobs that was re-queued after a previous failure.</td>
+</tr>
+<tr class="row-even"><td>eva_resource_object_version_too_old</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Events that was rejected because the Productstatus resource was updated again before EVA could process the original resource.</td>
+</tr>
+<tr class="row-odd"><td>eva_restored_events</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Events restored from the ZooKeeper cache upon starting EVA from a crashed state.</td>
+</tr>
+<tr class="row-even"><td>eva_restored_jobs</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Jobs restored from the ZooKeeper cache upon starting EVA from a crashed state.</td>
+</tr>
+<tr class="row-odd"><td>eva_shutdown</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>EVA program shutdowns.</td>
+</tr>
+<tr class="row-even"><td>eva_start</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>EVA program startups.</td>
+</tr>
+<tr class="row-odd"><td>eva_zookeeper_connection_loss</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Times the ZooKeeper connection was irrecoverably lost.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="tutorial.html">Tutorial</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="restapi.html">HTTP REST API</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

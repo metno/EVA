@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configuration &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="index.html" />
+    <link rel="next" title="Configuration directives" href="variables.html" />
+    <link rel="prev" title="Development" href="development.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>Configuration</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="development.html">Development</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="variables.html">Configuration directives</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="configuration">
+<h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
+<p>Event Adapter is configured using INI configuration files. There is no implicit
+configuration file location, so it must be specified using the command line:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python -m eva --config &lt;PATH&gt; <span class="o">[</span>--config &lt;PATH&gt;<span class="o">]</span> <span class="o">[</span>...<span class="o">]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">PATH</span></code> can be either a file or a directory. In case <code class="docutils literal"><span class="pre">PATH</span></code> is a directory,
+the entire directory is recursively scanned for configuration files. All
+configuration files must end with <code class="docutils literal"><span class="pre">.ini</span></code>, all other files are ignored.</p>
+<p>When all the configuration file paths have been resolved, they are merged
+internally into one big configuration file. This implies that section names
+must be unique, but grants you the ability to add references to configuration
+sections that are present only in another file.</p>
+<div class="section" id="configuration-file-format">
+<h2>Configuration file format<a class="headerlink" href="#configuration-file-format" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s start with the most basic configuration that EVA will accept.
+Configuration variables are grouped in sections, and sections can be
+cross-referenced where applicable.</p>
+<div class="literal-block-wrapper container" id="id1">
+<div class="code-block-caption"><span class="caption-text">eva-config/base.ini</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[eva]</span>
+<span class="na">listeners</span> <span class="o">=</span> <span class="s">listener.productstatus</span>
+<span class="na">mailer</span> <span class="o">=</span> <span class="s">mailer.default</span>
+<span class="na">productstatus</span> <span class="o">=</span> <span class="s">productstatus.localhost</span>
+<span class="na">rest_server</span> <span class="o">=</span> <span class="s">rest.api</span>
+<span class="na">statsd</span> <span class="o">=</span> <span class="s">127.0.0.1:8125</span>
+<span class="na">zookeeper</span> <span class="o">=</span> <span class="s">127.0.0.1:2181/eva</span>
+
+<span class="k">[rest.api]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.rest.Server</span>
+
+<span class="k">[productstatus.localhost]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.incubator.Productstatus</span>
+<span class="na">url</span> <span class="o">=</span> <span class="s">http://127.0.0.1:8000</span>
+
+<span class="k">[mailer.default]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.mail.Mailer</span>
+<span class="na">enabled</span> <span class="o">=</span> <span class="s">NO</span>
+<span class="na">smtp_host</span> <span class="o">=</span> <span class="s">127.0.0.1</span>
+<span class="na">recipients</span> <span class="o">=</span> <span class="s">me@example.com</span>
+<span class="na">from</span> <span class="o">=</span> <span class="s">eva@example.com</span>
+
+<span class="k">[listener.productstatus]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.listener.ProductstatusListener</span>
+</pre></div>
+</div>
+</div>
+<p>First, we define the <code class="docutils literal"><span class="pre">[eva]</span></code> section. This is the top-level configuration,
+and requires a definition of global clients that should be instantiated upon
+startup.</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">listeners</span></code>: a section reference to one or more <code class="docutils literal"><span class="pre">Listener</span></code> classes.</li>
+<li><code class="docutils literal"><span class="pre">mailer</span></code>: a section reference to a <code class="docutils literal"><span class="pre">Mailer</span></code> class.</li>
+<li><code class="docutils literal"><span class="pre">productstatus</span></code>: a section reference to a <code class="docutils literal"><span class="pre">Productstatus</span></code> class.</li>
+<li><code class="docutils literal"><span class="pre">statsd</span></code>: comma-delimited <code class="docutils literal"><span class="pre">HOST:PORT</span></code> pairs to <a class="reference external" href="https://github.com/influxdata/telegraf/tree/master/plugins/inputs/statsd">StatsD</a> servers.</li>
+<li><code class="docutils literal"><span class="pre">zookeeper</span></code>: ZooKeeper connection string.</li>
+</ul>
+</div></blockquote>
+<p>Here&#8217;s a more advanced example. Note that the configuration from the previous
+example is assumed to be automatically included in this example. This example
+uses section inheritance and default parameters.</p>
+<div class="literal-block-wrapper container" id="id2">
+<div class="code-block-caption"><span class="caption-text">eva-config/advanced.ini</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[executor.grid_engine]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.executor.GridEngineExecutor</span>
+<span class="na">ssh_host</span> <span class="o">=</span> <span class="s">example.com</span>
+<span class="na">ssh_key_file</span> <span class="o">=</span> <span class="s">/home/user/.ssh/id_rsa</span>
+<span class="na">ssh_user</span> <span class="o">=</span> <span class="s">user</span>
+
+<span class="k">[defaults.adapter]</span>
+<span class="na">abstract</span> <span class="o">=</span> <span class="s">true</span>
+<span class="na">executor</span> <span class="o">=</span> <span class="s">executor.grid_engine</span>
+
+<span class="k">[include.adapter.a]</span>
+<span class="na">abstract</span> <span class="o">=</span> <span class="s">true</span>
+<span class="na">input_service_backend</span> <span class="o">=</span> <span class="s">backend-a</span>
+<span class="na">output_service_backend</span> <span class="o">=</span> <span class="s">backend-a</span>
+
+<span class="k">[include.adapter.b]</span>
+<span class="na">abstract</span> <span class="o">=</span> <span class="s">true</span>
+<span class="na">input_service_backend</span> <span class="o">=</span> <span class="s">backend-b</span>
+<span class="na">output_service_backend</span> <span class="o">=</span> <span class="s">backend-b</span>
+
+<span class="k">[adapter.foo.a]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.ExampleAdapter</span>
+<span class="na">include</span> <span class="o">=</span> <span class="s">include.adapter.a</span>
+<span class="na">input_file_format</span> <span class="o">=</span> <span class="s">grib</span>
+
+<span class="k">[adapter.foo.b]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.ExampleAdapter</span>
+<span class="na">include</span> <span class="o">=</span> <span class="s">include.adapter.b</span>
+<span class="na">input_file_format</span> <span class="o">=</span> <span class="s">netcdf</span>
+</pre></div>
+</div>
+</div>
+<p>Here, we define two adapters that should be run, <code class="docutils literal"><span class="pre">adapter.foo.a</span></code> and
+<code class="docutils literal"><span class="pre">adapter.foo.b</span></code>. Both of these adapters will receive all events on the wire,
+and generate their own sets of jobs based on the events. We use default values
+and section inheritance to avoid duplicating configuration when many parameters
+are similar.</p>
+<p>The rendered configuration that EVA will see, looks like this:</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[executor.grid_engine]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.executor.GridEngineExecutor</span>
+<span class="na">ssh_host</span> <span class="o">=</span> <span class="s">example.com</span>
+<span class="na">ssh_key_file</span> <span class="o">=</span> <span class="s">/home/user/.ssh/id_rsa</span>
+<span class="na">ssh_user</span> <span class="o">=</span> <span class="s">user</span>
+
+<span class="k">[adapter.foo.a]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.ExampleAdapter</span>
+<span class="na">executor</span> <span class="o">=</span> <span class="s">executor.grid_engine</span>
+<span class="na">input_file_format</span> <span class="o">=</span> <span class="s">grib</span>
+<span class="na">input_service_backend</span> <span class="o">=</span> <span class="s">backend-a</span>
+<span class="na">output_service_backend</span> <span class="o">=</span> <span class="s">backend-a</span>
+
+<span class="k">[adapter.foo.b]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.ExampleAdapter</span>
+<span class="na">executor</span> <span class="o">=</span> <span class="s">executor.grid_engine</span>
+<span class="na">input_file_format</span> <span class="o">=</span> <span class="s">netcdf</span>
+<span class="na">input_service_backend</span> <span class="o">=</span> <span class="s">backend-b</span>
+<span class="na">output_service_backend</span> <span class="o">=</span> <span class="s">backend-b</span>
+</pre></div>
+</div>
+<p>For an explanation of the <code class="docutils literal"><span class="pre">abstract</span></code>, <code class="docutils literal"><span class="pre">class</span></code>, and <code class="docutils literal"><span class="pre">include</span></code> directives,
+please see <a class="reference internal" href="variables.html"><span class="doc">Configuration directives</span></a>.</p>
+<p>Please see the official Python documentation on <a class="reference external" href="https://docs.python.org/3/library/configparser.html#supported-ini-file-structure">INI file structure</a> in order
+to find information about formatting, comments, whitespace, and so forth.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="development.html">Development</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="variables.html">Configuration directives</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

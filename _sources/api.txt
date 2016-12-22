@@ -1,0 +1,6 @@
+Event Adpter API documentation
+==============================
+
+.. automodule:: eva
+   :members:
+

@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">dateutil.tz</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+
+
+<div class="viewcode-block" id="retry_n"><a class="viewcode-back" href="../api/eva.html#eva.retry_n">[docs]</a><span class="k">def</span> <span class="nf">retry_n</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">interval</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="ne">Exception</span><span class="p">,),</span> <span class="n">warning</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">give_up</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logging</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Call `func(*args, **kwargs)` and, if it throws anything listed in</span>
+<span class="sd">    `exceptions`, catch it and retry again, up to `give_up` times. If `give_up`</span>
+<span class="sd">    is `&lt;= 0`, retry indefinitely.</span>
+
+<span class="sd">    :param function func: the function to call.</span>
+<span class="sd">    :param tuple args: positional arguments to send with the function call.</span>
+<span class="sd">    :param dict kwargs: keyword arguments to send with the function call.</span>
+<span class="sd">    :param int interval: how long to wait between function calls.</span>
+<span class="sd">    :param tuple exceptions: tuple of exceptions to catch.</span>
+<span class="sd">    :param int warning: how many failures before escalating logging output to `WARNING`.</span>
+<span class="sd">    :param int error: how many failures before escalating logging output to `ERROR`.</span>
+<span class="sd">    :param int give_up: how many failures to tolerate before giving up.</span>
+<span class="sd">    :param logging.Logger logger: Logger object where failure messages are sent.</span>
+
+<span class="sd">    :raises AssertionError: if either `(error &gt; warning &gt; 0)` or `(give_up &gt; error or give_up &lt;= 0)` are False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">warning</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">error</span> <span class="o">&gt;</span> <span class="n">warning</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">give_up</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">give_up</span> <span class="o">&gt;</span> <span class="n">error</span><span class="p">)</span>
+    <span class="n">tries</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">tries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">give_up</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">tries</span> <span class="o">&gt;=</span> <span class="n">give_up</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Action failed </span><span class="si">%d</span><span class="s1"> times, giving up: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">give_up</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">tries</span> <span class="o">&gt;=</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">logfunc</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">error</span>
+            <span class="k">elif</span> <span class="n">tries</span> <span class="o">&gt;=</span> <span class="n">warning</span><span class="p">:</span>
+                <span class="n">logfunc</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">warning</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logfunc</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">info</span>
+            <span class="n">logfunc</span><span class="p">(</span><span class="s1">&#39;Action failed, retrying in </span><span class="si">%d</span><span class="s1"> seconds: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="import_module_class"><a class="viewcode-back" href="../api/eva.html#eva.import_module_class">[docs]</a><span class="k">def</span> <span class="nf">import_module_class</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import a Python module and return it to the caller.</span>
+
+<span class="sd">    :param str name: full dotted name to a Python module.</span>
+<span class="sd">    :rtype: module</span>
+<span class="sd">    :returns: the imported module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">modname</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">mod</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">modname</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">components</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">components</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="format_exception_as_bug"><a class="viewcode-back" href="../api/eva.html#eva.format_exception_as_bug">[docs]</a><span class="k">def</span> <span class="nf">format_exception_as_bug</span><span class="p">(</span><span class="n">exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format an exception backtrace into a list of lines.</span>
+
+<span class="sd">    :param Exception exception: the exception to return a backtrace from.</span>
+<span class="sd">    :rtype: list</span>
+<span class="sd">    :returns: a list of strings from the exception backtrace.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;Fatal error: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">exception</span><span class="p">]</span>
+    <span class="n">backtrace</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;***********************************************************&quot;</span><span class="p">]</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;Uncaught exception during program execution. THIS IS A BUG!&quot;</span><span class="p">]</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;***********************************************************&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">backtrace</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="n">line</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">lines</span></div>
+
+
+<div class="viewcode-block" id="print_and_mail_exception"><a class="viewcode-back" href="../api/eva.html#eva.print_and_mail_exception">[docs]</a><span class="k">def</span> <span class="nf">print_and_mail_exception</span><span class="p">(</span><span class="n">exception</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">mailer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print an exception with backtrace to a logging object, and send it as an</span>
+<span class="sd">    e-mail as well.</span>
+
+<span class="sd">    :param Exception exception: the exception instance.</span>
+<span class="sd">    :param logging.Logger logger: a Logger object used for printing the backtrace.</span>
+<span class="sd">    :param eva.mail.Mailer mailer: a Mailer object used for sending the backtrace.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">format_exception_as_bug</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="n">template_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;error_message&#39;</span><span class="p">:</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s1">&#39;backtrace&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">CRITICAL_ERROR_SUBJECT</span> <span class="o">%</span> <span class="n">template_params</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">CRITICAL_ERROR_TEXT</span> <span class="o">%</span> <span class="n">template_params</span>
+    <span class="n">mailer</span><span class="o">.</span><span class="n">send_email</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="in_array_or_empty"><a class="viewcode-back" href="../api/eva.html#eva.in_array_or_empty">[docs]</a><span class="k">def</span> <span class="nf">in_array_or_empty</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if `id` is found in `array`, or `array` is empty.</span>
+
+<span class="sd">    :param id: the member to check.</span>
+<span class="sd">    :param list array: the list to check.</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">id</span> <span class="ow">in</span> <span class="n">array</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="split_comma_separated"><a class="viewcode-back" href="../api/eva.html#eva.split_comma_separated">[docs]</a><span class="k">def</span> <span class="nf">split_comma_separated</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split a comma-separated string into a list of strings.</span>
+
+<span class="sd">    :param str string: string with comma-separated values.</span>
+<span class="sd">    :rtype: list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="url_to_filename"><a class="viewcode-back" href="../api/eva.html#eva.url_to_filename">[docs]</a><span class="k">def</span> <span class="nf">url_to_filename</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a file:// URL to a path name.</span>
+
+<span class="sd">    :param str url: URL starting with `file://`.</span>
+<span class="sd">    :raises RuntimeError: when the URL does not start with `file://`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="s1">&#39;file://&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">start</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Expected an URL starting with </span><span class="si">%s</span><span class="s1">, got </span><span class="si">%s</span><span class="s1"> instead&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">url</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">url</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">start</span><span class="p">):]</span></div>
+
+
+<div class="viewcode-block" id="strftime_iso8601"><a class="viewcode-back" href="../api/eva.html#eva.strftime_iso8601">[docs]</a><span class="k">def</span> <span class="nf">strftime_iso8601</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">null_string</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a DateTime object into an ISO8601 formatted string.</span>
+
+<span class="sd">    :param datetime.datetime.DateTime dt: DateTime object.</span>
+<span class="sd">    :param bool null_string: if True, print &quot;NULL&quot; instead of timestamp if not passed a DateTime object.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S%z&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">null_string</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;NULL&#39;</span>
+        <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="coerce_to_utc"><a class="viewcode-back" href="../api/eva.html#eva.coerce_to_utc">[docs]</a><span class="k">def</span> <span class="nf">coerce_to_utc</span><span class="p">(</span><span class="n">dt</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a copy of a DateTime object, where the timezone is set to UTC.</span>
+
+<span class="sd">    Any existing timezone information is lost in the conversion process.</span>
+
+<span class="sd">    :param datetime.datetime.DateTime dt: DateTime object.</span>
+<span class="sd">    :rtype: datetime.datetime.Datetime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">dateutil</span><span class="o">.</span><span class="n">tz</span><span class="o">.</span><span class="n">tzutc</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="now_with_timezone"><a class="viewcode-back" href="../api/eva.html#eva.now_with_timezone">[docs]</a><span class="k">def</span> <span class="nf">now_with_timezone</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a timezone-aware UTC DateTime object with the current time.</span>
+
+<span class="sd">    :rtype: datetime.datetime.Datetime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">coerce_to_utc</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="epoch_with_timezone"><a class="viewcode-back" href="../api/eva.html#eva.epoch_with_timezone">[docs]</a><span class="k">def</span> <span class="nf">epoch_with_timezone</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a timezone-aware DateTime object with timestamp zero.</span>
+
+<span class="sd">    :rtype: datetime.datetime.Datetime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">eva</span><span class="o">.</span><span class="n">coerce_to_utc</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="netcdf_time_to_timestamp"><a class="viewcode-back" href="../api/eva.html#eva.netcdf_time_to_timestamp">[docs]</a><span class="k">def</span> <span class="nf">netcdf_time_to_timestamp</span><span class="p">(</span><span class="n">time_string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses the &quot;ncdump -v -t time&quot; time string output to a DateTime object.</span>
+
+<span class="sd">    :param str time_string: single line of `ncdump` time string output.</span>
+<span class="sd">    :rtype: datetime.datetime.Datetime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_string</span><span class="o">.</span><span class="n">split</span><span class="p">())</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">time_string</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">time_string</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">coerce_to_utc</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="zookeeper_group_id"><a class="viewcode-back" href="../api/eva.html#eva.zookeeper_group_id">[docs]</a><span class="k">def</span> <span class="nf">zookeeper_group_id</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clean up a string so that it can be used as a Zookeeper path component.</span>
+
+<span class="sd">    :param str string: the string to convert.</span>
+<span class="sd">    :raises eva.exceptions.InvalidGroupIdException: when the converted string is not suitable for use in ZooKeeper.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">r&#39;[/\000]&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">g</span> <span class="o">==</span> <span class="n">b</span><span class="s1">&#39;zookeeper&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidGroupIdException</span><span class="p">(</span><span class="s1">&#39;The name &quot;zookeeper&quot; is reserved and cannot be used as a Zookeeper node name.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidGroupIdException</span><span class="p">(</span><span class="s1">&#39;The group id &quot;</span><span class="si">%s</span><span class="s1">&quot; translates to an empty string, which cannot be used as a Zookeeper node name.&#39;</span> <span class="o">%</span> <span class="n">string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="convert_to_bytes"><a class="viewcode-back" href="../api/eva.html#eva.convert_to_bytes">[docs]</a><span class="k">def</span> <span class="nf">convert_to_bytes</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">notation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a number into a string, representing a value in bytes, kilobytes,</span>
+<span class="sd">    megabytes, gigabytes, or terabytes.</span>
+
+<span class="sd">    :param int|float value: number to convert.</span>
+<span class="sd">    :param str notation: size wanted, one of B, K, M, G, T</span>
+<span class="sd">    :raises ValueError: when the notation parameter is not one of the pre-defined variables.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">notations</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">exp</span><span class="p">,</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">notations</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">notation</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="n">suffix</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="mi">1024</span> <span class="o">**</span> <span class="n">exp</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid data size notation </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">notation</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="log_productstatus_resource_info"><a class="viewcode-back" href="../api/eva.html#eva.log_productstatus_resource_info">[docs]</a><span class="k">def</span> <span class="nf">log_productstatus_resource_info</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">loglevel</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print information about a Productstatus resource to the log.</span>
+
+<span class="sd">    :param productstatus.api.Resource resource: a Productstatus resource instance.</span>
+<span class="sd">    :param logging.Logger logger: a Logger instance.</span>
+<span class="sd">    :param int loglevel: a :mod:`logging` module loglevel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span> <span class="s1">&#39;Resource: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">resource</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_resource_name</span> <span class="o">==</span> <span class="s1">&#39;datainstance&#39;</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span>
+               <span class="s1">&#39;Product: </span><span class="si">%s</span><span class="s1"> [</span><span class="si">%s</span><span class="s1">]&#39;</span><span class="p">,</span>
+               <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">product</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+               <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">product</span><span class="o">.</span><span class="n">slug</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span> <span class="s1">&#39;Data: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span> <span class="s1">&#39;ProductInstance: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span> <span class="s1">&#39;Data format: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">resource</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">slug</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span> <span class="s1">&#39;Service backend: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">resource</span><span class="o">.</span><span class="n">servicebackend</span><span class="o">.</span><span class="n">slug</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span> <span class="s1">&#39;Reference time: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">strftime_iso8601</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="p">,</span> <span class="n">null_string</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">loglevel</span><span class="p">,</span> <span class="s1">&#39;Time step: from </span><span class="si">%s</span><span class="s1"> to </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">strftime_iso8601</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">time_period_begin</span><span class="p">,</span> <span class="n">null_string</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">strftime_iso8601</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">time_period_end</span><span class="p">,</span> <span class="n">null_string</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

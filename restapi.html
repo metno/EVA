@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>HTTP REST API &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="index.html" />
+    <link rel="next" title="API documentation" href="api/index.html" />
+    <link rel="prev" title="Metrics" href="metrics.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>HTTP REST API</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="metrics.html">Metrics</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="api/index.html">API documentation</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="http-rest-api">
+<h1>HTTP REST API<a class="headerlink" href="#http-rest-api" title="Permalink to this headline">¶</a></h1>
+<p>EVA supports running a HTTP REST API which can be used for monitoring and
+controlling. This feature is enabled by providing the <code class="docutils literal"><span class="pre">--rest-server-port</span></code>
+argument when starting EVA:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python3 -m eva --rest-server-port 12345
+</pre></div>
+</div>
+<p>The above example will start the REST server on <code class="docutils literal"><span class="pre">0.0.0.0:12345</span></code>.</p>
+<div class="section" id="rpc-client">
+<h2>RPC Client<a class="headerlink" href="#rpc-client" title="Permalink to this headline">¶</a></h2>
+<p>To simplify the process of making requests to the API, EVA ships with a <code class="docutils literal"><span class="pre">rpc</span></code> tool:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>bin/rpc --server &lt;host:port&gt; --help
+</pre></div>
+</div>
+</div>
+<div class="section" id="health-checks">
+<h2>Health checks<a class="headerlink" href="#health-checks" title="Permalink to this headline">¶</a></h2>
+<p>Make a request to <code class="docutils literal"><span class="pre">/health</span></code>. If EVA reponds with a <code class="docutils literal"><span class="pre">2xx</span></code> status code, the
+system is functioning correctly. A code of <code class="docutils literal"><span class="pre">555</span></code> signals that the connection
+to the Kafka message queue has probably been lost, while any other error code
+means that the server is misbehaving or is buggy.</p>
+<p>You may also query the health using the RPC tool:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>bin/rpc health
+</pre></div>
+</div>
+</div>
+<div class="section" id="read-only-requests">
+<h2>Read-only requests<a class="headerlink" href="#read-only-requests" title="Permalink to this headline">¶</a></h2>
+<p>Read-only requests are done with a HTTP <code class="docutils literal"><span class="pre">GET</span></code> request. All read requests are
+publicly available. EVA will not expose any sensitive data through GET
+requests.</p>
+</div>
+<div class="section" id="write-requests">
+<h2>Write requests<a class="headerlink" href="#write-requests" title="Permalink to this headline">¶</a></h2>
+<p>Write requests are done with HTTP <code class="docutils literal"><span class="pre">POST</span></code>, <code class="docutils literal"><span class="pre">PUT</span></code>, <code class="docutils literal"><span class="pre">PATCH</span></code> and <code class="docutils literal"><span class="pre">DELETE</span></code>
+requests, and the payload for the request must be included as a JSON object.
+The <code class="docutils literal"><span class="pre">Content-Type</span></code> header must be set to <code class="docutils literal"><span class="pre">application/json</span></code>.</p>
+<p>Furthermore, write requests must be authenticated using a GPG signature. The
+GPG key IDs allowed to make requests must be added to the EVA configuration.</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[eva]</span>
+<span class="na">rest_server</span> <span class="o">=</span> <span class="s">rest.api</span>
+
+<span class="k">[rest.api]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.rest.Server</span>
+<span class="na">gpg_key_ids</span> <span class="o">=</span> <span class="s">12345678, 90ABCDEF</span>
+</pre></div>
+</div>
+<p>The client must generate a detached GPG signature of the JSON payload. The
+signature is then sent as HTTP headers along with the request. The GPG
+signature must be made within 2 seconds of the server time, or else the request
+will be rejected. This prevents, to a certain degree, request replay attacks.</p>
+<p>If you use the RPC client, all this will be handled for you. For instance, the
+following command:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>~/eva/bin/rpc control --drain
+</pre></div>
+</div>
+<p>...will generate the following HTTP conversation:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>&gt; POST /control/drain HTTP/1.1
+&gt; Host: localhost:8080
+&gt; Accept-Encoding: gzip, deflate
+&gt; Accept: */*
+&gt; Authorization: Basic bG9sZmFjZTphYmM=
+&gt; Connection: keep-alive
+&gt; Content-Length: 2
+&gt; Content-Type: application/json
+&gt; User-Agent: python-requests/2.9.1
+&gt; X-EVA-Request-Signature-001: -----BEGIN PGP SIGNATURE-----
+&gt; X-EVA-Request-Signature-002: Version: GnuPG v1
+&gt; X-EVA-Request-Signature-003:
+&gt; X-EVA-Request-Signature-004: iQIcBAABAgAGBQJYV7nHAAoJEIJRrk/X9SU7lUMQAK+6jOa0JH9UL9LcVX30qgpT
+&gt; X-EVA-Request-Signature-005: K3IFtkZXfbaPMdVtlfzeT8lcretFV93zFE7RrSYfvcXYGC9H6doEsKWX53EdYUeJ
+&gt; X-EVA-Request-Signature-006: 4PGU7DISRX4BBVM0b4+mnbU580JX73NhY1w0f/kXQQCoRIdJ87j+aihSEC7/LaIP
+&gt; X-EVA-Request-Signature-007: 1VlCf9H+R/qU6DmVRTQHrrY29WZxIig+r5vHzQOWijMv+YLEcAqy2c5zorvIuQlR
+&gt; X-EVA-Request-Signature-008: LsX02YHqqK1E6sOTSmJaXe6Se3DOB48N/LfTjRdCLHK4+X8HljHS9/hMyOSw1ebT
+&gt; X-EVA-Request-Signature-009: NVTzJ26Et1Sp4qA3rctaZoqGeIdnGo48WT+I7bzpG0TgtsHhqP/kTApdvimxLos+
+&gt; X-EVA-Request-Signature-010: xn97zJ7PRn4AdOm88RxwWkumTRMFXI9crjb5s0RtnJOiWTjsRkmuR3m+k2EbgHPD
+&gt; X-EVA-Request-Signature-011: e6aLRmUvPqmpZCKio8CHrGCBHm6DM/Xu7WwWyQfuB+8TtXSWysPm+Nr53/7vj+BO
+&gt; X-EVA-Request-Signature-012: cW2jmLPZF9sljWlep5ZKL8uHqBtgs+LytfQEhVobyfdC0fao8Hfpnjh9sb+jQZRE
+&gt; X-EVA-Request-Signature-013: RtqUie2OutJHaixRf3A83qtETaUMp8cpJty31DGaLzTuzSY6ISdzOxy/Hp0apowL
+&gt; X-EVA-Request-Signature-014: BlrEwHuxqyWyJKxS77VmkP59bbtlNh153BZlbjuLvmAb/nXJsR1xs4JB+pVQvp55
+&gt; X-EVA-Request-Signature-015: 0fmKDGP/1+s1WE58xh/r
+&gt; X-EVA-Request-Signature-016: =/zZr
+&gt; X-EVA-Request-Signature-017: -----END PGP SIGNATURE-----
+&gt;
+&gt; {}
+
+&lt; HTTP/1.0 200 OK
+&lt; Date: Mon, 19 Dec 2016 10:43:19 GMT
+&lt; Server: WSGIServer/0.2 CPython/3.4.3
+&lt; content-type: application/json; charset=UTF-8
+&lt; content-length: 38
+&lt;
+&lt; {&quot;message&quot;: &quot;Drain has been enabled.&quot;}
+</pre></div>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="metrics.html">Metrics</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="api/index.html">API documentation</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

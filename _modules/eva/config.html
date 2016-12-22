@@ -1,0 +1,501 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.config &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../index.html" />
+    <link rel="up" title="eva" href="../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.config</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Configuration module, containing classes necessary for automatic configuration</span>
+<span class="sd">of objects from a configuration file.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+
+
+<span class="c1">#: list of configuration options that shall be censored from log output.</span>
+<span class="n">SECRET_CONFIGURATION</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;api_key&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="resolved_config_section"><a class="viewcode-back" href="../../api/config.html#eva.config.resolved_config_section">[docs]</a><span class="k">def</span> <span class="nf">resolved_config_section</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">section_keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_defaults</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recursively pull in includes and defaults for a configuration section, and</span>
+<span class="sd">    combine them into a single dictionary.</span>
+
+<span class="sd">    This function provides infinite recursion protection, guaranteeing that a</span>
+<span class="sd">    single configuration section will be read only once.</span>
+
+<span class="sd">    :param configparser.ConfigParser section: reference to a configuration parser.</span>
+<span class="sd">    :param list section_keys: list of section keys already parsed, used for infinite recursion protection.</span>
+<span class="sd">    :param bool ignore_defaults: whether or not to include the &#39;defaults.&lt;SECTION-BASENAME&gt;&#39; configuration section.</span>
+<span class="sd">    :raises eva.exceptions.MissingConfigurationSectionException: when the configuration section does not exist.</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    :returns: dictionary of configuration values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># Workaround greedy default parameter value</span>
+    <span class="c1"># http://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument</span>
+    <span class="k">if</span> <span class="n">section_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">section_keys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">section_keys</span> <span class="o">+=</span> <span class="p">[</span><span class="n">section</span><span class="p">]</span>
+    <span class="n">section_keys</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">section_keys</span><span class="p">)))</span> <span class="o">!=</span> <span class="n">section_keys</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Multiple inheritance of the same base object detected: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">section</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">section</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">MissingConfigurationSectionException</span><span class="p">(</span><span class="s2">&quot;Configuration section &#39;</span><span class="si">%s</span><span class="s2">&#39; was not found.&quot;</span> <span class="o">%</span> <span class="n">section</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ignore_defaults</span><span class="p">:</span>
+        <span class="n">section_defaults</span> <span class="o">=</span> <span class="s1">&#39;defaults.&#39;</span> <span class="o">+</span> <span class="n">section</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">section_defaults</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">resolved</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">resolved_config_section</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section_defaults</span><span class="p">,</span> <span class="n">section_keys</span><span class="o">=</span><span class="n">section_keys</span><span class="p">,</span> <span class="n">ignore_defaults</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="s1">&#39;include&#39;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="n">section</span><span class="p">]:</span>
+        <span class="n">sections</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ConfigurableObject</span><span class="o">.</span><span class="n">normalize_config_list_string</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="n">section</span><span class="p">][</span><span class="s1">&#39;include&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">base_section</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">:</span>
+            <span class="n">resolved</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">resolved_config_section</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">base_section</span><span class="p">,</span> <span class="n">section_keys</span><span class="o">=</span><span class="n">section_keys</span><span class="p">,</span> <span class="n">ignore_defaults</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;abstract&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">resolved</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="n">resolved</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="n">section</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;include&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">resolved</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">resolved</span></div>
+
+
+<div class="viewcode-block" id="ConfigurableObject"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject">[docs]</a><span class="k">class</span> <span class="nc">ConfigurableObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class that allows the subclass to define configuration options that</span>
+<span class="sd">    can be populated from an INI file, along with a list of required and</span>
+<span class="sd">    optional configuration variables.</span>
+
+<span class="sd">    In order to use configuration classes in your EVA configuration, they MUST</span>
+<span class="sd">    be derived from this class. Optionally, they may reimplement the</span>
+<span class="sd">    :meth:`_factory()` method, which must return a configured class instance of</span>
+<span class="sd">    any type.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">       incubator, object_ = eva.config.ConfigurableObject().factory(</span>
+<span class="sd">           {</span>
+<span class="sd">               &#39;foo&#39;: &#39;1, 2, 3, 5, 7, 11&#39;,</span>
+<span class="sd">               &#39;bar&#39;: &#39;baz&#39;,</span>
+<span class="sd">           }</span>
+<span class="sd">       )</span>
+
+<span class="sd">       # `incubator` is a reference to the ConfigurableObject instance, while</span>
+<span class="sd">       # `object_` is a reference to the object returned by _factory().</span>
+<span class="sd">       # Normally, you proceed with calling init() if your instantiated class</span>
+<span class="sd">       # is a ConfigurableObject instance:</span>
+
+<span class="sd">       object_.init()</span>
+
+<span class="sd">    Configurable variables are defined with the :const:`CONFIG` dictionary.</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">       class MyClass(ConfigurableObject):</span>
+<span class="sd">           CONFIG = {</span>
+<span class="sd">               &#39;foo&#39;: {</span>
+<span class="sd">                   &#39;type&#39;: &#39;list_int&#39;,</span>
+<span class="sd">                   &#39;default&#39;: &#39;1,2,3&#39;,</span>
+<span class="sd">               },</span>
+<span class="sd">               &#39;bar&#39;: {</span>
+<span class="sd">                   ...</span>
+<span class="sd">               },</span>
+<span class="sd">           },</span>
+
+<span class="sd">    The types are defined as ``normalize_config_&lt;type&gt;`` functions in this</span>
+<span class="sd">    class. Subclasses might implement their own normalization functions as</span>
+<span class="sd">    needed. A list of provided configuration normalizers are provided below:</span>
+
+<span class="sd">        * :meth:`normalize_config_string`</span>
+<span class="sd">        * :meth:`normalize_config_int`</span>
+<span class="sd">        * :meth:`normalize_config_positive_int`</span>
+<span class="sd">        * :meth:`normalize_config_null_bool`</span>
+<span class="sd">        * :meth:`normalize_config_bool`</span>
+<span class="sd">        * :meth:`normalize_config_list`</span>
+<span class="sd">        * :meth:`normalize_config_list_string`</span>
+<span class="sd">        * :meth:`normalize_config_list_int`</span>
+<span class="sd">        * :meth:`normalize_config_config_class`</span>
+
+<span class="sd">    To define configuration options as required or optional, you may do:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">       class MyClass(ConfigurableObject):</span>
+<span class="sd">           REQUIRED_CONFIG = [&#39;foo&#39;]</span>
+<span class="sd">           OPTIONAL_CONFIG = [&#39;bar&#39;]</span>
+
+<span class="sd">    Note that variables that are not in any of these two lists will be regarded</span>
+<span class="sd">    as invalid options, and trying to use them will throw an exception.</span>
+
+<span class="sd">    The normalized variables are made available in the `env` class member. For</span>
+<span class="sd">    instance:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">       assert object_.env[&#39;foo&#39;] == [1, 2, 3]  # True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: dictionary of possible configuration variables.</span>
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1">#: list of required configuration variables.</span>
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1">#: list of optional configuration variables.</span>
+    <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a string representation of the class.</span>
+
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_id</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.factory"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.factory">[docs]</a>    <span class="k">def</span> <span class="nf">factory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">config_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the specified configuration data, according to :meth:`load_configuration()`.</span>
+
+<span class="sd">        :param dict config: dictionary of configuration variables.</span>
+<span class="sd">        :param str config_id: configuration section ID used to configure this class.</span>
+<span class="sd">        :rtype: tuple</span>
+<span class="sd">        :returns: a tuple of the incubator class instance, and the final instantiated class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">object_</span> <span class="o">=</span> <span class="bp">self</span><span class="p">()</span>
+        <span class="n">object_</span><span class="o">.</span><span class="n">load_configuration</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">object_</span><span class="o">.</span><span class="n">set_config_id</span><span class="p">(</span><span class="n">config_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">object_</span><span class="p">,</span> <span class="n">object_</span><span class="o">.</span><span class="n">_factory</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="ConfigurableObject._factory"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject._factory">[docs]</a>    <span class="k">def</span> <span class="nf">_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a class instance. Override this method in order to return a</span>
+<span class="sd">        different object than the :class:`ConfigurableObject` instance. This is</span>
+<span class="sd">        useful if external objects are going to be instantiated.</span>
+
+<span class="sd">        This method is called after :meth:`load_configuration`, so you can use</span>
+<span class="sd">        the :attr:`env` dictionary for your object configuration.</span>
+
+<span class="sd">        :rtype: object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="ConfigurableObject.set_config_id"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.set_config_id">[docs]</a>    <span class="k">def</span> <span class="nf">set_config_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the configuration ID of this class.</span>
+
+<span class="sd">        :param str id: configuration ID to set.</span>
+<span class="sd">        :raises RuntimeError: when the configuration ID is already set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_config_id&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Configuration ID for this class already set!&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_id</span> <span class="o">=</span> <span class="nb">id</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">config_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the configuration ID of this class.</span>
+
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_config_id&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s1">&#39;(NO CONFIGURATION ID)&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_id</span>
+
+<div class="viewcode-block" id="ConfigurableObject.isset"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.isset">[docs]</a>    <span class="k">def</span> <span class="nf">isset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns True if ``variable`` is found in :attr:`env`, and its value is set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">variable</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ConfigurableObject.init"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides a place for subclasses to run their own initialization. By</span>
+<span class="sd">        default, this method does nothing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_string"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_string">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_string</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a value of any type into a unicode string.</span>
+
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_int"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_int">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_int</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a value of any type into an integer.</span>
+
+<span class="sd">        :rtype: int|None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_positive_int"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_positive_int">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_positive_int</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a value of any type into a positive integer.</span>
+
+<span class="sd">        :raises eva.exceptions.InvalidConfigurationException: when the integer is `&lt;= 0`.</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">ConfigurableObject</span><span class="o">.</span><span class="n">normalize_config_int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span><span class="s1">&#39;Invalid non-positive integer: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_null_bool"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_null_bool">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_null_bool</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a value of any type into a nullable boolean.</span>
+
+<span class="sd">        :rtype: bool|None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;yes&#39;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="s1">&#39;on&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="s1">&#39;false&#39;</span><span class="p">,</span> <span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_bool"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_bool">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_bool</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a value of any type into boolean.</span>
+
+<span class="sd">        :raises eva.exceptions.InvalidConfigurationException: when a boolean value can not be derived.</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">ConfigurableObject</span><span class="o">.</span><span class="n">normalize_config_null_bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span><span class="s1">&#39;Invalid boolean value&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_list"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_list">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_list</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Split a comma-separated string into a list.</span>
+
+<span class="sd">        :rtype: list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">eva</span><span class="o">.</span><span class="n">split_comma_separated</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_list_string"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_list_string">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_list_string</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Split a comma-separated string into a list of unicode strings. Empty</span>
+<span class="sd">        values are ignored.</span>
+
+<span class="sd">        :rtype: list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">ConfigurableObject</span><span class="o">.</span><span class="n">normalize_config_string</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ConfigurableObject</span><span class="o">.</span><span class="n">normalize_config_list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_list_int"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_list_int">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_list_int</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Split a comma-separated string into a list of integers.</span>
+
+<span class="sd">        :rtype: list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">ConfigurableObject</span><span class="o">.</span><span class="n">normalize_config_int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ConfigurableObject</span><span class="o">.</span><span class="n">normalize_config_list</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ConfigurableObject.normalize_config_config_class"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.normalize_config_config_class">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_config_config_class</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a dotted class name into a :class:`ResolvableDependency` object.</span>
+
+<span class="sd">        :rtype: ResolvableDependency</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ResolvableDependency</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ConfigurableObject.resolve_dependencies"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.resolve_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_classes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Replace all configuration objects of type :class:`ResolvableDependency`</span>
+<span class="sd">        with their true class reference.</span>
+
+<span class="sd">        :param dict config_classes: dictionary with configuration IDs (see</span>
+<span class="sd">               :attr:`config_id`) as keys pointing to</span>
+<span class="sd">               :class:`ResolvableDependency` objects.</span>
+<span class="sd">        :rtype: class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">ResolvableDependency</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">config_classes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ConfigurableObject.load_configuration"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.load_configuration">[docs]</a>    <span class="k">def</span> <span class="nf">load_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalize input configuration based on the configuration definition:</span>
+<span class="sd">        split strings into lists, convert to types.</span>
+
+<span class="sd">        :param dict config: dictionary with configuration variables.</span>
+<span class="sd">        :raises eva.exceptions.InvalidConfigurationException: when a configuration value is invalid (normalizer function raised an exception).</span>
+<span class="sd">        :raises eva.exceptions.MissingConfigurationException: when a configuration value defined in :attr:`REQUIRED_CONFIG` is missing from the configuration dictionary.</span>
+<span class="sd">        :raises RuntimeError: when a configuration variable is missing from the :attr:`CONFIG` hash, or has defined a normalization function that is not defined as a class member. This error indicates a bug in a subclass.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#: dictionary of normalized configuration variables, as read from the configuration file.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">REQUIRED_CONFIG</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">OPTIONAL_CONFIG</span><span class="p">))</span>
+        <span class="n">configured</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Iterate through required and optional config, and read only those variables</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONFIG</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Missing configuration option &#39;</span><span class="si">%s</span><span class="s2">&#39; in class CONFIG hash, please fix your code!&quot;</span> <span class="o">%</span> <span class="n">key</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Read default value and enforce requirements</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">config</span>
+            <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">REQUIRED_CONFIG</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">MissingConfigurationException</span><span class="p">(</span>
+                        <span class="s2">&quot;Missing required configuration variable &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">key</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OPTIONAL_CONFIG</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONFIG</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;default&#39;</span><span class="p">]</span>
+
+            <span class="c1"># Normalize configuration option</span>
+            <span class="n">option_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONFIG</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+            <span class="n">func_name</span> <span class="o">=</span> <span class="s1">&#39;normalize_config_&#39;</span> <span class="o">+</span> <span class="n">option_type</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No normalization function for configuration type &#39;</span><span class="si">%s</span><span class="s2">&#39; found!&quot;</span> <span class="o">%</span> <span class="n">option_type</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span><span class="s2">&quot;Invalid value &#39;</span><span class="si">%s</span><span class="s2">&#39; for configuration &#39;</span><span class="si">%s</span><span class="s2">&#39;: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+            <span class="c1"># Write normalized value into configuration hash</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">configured</span> <span class="o">+=</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="c1"># Check for extraneous options, and raise an exception if a non-defined key is set</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">configured</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span><span class="s2">&quot;Invalid configuration key &#39;</span><span class="si">%s</span><span class="s2">&#39; for class &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ConfigurableObject.format_config"><a class="viewcode-back" href="../../api/config.html#eva.config.ConfigurableObject.format_config">[docs]</a>    <span class="k">def</span> <span class="nf">format_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a list of strings with configuration options, formatted in</span>
+<span class="sd">        ``key=value`` format, and with censored variables defined in</span>
+<span class="sd">        :attr:`SECRET_CONFIGURATION` filtered out.</span>
+
+<span class="sd">        :rtype: list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">strings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">SECRET_CONFIGURATION</span><span class="p">:</span>
+                <span class="n">var</span> <span class="o">=</span> <span class="s1">&#39;****CENSORED****&#39;</span>
+            <span class="n">strings</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">var</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">strings</span></div></div>
+
+
+<div class="viewcode-block" id="ResolvableDependency"><a class="viewcode-back" href="../../api/config.html#eva.config.ResolvableDependency">[docs]</a><span class="k">class</span> <span class="nc">ResolvableDependency</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class provides a future resolvable representation of a class defined</span>
+<span class="sd">    in a configuration key, which will be converted into an object as soon as</span>
+<span class="sd">    all the configuration keys have been loaded.</span>
+
+<span class="sd">    :param str key: configuration ID (see :attr:`ConfigurableObject.config_id`) of the resolvable object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+
+<div class="viewcode-block" id="ResolvableDependency.resolve"><a class="viewcode-back" href="../../api/config.html#eva.config.ResolvableDependency.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_classes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiate the class, using the pre-defined :attr:`key` to look up the</span>
+<span class="sd">        object in the :param:`config_classes` dictionary.</span>
+
+<span class="sd">        :param dict config_classes: dictionary of classes.</span>
+<span class="sd">        :rtype: class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">config_classes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot resolve class dependencies: section &#39;</span><span class="si">%s</span><span class="s2">&#39; is not found in the configuration.&quot;</span> <span class="o">%</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">key</span>
+            <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

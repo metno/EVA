@@ -1,0 +1,466 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.eventloop &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="up" title="API documentation" href="index.html" />
+    <link rel="next" title="eva.eventqueue" href="eventqueue.html" />
+    <link rel="prev" title="eva.config" href="config.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.eventloop</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="config.html">eva.config</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="eventqueue.html">eva.eventqueue</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-eva.eventloop">
+<span id="eva-eventloop"></span><h1>eva.eventloop<a class="headerlink" href="#module-eva.eventloop" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="eva.eventloop.Eventloop">
+<em class="property">class </em><code class="descclassname">eva.eventloop.</code><code class="descname">Eventloop</code><span class="sig-paren">(</span><em>adapters</em>, <em>listeners</em>, <em>rest_api_server</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Main EVA scheduler.</p>
+<p>This class is responsible for running the main loop, which is receiving
+events, maintaining an event queue, and scheduling jobs.</p>
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.adapter_by_config_id">
+<code class="descname">adapter_by_config_id</code><span class="sig-paren">(</span><em>config_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.adapter_by_config_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.adapter_by_config_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Given an adapter configuration ID, return an adapter object, or None if not found.
+&#64;returns eva.base.adapter.BaseAdapter</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.assert_event_matches_object_version">
+<code class="descname">assert_event_matches_object_version</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.assert_event_matches_object_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.assert_event_matches_object_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the Productstatus resource version matches the version referred to by the Event.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first simple">
+<li><a class="reference internal" href="exceptions.html#eva.exceptions.ResourceTooOldException" title="eva.exceptions.ResourceTooOldException"><strong>eva.exceptions.ResourceTooOldException</strong></a> &#8211; when the Productstatus resource differs from the version referred to in the Event data.</li>
+<li><strong>AssertionError</strong> &#8211; when the Productstatus resource has not been initialized.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.create_event_queue_timer">
+<code class="descname">create_event_queue_timer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.create_event_queue_timer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.create_event_queue_timer" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Create a statsd timer object that measures the event queue processing time.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.create_job_for_event_queue_item">
+<code class="descname">create_job_for_event_queue_item</code><span class="sig-paren">(</span><em>item</em>, <em>adapter</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.create_job_for_event_queue_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.create_job_for_event_queue_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Job object based on an event queue item, using a specific adapter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">eva.job.Job|None</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Job object if successfully validated and created, or None otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.create_jobs_for_event_queue_item">
+<code class="descname">create_jobs_for_event_queue_item</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.create_jobs_for_event_queue_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.create_jobs_for_event_queue_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Given an EventQueueItem object, run through all adapters and
+create jobs based on the Event.
+&#64;returns List of Job objects</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.drained">
+<code class="descname">drained</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.drained"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.drained" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns True if EVA is draining queues for messages AND event queue is empty.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.draining">
+<code class="descname">draining</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.draining"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.draining" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns True if event queue draining is enabled, False otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.graceful_shutdown">
+<code class="descname">graceful_shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.graceful_shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.graceful_shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Shutdown EVA after the current resource has been processed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.handle_kafka_error">
+<code class="descname">handle_kafka_error</code><span class="sig-paren">(</span><em>exception</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.handle_kafka_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.handle_kafka_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a Kafka error, and restart all listeners.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.initialize_event_queue_item">
+<code class="descname">initialize_event_queue_item</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.initialize_event_queue_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.initialize_event_queue_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will instantiate the Productstatus resource belonging to,
+and generate jobs for, an event queue item.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item</strong> (<a class="reference internal" href="eventqueue.html#eva.eventqueue.EventQueueItem" title="eva.eventqueue.EventQueueItem"><em>eva.eventqueue.EventQueueItem</em></a>) &#8211; an event queue item.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.initialize_job">
+<code class="descname">initialize_job</code><span class="sig-paren">(</span><em>adapter</em>, <em>item</em>, <em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.initialize_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.initialize_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Populate a Job object using a specific adapter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>adapter</strong> (<a class="reference internal" href="baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><em>eva.base.adapter.BaseAdapter</em></a>) &#8211; the adapter that should generate a job.</li>
+<li><strong>item</strong> (<a class="reference internal" href="eventqueue.html#eva.eventqueue.EventQueueItem" title="eva.eventqueue.EventQueueItem"><em>eva.eventqueue.EventQueueItem</em></a>) &#8211; the event queue item that should be used as a job source.</li>
+<li><strong>job</strong> (<em>eva.job.Job</em>) &#8211; the Job object that should be populated.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.instantiate_productstatus_data">
+<code class="descname">instantiate_productstatus_data</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.instantiate_productstatus_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.instantiate_productstatus_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make sure a ProductstatusResourceEvent has a Productstatus resource in
+<code class="xref py py-attr docutils literal"><span class="pre">Event.resource</span></code>.</p>
+<p>Retrieves a <code class="xref py py-class docutils literal"><span class="pre">productstatus.api.Resource</span></code> object using the
+resource URI in the event data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>eva.event.Event</em>) &#8211; event object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><a class="reference internal" href="exceptions.html#eva.exceptions.ResourceTooOldException" title="eva.exceptions.ResourceTooOldException"><strong>eva.exceptions.ResourceTooOldException</strong></a> &#8211; when the Productstatus resource differs from the version referred to in the Event data.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.job_by_id">
+<code class="descname">job_by_id</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.job_by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.job_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a Job object with the given <code class="docutils literal"><span class="pre">id</span></code> if found in the event queue, or None if not found.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>id</strong> (<em>str</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">eva.job.Job</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.main_loop_iteration">
+<code class="descname">main_loop_iteration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.main_loop_iteration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.main_loop_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief A single iteration in the main loop.
+&#64;returns True if there are more events to process, False otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.must_the_show_go_on">
+<code class="descname">must_the_show_go_on</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.must_the_show_go_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.must_the_show_go_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if the program should continue to run, False otherwise.</p>
+<p>The program can be shut down either via a regular shutdown (all
+processing stops immediately, might leave unfinished jobs), or a
+graceful shutdown, which will stop receiving events, finish processing
+all jobs, and then shutdown.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.next_event_queue_item">
+<code class="descname">next_event_queue_item</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.next_event_queue_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.next_event_queue_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Generator of event queue items, for sequential processing.
+&#64;returns eva.eventqueue.EventQueueItem</p>
+<p>This generator is needed in order to quickly iterate the main loop. If
+a lot of events are in the event queue, it may take too much time to
+run through them all, resulting in a timeout at the Kafka queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.notify_job_failure">
+<code class="descname">notify_job_failure</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.notify_job_failure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.notify_job_failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Send an email notifying about a failed job.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.notify_job_success">
+<code class="descname">notify_job_success</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.notify_job_success"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.notify_job_success" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Set the number of failures for a specific event to zero, and
+send out an e-mail in case it recovered from a non-zero error count.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.poll_listeners">
+<code class="descname">poll_listeners</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.poll_listeners"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.poll_listeners" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Poll for new messages from all message listeners.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.process_all_in_product_instance">
+<code class="descname">process_all_in_product_instance</code><span class="sig-paren">(</span><em>product_instance_uuid</em>, <em>adapters=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.process_all_in_product_instance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.process_all_in_product_instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process all child DataInstance objects of a ProductInstance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>product_instance_uuid</strong> (<em>str</em>) &#8211; the UUID of a ProductInstance to be searched for DataInstance resources.</li>
+<li><strong>adapters</strong> (<em>str</em>) &#8211; if set, contains the list of the only adapters that should generate jobs for these events.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.process_data_instance">
+<code class="descname">process_data_instance</code><span class="sig-paren">(</span><em>data_instance_uuid</em>, <em>adapters=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.process_data_instance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.process_data_instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process a single DataInstance resource.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data_instance_uuid</strong> (<em>str</em>) &#8211; the UUID of a DataInstance resource.</li>
+<li><strong>adapters</strong> (<em>str</em>) &#8211; if set, contains the list of the only adapters that should generate jobs for this event.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.process_job">
+<code class="descname">process_job</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.process_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.process_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Run asynchronous processing of an event queue item.</p>
+<p>This function will, based on the status of the event:</p>
+<ul class="simple">
+<li>Ask the Adapter to initialize the Job</li>
+<li>Send the Job for execution to the Executor</li>
+<li>Send a finish message to the Adapter</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.process_next_event">
+<code class="descname">process_next_event</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.process_next_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.process_next_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Process any events in the process list once.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.process_rest_api">
+<code class="descname">process_rest_api</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.process_rest_api"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.process_rest_api" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Make sure health check requests are processed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.reinitialize_job">
+<code class="descname">reinitialize_job</code><span class="sig-paren">(</span><em>item</em>, <em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.reinitialize_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.reinitialize_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-initialize a previously failed job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>item</strong> (<a class="reference internal" href="eventqueue.html#eva.eventqueue.EventQueueItem" title="eva.eventqueue.EventQueueItem"><em>eva.eventqueue.EventQueueItem</em></a>) &#8211; the event queue item owning the failed job.</li>
+<li><strong>job</strong> (<em>eva.job.Job</em>) &#8211; the Job object that should be reinitialized.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.report_event_queue_metrics">
+<code class="descname">report_event_queue_metrics</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.report_event_queue_metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.report_event_queue_metrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Report event queue count metrics to statsd.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.report_job_status_metrics">
+<code class="descname">report_job_status_metrics</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.report_job_status_metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.report_job_status_metrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Report job status metrics to statsd.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.reset_event_queue_item_generator">
+<code class="descname">reset_event_queue_item_generator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.reset_event_queue_item_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.reset_event_queue_item_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Reset the event queue item generator.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.restart_listeners">
+<code class="descname">restart_listeners</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.restart_listeners"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.restart_listeners" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart all event listeners.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.restore_queue">
+<code class="descname">restore_queue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.restore_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.restore_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Load a serialized, saved queue from ZooKeeper into the EventQueue instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.set_drain">
+<code class="descname">set_drain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.set_drain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.set_drain" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Define that new events from queues will not be accepted for processing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.set_health_check_heartbeat_interval">
+<code class="descname">set_health_check_heartbeat_interval</code><span class="sig-paren">(</span><em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.set_health_check_heartbeat_interval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.set_health_check_heartbeat_interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.set_health_check_heartbeat_timeout">
+<code class="descname">set_health_check_heartbeat_timeout</code><span class="sig-paren">(</span><em>timeout</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.set_health_check_heartbeat_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.set_health_check_heartbeat_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.set_health_check_skip_heartbeat">
+<code class="descname">set_health_check_skip_heartbeat</code><span class="sig-paren">(</span><em>skip</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.set_health_check_skip_heartbeat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.set_health_check_skip_heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Tell the health check server to report healthy if heartbeats are skipped.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.set_health_check_timestamp">
+<code class="descname">set_health_check_timestamp</code><span class="sig-paren">(</span><em>timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.set_health_check_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.set_health_check_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Give a heartbeat to the health check server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.set_message_timestamp_threshold">
+<code class="descname">set_message_timestamp_threshold</code><span class="sig-paren">(</span><em>timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.set_message_timestamp_threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.set_message_timestamp_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Fast-forward the message queue to a specific time.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.set_no_drain">
+<code class="descname">set_no_drain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.set_no_drain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.set_no_drain" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Define that new events from queues will again be accepted for
+processing. This will restart the message queue listener.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.shutdown">
+<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Shutdown EVA after the current resource has been processed.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="config.html">eva.config</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="eventqueue.html">eva.eventqueue</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,638 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.base.adapter &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../../index.html" />
+    <link rel="up" title="eva" href="../../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.base.adapter</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.base.adapter</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The Adapter is the single most important component of EVA. Adapters define how</span>
+<span class="sd">to convert a message about created or changed metadata into meaningful work.</span>
+<span class="sd">They are also responsible for creating metadata that should be posted back to</span>
+<span class="sd">Productstatus.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.config</span>
+<span class="kn">import</span> <span class="nn">eva.globe</span>
+<span class="kn">import</span> <span class="nn">eva.logger</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+
+<span class="kn">import</span> <span class="nn">productstatus</span>
+<span class="kn">import</span> <span class="nn">productstatus.api</span>
+
+
+<div class="viewcode-block" id="BaseAdapter"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter">[docs]</a><span class="k">class</span> <span class="nc">BaseAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ConfigurableObject</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">globe</span><span class="o">.</span><span class="n">GlobalMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is the adapter base class. All adapters must inherit this base class</span>
+<span class="sd">    in order to function correctly.</span>
+
+<span class="sd">    By deriving from this class, you may also use the following configuration</span>
+<span class="sd">    variables. For a description of `types`, see the documentation for</span>
+<span class="sd">    :class:`~eva.config.ConfigurableObject`.</span>
+
+<span class="sd">    Variables marked as `required` **must** be configured, and `optional`</span>
+<span class="sd">    **can** be configured. `explicit` variables are defined here for</span>
+<span class="sd">    convenience, so that they can be re-used in subclasses with minimal code</span>
+<span class="sd">    duplication.</span>
+
+<span class="sd">    Variables starting with ``input_`` will be used to</span>
+<span class="sd">    determine whether or not the adapter should process the incoming resource.</span>
+
+<span class="sd">    .. table:: Base configuration for all adapters</span>
+
+<span class="sd">       ==========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       Variable                    Type            Default         Inclusion   Description</span>
+<span class="sd">       ==========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       concurrency                 |int|           1               optional    How many tasks that may run concurrently.</span>
+<span class="sd">       executor                    |config_class|  (empty)         required    Which :class:`Executor &lt;eva.base.executor.BaseExecutor&gt;` to use.</span>
+<span class="sd">       input_data_format           |list_string|   (empty)         optional    Only process resources with the specified data format(s).</span>
+<span class="sd">       input_partial               |null_bool|     NO              optional    Only process resources that are either</span>
+<span class="sd">                                                                               marked as partial (`YES`) or</span>
+<span class="sd">                                                                               *not* marked as partial (`NO`).</span>
+<span class="sd">                                                                               A null value means that the partial flag is ignored.</span>
+<span class="sd">       input_product               |list_string|   (empty)         optional    Only process resources derived from the specified product(s).</span>
+<span class="sd">       input_reference_hours       |list_int|      (empty)         optional    Only process resources where the ProductInstance reference hour</span>
+<span class="sd">                                                                               matches any of the input values. An empty value will ignore</span>
+<span class="sd">                                                                               the reference hour.</span>
+<span class="sd">       input_service_backend       |list_string|   (empty)         optional    Only process resources with th e specified service backend(s).</span>
+<span class="sd">       input_with_hash             |null_bool|     NULL            optional    Only process resources that either</span>
+<span class="sd">                                                                               have a checksum hash stored (`YES`) or</span>
+<span class="sd">                                                                               does *not* have a checksum hash stored (`NO`).</span>
+<span class="sd">                                                                               A null value means that the hash is ignored.</span>
+<span class="sd">       output_base_url             |string|        (empty)         explicit    The base URL for any output files generated.</span>
+<span class="sd">                                                                               **THIS VARIABLE IS DEPRECATED.**</span>
+<span class="sd">       output_data_format          |string|        (empty)         explicit    The data format for any output files generated.</span>
+<span class="sd">       output_filename_pattern     |string|        (empty)         explicit    The filename pattern for any output files generated.</span>
+<span class="sd">       output_lifetime             |int|           (empty)         explicit    Lifetime, in hours, for any output files generated.</span>
+<span class="sd">                                                                               Defines how long the output files *must* live.</span>
+<span class="sd">                                                                               A null value specifies that the output files must live forever.</span>
+<span class="sd">       output_product              |string|        (empty)         explicit    The product name for any output files generated.</span>
+<span class="sd">       output_service_backend      |string|        (empty)         explicit    The service backend for any output files generated.</span>
+<span class="sd">       reference_time_threshold    |int|           0               optional    Never process resources whose reference time is older than N seconds.</span>
+<span class="sd">                                                                               A value of zero specifies that the reference time is ignored.</span>
+<span class="sd">       ==========================  ==============  ==============  ==========  ===========</span>
+
+<span class="sd">    .. |string| replace:: :meth:`string &lt;eva.config.ConfigurableObject.normalize_config_string&gt;`</span>
+<span class="sd">    .. |int| replace:: :meth:`int &lt;eva.config.ConfigurableObject.normalize_config_int&gt;`</span>
+<span class="sd">    .. |positive_int| replace:: :meth:`positive_int &lt;eva.config.ConfigurableObject.normalize_config_positive_int&gt;`</span>
+<span class="sd">    .. |null_bool| replace:: :meth:`null_bool &lt;eva.config.ConfigurableObject.normalize_config_null_bool&gt;`</span>
+<span class="sd">    .. |bool| replace:: :meth:`bool &lt;eva.config.ConfigurableObject.normalize_config_bool&gt;`</span>
+<span class="sd">    .. |list| replace:: :meth:`list &lt;eva.config.ConfigurableObject.normalize_config_list&gt;`</span>
+<span class="sd">    .. |list_string| replace:: :meth:`list_string &lt;eva.config.ConfigurableObject.normalize_config_list_string&gt;`</span>
+<span class="sd">    .. |list_int| replace:: :meth:`list_int &lt;eva.config.ConfigurableObject.normalize_config_list_int&gt;`</span>
+<span class="sd">    .. |config_class| replace:: :meth:`config_class &lt;eva.config.ConfigurableObject.normalize_config_config_class&gt;`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#! Common configuration variables all subclasses may use.</span>
+    <span class="n">_COMMON_ADAPTER_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;concurrency&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;executor&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;config_class&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;input_partial&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;null_bool&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;NO&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;input_reference_hours&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;input_with_hash&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;null_bool&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;output_base_url&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;output_data_format&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;output_lifetime&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;reference_time_threshold&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">_OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;concurrency&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_partial&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_reference_hours&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_with_hash&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;reference_time_threshold&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">_REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;executor&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">PRODUCTSTATUS_REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">PROCESS_PARTIAL_ONLY</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">PROCESS_PARTIAL_NO</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">PROCESS_PARTIAL_BOTH</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Class initialization will merge common configuration options with</span>
+<span class="sd">        subclass-defined configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">CONFIG</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_COMMON_ADAPTER_CONFIG</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">OPTIONAL_CONFIG</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_OPTIONAL_CONFIG</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">REQUIRED_CONFIG</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_REQUIRED_CONFIG</span>
+
+<div class="viewcode-block" id="BaseAdapter.init"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize base adapter functionality such as logging, blacklist,</span>
+<span class="sd">        template environment, and so forth.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_logger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_post_to_productstatus</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_uuids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reference_time_threshold_delta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">template</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_process_partial</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_productstatus_output_resources</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;reference_time_threshold&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reference_time_threshold_delta</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;reference_time_threshold&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_to_productstatus</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Posting to Productstatus is ENABLED.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Posting to Productstatus is DISABLED due to insufficient configuration.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">adapter_init</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.adapter_init"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.adapter_init">[docs]</a>    <span class="k">def</span> <span class="nf">adapter_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides a place for subclasses to initialize themselves. By default,</span>
+<span class="sd">        this function does nothing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="nf">_init_productstatus_output_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiate Productstatus resources referenced in output configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_data_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">dataformat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_data_format&#39;</span><span class="p">]]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isset</span><span class="p">(</span><span class="s1">&#39;output_data_format&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_product</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">product</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_product&#39;</span><span class="p">]]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isset</span><span class="p">(</span><span class="s1">&#39;output_product&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_service_backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">servicebackend</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_service_backend&#39;</span><span class="p">]]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isset</span><span class="p">(</span><span class="s1">&#39;output_service_backend&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">executor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the :class:`Executor &lt;eva.base.executor.BaseExecutor&gt;` instance for this adapter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;executor&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">api</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the Productstatus API instance that is used by this adapter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">globe</span><span class="o">.</span><span class="n">productstatus</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">concurrency</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the number of jobs that this adapter should run concurrently.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;concurrency&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BaseAdapter.create_logger"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.create_logger">[docs]</a>    <span class="k">def</span> <span class="nf">create_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiates and returns a custom log adapter that will be used for log</span>
+<span class="sd">        output by this adapter.</span>
+
+<span class="sd">        :param logging.Logger logger: parent logging object.</span>
+<span class="sd">        :rtype: logging.Logger</span>
+<span class="sd">        :returns: a new log adapter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">eva</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">AdapterLogAdapter</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;ADAPTER&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">})</span></div>
+
+    <span class="k">def</span> <span class="nf">_setup_process_partial</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up the `process_partial` variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># FIXME: is this constant variable needed? Substitute for a function?</span>
+        <span class="k">if</span> <span class="s1">&#39;input_partial&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_partial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROCESS_PARTIAL_NO</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_partial&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_partial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROCESS_PARTIAL_BOTH</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_partial&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_partial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROCESS_PARTIAL_ONLY</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_partial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROCESS_PARTIAL_NO</span>
+
+<div class="viewcode-block" id="BaseAdapter.blacklist_add"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.blacklist_add">[docs]</a>    <span class="k">def</span> <span class="nf">blacklist_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Add a resource UUID to the blacklist. Once added to the</span>
+<span class="sd">        blacklist, no ProductInstance with this UUID will be processed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">uuid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.is_blacklisted"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.is_blacklisted">[docs]</a>    <span class="k">def</span> <span class="nf">is_blacklisted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @returns True if a resource UUID is blacklisted, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">uuid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.forward_to_uuid"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.forward_to_uuid">[docs]</a>    <span class="k">def</span> <span class="nf">forward_to_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Instruct the adapter to ignore messages that do not refer to the</span>
+<span class="sd">        specified UUID through either its own ID or any child or parent IDs.</span>
+<span class="sd">        This parameter is deleted once a valid message is accepted for</span>
+<span class="sd">        processing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_uuids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">uuid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.remove_required_uuid"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.remove_required_uuid">[docs]</a>    <span class="k">def</span> <span class="nf">remove_required_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Delete an UUID from the required UUID set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_uuids</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">uuid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.clear_required_uuids"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.clear_required_uuids">[docs]</a>    <span class="k">def</span> <span class="nf">clear_required_uuids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Delete all UUIDs from the required UUID set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_uuids</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.is_in_required_uuids"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.is_in_required_uuids">[docs]</a>    <span class="k">def</span> <span class="nf">is_in_required_uuids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @returns True if self.required_uuids is empty or the specified UUID is</span>
+<span class="sd">        in that set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">required_uuids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">uuid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">required_uuids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.datainstance_has_required_uuids"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.datainstance_has_required_uuids">[docs]</a>    <span class="k">def</span> <span class="nf">datainstance_has_required_uuids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datainstance</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @returns True if the DataInstance or any of its parents or children</span>
+<span class="sd">        have the specified UUID as their primary key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_required_uuids</span><span class="p">(</span><span class="n">datainstance</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_required_uuids</span><span class="p">(</span><span class="n">datainstance</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_required_uuids</span><span class="p">(</span><span class="n">datainstance</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_required_uuids</span><span class="p">(</span><span class="n">datainstance</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">product</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_required_uuids</span><span class="p">(</span><span class="n">datainstance</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_required_uuids</span><span class="p">(</span><span class="n">datainstance</span><span class="o">.</span><span class="n">servicebackend</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.reference_time_threshold"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.reference_time_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">reference_time_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Return a DateTime object which represent the oldest reference time that will be processed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_time_threshold_delta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">eva</span><span class="o">.</span><span class="n">now_with_timezone</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_time_threshold_delta</span>
+        <span class="k">return</span> <span class="n">eva</span><span class="o">.</span><span class="n">epoch_with_timezone</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.resource_matches_input_config"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.resource_matches_input_config">[docs]</a>    <span class="k">def</span> <span class="nf">resource_matches_input_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Check that a Productstatus resource matches the configured</span>
+<span class="sd">        processing criteria.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_resource_name</span> <span class="o">!=</span> <span class="s1">&#39;datainstance&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: resource is not of type DataInstance, ignoring.&quot;</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">eva</span><span class="o">.</span><span class="n">in_array_or_empty</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">product</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_product&#39;</span><span class="p">]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: belongs to Product &#39;</span><span class="si">%s</span><span class="s2">&#39;, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">product</span><span class="o">.</span><span class="n">slug</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">eva</span><span class="o">.</span><span class="n">in_array_or_empty</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">servicebackend</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_service_backend&#39;</span><span class="p">]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: hosted on service backend &#39;</span><span class="si">%s</span><span class="s2">&#39;, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="o">.</span><span class="n">servicebackend</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">eva</span><span class="o">.</span><span class="n">in_array_or_empty</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_data_format&#39;</span><span class="p">]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: file type is &#39;</span><span class="si">%s</span><span class="s2">&#39;, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">eva</span><span class="o">.</span><span class="n">in_array_or_empty</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_reference_hours&#39;</span><span class="p">]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: ProductInstance reference hour does not match any of </span><span class="si">%s</span><span class="s2">, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_reference_hours&#39;</span><span class="p">])))</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_time_threshold</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: ProductInstance reference time is older than threshold of </span><span class="si">%s</span><span class="s2">, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">reference_time_threshold</span><span class="p">())</span>
+
+        <span class="k">elif</span> <span class="n">resource</span><span class="o">.</span><span class="n">deleted</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: marked as deleted, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_matches_hash_config</span><span class="p">(</span><span class="n">resource</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: resource has hash, and adapter is configured to not process instances with hashes, or vice versa; ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">resource</span><span class="o">.</span><span class="n">partial</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_partial</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROCESS_PARTIAL_NO</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">datainstance_has_complete_file_count</span><span class="p">(</span><span class="n">resource</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: resource is incomplete; ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">resource</span><span class="o">.</span><span class="n">partial</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_partial</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROCESS_PARTIAL_ONLY</span> <span class="ow">and</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">datainstance_has_complete_file_count</span><span class="p">(</span><span class="n">resource</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: resource is complete; ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_blacklisted</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: resource is blacklisted, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_blacklisted</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: resource Data </span><span class="si">%s</span><span class="s2"> is blacklisted, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_blacklisted</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: ProductInstance </span><span class="si">%s</span><span class="s2"> is blacklisted, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">datainstance_has_required_uuids</span><span class="p">(</span><span class="n">resource</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: resource does not have any relationships to required UUIDs </span><span class="si">%s</span><span class="s2">, ignoring.&quot;</span><span class="p">,</span>
+                              <span class="n">resource</span><span class="p">,</span>
+                              <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">required_uuids</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clear_required_uuids</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> matches all configured criteria.&quot;</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.validate_resource"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.validate_resource">[docs]</a>    <span class="k">def</span> <span class="nf">validate_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the provided Resource matches this adapter&#39;s processing criteria.</span>
+
+<span class="sd">        :param productstatus.api.Resource resource: a Productstatus resource instance.</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_matches_input_config</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.create_job"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.create_job">[docs]</a>    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Perform any action based on a Productstatus resource. The</span>
+<span class="sd">        resource is guaranteed to be validated against input configuration.</span>
+<span class="sd">        @type job eva.job.Job</span>
+<span class="sd">        @param job The Job object to be operated on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.finish_job"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.finish_job">[docs]</a>    <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief After a task has been executed by the Executor, call this</span>
+<span class="sd">        function in order to take action based on the data generated by the</span>
+<span class="sd">        finished job.</span>
+<span class="sd">        @type job eva.job.Job</span>
+<span class="sd">        @param job The Job object to be operated on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.post_to_productstatus"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.post_to_productstatus">[docs]</a>    <span class="k">def</span> <span class="nf">post_to_productstatus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns True if this adapter has sufficient configuration to be</span>
+<span class="sd">        able to post to Productstatus, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">productstatus</span><span class="o">.</span><span class="n">has_credentials</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_post_to_productstatus</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PRODUCTSTATUS_REQUIRED_CONFIG</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_post_to_productstatus</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">break</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_to_productstatus</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.resource_matches_hash_config"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.resource_matches_hash_config">[docs]</a>    <span class="k">def</span> <span class="nf">resource_matches_hash_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        Returns true if one of the following criteria matches:</span>
+
+<span class="sd">        * DataInstance.hash is NULL, and input_with_hash is set to NO</span>
+<span class="sd">        * DataInstance.hash populated, and input_with_hash is set to YES</span>
+<span class="sd">        * input_with_hash is unset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_with_hash&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">hash</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_with_hash&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_with_hash&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.has_productstatus_credentials"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.has_productstatus_credentials">[docs]</a>    <span class="k">def</span> <span class="nf">has_productstatus_credentials</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @return True if the adapter is configured with a user name and API key</span>
+<span class="sd">        to Productstatus, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">productstatus</span><span class="o">.</span><span class="n">has_credentials</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.require_productstatus_credentials"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.require_productstatus_credentials">[docs]</a>    <span class="k">def</span> <span class="nf">require_productstatus_credentials</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Raise an exception if Productstatus credentials are not configured.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;This function is obsolete, please remove this requirement.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.has_output_lifetime"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.has_output_lifetime">[docs]</a>    <span class="k">def</span> <span class="nf">has_output_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @returns True if a DataInstance lifetime is specified, false otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;output_lifetime&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_lifetime&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.expiry_from_hours"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.expiry_from_hours">[docs]</a>    <span class="k">def</span> <span class="nf">expiry_from_hours</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hours</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @returns a DateTime object representing an absolute DataInstance expiry</span>
+<span class="sd">        time, calculated from the current time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">eva</span><span class="o">.</span><span class="n">now_with_timezone</span><span class="p">()</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">hours</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.expiry_from_lifetime"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.expiry_from_lifetime">[docs]</a>    <span class="k">def</span> <span class="nf">expiry_from_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @returns a DateTime object representing an absolute DataInstance expiry</span>
+<span class="sd">        time, based on the output_lifetime environment variable. If the</span>
+<span class="sd">        variable is not set, this function returns None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_output_lifetime</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry_from_hours</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_lifetime&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="BaseAdapter.default_resource_dictionary"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.default_resource_dictionary">[docs]</a>    <span class="k">def</span> <span class="nf">default_resource_dictionary</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns a dictionary of resource types that will be populated with generate_resources().</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;productinstance&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;datainstance&#39;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.generate_and_post_resources"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.generate_and_post_resources">[docs]</a>    <span class="k">def</span> <span class="nf">generate_and_post_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Given a finished Job object, post information to Productstatus</span>
+<span class="sd">        about newly created resources. Performs a number of sanity checks</span>
+<span class="sd">        before posting any information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_to_productstatus</span><span class="p">():</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Skipping post to Productstatus because of missing configuration.&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">JobNotCompleteException</span><span class="p">(</span><span class="s1">&#39;Refusing to post to Productstatus without a complete job.&#39;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Generating Productstatus resources...&#39;</span><span class="p">)</span>
+            <span class="n">resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_resource_dictionary</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">generate_resources</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;generate_resources() did not return a tuple with three arrays, this is a bug in the code!&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_resources</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">)</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished posting to Productstatus; all complete.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.generate_resources"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.generate_resources">[docs]</a>    <span class="k">def</span> <span class="nf">generate_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generate Productstatus resources based on finished job output.</span>
+<span class="sd">        @param resources Dictionary with resource types that can be populated by the subclass implementation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Please override this method in order to post to Productstatus.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseAdapter.post_resources"><a class="viewcode-back" href="../../../api/baseadapter.html#eva.base.adapter.BaseAdapter.post_resources">[docs]</a>    <span class="k">def</span> <span class="nf">post_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Post information about a finished job to Productstatus. Takes a</span>
+<span class="sd">        dictionary of arrays of Resource or EvaluatedResource objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving </span><span class="si">%d</span><span class="s1"> resources to Productstatus.&#39;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">resources</span><span class="o">.</span><span class="n">values</span><span class="p">()]))</span>
+
+        <span class="k">for</span> <span class="n">resource_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ProductInstance&#39;</span><span class="p">,</span> <span class="s1">&#39;Data&#39;</span><span class="p">,</span> <span class="s1">&#39;DataInstance&#39;</span><span class="p">]:</span>
+            <span class="n">resource_type</span> <span class="o">=</span> <span class="n">resource_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">resource_list</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="n">resource_type</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resource_list</span><span class="p">:</span>
+                <span class="c1"># lazy evaluation</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">):</span>
+                    <span class="n">resource</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">resource</span>
+
+                <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Creating new </span><span class="si">%s</span><span class="s1"> resource...&#39;</span><span class="p">,</span> <span class="n">resource_name</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving existing </span><span class="si">%s</span><span class="s1"> resource...&#39;</span><span class="p">,</span> <span class="n">resource_name</span><span class="p">)</span>
+
+                <span class="c1"># save the resource, with infinite retries</span>
+                <span class="n">eva</span><span class="o">.</span><span class="n">retry_n</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">save</span><span class="p">,</span>
+                            <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="n">productstatus</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ServiceUnavailableException</span><span class="p">,),</span>
+                            <span class="n">give_up</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                            <span class="n">logger</span><span class="o">=</span><span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+
+                <span class="c1"># log the event</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">%s</span><span class="s1"> resource: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">resource_name</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span></div></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

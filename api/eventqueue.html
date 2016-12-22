@@ -1,0 +1,350 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.eventqueue &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="up" title="API documentation" href="index.html" />
+    <link rel="prev" title="eva.eventloop" href="eventloop.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.eventqueue</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="eventloop.html">eva.eventloop</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-eva.eventqueue">
+<span id="eva-eventqueue"></span><h1>eva.eventqueue<a class="headerlink" href="#module-eva.eventqueue" title="Permalink to this headline">¶</a></h1>
+<p>!
+&#64;brief Classes related to event queue handling.</p>
+<dl class="class">
+<dt id="eva.eventqueue.EventQueue">
+<em class="property">class </em><code class="descclassname">eva.eventqueue.</code><code class="descname">EventQueue</code><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Manages events under processing, in a queue mirrored to ZooKeeper.</p>
+<p>ZooKeeper paths:</p>
+<ul>
+<li><p class="first"><cite>/events</cite></p>
+<p>A list of event IDs referring to individual ZooKeeper paths. This list
+exists only in order to detect which events are in the processing list.</p>
+</li>
+<li><p class="first"><cite>/events/&lt;EVENT_UUID&gt;</cite></p>
+<p>A list of jobs IDs, referring to jobs that have been initialized from
+this particular event. This list exists only in order to detect which
+jobs are in the processing list.</p>
+</li>
+<li><p class="first"><cite>/events/&lt;EVENT_UUID&gt;/message</cite></p>
+<p>The raw message string for an event, as received on the wire. Used for
+reconstructing event objects in case of a program crash or adapter
+failure.</p>
+</li>
+<li><p class="first"><cite>/events/&lt;EVENT_UUID&gt;/&lt;JOB_UUID&gt;/status</cite></p>
+<p>The job status of this job.</p>
+</li>
+<li><p class="first"><cite>/events/&lt;EVENT_UUID&gt;/&lt;JOB_UUID&gt;/pid</cite></p>
+<p>The process ID of this job.</p>
+</li>
+<li><p class="first"><cite>/events/&lt;EVENT_UUID&gt;/&lt;JOB_UUID&gt;/adapter</cite></p>
+<p>The adapter that owns this job.</p>
+</li>
+</ul>
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.adapter_active_job_count">
+<code class="descname">adapter_active_job_count</code><span class="sig-paren">(</span><em>adapter</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.adapter_active_job_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.adapter_active_job_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns the number of active jobs for a specific adapter.
+&#64;param adapter eva.base.adapter.BaseAdapter</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.add_event">
+<code class="descname">add_event</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.add_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.add_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Add an event to the event queue.
+&#64;param event eva.event.Event
+&#64;throws eva.exceptions.DuplicateEventException Thrown when the event already exists in the event queue.
+&#64;throws eva.exceptions.ZooKeeperDataTooLargeException Thrown when the payload is too large for ZooKeeper storage.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</p>
+<p>The event will be stored in ZooKeeper as soon as it is added.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.delete_stored_item">
+<code class="descname">delete_stored_item</code><span class="sig-paren">(</span><em>item_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.delete_stored_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.delete_stored_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Delete a EventQueueItem from ZooKeeper.
+&#64;param item_id str The Event ID.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.empty">
+<code class="descname">empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns True if the event queue list is empty.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.get_stored_queue">
+<code class="descname">get_stored_queue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.get_stored_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.get_stored_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Return an ordered dictionary that contains a serialized, stored event queue from ZooKeeper.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.
+&#64;returns collections.OrderedDict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.init">
+<code class="descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Instantiate the event queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.item_keys">
+<code class="descname">item_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.item_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.item_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Return the list of eva.event.Event ID&#8217;s currently in the event
+queue. The list is guaranteed to have the same order as they were
+added. Note that ephemeral events are not included in this list.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.remove_item">
+<code class="descname">remove_item</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.remove_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.remove_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Remove an EventQueueItem from the event queue.
+&#64;param item eva.eventqueue.EventQueueItem
+&#64;throws kazoo.exceptions.ZooKeeperError</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.status_count">
+<code class="descname">status_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.status_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.status_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Return a dictionary with status codes and the total number of
+jobs in the event queue having that specific status.
+&#64;return dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.store_item">
+<code class="descname">store_item</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.store_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.store_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Store a specific EventQueueItem in ZooKeeper. The EventQueueItem must already exist in the event queue.
+&#64;param item eva.eventqueue.EventQueueItem
+&#64;throws eva.exceptions.ZooKeeperDataTooLargeException Thrown when the payload is too large for ZooKeeper storage.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</p>
+<p>The following information is stored:</p>
+<blockquote>
+<div><ul class="simple">
+<li>The initial Event message, useful for reconstructing the
+eva.event.Event object.</li>
+<li>The list of job ID&#8217;s connected to the event.</li>
+<li>An entry for each job that has been generated, containing the
+adapter that generated the job, as well as the job&#8217;s status code.</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.store_list">
+<code class="descname">store_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.store_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.store_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Store the list of event ID&#8217;s in ZooKeeper.
+&#64;throws eva.exceptions.ZooKeeperDataTooLargeException Thrown when the payload is too large for ZooKeeper storage.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</p>
+<p>EVA stores events in ZooKeeper under separate paths. ZooKeeper can not
+provide a list of paths to the Kazoo client. Thus, a list of paths is
+necessary for proper processing. This method ensures that this list is
+stored.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.store_serialized_data">
+<code class="descname">store_serialized_data</code><span class="sig-paren">(</span><em>path</em>, <em>data</em>, <em>metric_base=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.store_serialized_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.store_serialized_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Store structured data in ZooKeeper.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</p>
+<p>In addition to ZooKeeper storage, this function will log the event to
+the debug log, as well as report metrics for the stored item if
+metric_base is not None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.zk_get_serialized">
+<code class="descname">zk_get_serialized</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.zk_get_serialized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.zk_get_serialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Read serialized JSON data from a ZooKeeper path, and return its contents unserialized.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.zk_get_str">
+<code class="descname">zk_get_str</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.zk_get_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.zk_get_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Read data from a ZooKeeper path, and return its contents as a string.
+&#64;throws kazoo.exceptions.ZooKeeperError Generic ZooKeeper error, usually connection related.
+&#64;returns str</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.zk_immediate_store_disable">
+<code class="descname">zk_immediate_store_disable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.zk_immediate_store_disable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.zk_immediate_store_disable" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Disable automatic event queue storage in ZooKeeper. Use this
+when loading data while populating the event queue, and you do not want
+to touch existing data in the process.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueue.zk_immediate_store_enable">
+<code class="descname">zk_immediate_store_enable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueue.zk_immediate_store_enable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueue.zk_immediate_store_enable" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Enable automatic event queue storage in ZooKeeper.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="eva.eventqueue.EventQueueItem">
+<em class="property">class </em><code class="descclassname">eva.eventqueue.</code><code class="descname">EventQueueItem</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Wrapper around eva.event.Event, maintaining a list of jobs for a
+specific event.</p>
+<p>This class is a wrapper around the eva.event.Event object, maintaining an
+ordered list of eva.job.Job objects. The class can be iterated to retrieve
+a list of the job objects.</p>
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.add_job">
+<code class="descname">add_job</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.add_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.add_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Add a eva.job.Job object to this event queue item.
+&#64;param job eva.job.Job</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.empty">
+<code class="descname">empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns True if there are no eva.job.Job objects connected to
+this event queue item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.failed_jobs">
+<code class="descname">failed_jobs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.failed_jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.failed_jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns a list of jobs that have failed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.finished">
+<code class="descname">finished</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.finished"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.finished" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns True if all jobs have finished, False otherwise.
+&#64;throws RuntimeError Thrown if this function is called on an event
+queue item with zero associated jobs.</p>
+<p>This function must only be called if this EventQueueItem object
+contains jobs, otherwise an exception will be thrown.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.id">
+<code class="descname">id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Return the event ID.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.job_keys">
+<code class="descname">job_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.job_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.job_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns an ordered list of job ID&#8217;s.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.remove_job">
+<code class="descname">remove_job</code><span class="sig-paren">(</span><em>job_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.remove_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.remove_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Remove a eva.job.Job object from this event queue item.
+&#64;param job_id str</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Returns a serialized representation of this event queue item,
+suitable for storage in ZooKeeper.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventqueue.EventQueueItem.set_adapters">
+<code class="descname">set_adapters</code><span class="sig-paren">(</span><em>adapters</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventqueue.html#EventQueueItem.set_adapters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventqueue.EventQueueItem.set_adapters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the list of adapters that should process this event.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>adapters</strong> (<em>list</em>) &#8211; list of <a class="reference internal" href="baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">adapter</span></code></a> instances.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="eventloop.html">eva.eventloop</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

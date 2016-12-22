@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Event Adpter API documentation &#8212; Event Adapter 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="Event Adapter 1.0.0 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to Event Adapter’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-eva">
+<span id="event-adpter-api-documentation"></span><h1>Event Adpter API documentation<a class="headerlink" href="#module-eva" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="eva.coerce_to_utc">
+<code class="descclassname">eva.</code><code class="descname">coerce_to_utc</code><span class="sig-paren">(</span><em>dt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#coerce_to_utc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.coerce_to_utc" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Sets the time zone of a DateTime object to UTC.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.epoch_with_timezone">
+<code class="descclassname">eva.</code><code class="descname">epoch_with_timezone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#epoch_with_timezone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.epoch_with_timezone" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Return a timezone-aware datetime object with timestamp zero.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.format_exception_as_bug">
+<code class="descclassname">eva.</code><code class="descname">format_exception_as_bug</code><span class="sig-paren">(</span><em>exception</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#format_exception_as_bug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.format_exception_as_bug" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Given an Exception object, return a list of lines that can be
+printed in order to display the backtrace and error.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.in_array_or_empty">
+<code class="descclassname">eva.</code><code class="descname">in_array_or_empty</code><span class="sig-paren">(</span><em>id</em>, <em>array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#in_array_or_empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.in_array_or_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;returns true if <cite>id</cite> is found in <cite>array</cite>, or <cite>array</cite> is empty.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.netcdf_time_to_timestamp">
+<code class="descclassname">eva.</code><code class="descname">netcdf_time_to_timestamp</code><span class="sig-paren">(</span><em>time_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#netcdf_time_to_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.netcdf_time_to_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Parses &#8220;ncdump -v -t time&#8221; time string output into a DateTime object.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.now_with_timezone">
+<code class="descclassname">eva.</code><code class="descname">now_with_timezone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#now_with_timezone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.now_with_timezone" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Return a timezone-aware UTC datetime object representing the current timestamp.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.parse_boolean_string">
+<code class="descclassname">eva.</code><code class="descname">parse_boolean_string</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#parse_boolean_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.parse_boolean_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Given a string, return its boolean value.
+&#64;returns True if parsed as true, False if parsed as false, otherwise None.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.retry_n">
+<code class="descclassname">eva.</code><code class="descname">retry_n</code><span class="sig-paren">(</span><em>func</em>, <em>args=()</em>, <em>kwargs={}</em>, <em>interval=5</em>, <em>exceptions=(&lt;class 'Exception'&gt;</em>, <em>)</em>, <em>warning=1</em>, <em>error=3</em>, <em>give_up=5</em>, <em>logger=&lt;module 'logging' from '/usr/lib/python3.4/logging/__init__.py'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#retry_n"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.retry_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call &#8216;func&#8217; and, if it throws anything listed in &#8216;exceptions&#8217;, catch it and retry again
+up to &#8216;give_up&#8217; times. If give_up is &lt;= 0, retry indefinitely.
+Checks that error &gt; warning &gt; 0, and give_up &gt; error or give_up &lt;= 0.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.split_comma_separated">
+<code class="descclassname">eva.</code><code class="descname">split_comma_separated</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#split_comma_separated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.split_comma_separated" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Given a comma-separated string, return a list of components.
+&#64;returns list</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.strftime_iso8601">
+<code class="descclassname">eva.</code><code class="descname">strftime_iso8601</code><span class="sig-paren">(</span><em>dt</em>, <em>null_string=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#strftime_iso8601"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.strftime_iso8601" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Given a DateTime object, return an ISO8601 formatted string.
+&#64;param null_string Print &#8220;NULL&#8221; instead of timestamp if not passed a DateTime object</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.url_to_filename">
+<code class="descclassname">eva.</code><code class="descname">url_to_filename</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#url_to_filename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.url_to_filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Convert a <a class="reference external" href="file://">file://</a>... URL to a path name. Raises an exception if
+the URL does not start with <a class="reference external" href="file://">file://</a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.zookeeper_group_id">
+<code class="descclassname">eva.</code><code class="descname">zookeeper_group_id</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/eva.html#zookeeper_group_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.zookeeper_group_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Clean up a group_id name so that it can be used in a Zookeeper path.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Event Adapter&#8217;s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Kim Tore Jensen.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/api.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Development &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="index.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="Introduction to Event Adapter" href="intro.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>Development</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="intro.html">Introduction to Event Adapter</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="configuration.html">Configuration</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="development">
+<h1>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h1>
+<p>This section is important to you if you want to run Event Adapter on your local
+machine, either because you are writing custom adapters, or because you are
+developing EVA itself.</p>
+<div class="section" id="setting-up-a-development-environment">
+<h2>Setting up a development environment<a class="headerlink" href="#setting-up-a-development-environment" title="Permalink to this headline">¶</a></h2>
+<p>EVA is a Python 3 program. It is recommended to set up a <a class="reference external" href="https://virtualenv.pypa.io/en/stable/">virtualenv</a> to contain
+dependencies, so that you do not clobber up your system-wide Python package
+directory.</p>
+<p>Check out the <a class="reference external" href="https://github.com/metno/eva">EVA source code</a>, then proceed to set up your <a class="reference external" href="https://virtualenv.pypa.io/en/stable/">virtualenv</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>git clone https://github.com/metno/eva.git
+<span class="nb">cd</span> eva/
+sudo apt-get install python-pip python-virtualenv python-dev
+virtualenv deps
+<span class="nb">source</span> deps/bin/activate
+pip install -e .
+</pre></div>
+</div>
+</div>
+<div class="section" id="running">
+<h2>Running<a class="headerlink" href="#running" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python -m eva --help
+</pre></div>
+</div>
+</div>
+<div class="section" id="docker-container">
+<h2>Docker container<a class="headerlink" href="#docker-container" title="Permalink to this headline">¶</a></h2>
+<p>Building the Docker container:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>make eva
+</pre></div>
+</div>
+<p>Uploading the finished Docker container to the Docker registry:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>make upload-eva
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-tests-and-lint">
+<h2>Running tests and lint<a class="headerlink" href="#running-tests-and-lint" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">source</span> deps/bin/activate
+make <span class="nb">test</span>
+make lint
+</pre></div>
+</div>
+</div>
+<div class="section" id="generating-documentation">
+<h2>Generating documentation<a class="headerlink" href="#generating-documentation" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>make doc
+</pre></div>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="intro.html">Introduction to Event Adapter</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="configuration.html">Configuration</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

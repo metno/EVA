@@ -1,0 +1,839 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.eventloop &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../index.html" />
+    <link rel="up" title="eva" href="../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.eventloop</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.eventloop</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">dateutil.tz</span>
+<span class="kn">import</span> <span class="nn">kafka.errors</span>
+<span class="kn">import</span> <span class="nn">kazoo.exceptions</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.config</span>
+<span class="kn">import</span> <span class="nn">eva.event</span>
+<span class="kn">import</span> <span class="nn">eva.eventqueue</span>
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+<span class="kn">import</span> <span class="nn">eva.globe</span>
+<span class="kn">import</span> <span class="nn">eva.mail.text</span>
+<span class="kn">import</span> <span class="nn">eva.zk</span>
+
+<span class="kn">import</span> <span class="nn">productstatus.exceptions</span>
+
+
+<div class="viewcode-block" id="Eventloop"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop">[docs]</a><span class="k">class</span> <span class="nc">Eventloop</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">globe</span><span class="o">.</span><span class="n">GlobalMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">    @brief Main EVA scheduler.</span>
+
+<span class="sd">    This class is responsible for running the main loop, which is receiving</span>
+<span class="sd">    events, maintaining an event queue, and scheduling jobs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">RECOVERABLE_EXCEPTIONS</span> <span class="o">=</span> <span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RetryException</span><span class="p">,</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ServiceUnavailableException</span><span class="p">,)</span>
+
+    <span class="c1"># Allow maximum 60 seconds since last heartbeat before reporting process unhealthy</span>
+    <span class="n">HEALTH_CHECK_HEARTBEAT_TIMEOUT</span> <span class="o">=</span> <span class="mi">60</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">adapters</span><span class="p">,</span>
+                 <span class="n">listeners</span><span class="p">,</span>
+                 <span class="n">rest_api_server</span><span class="p">,</span>
+                 <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adapters</span> <span class="o">=</span> <span class="n">adapters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span> <span class="o">=</span> <span class="n">listeners</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rest_api_server</span> <span class="o">=</span> <span class="n">rest_api_server</span>
+
+    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drain</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rest_api_server</span><span class="o">.</span><span class="n">set_eventloop_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">eventqueue</span><span class="o">.</span><span class="n">EventQueue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">set_globe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">globe</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_event_queue_timer</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_event_queue_item_generator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_shutdown</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_graceful_shutdown</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_timestamp_threshold</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dateutil</span><span class="o">.</span><span class="n">tz</span><span class="o">.</span><span class="n">tzutc</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">gauge</span><span class="p">(</span><span class="s1">&#39;eva_adapter_count&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adapters</span><span class="p">))</span>
+
+        <span class="n">event_listener_configuration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">productstatus</span><span class="o">.</span><span class="n">get_event_listener_configuration</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event_listener_configuration</span><span class="p">,</span> <span class="s1">&#39;heartbeat_interval&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_health_check_skip_heartbeat</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_health_check_heartbeat_interval</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">event_listener_configuration</span><span class="o">.</span><span class="n">heartbeat_interval</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_health_check_heartbeat_timeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">HEALTH_CHECK_HEARTBEAT_TIMEOUT</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Eventloop.adapter_by_config_id"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.adapter_by_config_id">[docs]</a>    <span class="k">def</span> <span class="nf">adapter_by_config_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Given an adapter configuration ID, return an adapter object, or None if not found.</span>
+<span class="sd">        @returns eva.base.adapter.BaseAdapter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span> <span class="o">==</span> <span class="n">config_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">adapter</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Eventloop.job_by_id"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.job_by_id">[docs]</a>    <span class="k">def</span> <span class="nf">job_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a Job object with the given ``id`` if found in the event queue, or None if not found.</span>
+
+<span class="sd">        :param str id:</span>
+<span class="sd">        :rtype: eva.job.Job</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="nb">id</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">job</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Eventloop.restore_queue"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.restore_queue">[docs]</a>    <span class="k">def</span> <span class="nf">restore_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Load a serialized, saved queue from ZooKeeper into the EventQueue instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Restoring event queue from ZooKeeper...&#39;</span><span class="p">)</span>
+        <span class="n">cached_queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">get_stored_queue</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cached_queue</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">zk_immediate_store_disable</span><span class="p">()</span>
+
+            <span class="c1"># Iterate through events</span>
+            <span class="k">for</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">event_data</span> <span class="ow">in</span> <span class="n">cached_queue</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="n">event_data</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">])</span>
+                <span class="n">event</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusBaseEvent</span><span class="o">.</span><span class="n">factory</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_restored_events&#39;</span><span class="p">)</span>
+
+                <span class="c1"># Try restoring event data indefinitely.</span>
+                <span class="n">eva</span><span class="o">.</span><span class="n">retry_n</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instantiate_productstatus_data</span><span class="p">,</span>
+                            <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">],</span>
+                            <span class="n">give_up</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                            <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+
+                <span class="c1"># Iterate through event-generated jobs</span>
+                <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job_data</span> <span class="ow">in</span> <span class="n">event_data</span><span class="p">[</span><span class="s1">&#39;jobs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">adapter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapter_by_config_id</span><span class="p">(</span><span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;adapter&#39;</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">adapter</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Stored job &#39;</span><span class="si">%s</span><span class="s2">&#39; refers to unconfigured adapter &#39;</span><span class="si">%s</span><span class="s2">&#39;, this job will be discarded!&quot;</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;adapter&#39;</span><span class="p">])</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_job_for_event_queue_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Empty Job object returned, discarding saved job.&#39;</span><span class="p">)</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># FIXME: use better algorithm, or serialize data needed to restore to any state</span>
+                    <span class="k">if</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">COMPLETE</span> <span class="ow">or</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">:</span>
+                        <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">READY</span><span class="p">)</span>
+
+                    <span class="c1"># Restore process ID</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">]</span>
+
+                    <span class="n">item</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_restored_jobs&#39;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">zk_immediate_store_enable</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished restoring event queue from ZooKeeper, size is </span><span class="si">%d</span><span class="s1"> items.&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Eventloop.poll_listeners"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.poll_listeners">[docs]</a>    <span class="k">def</span> <span class="nf">poll_listeners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Poll for new messages from all message listeners.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="s1">&#39;eva_poll_listeners&#39;</span><span class="p">)</span>
+        <span class="n">timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">event</span> <span class="o">=</span> <span class="n">listener</span><span class="o">.</span><span class="n">get_next_event</span><span class="p">()</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">EventTimeoutException</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidEventException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Received invalid event: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">RECOVERABLE_EXCEPTIONS</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Exception while receiving event: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_received&#39;</span><span class="p">)</span>
+
+            <span class="c1"># Accept heartbeats without adding them to queue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusHeartbeatEvent</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: heartbeat received&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+                <span class="n">listener</span><span class="o">.</span><span class="n">acknowledge</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_heartbeat&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_health_check_timestamp</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">now_with_timezone</span><span class="p">())</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Print to log</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: event received&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+            <span class="c1"># Reject messages that are too old</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_timestamp_threshold</span><span class="p">:</span>
+                <span class="n">listener</span><span class="o">.</span><span class="n">acknowledge</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_too_old&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Skip processing event because resource is older than threshold: </span><span class="si">%s</span><span class="s1"> vs </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+                                    <span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">message_timestamp_threshold</span><span class="p">)</span>
+
+            <span class="c1"># Checks for real Productstatus events from the message queue</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">event</span><span class="p">)</span> <span class="ow">is</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusResourceEvent</span><span class="p">:</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_productstatus&#39;</span><span class="p">)</span>
+
+                <span class="c1"># Only process messages with the correct version</span>
+                <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Event version is </span><span class="si">%s</span><span class="s1">, but I am only accepting major version 1. Discarding message.&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">()))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_version_unsupported&#39;</span><span class="p">)</span>
+                    <span class="n">listener</span><span class="o">.</span><span class="n">acknowledge</span><span class="p">()</span>
+                    <span class="k">continue</span>
+
+            <span class="c1"># Add message to event queue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+                <span class="c1"># All adapters should process this event by default</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">set_adapters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adapters</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">DuplicateEventException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_duplicate&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;This is most probably due to a previous Kafka commit error. The message has been discarded.&#39;</span><span class="p">)</span>
+
+            <span class="n">listener</span><span class="o">.</span><span class="n">acknowledge</span><span class="p">()</span>
+
+        <span class="n">timer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.next_event_queue_item"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.next_event_queue_item">[docs]</a>    <span class="k">def</span> <span class="nf">next_event_queue_item</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generator of event queue items, for sequential processing.</span>
+<span class="sd">        @returns eva.eventqueue.EventQueueItem</span>
+
+<span class="sd">        This generator is needed in order to quickly iterate the main loop. If</span>
+<span class="sd">        a lot of events are in the event queue, it may take too much time to</span>
+<span class="sd">        run through them all, resulting in a timeout at the Kafka queue.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">item</span></div>
+
+<div class="viewcode-block" id="Eventloop.create_event_queue_timer"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.create_event_queue_timer">[docs]</a>    <span class="k">def</span> <span class="nf">create_event_queue_timer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Create a statsd timer object that measures the event queue processing time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue_timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="s1">&#39;eva_event_queue_process_time&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue_timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.reset_event_queue_item_generator"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.reset_event_queue_item_generator">[docs]</a>    <span class="k">def</span> <span class="nf">reset_event_queue_item_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Reset the event queue item generator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue_timer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_event_queue_timer</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue_item_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_event_queue_item</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.process_next_event"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.process_next_event">[docs]</a>    <span class="k">def</span> <span class="nf">process_next_event</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Process any events in the process list once.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue_item_generator</span><span class="o">.</span><span class="n">__next__</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_event_queue_item_generator</span><span class="p">()</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Postpone processing of event if it has a delay</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">get_processing_delay</span><span class="p">()</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">delay</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Postponing processing of event queue item </span><span class="si">%s</span><span class="s1"> due to </span><span class="si">%.1f</span><span class="s1"> seconds event delay.&#39;</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Try initializing this event queue item with data and jobs</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initialize_event_queue_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">remove_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">store_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+        <span class="c1"># Check if any jobs for this event has failed, and recreate them if necessary</span>
+        <span class="n">failed_jobs</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">failed_jobs</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_jobs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> failed jobs; reloading Productstatus metadata and reinitializing jobs.&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_jobs</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">instantiate_productstatus_data</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResourceTooOldException</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">remove_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">return</span>
+
+        <span class="c1"># Reinitialize failed jobs</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">failed_jobs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reinitialize_job</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+
+        <span class="c1"># Process all jobs generated from this event</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Only process N active jobs at a time</span>
+                <span class="n">job_active</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">initialized</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">ready</span><span class="p">())</span>
+                <span class="n">has_capacity</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">adapter_active_job_count</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">job_active</span> <span class="ow">or</span> <span class="n">has_capacity</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">process_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">RECOVERABLE_EXCEPTIONS</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Setting failed due to a recoverable error: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">FAILED</span><span class="p">)</span>
+                <span class="n">changed</span> <span class="o">+=</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status_changed</span><span class="p">():</span>
+                <span class="n">changed</span> <span class="o">+=</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">failed</span><span class="p">()</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_failure</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">job</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_success</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+        <span class="c1"># Store renewed statuses of changed jobs</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">changed</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">store_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+        <span class="c1"># Remove event if finished</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">finished</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: removing finished event from event queue.&#39;</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">remove_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.process_job"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.process_job">[docs]</a>    <span class="k">def</span> <span class="nf">process_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Run asynchronous processing of an event queue item.</span>
+
+<span class="sd">        This function will, based on the status of the event:</span>
+
+<span class="sd">        * Ask the Adapter to initialize the Job</span>
+<span class="sd">        * Send the Job for execution to the Executor</span>
+<span class="sd">        * Send a finish message to the Adapter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Start job if it is not running</span>
+        <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">ready</span><span class="p">():</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Ready to start; sending job to executor for asynchronous execution...&#39;</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Job has been sent successfully to the executor.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Check status of the job</span>
+        <span class="k">elif</span> <span class="n">job</span><span class="o">.</span><span class="n">running</span><span class="p">():</span>  <span class="c1"># TODO: check for STARTED as well?</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">poll_time_reached</span><span class="p">():</span>
+                <span class="k">return</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Polling executor for job status...&#39;</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Finished polling executor for job status.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Remove job from executors</span>
+        <span class="k">elif</span> <span class="n">job</span><span class="o">.</span><span class="n">deleted</span><span class="p">():</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Job is scheduled for deletion, trying to terminate with executors...&#39;</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">)</span>
+
+        <span class="c1"># Tell adapter that the job has finished</span>
+        <span class="k">elif</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">()</span> <span class="ow">or</span> <span class="n">job</span><span class="o">.</span><span class="n">failed</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">running</span><span class="p">():</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished with total time </span><span class="si">%.1f</span><span class="s1">s; sending to adapter for finishing.&#39;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">total_time_msec</span><span class="p">()</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Job timer is not running. This is probably the result of a program recovery situation.&#39;</span><span class="p">)</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Timer information for this job will NOT be submitted to StatsD.&#39;</span><span class="p">)</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished with unknown runtime; sending to adapter for finishing.&#39;</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">finish_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">generate_and_post_resources</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">JobNotCompleteException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># ignore non-fatal errors</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Job failed, but marking as finished due to adapter policy.&#39;</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Adapter has finished processing the job.&#39;</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.handle_kafka_error"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.handle_kafka_error">[docs]</a>    <span class="k">def</span> <span class="nf">handle_kafka_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log a Kafka error, and restart all listeners.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Kafka error: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Will try to restart all Kafka consumers.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restart_listeners</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;All Kafka consumers have been restarted, good riddance.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.main_loop_iteration"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.main_loop_iteration">[docs]</a>    <span class="k">def</span> <span class="nf">main_loop_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief A single iteration in the main loop.</span>
+<span class="sd">        @returns True if there are more events to process, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="s1">&#39;eva_main_loop&#39;</span><span class="p">)</span>
+        <span class="n">timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">drained</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_no_drain</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">draining</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">poll_listeners</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">kafka</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">NoBrokersAvailable</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_kafka_no_brokers_available&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handle_kafka_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">kafka</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">CommitFailedError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_kafka_commit_failed&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handle_kafka_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_next_event</span><span class="p">()</span>
+        <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">RECOVERABLE_EXCEPTIONS</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_recoverable_exceptions&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Job processing aborted due to recoverable error: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">report_event_queue_metrics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report_job_status_metrics</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_rest_api</span><span class="p">()</span>
+
+        <span class="n">timer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Entering main loop.&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">must_the_show_go_on</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">main_loop_iteration</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">kazoo</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ZookeeperError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;There is a problem with the ZooKeeper connection: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;EVA cannot continue to operate in this state, thanks for all the fish.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_zookeeper_connection_loss&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Exited main loop.&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Eventloop.report_job_status_metrics"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.report_job_status_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">report_job_status_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Report job status metrics to statsd.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">status_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">status_count</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">status</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">status_count</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">gauge</span><span class="p">(</span><span class="s1">&#39;eva_job_status_count&#39;</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">status</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="Eventloop.report_event_queue_metrics"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.report_event_queue_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">report_event_queue_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Report event queue count metrics to statsd.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">gauge</span><span class="p">(</span><span class="s1">&#39;eva_event_queue_count&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Eventloop.initialize_event_queue_item"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.initialize_event_queue_item">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_event_queue_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function will instantiate the Productstatus resource belonging to,</span>
+<span class="sd">        and generate jobs for, an event queue item.</span>
+
+<span class="sd">        :param eva.eventqueue.EventQueueItem item: an event queue item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Instantiate Productstatus object from event resource URI</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusBaseEvent</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">instantiate_productstatus_data</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResourceTooOldException</span><span class="p">:</span>
+                <span class="k">return</span>
+
+        <span class="c1"># Ask all adapters to create jobs for this event queue item</span>
+        <span class="n">jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_jobs_for_event_queue_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">jobs</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Add generated jobs to event queue item</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> jobs generated, adding to event queue item...&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">jobs</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: adding job </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">READY</span><span class="p">)</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: finished adding jobs to event queue item.&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.initialize_job"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.initialize_job">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adapter</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Populate a Job object using a specific adapter.</span>
+
+<span class="sd">        :param eva.base.adapter.BaseAdapter adapter: the adapter that should generate a job.</span>
+<span class="sd">        :param eva.eventqueue.EventQueueItem item: the event queue item that should be used as a job source.</span>
+<span class="sd">        :param eva.job.Job job: the Job object that should be populated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">adapter</span><span class="o">.</span><span class="n">validate_resource</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="p">):</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Adapter did not validate resource </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">resource</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">adapter</span> <span class="o">=</span> <span class="n">adapter</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="s1">&#39;eva_execution_time&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">})</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">adapter</span><span class="o">.</span><span class="n">create_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">JobNotGenerated</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Adapter did not generate job data: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Eventloop.reinitialize_job"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.reinitialize_job">[docs]</a>    <span class="k">def</span> <span class="nf">reinitialize_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-initialize a previously failed job.</span>
+
+<span class="sd">        :param eva.eventqueue.EventQueueItem item: the event queue item owning the failed job.</span>
+<span class="sd">        :param eva.job.Job job: the Job object that should be reinitialized.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Reinitializing and requeueing previously failed job.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_job</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Reinitialization failed; removing job from event queue item.&#39;</span><span class="p">)</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">remove_job</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_requeue_rejected&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">})</span>
+            <span class="k">return</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">READY</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_requeued_jobs&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="Eventloop.create_job_for_event_queue_item"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.create_job_for_event_queue_item">[docs]</a>    <span class="k">def</span> <span class="nf">create_job_for_event_queue_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">adapter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a Job object based on an event queue item, using a specific adapter.</span>
+
+<span class="sd">        :rtype: eva.job.Job|None</span>
+<span class="sd">        :returns: Job object if successfully validated and created, or None otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: this is a pre-emptive validation of the resource, done solely</span>
+        <span class="c1"># because too much logging output would be generated otherwise. Refactor?</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">adapter</span><span class="o">.</span><span class="n">validate_resource</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">globe</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_job</span><span class="p">(</span><span class="n">adapter</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">job</span></div>
+
+<div class="viewcode-block" id="Eventloop.create_jobs_for_event_queue_item"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.create_jobs_for_event_queue_item">[docs]</a>    <span class="k">def</span> <span class="nf">create_jobs_for_event_queue_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Given an EventQueueItem object, run through all adapters and</span>
+<span class="sd">        create jobs based on the Event.</span>
+<span class="sd">        @returns List of Job objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jobs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: start generating jobs&#39;</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">adapters</span><span class="p">:</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_job_for_event_queue_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_rejected&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">})</span>
+                <span class="k">continue</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_accepted&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">})</span>
+
+            <span class="n">jobs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">job</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: total of </span><span class="si">%d</span><span class="s1"> jobs generated&#39;</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">jobs</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">jobs</span></div>
+
+<div class="viewcode-block" id="Eventloop.restart_listeners"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.restart_listeners">[docs]</a>    <span class="k">def</span> <span class="nf">restart_listeners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Restart all event listeners.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Restarting listener: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">listener</span><span class="p">)</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">close_listener</span><span class="p">()</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">setup_listener</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.set_drain"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.set_drain">[docs]</a>    <span class="k">def</span> <span class="nf">set_drain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Define that new events from queues will not be accepted for processing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drain</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Drain enabled! Will NOT process any more events from message listeners until event queue is empty!&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_health_check_skip_heartbeat</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">:</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">close_listener</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.set_no_drain"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.set_no_drain">[docs]</a>    <span class="k">def</span> <span class="nf">set_no_drain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Define that new events from queues will again be accepted for</span>
+<span class="sd">        processing. This will restart the message queue listener.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drain</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Drain disabled. Will restart message listeners and start accepting new events.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_health_check_skip_heartbeat</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">:</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">setup_listener</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.draining"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.draining">[docs]</a>    <span class="k">def</span> <span class="nf">draining</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Returns True if event queue draining is enabled, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">drain</span> <span class="ow">is</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Eventloop.drained"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.drained">[docs]</a>    <span class="k">def</span> <span class="nf">drained</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @returns True if EVA is draining queues for messages AND event queue is empty.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">draining</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.instantiate_productstatus_data"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.instantiate_productstatus_data">[docs]</a>    <span class="k">def</span> <span class="nf">instantiate_productstatus_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make sure a ProductstatusResourceEvent has a Productstatus resource in</span>
+<span class="sd">        :attr:`Event.resource`.</span>
+
+<span class="sd">        Retrieves a :class:`productstatus.api.Resource` object using the</span>
+<span class="sd">        resource URI in the event data.</span>
+
+<span class="sd">        :param eva.event.Event event: event object.</span>
+<span class="sd">        :raises eva.exceptions.ResourceTooOldException: when the Productstatus resource differs from the version referred to in the Event data.</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusBaseEvent</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: loading resource data&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">productstatus</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">data</span><span class="p">]</span>
+        <span class="n">eva</span><span class="o">.</span><span class="n">log_productstatus_resource_info</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span> <span class="n">loglevel</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+        <span class="c1"># Assert that Productstatus resource is the correct version, as referred to in the event</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">event</span><span class="p">)</span> <span class="ow">is</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusResourceEvent</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assert_event_matches_object_version</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.process_rest_api"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.process_rest_api">[docs]</a>    <span class="k">def</span> <span class="nf">process_rest_api</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Make sure health check requests are processed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rest_api_server</span><span class="o">.</span><span class="n">respond_to_next_request</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.set_health_check_skip_heartbeat"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.set_health_check_skip_heartbeat">[docs]</a>    <span class="k">def</span> <span class="nf">set_health_check_skip_heartbeat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Tell the health check server to report healthy if heartbeats are skipped.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting health check heartbeat skip: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">skip</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rest_api_server</span><span class="o">.</span><span class="n">health</span><span class="o">.</span><span class="n">set_skip_heartbeat</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">skip</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Eventloop.set_health_check_heartbeat_interval"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.set_health_check_heartbeat_interval">[docs]</a>    <span class="k">def</span> <span class="nf">set_health_check_heartbeat_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting health check heartbeat interval to </span><span class="si">%d</span><span class="s1"> seconds&#39;</span><span class="p">,</span> <span class="n">interval</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rest_api_server</span><span class="o">.</span><span class="n">health</span><span class="o">.</span><span class="n">set_heartbeat_interval</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.set_health_check_heartbeat_timeout"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.set_health_check_heartbeat_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">set_health_check_heartbeat_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Set the number of seconds expected between each heartbeat from the Productstatus message queue.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting health check heartbeat timeout to </span><span class="si">%d</span><span class="s1"> seconds&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rest_api_server</span><span class="o">.</span><span class="n">health</span><span class="o">.</span><span class="n">set_heartbeat_timeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.set_health_check_timestamp"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.set_health_check_timestamp">[docs]</a>    <span class="k">def</span> <span class="nf">set_health_check_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Give a heartbeat to the health check server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting health check heartbeat at timestamp </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rest_api_server</span><span class="o">.</span><span class="n">health</span><span class="o">.</span><span class="n">heartbeat</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.notify_job_failure"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.notify_job_failure">[docs]</a>    <span class="k">def</span> <span class="nf">notify_job_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Send an email notifying about a failed job.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">template_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">,</span>
+            <span class="s1">&#39;failures&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">(),</span>
+            <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">subject</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_FAIL_SUBJECT</span> <span class="o">%</span> <span class="n">template_params</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_FAIL_TEXT</span> <span class="o">%</span> <span class="n">template_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mailer</span><span class="o">.</span><span class="n">send_email</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.notify_job_success"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.notify_job_success">[docs]</a>    <span class="k">def</span> <span class="nf">notify_job_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Set the number of failures for a specific event to zero, and</span>
+<span class="sd">        send out an e-mail in case it recovered from a non-zero error count.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">template_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">,</span>
+            <span class="s1">&#39;failures&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">(),</span>
+            <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">subject</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_RECOVER_SUBJECT</span> <span class="o">%</span> <span class="n">template_params</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_RECOVER_TEXT</span> <span class="o">%</span> <span class="n">template_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mailer</span><span class="o">.</span><span class="n">send_email</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.assert_event_matches_object_version"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.assert_event_matches_object_version">[docs]</a>    <span class="k">def</span> <span class="nf">assert_event_matches_object_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the Productstatus resource version matches the version referred to by the Event.</span>
+
+<span class="sd">        :raises eva.exceptions.ResourceTooOldException: when the Productstatus resource differs from the version referred to in the Event data.</span>
+<span class="sd">        :raises AssertionError: when the Productstatus resource has not been initialized.</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusResourceEvent</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="p">,</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">Resource</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">object_version</span><span class="p">()</span> <span class="o">==</span> <span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">object_version</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: object version is </span><span class="si">%d</span><span class="s1">, expecting version </span><span class="si">%d</span><span class="s1"> from Event object. The message is too old, discarding.&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">object_version</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">object_version</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_resource_object_version_too_old&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResourceTooOldException</span><span class="p">(</span><span class="s1">&#39;Resource version is too old&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.set_message_timestamp_threshold"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.set_message_timestamp_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">set_message_timestamp_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Fast-forward the message queue to a specific time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ts</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ts</span><span class="o">.</span><span class="n">tzinfo</span><span class="o">.</span><span class="n">utcoffset</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Received a naive datetime string, assuming UTC&#39;</span><span class="p">)</span>
+            <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">dateutil</span><span class="o">.</span><span class="n">tz</span><span class="o">.</span><span class="n">tzutc</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_timestamp_threshold</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Forwarding message queue threshold timestamp to </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_timestamp_threshold</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.process_all_in_product_instance"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.process_all_in_product_instance">[docs]</a>    <span class="k">def</span> <span class="nf">process_all_in_product_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product_instance_uuid</span><span class="p">,</span> <span class="n">adapters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process all child DataInstance objects of a ProductInstance.</span>
+
+<span class="sd">        :param str product_instance_uuid: the UUID of a ProductInstance to be searched for DataInstance resources.</span>
+<span class="sd">        :param str adapters: if set, contains the list of the only adapters that should generate jobs for these events.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">adapters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">adapters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapters</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">product_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">productstatus</span><span class="o">.</span><span class="n">productinstance</span><span class="p">[</span><span class="n">product_instance_uuid</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing all DataInstance resources descended from </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">product_instance</span><span class="p">)</span>
+        <span class="n">instances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">productstatus</span><span class="o">.</span><span class="n">datainstance</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">data__productinstance</span><span class="o">=</span><span class="n">product_instance</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">instances</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Adding </span><span class="si">%d</span><span class="s1"> DataInstance resources to queue...&#39;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">instances</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%d</span><span class="s1">/</span><span class="si">%d</span><span class="s1">] Adding to queue: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusLocalEvent</span><span class="p">(</span>
+                <span class="p">{},</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">resource_uri</span><span class="p">,</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">resource</span><span class="o">.</span><span class="n">modified</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">events</span> <span class="o">+=</span> <span class="p">[</span><span class="n">event</span><span class="p">]</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">set_adapters</span><span class="p">(</span><span class="n">adapters</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.process_data_instance"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.process_data_instance">[docs]</a>    <span class="k">def</span> <span class="nf">process_data_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instance_uuid</span><span class="p">,</span> <span class="n">adapters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process a single DataInstance resource.</span>
+
+<span class="sd">        :param str data_instance_uuid: the UUID of a DataInstance resource.</span>
+<span class="sd">        :param str adapters: if set, contains the list of the only adapters that should generate jobs for this event.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">adapters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">adapters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapters</span>
+        <span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">productstatus</span><span class="o">.</span><span class="n">datainstance</span><span class="p">[</span><span class="n">data_instance_uuid</span><span class="p">]</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusLocalEvent</span><span class="p">(</span>
+            <span class="p">{},</span>
+            <span class="n">resource</span><span class="o">.</span><span class="n">resource_uri</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">resource</span><span class="o">.</span><span class="n">modified</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Adding event with DataInstance </span><span class="si">%s</span><span class="s1"> to queue&#39;</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="n">item</span><span class="o">.</span><span class="n">set_adapters</span><span class="p">(</span><span class="n">adapters</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.shutdown"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Shutdown EVA after the current resource has been processed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Received shutdown call, will stop processing resources.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_shutdown</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Eventloop.graceful_shutdown"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.graceful_shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">graceful_shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Shutdown EVA after the current resource has been processed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Received graceful shutdown call; will stop receiving events, finish processing all remaining jobs, and exit.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_graceful_shutdown</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_drain</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Eventloop.must_the_show_go_on"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.must_the_show_go_on">[docs]</a>    <span class="k">def</span> <span class="nf">must_the_show_go_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns True if the program should continue to run, False otherwise.</span>
+
+<span class="sd">        The program can be shut down either via a regular shutdown (all</span>
+<span class="sd">        processing stops immediately, might leave unfinished jobs), or a</span>
+<span class="sd">        graceful shutdown, which will stop receiving events, finish processing</span>
+<span class="sd">        all jobs, and then shutdown.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_shutdown</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_graceful_shutdown</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction to Event Adapter &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="index.html" />
+    <link rel="next" title="Development" href="development.html" />
+    <link rel="prev" title="EVA: the Event Adapter" href="index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>Introduction to Event Adapter</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">EVA: the Event Adapter</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="development.html">Development</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="introduction-to-event-adapter">
+<h1>Introduction to Event Adapter<a class="headerlink" href="#introduction-to-event-adapter" title="Permalink to this headline">¶</a></h1>
+<p>Event Adapter, or <em>EVA</em>, is a robust job scheduling system, utilizing
+<a class="reference external" href="https://github.com/metno/productstatus">Productstatus</a> for event triggering and metadata storage, and <a class="reference external" href="https://kafka.apache.org/">Kafka</a> for
+transporting events over a highly available message queue.</p>
+<div class="section" id="anatomy-of-eva">
+<h2>Anatomy of EVA<a class="headerlink" href="#anatomy-of-eva" title="Permalink to this headline">¶</a></h2>
+<p>EVA is structured as three main, logical parts. These parts are:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Events</p>
+<p>Events are small, chronographically ordered messages, that ultimately
+instructs EVA to execute specific tasks. Currently, only messages coming
+directly from <a class="reference external" href="https://github.com/metno/productstatus">Productstatus</a> make sense to EVA.</p>
+</li>
+<li><p class="first">Adapters</p>
+<p>Adapters are Python classes that receives events, and creates jobs that
+should be processed on an Executor. They are configured to accept
+<a class="reference external" href="https://github.com/metno/productstatus">Productstatus</a> events with specific properties, such as a specific input
+file format or a specific <em>Product</em>.</p>
+</li>
+<li><p class="first">Executors</p>
+<p>Executors are Python classes that provide an asynchronous interface to job
+processing. Executors make sure that shell commands run on the correct
+infrastructure, and that the exit code, standard output, and standard error
+is available for log output and further processing.</p>
+</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">EVA: the Event Adapter</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="development.html">Development</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,509 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.config &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="up" title="API documentation" href="index.html" />
+    <link rel="next" title="eva.eventloop" href="eventloop.html" />
+    <link rel="prev" title="eva.base.executor" href="baseexecutor.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.config</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="baseexecutor.html">eva.base.executor</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="eventloop.html">eva.eventloop</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-eva.config">
+<span id="eva-config"></span><h1>eva.config<a class="headerlink" href="#module-eva.config" title="Permalink to this headline">¶</a></h1>
+<p>Configuration module, containing classes necessary for automatic configuration
+of objects from a configuration file.</p>
+<dl class="class">
+<dt id="eva.config.ConfigurableObject">
+<em class="property">class </em><code class="descclassname">eva.config.</code><code class="descname">ConfigurableObject</code><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class that allows the subclass to define configuration options that
+can be populated from an INI file, along with a list of required and
+optional configuration variables.</p>
+<p>In order to use configuration classes in your EVA configuration, they MUST
+be derived from this class. Optionally, they may reimplement the
+<a class="reference internal" href="#eva.config.ConfigurableObject._factory" title="eva.config.ConfigurableObject._factory"><code class="xref py py-meth docutils literal"><span class="pre">_factory()</span></code></a> method, which must return a configured class instance of
+any type.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">incubator</span><span class="p">,</span> <span class="n">object_</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ConfigurableObject</span><span class="p">()</span><span class="o">.</span><span class="n">factory</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;foo&#39;</span><span class="p">:</span> <span class="s1">&#39;1, 2, 3, 5, 7, 11&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;bar&#39;</span><span class="p">:</span> <span class="s1">&#39;baz&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># `incubator` is a reference to the ConfigurableObject instance, while</span>
+<span class="c1"># `object_` is a reference to the object returned by _factory().</span>
+<span class="c1"># Normally, you proceed with calling init() if your instantiated class</span>
+<span class="c1"># is a ConfigurableObject instance:</span>
+
+<span class="n">object_</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Configurable variables are defined with the <a class="reference internal" href="#eva.config.ConfigurableObject.CONFIG" title="eva.config.ConfigurableObject.CONFIG"><code class="xref py py-const docutils literal"><span class="pre">CONFIG</span></code></a> dictionary.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyClass</span><span class="p">(</span><span class="n">ConfigurableObject</span><span class="p">):</span>
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;foo&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;1,2,3&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;bar&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">...</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+</pre></div>
+</div>
+<p>The types are defined as <code class="docutils literal"><span class="pre">normalize_config_&lt;type&gt;</span></code> functions in this
+class. Subclasses might implement their own normalization functions as
+needed. A list of provided configuration normalizers are provided below:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_string()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_int()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_positive_int" title="eva.config.ConfigurableObject.normalize_config_positive_int"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_positive_int()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_null_bool" title="eva.config.ConfigurableObject.normalize_config_null_bool"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_null_bool()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_bool" title="eva.config.ConfigurableObject.normalize_config_bool"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_bool()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_list" title="eva.config.ConfigurableObject.normalize_config_list"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_list()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_list_string" title="eva.config.ConfigurableObject.normalize_config_list_string"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_list_string()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_list_int" title="eva.config.ConfigurableObject.normalize_config_list_int"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_list_int()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_config_class" title="eva.config.ConfigurableObject.normalize_config_config_class"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_config_class()</span></code></a></li>
+</ul>
+</div></blockquote>
+<p>To define configuration options as required or optional, you may do:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyClass</span><span class="p">(</span><span class="n">ConfigurableObject</span><span class="p">):</span>
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">]</span>
+    <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bar&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Note that variables that are not in any of these two lists will be regarded
+as invalid options, and trying to use them will throw an exception.</p>
+<p>The normalized variables are made available in the <cite>env</cite> class member. For
+instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">object_</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>  <span class="c1"># True</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="eva.config.ConfigurableObject.CONFIG">
+<code class="descname">CONFIG</code><em class="property"> = {}</em><a class="headerlink" href="#eva.config.ConfigurableObject.CONFIG" title="Permalink to this definition">¶</a></dt>
+<dd><p>dictionary of possible configuration variables.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eva.config.ConfigurableObject.OPTIONAL_CONFIG">
+<code class="descname">OPTIONAL_CONFIG</code><em class="property"> = []</em><a class="headerlink" href="#eva.config.ConfigurableObject.OPTIONAL_CONFIG" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of optional configuration variables.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eva.config.ConfigurableObject.REQUIRED_CONFIG">
+<code class="descname">REQUIRED_CONFIG</code><em class="property"> = []</em><a class="headerlink" href="#eva.config.ConfigurableObject.REQUIRED_CONFIG" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of required configuration variables.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.config.ConfigurableObject._factory">
+<code class="descname">_factory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject._factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject._factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a class instance. Override this method in order to return a
+different object than the <a class="reference internal" href="#eva.config.ConfigurableObject" title="eva.config.ConfigurableObject"><code class="xref py py-class docutils literal"><span class="pre">ConfigurableObject</span></code></a> instance. This is
+useful if external objects are going to be instantiated.</p>
+<p>This method is called after <a class="reference internal" href="#eva.config.ConfigurableObject.load_configuration" title="eva.config.ConfigurableObject.load_configuration"><code class="xref py py-meth docutils literal"><span class="pre">load_configuration()</span></code></a>, so you can use
+the <code class="xref py py-attr docutils literal"><span class="pre">env</span></code> dictionary for your object configuration.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eva.config.ConfigurableObject.config_id">
+<code class="descname">config_id</code><a class="headerlink" href="#eva.config.ConfigurableObject.config_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the configuration ID of this class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="eva.config.ConfigurableObject.factory">
+<em class="property">classmethod </em><code class="descname">factory</code><span class="sig-paren">(</span><em>config</em>, <em>config_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the specified configuration data, according to <a class="reference internal" href="#eva.config.ConfigurableObject.load_configuration" title="eva.config.ConfigurableObject.load_configuration"><code class="xref py py-meth docutils literal"><span class="pre">load_configuration()</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>config</strong> (<em>dict</em>) &#8211; dictionary of configuration variables.</li>
+<li><strong>config_id</strong> (<em>str</em>) &#8211; configuration section ID used to configure this class.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">tuple</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a tuple of the incubator class instance, and the final instantiated class.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.config.ConfigurableObject.format_config">
+<code class="descname">format_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.format_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.format_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a list of strings with configuration options, formatted in
+<code class="docutils literal"><span class="pre">key=value</span></code> format, and with censored variables defined in
+<a class="reference internal" href="#eva.config.SECRET_CONFIGURATION" title="eva.config.SECRET_CONFIGURATION"><code class="xref py py-attr docutils literal"><span class="pre">SECRET_CONFIGURATION</span></code></a> filtered out.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.config.ConfigurableObject.init">
+<code class="descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a place for subclasses to run their own initialization. By
+default, this method does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.config.ConfigurableObject.isset">
+<code class="descname">isset</code><span class="sig-paren">(</span><em>variable</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.isset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.isset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if <code class="docutils literal"><span class="pre">variable</span></code> is found in <code class="xref py py-attr docutils literal"><span class="pre">env</span></code>, and its value is set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.config.ConfigurableObject.load_configuration">
+<code class="descname">load_configuration</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.load_configuration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.load_configuration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize input configuration based on the configuration definition:
+split strings into lists, convert to types.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> (<em>dict</em>) &#8211; dictionary with configuration variables.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><a class="reference internal" href="exceptions.html#eva.exceptions.InvalidConfigurationException" title="eva.exceptions.InvalidConfigurationException"><strong>eva.exceptions.InvalidConfigurationException</strong></a> &#8211; when a configuration value is invalid (normalizer function raised an exception).</li>
+<li><a class="reference internal" href="exceptions.html#eva.exceptions.MissingConfigurationException" title="eva.exceptions.MissingConfigurationException"><strong>eva.exceptions.MissingConfigurationException</strong></a> &#8211; when a configuration value defined in <a class="reference internal" href="#eva.config.ConfigurableObject.REQUIRED_CONFIG" title="eva.config.ConfigurableObject.REQUIRED_CONFIG"><code class="xref py py-attr docutils literal"><span class="pre">REQUIRED_CONFIG</span></code></a> is missing from the configuration dictionary.</li>
+<li><strong>RuntimeError</strong> &#8211; when a configuration variable is missing from the <a class="reference internal" href="#eva.config.ConfigurableObject.CONFIG" title="eva.config.ConfigurableObject.CONFIG"><code class="xref py py-attr docutils literal"><span class="pre">CONFIG</span></code></a> hash, or has defined a normalization function that is not defined as a class member. This error indicates a bug in a subclass.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_bool">
+<em class="property">static </em><code class="descname">normalize_config_bool</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_bool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_bool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of any type into boolean.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><a class="reference internal" href="exceptions.html#eva.exceptions.InvalidConfigurationException" title="eva.exceptions.InvalidConfigurationException"><strong>eva.exceptions.InvalidConfigurationException</strong></a> &#8211; when a boolean value can not be derived.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_config_class">
+<em class="property">static </em><code class="descname">normalize_config_config_class</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_config_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_config_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a dotted class name into a <a class="reference internal" href="#eva.config.ResolvableDependency" title="eva.config.ResolvableDependency"><code class="xref py py-class docutils literal"><span class="pre">ResolvableDependency</span></code></a> object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#eva.config.ResolvableDependency" title="eva.config.ResolvableDependency">ResolvableDependency</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_int">
+<em class="property">static </em><code class="descname">normalize_config_int</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of any type into an integer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int|None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_list">
+<em class="property">static </em><code class="descname">normalize_config_list</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a comma-separated string into a list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_list_int">
+<em class="property">static </em><code class="descname">normalize_config_list_int</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_list_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_list_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a comma-separated string into a list of integers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_list_string">
+<em class="property">static </em><code class="descname">normalize_config_list_string</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_list_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_list_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a comma-separated string into a list of unicode strings. Empty
+values are ignored.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_null_bool">
+<em class="property">static </em><code class="descname">normalize_config_null_bool</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_null_bool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_null_bool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of any type into a nullable boolean.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool|None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_positive_int">
+<em class="property">static </em><code class="descname">normalize_config_positive_int</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_positive_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_positive_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of any type into a positive integer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><a class="reference internal" href="exceptions.html#eva.exceptions.InvalidConfigurationException" title="eva.exceptions.InvalidConfigurationException"><strong>eva.exceptions.InvalidConfigurationException</strong></a> &#8211; when the integer is <cite>&lt;= 0</cite>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_string">
+<em class="property">static </em><code class="descname">normalize_config_string</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of any type into a unicode string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.config.ConfigurableObject.resolve_dependencies">
+<code class="descname">resolve_dependencies</code><span class="sig-paren">(</span><em>config_classes</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.resolve_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.resolve_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace all configuration objects of type <a class="reference internal" href="#eva.config.ResolvableDependency" title="eva.config.ResolvableDependency"><code class="xref py py-class docutils literal"><span class="pre">ResolvableDependency</span></code></a>
+with their true class reference.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config_classes</strong> (<em>dict</em>) &#8211; dictionary with configuration IDs (see
+<a class="reference internal" href="#eva.config.ConfigurableObject.config_id" title="eva.config.ConfigurableObject.config_id"><code class="xref py py-attr docutils literal"><span class="pre">config_id</span></code></a>) as keys pointing to
+<a class="reference internal" href="#eva.config.ResolvableDependency" title="eva.config.ResolvableDependency"><code class="xref py py-class docutils literal"><span class="pre">ResolvableDependency</span></code></a> objects.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">class</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.config.ConfigurableObject.set_config_id">
+<code class="descname">set_config_id</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.set_config_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.set_config_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the configuration ID of this class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>id</strong> (<em>str</em>) &#8211; configuration ID to set.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>RuntimeError</strong> &#8211; when the configuration ID is already set.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="eva.config.ResolvableDependency">
+<em class="property">class </em><code class="descclassname">eva.config.</code><code class="descname">ResolvableDependency</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ResolvableDependency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ResolvableDependency" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class provides a future resolvable representation of a class defined
+in a configuration key, which will be converted into an object as soon as
+all the configuration keys have been loaded.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> (<em>str</em>) &#8211; configuration ID (see <a class="reference internal" href="#eva.config.ConfigurableObject.config_id" title="eva.config.ConfigurableObject.config_id"><code class="xref py py-attr docutils literal"><span class="pre">ConfigurableObject.config_id</span></code></a>) of the resolvable object.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="eva.config.ResolvableDependency.resolve">
+<code class="descname">resolve</code><span class="sig-paren">(</span><em>config_classes</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ResolvableDependency.resolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ResolvableDependency.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate the class, using the pre-defined <code class="xref py py-attr docutils literal"><span class="pre">key</span></code> to look up the
+object in the <a href="#id1"><span class="problematic" id="id2">:param:`config_classes`</span></a> dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config_classes</strong> (<em>dict</em>) &#8211; dictionary of classes.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">class</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="data">
+<dt id="eva.config.SECRET_CONFIGURATION">
+<code class="descclassname">eva.config.</code><code class="descname">SECRET_CONFIGURATION</code><em class="property"> = ['api_key']</em><a class="headerlink" href="#eva.config.SECRET_CONFIGURATION" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of configuration options that shall be censored from log output.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eva.config.resolved_config_section">
+<code class="descclassname">eva.config.</code><code class="descname">resolved_config_section</code><span class="sig-paren">(</span><em>config</em>, <em>section</em>, <em>section_keys=None</em>, <em>ignore_defaults=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#resolved_config_section"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.resolved_config_section" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively pull in includes and defaults for a configuration section, and
+combine them into a single dictionary.</p>
+<p>This function provides infinite recursion protection, guaranteeing that a
+single configuration section will be read only once.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>section</strong> (<em>configparser.ConfigParser</em>) &#8211; reference to a configuration parser.</li>
+<li><strong>section_keys</strong> (<em>list</em>) &#8211; list of section keys already parsed, used for infinite recursion protection.</li>
+<li><strong>ignore_defaults</strong> (<em>bool</em>) &#8211; whether or not to include the &#8216;defaults.&lt;SECTION-BASENAME&gt;&#8217; configuration section.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><a class="reference internal" href="exceptions.html#eva.exceptions.MissingConfigurationSectionException" title="eva.exceptions.MissingConfigurationSectionException"><strong>eva.exceptions.MissingConfigurationSectionException</strong></a> &#8211; when the configuration section does not exist.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">dict</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dictionary of configuration values.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="baseexecutor.html">eva.base.executor</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="eventloop.html">eva.eventloop</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

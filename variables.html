@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configuration directives &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="index.html" />
+    <link rel="next" title="Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Configuration" href="configuration.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>Configuration directives</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="configuration.html">Configuration</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="tutorial.html">Tutorial</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="configuration-directives">
+<h1>Configuration directives<a class="headerlink" href="#configuration-directives" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="section">
+<h2>[section]<a class="headerlink" href="#section" title="Permalink to this headline">¶</a></h2>
+<p>Starts a new configuration section.</p>
+<p>There are a few special section names. Other than these names, you may define
+your own configuration section names.</p>
+<blockquote>
+<div><ul class="simple">
+<li>The section <code class="docutils literal"><span class="pre">eva</span></code> is used for defining global program options.</li>
+<li>Variables under the <code class="docutils literal"><span class="pre">DEFAULT</span></code> section applies to every configuration section.</li>
+<li>The section name <code class="docutils literal"><span class="pre">defaults.&lt;ROOT&gt;</span></code> is always loaded regardless of include
+directives. The name <code class="docutils literal"><span class="pre">ROOT</span></code> refers to the first part of a dotted name,
+e.g. <code class="docutils literal"><span class="pre">adapter.foo.bar</span></code> will automatically load the section
+<code class="docutils literal"><span class="pre">defaults.adapter</span></code>.</li>
+</ul>
+</div></blockquote>
+<div class="highlight-ini"><div class="highlight"><pre><span></span>[defaults.my]
+...
+
+[my.configuration.section]
+...
+</pre></div>
+</div>
+</div>
+<div class="section" id="abstract">
+<h2>abstract<a class="headerlink" href="#abstract" title="Permalink to this headline">¶</a></h2>
+<p>Specifies that a section should ONLY be used for inheritance, and not
+instantiated when reading the configuration. You <em>MUST</em> define either <code class="docutils literal"><span class="pre">class</span></code>
+or <code class="docutils literal"><span class="pre">abstract</span></code> when writing a configuration section, otherwise EVA will refuse
+to start.</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[adapter.base.foo]</span>
+<span class="na">abstract</span> <span class="o">=</span> <span class="s">true</span>
+<span class="na">input_product</span> <span class="o">=</span> <span class="s">foo</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="class">
+<h2>class<a class="headerlink" href="#class" title="Permalink to this headline">¶</a></h2>
+<p>Full Python class name, in dotted notation, referring to a class derived from
+<a class="reference internal" href="api/config.html#eva.config.ConfigurableObject" title="eva.config.ConfigurableObject"><code class="xref py py-class docutils literal"><span class="pre">ConfigurableObject</span></code></a>.</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[adapter.foo]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.FooAdapter</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="include">
+<h2>include<a class="headerlink" href="#include" title="Permalink to this headline">¶</a></h2>
+<p>Use this directive to join another configuration section into the current
+configuration section.</p>
+<p>For example, the following configuration file...</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[adapter.base.foo]</span>
+<span class="na">abstract</span> <span class="o">=</span> <span class="s">true</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.FooAdapter</span>
+
+<span class="k">[adapter.base.bar]</span>
+<span class="na">abstract</span> <span class="o">=</span> <span class="s">true</span>
+<span class="na">input_product</span> <span class="o">=</span> <span class="s">bar</span>
+
+<span class="k">[adapter.foobar]</span>
+<span class="na">include</span> <span class="o">=</span> <span class="s">adapter.base.foo, adapter.base.bar</span>
+</pre></div>
+</div>
+<p>... will be rendered as this:</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[adapter.foobar]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.FooAdapter</span>
+<span class="na">input_product</span> <span class="o">=</span> <span class="s">bar</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="configuration.html">Configuration</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="tutorial.html">Tutorial</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

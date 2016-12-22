@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.exceptions &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="up" title="API documentation" href="index.html" />
+    <link rel="next" title="eva.base.adapter" href="baseadapter.html" />
+    <link rel="prev" title="eva" href="eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.exceptions</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="eva.html">eva</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="baseadapter.html">eva.base.adapter</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-eva.exceptions">
+<span id="eva-exceptions"></span><h1>eva.exceptions<a class="headerlink" href="#module-eva.exceptions" title="Permalink to this headline">¶</a></h1>
+<p>Exceptions thrown by EVA under various circumstances.</p>
+<dl class="exception">
+<dt id="eva.exceptions.AlreadyRunningException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">AlreadyRunningException</code><a class="reference internal" href="../_modules/eva/exceptions.html#AlreadyRunningException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.AlreadyRunningException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when EVA is configured to run as a single instance, but it is
+already running according to Zookeeper.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.ConfigurationException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">ConfigurationException</code><a class="reference internal" href="../_modules/eva/exceptions.html#ConfigurationException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.ConfigurationException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for configuration related exceptions.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.DuplicateEventException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">DuplicateEventException</code><a class="reference internal" href="../_modules/eva/exceptions.html#DuplicateEventException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.DuplicateEventException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when trying to add an event to the event queue and it already exists.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.EvaException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">EvaException</code><a class="reference internal" href="../_modules/eva/exceptions.html#EvaException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.EvaException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base exception for all exceptions thrown by EVA.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.EventTimeoutException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">EventTimeoutException</code><a class="reference internal" href="../_modules/eva/exceptions.html#EventTimeoutException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.EventTimeoutException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when the next event did not arrive in the expected time period.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.GridEngineParseException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">GridEngineParseException</code><a class="reference internal" href="../_modules/eva/exceptions.html#GridEngineParseException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.GridEngineParseException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when output parsing from GridEngine commands yields unexpected results.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.InvalidConfigurationException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">InvalidConfigurationException</code><a class="reference internal" href="../_modules/eva/exceptions.html#InvalidConfigurationException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.InvalidConfigurationException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when configuration does not make sense.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.InvalidEventException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">InvalidEventException</code><a class="reference internal" href="../_modules/eva/exceptions.html#InvalidEventException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.InvalidEventException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when a received event is not valid for processing.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.InvalidGroupIdException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">InvalidGroupIdException</code><a class="reference internal" href="../_modules/eva/exceptions.html#InvalidGroupIdException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.InvalidGroupIdException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when a group_id is incompatible with Zookeeper.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.InvalidRPCException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">InvalidRPCException</code><a class="reference internal" href="../_modules/eva/exceptions.html#InvalidRPCException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.InvalidRPCException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when an RPC call contains invalid data.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.JobNotCompleteException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">JobNotCompleteException</code><a class="reference internal" href="../_modules/eva/exceptions.html#JobNotCompleteException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.JobNotCompleteException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when an operation is performed on a Job object that is not
+complete, but should be. Treat this exception as a BUG!</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.JobNotGenerated">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">JobNotGenerated</code><a class="reference internal" href="../_modules/eva/exceptions.html#JobNotGenerated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.JobNotGenerated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown by an adapter when a resource event fits the processing
+criteria, but does not need processing after all.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.MissingConfigurationException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">MissingConfigurationException</code><a class="reference internal" href="../_modules/eva/exceptions.html#MissingConfigurationException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.MissingConfigurationException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when a configuration variable is missing.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.MissingConfigurationSectionException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">MissingConfigurationSectionException</code><a class="reference internal" href="../_modules/eva/exceptions.html#MissingConfigurationSectionException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.MissingConfigurationSectionException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when a configuration section is requested from a ConfigParser
+object, but does not exist.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.RPCException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">RPCException</code><a class="reference internal" href="../_modules/eva/exceptions.html#RPCException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.RPCException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for RPC exceptions.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.RPCFailedException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">RPCFailedException</code><a class="reference internal" href="../_modules/eva/exceptions.html#RPCFailedException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.RPCFailedException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when an RPC call fails.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.RPCInvalidRegexException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">RPCInvalidRegexException</code><a class="reference internal" href="../_modules/eva/exceptions.html#RPCInvalidRegexException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.RPCInvalidRegexException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown then the instance_id in a RPC message is not a valid regular expression.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.RPCWrongInstanceIDException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">RPCWrongInstanceIDException</code><a class="reference internal" href="../_modules/eva/exceptions.html#RPCWrongInstanceIDException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.RPCWrongInstanceIDException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when the RPC message does not match our configured EVA instance ID.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.ResourceTooOldException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">ResourceTooOldException</code><a class="reference internal" href="../_modules/eva/exceptions.html#ResourceTooOldException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.ResourceTooOldException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when an event is outdated because the Productstatus resource it
+refers to has been overwritten with more recent data.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.RetryException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">RetryException</code><a class="reference internal" href="../_modules/eva/exceptions.html#RetryException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.RetryException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when event processing cannot be completed due to a transient error
+on an underlying resource, typically a network or service outage.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.ShutdownException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">ShutdownException</code><a class="reference internal" href="../_modules/eva/exceptions.html#ShutdownException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.ShutdownException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when EVA is sent a <cite>SIGINT</cite> or <cite>SIGTERM</cite> signal.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eva.exceptions.ZooKeeperDataTooLargeException">
+<em class="property">exception </em><code class="descclassname">eva.exceptions.</code><code class="descname">ZooKeeperDataTooLargeException</code><a class="reference internal" href="../_modules/eva/exceptions.html#ZooKeeperDataTooLargeException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.exceptions.ZooKeeperDataTooLargeException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thrown when trying to store a message in ZooKeeper that is too big.</p>
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="eva.html">eva</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="baseadapter.html">eva.base.adapter</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>
