@@ -49,6 +49,7 @@ class Eventloop(eva.globe.GlobalMixin):
         self.create_event_queue_timer()
         self.reset_event_queue_item_generator()
         self.do_shutdown = False
+        self.do_graceful_shutdown = False
         self.message_timestamp_threshold = datetime.datetime.fromtimestamp(0, dateutil.tz.tzutc())
 
         self.statsd.gauge('eva_adapter_count', len(self.adapters))
@@ -401,7 +402,7 @@ class Eventloop(eva.globe.GlobalMixin):
         @brief Main loop. Checks for Productstatus events and dispatchs them to the adapter.
         """
         self.logger.info('Entering main loop.')
-        while not self.do_shutdown:
+        while self.must_the_show_go_on():
             try:
                 self.main_loop_iteration()
             except kazoo.exceptions.ZookeeperError as e:
@@ -750,3 +751,26 @@ class Eventloop(eva.globe.GlobalMixin):
         """
         self.logger.info('Received shutdown call, will stop processing resources.')
         self.do_shutdown = True
+
+    def graceful_shutdown(self):
+        """!
+        @brief Shutdown EVA after the current resource has been processed.
+        """
+        self.logger.info('Received graceful shutdown call; will stop receiving events, finish processing all remaining jobs, and exit.')
+        self.do_graceful_shutdown = True
+        self.set_drain()
+
+    def must_the_show_go_on(self):
+        """
+        Returns True if the program should continue to run, False otherwise.
+
+        The program can be shut down either via a regular shutdown (all
+        processing stops immediately, might leave unfinished jobs), or a
+        graceful shutdown, which will stop receiving events, finish processing
+        all jobs, and then shutdown.
+        """
+        if self.do_shutdown:
+            return False
+        if self.do_graceful_shutdown and self.event_queue.empty():
+            return False
+        return True

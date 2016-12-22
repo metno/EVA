@@ -60,6 +60,8 @@ class EVARPC(object):
     def req_control(self):
         if self.args.shutdown:
             url = self.build_url('control', 'shutdown')
+        elif self.args.graceful_shutdown:
+            url = self.build_url('control', 'graceful_shutdown')
         elif self.args.drain:
             url = self.build_url('control', 'drain')
         return self.make_signed_request(url)
@@ -118,6 +120,7 @@ class EVARPC(object):
         parser_control.set_defaults(func=self.req_control)
         parser_control_group = parser_control.add_mutually_exclusive_group(required=True)
         parser_control_group.add_argument('--shutdown', action='store_true', help='Shut down EVA immediately.')
+        parser_control_group.add_argument('--graceful-shutdown', action='store_true', help='Stop receiving new events, process all jobs remaining in the queue, and shut down.')
         parser_control_group.add_argument('--drain', action='store_true', help='Temporarily stop accepting new events until all events in the queue have been completely processed.')
 
         parser_process = subparsers.add_parser('process', help='Add Productstatus resources manually to process queue.')

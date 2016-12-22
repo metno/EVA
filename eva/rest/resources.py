@@ -82,12 +82,16 @@ class ControlResource(BaseResource):
         self.eventloop.shutdown()
         self.set_response_message(req, 'Shutting down immediately.')
 
+    def graceful_shutdown(self, req, resp):
+        self.eventloop.graceful_shutdown()
+        self.set_response_message(req, 'Shutting down gracefully. Event queue has %d remaining items.' % len(self.eventloop.event_queue))
+
     def drain(self, req, resp):
         self.eventloop.set_drain()
         self.set_response_message(req, 'Drain has been enabled.')
 
     def on_post(self, req, resp, method=None):
-        return self.exec_functions(req, resp, method, ['shutdown', 'drain'])
+        return self.exec_functions(req, resp, method, ['shutdown', 'graceful_shutdown', 'drain'])
 
 
 class JobResource(BaseResource):
