@@ -9,6 +9,8 @@ import kazoo.client
 import kazoo.exceptions
 import configparser
 
+import productstatus.exceptions
+
 import eva.adapter
 import eva.config
 import eva.eventloop
@@ -432,7 +434,13 @@ class Main(eva.config.ConfigurableObject):
             self.logger.info("Initializing '%s'...", instance)
             if isinstance(instance, eva.globe.GlobalMixin):
                 instance.set_globe(self.globe)
-            instance.init()
+            try:
+                instance.init()
+            except productstatus.exceptions.ResourceNotFoundException as e:
+                raise eva.exceptions.InvalidConfigurationException(
+                    "Productstatus error while initializing '%s': %s" %
+                    (instance.config_id, e)
+                )
 
         self.logger.info('Finished initializing classes.')
 
