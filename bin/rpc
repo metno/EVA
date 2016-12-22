@@ -92,7 +92,7 @@ class EVARPC(object):
             return self.make_signed_request(url, method='delete')
 
     def finish_request(self, r):
-        message = r.text
+        message = r.reason
         if len(r.text) > 0:
             data = r.json()
             for key in ['title', 'message', 'error']:
