@@ -9,13 +9,15 @@ import productstatus.api
 
 class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
     """!
+    The NowcastPPAdapter is postprocessing radar nowcast files in two steps:
 
-    NowcastPPAdapter with R script preprocessing step to the generic GridPP adapter
+    1) An R script creates a txt file with information about missing radars
+    2) Gridpp adds neighbourhood smoothing and masks out areas with missing radars
 
     The GridPP software is written by Thomas Nipen and is available at:
     https://github.com/metno/gridpp
 
-    R script write_missing_radars.R is available at 
+    R script write_missing_radars.R written by ivaras@met.no is available at
     https://gitlab.met.no/it-geo/eva-adapter-support/
 
     After generating the file, the adapter will post the information to
@@ -54,17 +56,17 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
             'help': 'Name of file with active radars to be used as input to gridpp',
             'default': '',
         },
-       'gridpp_preprocess_script': {
+        'gridpp_preprocess_script': {
             'type': 'string',
             'help': 'R script for generating file with missing radars',
             'default': '',
         },
-       'gridpp_mask_options': {
+        'gridpp_mask_options': {
             'type': 'string',
             'help': 'option for masking out points with gridpp',
             'default': '',
         },
-  }
+    }
 
     REQUIRED_CONFIG = [
         'input_data_format',
@@ -126,9 +128,9 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
                 'output.file': self.output_filename.render(**template_variables),
                 'output.options': self.out_opts.render(**template_variables),
                 'generic.options': self.generic_opts.render(**template_variables),
-		'missing.radarfile': self.missing_radarfile.render(**template_variables),
-		'preprocess.script': self.preprocess_script.render(**template_variables),
-		'mask.options': self.mask_opts.render(**template_variables),
+                'missing.radarfile': self.missing_radarfile.render(**template_variables),
+                'preprocess.script': self.preprocess_script.render(**template_variables),
+                'mask.options': self.mask_opts.render(**template_variables),
             }
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
@@ -139,7 +141,7 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
         for module in self.env['gridpp_modules']:
             command += ["module load %s" % module]
         command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
-        command += ["Rscript " + job.gridpp_params['preprocess.script'] + ' "' + job.gridpp_params['input.file'] + '" "' + job.gridpp_params['missing.radarfile'] + '"' ]
+        command += ["Rscript " + job.gridpp_params['preprocess.script'] + ' "' + job.gridpp_params['input.file'] + '" "' + job.gridpp_params['missing.radarfile'] + '"']
         command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
         command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s %(mask.options)s" % job.gridpp_params]
         job.command = '\n'.join(command) + '\n'
