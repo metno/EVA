@@ -146,6 +146,8 @@ class EVARPC(object):
 
         parser = self.get_parser()
         self.args = parser.parse_args()
+        if self.args.server[:7] != 'http://':
+            self.args.server = 'http://' + self.args.server
 
         try:
             request = self.args.func()
