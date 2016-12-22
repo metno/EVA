@@ -12,7 +12,7 @@
 # extensions to the MAJOR.MINOR.PATCH format.
 #
 
-VERSION = [2, 0, 0]
+VERSION = [1, 99, 999]
 
 config = {
     'description': 'The Event Adapter',
