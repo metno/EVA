@@ -27,6 +27,7 @@ section for how to set up configuration for StatsD.
    eva_job_status_change                    counter         status,         Status changes for a job belonging to a specific ``adapter``, to the status reported in ``status``.
                                                             adapter
    eva_kafka_commit_failed                  counter                         Kafka message queue position commit errors.
+   eva_kafka_no_brokers_available           counter                         Connection loss against all Kafka message queue brokers.
    eva_md5sum_fail                          counter                         Files on filesystem that had a mis-match with their md5sum counterpart. Reported by :class:`~eva.adapter.checksum.ChecksumVerificationAdapter`.
    eva_recoverable_exceptions               counter                         Times job processing was aborted internally in some way because of a network or other transient error.
    eva_requeue_rejected                     counter         adapter         Jobs that was attempted re-queued, but rejected for re-processing by the owning adapter.

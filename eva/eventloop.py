@@ -350,6 +350,15 @@ class Eventloop(eva.globe.GlobalMixin):
             job.logger.info('Adapter has finished processing the job.')
             job.set_status(eva.job.FINISHED)
 
+    def handle_kafka_error(self, exception):
+        """
+        Log a Kafka error, and restart all listeners.
+        """
+        self.logger.warning('Kafka error: %s', exception)
+        self.logger.warning('Will try to restart all Kafka consumers.')
+        self.restart_listeners()
+        self.logger.info('All Kafka consumers have been restarted, good riddance.')
+
     def main_loop_iteration(self):
         """!
         @brief A single iteration in the main loop.
@@ -364,12 +373,12 @@ class Eventloop(eva.globe.GlobalMixin):
         if not self.draining():
             try:
                 self.poll_listeners()
+            except kafka.errors.NoBrokersAvailable as e:
+                self.statsd.incr('eva_kafka_no_brokers_available')
+                self.handle_kafka_error(e)
             except kafka.errors.CommitFailedError as e:
                 self.statsd.incr('eva_kafka_commit_failed')
-                self.logger.warning('Kafka error: %s', e)
-                self.logger.warning('Will try to restart all Kafka consumers.')
-                self.restart_listeners()
-                self.logger.info('All Kafka consumers have been restarted, good riddance.')
+                self.handle_kafka_error(e)
 
         try:
             self.process_next_event()
