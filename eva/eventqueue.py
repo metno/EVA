@@ -230,9 +230,14 @@ class EventQueue(eva.globe.GlobalMixin):
             message_path = os.path.join(event_path, 'message')
             jobs_path = os.path.join(event_path, 'jobs')
             job_keys = self.zk_get_serialized(jobs_path)
-            items[event_key] = {}
-            items[event_key]['message'] = self.zk_get_serialized(message_path)
-            items[event_key]['jobs'] = collections.OrderedDict()
+            try:
+                items[event_key] = {}
+                items[event_key]['message'] = self.zk_get_serialized(message_path)
+                items[event_key]['jobs'] = collections.OrderedDict()
+            except kazoo.exceptions.NoNodeError:
+                self.logger.error("Restoring event '%s' from ZooKeeper raised exception because data is corrupt. Discarding!")
+                del items[event_key]
+                continue
             if not job_keys:
                 continue
             for job_key in job_keys:
