@@ -49,9 +49,9 @@ input_with_hash = NO
         resource = mock.MagicMock()
         job = self.create_job(resource)
         job.set_status(eva.job.COMPLETE)
-        self.adapter.finish_job(job)
         md5sum = '401b30e3b8b5d629635a5c613cdb7919'
-        job.stdout = md5sum
+        job.stdout = [md5sum]
+        self.adapter.finish_job(job)
         resources = self.generate_resources(job)
         self.assertEqual(resources['datainstance'][0].hash_type, str('md5'))
         self.assertEqual(resources['datainstance'][0].hash, md5sum)
