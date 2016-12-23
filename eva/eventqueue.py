@@ -4,6 +4,7 @@
 
 import collections
 import json
+import kazoo.exceptions
 import os
 
 import eva.base.adapter
