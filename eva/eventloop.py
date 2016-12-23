@@ -104,6 +104,7 @@ class Eventloop(eva.globe.GlobalMixin):
                 eva.retry_n(self.instantiate_productstatus_data,
                             args=[item.event],
                             give_up=0,
+                            exceptions=self.RECOVERABLE_EXCEPTIONS,
                             logger=self.logger)
 
                 # Iterate through event-generated jobs
