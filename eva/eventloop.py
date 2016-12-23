@@ -107,7 +107,7 @@ class Eventloop(eva.globe.GlobalMixin):
                                 give_up=0,
                                 exceptions=self.RECOVERABLE_EXCEPTIONS,
                                 logger=self.logger)
-                except eva.exceptions.ResourceTooOldException as e:
+                except eva.exceptions.ResourceTooOldException:
                     self.logger.warning('%s: stored event is older than the Productstatus resource; discarding.', event)
                     self.event_queue.remove_item(item)
                     continue
