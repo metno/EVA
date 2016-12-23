@@ -101,11 +101,16 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.statsd.incr('eva_restored_events')
 
                 # Try restoring event data indefinitely.
-                eva.retry_n(self.instantiate_productstatus_data,
-                            args=[item.event],
-                            give_up=0,
-                            exceptions=self.RECOVERABLE_EXCEPTIONS,
-                            logger=self.logger)
+                try:
+                    eva.retry_n(self.instantiate_productstatus_data,
+                                args=[item.event],
+                                give_up=0,
+                                exceptions=self.RECOVERABLE_EXCEPTIONS,
+                                logger=self.logger)
+                except eva.exceptions.ResourceTooOldException as e:
+                    self.logger.warning('%s: stored event is older than the Productstatus resource; discarding.', event)
+                    self.event_queue.remove_item(item)
+                    continue
 
                 # Iterate through event-generated jobs
                 for job_id, job_data in event_data['jobs'].items():
