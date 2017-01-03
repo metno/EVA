@@ -14,14 +14,22 @@ class TestDeleteAdapter(eva.tests.BaseTestAdapter):
 """
 [adapter]
 input_service_backend = foo
+delete_interval_secs = 0
 """  # NOQA
+
+    def make_resource(self):
+        resource = mock.MagicMock()
+        resource.data.productinstance.product.id = 'product'
+        resource.format.id = 'format'
+        resource.servicebackend.id = 'servicebackend'
+        return resource
 
     def test_create_job(self):
         """!
         @brief Test that job creation filters for DataInstance objects.
         """
         self.create_adapter()
-        resource = mock.MagicMock()
+        resource = self.make_resource()
         self.create_job(resource)
         self.assertEqual(self.adapter.api.datainstance.objects.filter.call_count, 1)
 
@@ -31,7 +39,7 @@ input_service_backend = foo
         that generated resources has their deleted flag set to True.
         """
         self.create_adapter()
-        resource = mock.MagicMock()
+        resource = self.make_resource()
         job = self.create_job(resource)
         self.setup_productstatus()
         job.set_status(eva.job.COMPLETE)
