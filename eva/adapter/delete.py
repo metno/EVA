@@ -1,5 +1,4 @@
 import datetime
-import dateutil.tz
 
 import eva.exceptions
 import eva.base.adapter
