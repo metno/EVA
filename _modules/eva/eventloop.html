@@ -147,10 +147,16 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_restored_events&#39;</span><span class="p">)</span>
 
                 <span class="c1"># Try restoring event data indefinitely.</span>
-                <span class="n">eva</span><span class="o">.</span><span class="n">retry_n</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instantiate_productstatus_data</span><span class="p">,</span>
-                            <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">],</span>
-                            <span class="n">give_up</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                            <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">eva</span><span class="o">.</span><span class="n">retry_n</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instantiate_productstatus_data</span><span class="p">,</span>
+                                <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">],</span>
+                                <span class="n">give_up</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                <span class="n">exceptions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">RECOVERABLE_EXCEPTIONS</span><span class="p">,</span>
+                                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResourceTooOldException</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: stored event is older than the Productstatus resource; discarding.&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">remove_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                    <span class="k">continue</span>
 
                 <span class="c1"># Iterate through event-generated jobs</span>
                 <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job_data</span> <span class="ow">in</span> <span class="n">event_data</span><span class="p">[</span><span class="s1">&#39;jobs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>

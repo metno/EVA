@@ -50,6 +50,7 @@
 
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">kazoo.exceptions</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">eva.base.adapter</span>
@@ -276,9 +277,14 @@
             <span class="n">message_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">event_path</span><span class="p">,</span> <span class="s1">&#39;message&#39;</span><span class="p">)</span>
             <span class="n">jobs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">event_path</span><span class="p">,</span> <span class="s1">&#39;jobs&#39;</span><span class="p">)</span>
             <span class="n">job_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_serialized</span><span class="p">(</span><span class="n">jobs_path</span><span class="p">)</span>
-            <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_serialized</span><span class="p">(</span><span class="n">message_path</span><span class="p">)</span>
-            <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;jobs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zk_get_serialized</span><span class="p">(</span><span class="n">message_path</span><span class="p">)</span>
+                <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">][</span><span class="s1">&#39;jobs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">kazoo</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">NoNodeError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Restoring event &#39;</span><span class="si">%s</span><span class="s2">&#39; from ZooKeeper raised exception because data is corrupt. Discarding!&quot;</span><span class="p">)</span>
+                <span class="k">del</span> <span class="n">items</span><span class="p">[</span><span class="n">event_key</span><span class="p">]</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">job_keys</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">for</span> <span class="n">job_key</span> <span class="ow">in</span> <span class="n">job_keys</span><span class="p">:</span>
