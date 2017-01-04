@@ -84,10 +84,10 @@ ssh_user = nobody
         metrics = eva.executor.grid_engine.parse_qacct_metrics(lines)
         self.assertDictEqual(metrics, {
             'metrics': {
-                'grid_engine_run_time': 300000,
-                'grid_engine_ru_utime': 14,
-                'grid_engine_ru_stime': 11,
-                'grid_engine_qsub_delay': 1000,
+                'eva_grid_engine_run_time': 300000,
+                'eva_grid_engine_ru_utime': 14,
+                'eva_grid_engine_ru_stime': 11,
+                'eva_grid_engine_qsub_delay': 1000,
             },
             'tags': {
                 'grid_engine_hostname': 'c6320-5wszm62.int.met.no',
@@ -119,10 +119,10 @@ ssh_user = nobody
         metrics = eva.executor.grid_engine.parse_qacct_metrics(lines)
         self.assertDictEqual(metrics, {
             'metrics': {
-                'grid_engine_run_time': 300000,
-                'grid_engine_ru_utime': 14,
-                'grid_engine_ru_stime': 10,
-                'grid_engine_qsub_delay': 1000,
+                'eva_grid_engine_run_time': 300000,
+                'eva_grid_engine_ru_utime': 14,
+                'eva_grid_engine_ru_stime': 10,
+                'eva_grid_engine_qsub_delay': 1000,
             },
             'tags': {
                 'grid_engine_hostname': 'c6320-5wszm62.int.met.no',
