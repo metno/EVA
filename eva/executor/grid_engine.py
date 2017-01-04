@@ -92,13 +92,13 @@ def parse_qacct_metrics(stdout_lines):
 
     if 'start_time' in parsed:
         if 'end_time' in parsed:
-            metrics['grid_engine_run_time'] = (parsed['end_time'] - parsed['start_time']).total_seconds() * 1000
+            metrics['eva_grid_engine_run_time'] = (parsed['end_time'] - parsed['start_time']).total_seconds() * 1000
         if 'qsub_time' in parsed:
-            metrics['grid_engine_qsub_delay'] = (parsed['start_time'] - parsed['qsub_time']).total_seconds() * 1000
+            metrics['eva_grid_engine_qsub_delay'] = (parsed['start_time'] - parsed['qsub_time']).total_seconds() * 1000
 
     for key in ['ru_utime', 'ru_stime']:
         if key in parsed:
-            metrics['grid_engine_' + key] = int(float(parsed[key]) * 1000)
+            metrics['eva_grid_engine_' + key] = int(float(parsed[key]) * 1000)
 
     for key in ['qname', 'hostname']:
         if key in parsed:
@@ -380,6 +380,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         # Submit job metrics
         stats = parse_qacct_metrics(stdout.splitlines())
         for metric, value in stats['metrics'].items():
+            stats['tags']['adapter'] = job.adapter.config_id
             self.statsd.timing(metric, value, stats['tags'])
 
         # Retrieve stdout and stderr
