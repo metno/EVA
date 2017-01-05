@@ -8,7 +8,7 @@ import productstatus.api
 
 
 class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
-    """!
+    """
     The NowcastPPAdapter post-processes RADAR NowCast files in two steps:
 
     1. An R script creates a txt file with information about missing radars
