@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.adapter.checksum &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../../index.html" />
+    <link rel="up" title="eva" href="../../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.adapter.checksum</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.adapter.checksum</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.base.adapter</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+
+
+<div class="viewcode-block" id="ChecksumVerificationAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.ChecksumVerificationAdapter">[docs]</a><span class="k">class</span> <span class="nc">ChecksumVerificationAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The ChecksumVerificationAdapter verifies checksums on data sets, according</span>
+<span class="sd">    to auxiliary files that have the similar name. For instance, it will</span>
+<span class="sd">    calculate the checksum on the file ``foo`` if a ``foo.md5`` file exists in</span>
+<span class="sd">    the same directory.</span>
+
+<span class="sd">    If the checksum is correct, it is added to the Productstatus resource under</span>
+<span class="sd">    the fields ``hash`` and ``hash_type``. If the checksum fails, the task</span>
+<span class="sd">    fails, and is NOT requeued.</span>
+
+<span class="sd">    At the moment, only MD5 checksums are supported.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_with_hash&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">adapter_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief This adapter requires Productstatus write access to be of any use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;input_with_hash&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span>
+                <span class="s1">&#39;This adapter MUST be configured with input_with_hash=NO in order to avoid recursive loops.&#39;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Return a Job object that will check the file&#39;s md5sum against a</span>
+<span class="sd">        stored hash in a corresponding file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">dataset_filename</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">url_to_filename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">md5_filename</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">dataset_filename</span> <span class="o">+</span> <span class="s1">&#39;.md5&#39;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting verification of file &#39;</span><span class="si">%s</span><span class="s2">&#39; against md5sum file &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">dataset_filename</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">md5_filename</span><span class="p">)</span>
+
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;#!/bin/bash&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;#$ -S /bin/bash&#39;</span><span class="p">,</span>  <span class="c1"># for GridEngine compatibility</span>
+            <span class="s1">&#39;set -e&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;cat </span><span class="si">%(md5_filename)s</span><span class="s1">&#39;</span><span class="p">,</span>  <span class="c1"># for hash detection in generate_resources()</span>
+            <span class="s1">&#39;printf &quot;</span><span class="si">%%</span><span class="s1">s  </span><span class="si">%(dataset_filename)s</span><span class="se">\\</span><span class="s1">n&quot; $(cat </span><span class="si">%(md5_filename)s</span><span class="s1">) | md5sum --check --status --strict -&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;dataset_filename&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">dataset_filename</span><span class="p">,</span>
+            <span class="s1">&#39;md5_filename&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">md5_filename</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">%</span> <span class="n">values</span>
+
+    <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;md5sum checking of &#39;</span><span class="si">%s</span><span class="s2">&#39; failed, skipping further processing!&quot;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_md5sum_fail&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">resource_hash_type</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="s1">&#39;md5&#39;</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">resource_hash</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource_hash</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">32</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RetryException</span><span class="p">(</span><span class="s1">&#39;md5sum hash (</span><span class="si">%s</span><span class="s1">) length does not equal 32, this must be a bug in the job output?&#39;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">resource_hash</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;DataInstance </span><span class="si">%s</span><span class="s1"> has md5sum hash </span><span class="si">%s</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">resource_hash</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generate a set of Productstatus resources based on job output.</span>
+
+<span class="sd">        This adapter will modify the original DataInstance object so that it</span>
+<span class="sd">        contains an MD5 hash.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">hash_type</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">resource_hash_type</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">hash</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">resource_hash</span>
+
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;datainstance&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="p">]</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

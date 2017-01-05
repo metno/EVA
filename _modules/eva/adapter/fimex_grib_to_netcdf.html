@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.adapter.fimex_grib_to_netcdf &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../../index.html" />
+    <link rel="up" title="eva" href="../../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.adapter.fimex_grib_to_netcdf</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.adapter.fimex_grib_to_netcdf</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os.path</span>
+
+<span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.base.adapter</span>
+
+<span class="kn">import</span> <span class="nn">productstatus.api</span>
+
+
+<div class="viewcode-block" id="FimexGRIB2NetCDFAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.fimex_grib_to_netcdf.FimexGRIB2NetCDFAdapter">[docs]</a><span class="k">class</span> <span class="nc">FimexGRIB2NetCDFAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">    This adapter fills a NetCDF file with GRIB data using Fimex.</span>
+<span class="sd">    The adapter requires an external library called `eva-adapter-support`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;fg2nc_lib&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;Path to .../eva-adapter-support/FimexGRIB2NetCDFAdapter&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;fg2nc_templatedir&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;Path to the NetCDF template files required for this conversion&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;fg2nc_lib&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;fg2nc_templatedir&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;input_partial&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_base_url&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_lifetime&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">PRODUCTSTATUS_REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;output_base_url&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generate a Job which converts GRIB to NetCDF using the</span>
+<span class="sd">        eva-adapter-support library.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">reftime</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;reftime&#39;</span><span class="p">:</span> <span class="n">reftime</span><span class="p">,</span>
+            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="s1">&#39;time_period_begin&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">time_period_begin</span><span class="p">,</span>
+            <span class="s1">&#39;time_period_end&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">time_period_end</span><span class="p">,</span>
+            <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">reftime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">]),</span>
+        <span class="p">}</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;#!/bin/bash</span>
+<span class="s2">#$ -S /bin/bash</span>
+<span class="si">{lib_fg2nc}</span><span class="s2">/grib2nc </span><span class="se">\</span>
+<span class="s2">--input &quot;</span><span class="si">{gribfile}</span><span class="s2">&quot; </span><span class="se">\</span>
+<span class="s2">--output &quot;</span><span class="si">{destfile}</span><span class="s2">&quot; </span><span class="se">\</span>
+<span class="s2">--reference_time &quot;</span><span class="si">{reftime}</span><span class="s2">&quot; </span><span class="se">\</span>
+<span class="s2">--template_directory &quot;</span><span class="si">{templatedir}</span><span class="s2">&quot;</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">gribfile</span><span class="o">=</span><span class="n">eva</span><span class="o">.</span><span class="n">url_to_filename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">),</span>
+            <span class="n">reftime</span><span class="o">=</span><span class="n">reftime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S%z&quot;</span><span class="p">),</span>
+            <span class="n">lib_fg2nc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;fg2nc_lib&#39;</span><span class="p">],</span>
+            <span class="n">templatedir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;fg2nc_templatedir&#39;</span><span class="p">],</span>
+            <span class="n">destfile</span><span class="o">=</span><span class="n">job</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;filename&#39;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RetryException</span><span class="p">(</span><span class="s2">&quot;GRIB to NetCDF conversion of &#39;</span><span class="si">%s</span><span class="s2">&#39; failed.&quot;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Successfully filled the NetCDF file </span><span class="si">%s</span><span class="s1"> with data from </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;filename&#39;</span><span class="p">],</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generate a set of Productstatus resources based on job output.</span>
+
+<span class="sd">        The adapter will try to re-use the existing ProductInstance if the</span>
+<span class="sd">        input and output products are the same. Otherwise, it will create a new</span>
+<span class="sd">        ProductInstance. Existing Data and DataInstance objects are re-used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Generate ProductInstance resource</span>
+        <span class="n">product_instance</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;product&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_product</span><span class="p">,</span>
+                <span class="s1">&#39;reference_time&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;reftime&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;productinstance&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">product_instance</span><span class="p">]</span>
+
+        <span class="c1"># Generate Data resource</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;productinstance&#39;</span><span class="p">:</span> <span class="n">product_instance</span><span class="p">,</span>
+                <span class="s1">&#39;time_period_begin&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;time_period_begin&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;time_period_end&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;time_period_end&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+        <span class="c1"># Generate DataInstance resource</span>
+        <span class="n">datainstance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">datainstance</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+        <span class="n">datainstance</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">datainstance</span><span class="o">.</span><span class="n">partial</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">datainstance</span><span class="o">.</span><span class="n">expires</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry_from_lifetime</span><span class="p">()</span>
+        <span class="n">datainstance</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">dataformat</span><span class="p">[</span><span class="s1">&#39;netcdf&#39;</span><span class="p">]</span>
+        <span class="n">datainstance</span><span class="o">.</span><span class="n">servicebackend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_service_backend</span>
+        <span class="n">datainstance</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_base_url&#39;</span><span class="p">],</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;filename&#39;</span><span class="p">]))</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;datainstance&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">datainstance</span><span class="p">]</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

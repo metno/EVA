@@ -1,0 +1,336 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.adapter.cwf &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../../index.html" />
+    <link rel="up" title="eva" href="../../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.adapter.cwf</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.adapter.cwf</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.base.adapter</span>
+<span class="kn">import</span> <span class="nn">eva.tests.schemas</span>
+
+<span class="kn">import</span> <span class="nn">productstatus.exceptions</span>
+<span class="kn">import</span> <span class="nn">productstatus.api</span>
+
+
+<div class="viewcode-block" id="CWFAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.CWFAdapter">[docs]</a><span class="k">class</span> <span class="nc">CWFAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This adapter postprocesses ECMWF NetCDF files into output suitable for the</span>
+<span class="sd">    EMEP and SNAP models.</span>
+
+<span class="sd">    A special script called ``ecdis4cwf.sh`` is required for the conversion.</span>
+<span class="sd">    The adapter provides the script with the correct input, and parses the</span>
+<span class="sd">    script output when processing is finished.</span>
+
+<span class="sd">    .. table::</span>
+
+<span class="sd">       ===============================  ==============  ==================  ==========  ===========</span>
+<span class="sd">       Variable                         Type            Default             Inclusion   Description</span>
+<span class="sd">       ===============================  ==============  ==================  ==========  ===========</span>
+<span class="sd">       cwf_domain                       |string|        NRPA_EUROPE_0_1     optional    Geographical domain to process.</span>
+<span class="sd">       cwf_input_min_days               |int|           2                   optional    Number of forecast days required in source dataset.</span>
+<span class="sd">       cwf_lifetime                     |list_int|      72,24               optional    Comma-separated list of DataInstance lifetimes. If the number of files</span>
+<span class="sd">                                                                                        produced is less than the list size, the value of the last list instance is used for all subsequent files.</span>
+<span class="sd">       cwf_modules                      |list_string|                       optional    Comma-separated list of modules to load before running.</span>
+<span class="sd">       cwf_nml_data_format              |string|        nml                 optional    Which Productstatus data format to use for NML files.</span>
+<span class="sd">       cwf_output_days                  |int|           3                   optional    Number of forecast days to generate in the resulting dataset.</span>
+<span class="sd">       cwf_output_directory_pattern     |string|                            required    Destination output directory.</span>
+<span class="sd">       cwf_parallel                     |int|           1                   optional    Number of processes run in parallel.</span>
+<span class="sd">       cwf_script_path                  |string|                            required    Full path to the executable CWF script that should be run.</span>
+<span class="sd">       ===============================  ==============  ==================  ==========  ===========</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;cwf_domain&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;NRPA_EUROPE_0_1&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_input_min_days&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_output_days&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_output_directory_pattern&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_parallel&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_script_path&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_lifetime&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;72,24&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_modules&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cwf_nml_data_format&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;nml&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;cwf_output_directory_pattern&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;cwf_script_path&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;cwf_domain&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;cwf_input_min_days&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;cwf_lifetime&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;cwf_modules&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;cwf_nml_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;cwf_output_days&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;cwf_parallel&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_data_format&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">PRODUCTSTATUS_REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_data_format&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">adapter_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span>
+                <span class="s1">&#39;Number of instances in cwf_parallel must be equal to or higher than 1.&#39;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nml_data_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">dataformat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_nml_data_format&#39;</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="nf">is_netcdf_data_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return True if the data entry parsed from a command line by</span>
+<span class="sd">        CWFAdapter.parse_file_recognition_output is of type NetCDF, False</span>
+<span class="sd">        otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;extension&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.nc&#39;</span>
+
+    <span class="k">def</span> <span class="nf">is_nml_data_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return True if the data entry parsed from a command line by</span>
+<span class="sd">        CWFAdapter.parse_file_recognition_output is of type NML, False</span>
+<span class="sd">        otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;extension&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.nml&#39;</span>
+
+    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="n">reference_time</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span>
+
+        <span class="c1"># Skip processing if the destination data set already exists. This</span>
+        <span class="c1"># disables re-runs and duplicates unless the DataInstance objects are</span>
+        <span class="c1"># marked as deleted.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_to_productstatus</span><span class="p">():</span>
+            <span class="n">qs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">datainstance</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">data__productinstance__product</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_product</span><span class="p">,</span>
+                                                      <span class="n">data__productinstance__reference_time</span><span class="o">=</span><span class="n">reference_time</span><span class="p">,</span>
+                                                      <span class="n">servicebackend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_service_backend</span><span class="p">,</span>
+                                                      <span class="n">deleted</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">qs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">JobNotGenerated</span><span class="p">(</span><span class="s2">&quot;Destination data set already exists in Productstatus, skipping processing.&quot;</span><span class="p">)</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">output_directory_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_output_directory_pattern&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">output_directory</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">output_directory_template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
+            <span class="n">reference_time</span><span class="o">=</span><span class="n">reference_time</span><span class="p">,</span>
+            <span class="n">domain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_domain&#39;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#/bin/bash&#39;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#$ -S /bin/bash&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#$ -pe mpi-fn </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_modules&#39;</span><span class="p">]:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;module load </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">module</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_PARALLEL=1&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_PARALLEL=0&#39;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export DATE=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export DOMAIN=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_domain&#39;</span><span class="p">]]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">eva</span><span class="o">.</span><span class="n">url_to_filename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_TMPDIR=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">,</span> <span class="s1">&#39;work&#39;</span><span class="p">)]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export NDAYS_MAX=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_output_days&#39;</span><span class="p">]]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export NREC_DAY_MIN=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_input_min_days&#39;</span><span class="p">]]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export OUTDIR=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export UTC=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H&#39;</span><span class="p">)]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> &gt;&amp;2&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_script_path&#39;</span><span class="p">]]</span>
+
+        <span class="c1"># Run output recognition</span>
+        <span class="n">datestamp_glob</span> <span class="o">=</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;*%Y%m</span><span class="si">%d</span><span class="s1">_*.*&#39;</span><span class="p">)</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;for file in </span><span class="si">%s</span><span class="s1">; do&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">,</span> <span class="n">datestamp_glob</span><span class="p">)]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    if [[ $file =~ \.nc$ ]]; then&#39;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;        echo -n &quot;$file &quot;&#39;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;        ncdump -l 1000 -t -v time $file | grep -E &#39;^ ?time\s*=&#39;&quot;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    elif [[ $file =~ \.nml$ ]]; then&#39;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;        echo &quot;$file&quot;&#39;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    fi&#39;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;done&#39;</span><span class="p">]</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RetryException</span><span class="p">(</span>
+                <span class="s2">&quot;Processing of </span><span class="si">%s</span><span class="s2"> to output directory </span><span class="si">%s</span><span class="s2"> failed.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">output_files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_file_recognition_output</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RetryException</span><span class="p">(</span>
+                <span class="s2">&quot;Processing of </span><span class="si">%s</span><span class="s2"> did not produce any legible output; expecting a list of file names and NetCDF time variables in standard output.&quot;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parse_file_recognition_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse standard output containing time dimensions from NetCDF files into</span>
+<span class="sd">        a structured format. Returns a list of dictionaries with file and time</span>
+<span class="sd">        dimension information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="c1"># Each output line looks like this:</span>
+            <span class="c1"># /tmp/meteo20160606_00.nc  time = &quot;2016-06-06 12&quot;, &quot;2016-06-06 15&quot;, &quot;2016-06-06 18&quot;, &quot;2016-06-06 21&quot;, &quot;2016-06-07&quot; ;</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;extension&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_netcdf_data_output</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+                <span class="n">time_str</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">times</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">eva</span><span class="o">.</span><span class="n">netcdf_time_to_timestamp</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39; &quot;&#39;</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">time_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)])</span>
+                <span class="n">data</span><span class="p">[</span><span class="s1">&#39;time_steps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">times</span>
+            <span class="n">result</span> <span class="o">+=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">generate_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generate a set of Productstatus resources based on job output.</span>
+
+<span class="sd">        This adapter will re-use any existing ProductInstance and Data objects,</span>
+<span class="sd">        and will create one new DataInstance resource for each file produced by</span>
+<span class="sd">        the job.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">product_instance</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;product&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_product</span><span class="p">,</span>
+                <span class="s1">&#39;reference_time&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="p">,</span>
+                <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;productinstance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">product_instance</span><span class="p">]</span>
+
+        <span class="n">lifetime_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">output_file</span> <span class="ow">in</span> <span class="n">job</span><span class="o">.</span><span class="n">output_files</span><span class="p">:</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;productinstance&#39;</span><span class="p">:</span> <span class="n">product_instance</span><span class="p">,</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_netcdf_data_output</span><span class="p">(</span><span class="n">output_file</span><span class="p">):</span>
+                <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;time_period_begin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_file</span><span class="p">[</span><span class="s1">&#39;time_steps&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;time_period_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_file</span><span class="p">[</span><span class="s1">&#39;time_steps&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;time_period_begin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;time_period_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+            <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+            <span class="n">data_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">datainstance</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+            <span class="n">data_instance</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="n">data_instance</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;file://&#39;</span> <span class="o">+</span> <span class="n">output_file</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span>
+            <span class="n">data_instance</span><span class="o">.</span><span class="n">servicebackend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_service_backend</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_netcdf_data_output</span><span class="p">(</span><span class="n">output_file</span><span class="p">):</span>
+                <span class="n">data_instance</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_data_format</span>
+                <span class="k">if</span> <span class="n">lifetime_index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_lifetime&#39;</span><span class="p">]):</span>
+                    <span class="n">data_instance</span><span class="o">.</span><span class="n">expires</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry_from_hours</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_lifetime&#39;</span><span class="p">][</span><span class="n">lifetime_index</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">data_instance</span><span class="o">.</span><span class="n">expires</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry_from_hours</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_lifetime&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">lifetime_index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_nml_data_output</span><span class="p">(</span><span class="n">output_file</span><span class="p">):</span>
+                <span class="n">data_instance</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nml_data_format</span>
+                <span class="c1"># let the NML file live as long as the shortest lived file in the output dataset</span>
+                <span class="n">data_instance</span><span class="o">.</span><span class="n">expires</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry_from_hours</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_lifetime&#39;</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Unsupported data format in job output: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;extension&#39;</span><span class="p">])</span>
+
+            <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;datainstance&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">data_instance</span><span class="p">]</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

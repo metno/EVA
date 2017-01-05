@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.adapter.thredds &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../../index.html" />
+    <link rel="up" title="eva" href="../../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.adapter.thredds</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.adapter.thredds</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os.path</span>
+
+<span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.base.adapter</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+<span class="kn">import</span> <span class="nn">eva.template</span>
+
+<span class="kn">import</span> <span class="nn">productstatus</span>
+
+
+<div class="viewcode-block" id="ThreddsAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.thredds.ThreddsAdapter">[docs]</a><span class="k">class</span> <span class="nc">ThreddsAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">    An adapter that listens to events about files being produced on /lustre</span>
+<span class="sd">    and then polls the Thredds server until a matching dataset is available</span>
+<span class="sd">    there, then it posts an information about it to productstatus.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;thredds_poll_interval&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;How often should Thredds server be checked.&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;20&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;thredds_poll_retries&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;Number of times to check for the data on Thredds server.&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;6&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;thredds_base_url&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;Base URL to prepend to the filename from the input resource&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;thredds_base_url&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;thredds_poll_interval&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;thredds_poll_retries&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">adapter_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Populate internal variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thredds_poll_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;thredds_poll_interval&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thredds_poll_retries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;thredds_poll_retries&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thredds_base_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;thredds_base_url&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Check if the resource is reachable via the provided URL if not, sleep and try again</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Assuming that when the .html link is accessible so will be the dataset via OPeNDAP</span>
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">thredds_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thredds_base_url</span><span class="p">,</span> <span class="n">basename</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">thredds_html_url</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">thredds_url</span> <span class="o">+</span> <span class="s2">&quot;.html&quot;</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">#!/bin/bash</span>
+<span class="s2">#$ -S /bin/bash</span>
+<span class="s2">for try in `seq 1 </span><span class="si">%(num_tries)d</span><span class="s2">`; do</span>
+<span class="s2">    echo &quot;[$</span><span class="si">{try}</span><span class="s2">/</span><span class="si">%(num_tries)d</span><span class="s2">] Try to fetch </span><span class="si">%(url)s</span><span class="s2">...&quot;</span>
+<span class="s2">    wget --quiet --output-document=/dev/null </span><span class="si">%(url)s</span><span class="s2"></span>
+<span class="s2">    if [ $? -eq 0 ]; then</span>
+<span class="s2">        exit 0</span>
+<span class="s2">    fi</span>
+<span class="s2">    if [ &quot;$try&quot; == &quot;</span><span class="si">%(num_tries)d</span><span class="s2">&quot; ]; then</span>
+<span class="s2">        echo &quot;Document is not available; giving up.&quot;</span>
+<span class="s2">        exit 1</span>
+<span class="s2">    fi</span>
+<span class="s2">    echo &quot;Document is not available; sleeping </span><span class="si">%(sleep)d</span><span class="s2"> seconds...&quot;</span>
+<span class="s2">    sleep </span><span class="si">%(sleep)d</span><span class="s2"></span>
+<span class="s2">done</span>
+<span class="s2">exit 1</span>
+<span class="s2">&quot;&quot;&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">%</span> <span class="p">{</span>
+            <span class="s1">&#39;num_tries&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thredds_poll_retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># correct usage of the word &#39;retry&#39;</span>
+            <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">thredds_html_url</span><span class="p">,</span>
+            <span class="s1">&#39;sleep&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thredds_poll_interval</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Ignore errors but log them.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;THREDDS document could not be found; ignoring error condition.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generate a set of Productstatus resources based on job output.</span>
+
+<span class="sd">        This adapter will post a new DataInstance using the same Data and</span>
+<span class="sd">        ProductInstance as the input resource.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">datainstance</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">datainstance</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
+                <span class="s1">&#39;servicebackend&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_service_backend</span><span class="p">,</span>
+                <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">thredds_url</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">extra_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;expires&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">expires</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;datainstance&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">datainstance</span><span class="p">]</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

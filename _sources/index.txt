@@ -14,6 +14,7 @@ EVA: the Event Adapter
    configuration
    variables
    tutorial
+   adapters
    metrics
    restapi
    api/index

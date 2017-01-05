@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Adapter documentation &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../index.html" />
+    <link rel="next" title="Metrics" href="../metrics.html" />
+    <link rel="prev" title="Tutorial" href="../tutorial.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>Adapter documentation</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../tutorial.html">Tutorial</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../metrics.html">Metrics</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="adapter-documentation">
+<h1>Adapter documentation<a class="headerlink" href="#adapter-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="list-of-adapters">
+<p class="topic-title first">List of adapters</p>
+<ul class="simple">
+<li><a class="reference internal" href="#cwfadapter" id="id2">CWFAdapter</a></li>
+<li><a class="reference internal" href="#checksumverificationadapter" id="id3">ChecksumVerificationAdapter</a></li>
+<li><a class="reference internal" href="#deleteadapter" id="id4">DeleteAdapter</a></li>
+<li><a class="reference internal" href="#distributionadapter" id="id5">DistributionAdapter</a></li>
+<li><a class="reference internal" href="#exampleadapter" id="id6">ExampleAdapter</a></li>
+<li><a class="reference internal" href="#fimexadapter" id="id7">FimexAdapter</a></li>
+<li><a class="reference internal" href="#fimexfillfileadapter" id="id8">FimexFillFileAdapter</a></li>
+<li><a class="reference internal" href="#fimexgrib2netcdfadapter" id="id9">FimexGRIB2NetCDFAdapter</a></li>
+<li><a class="reference internal" href="#gridppadapter" id="id10">GridPPAdapter</a></li>
+<li><a class="reference internal" href="#nowcastppadapter" id="id11">NowcastPPAdapter</a></li>
+<li><a class="reference internal" href="#nulladapter" id="id12">NullAdapter</a></li>
+<li><a class="reference internal" href="#testexecutoradapter" id="id13">TestExecutorAdapter</a></li>
+<li><a class="reference internal" href="#threddsadapter" id="id14">ThreddsAdapter</a></li>
+</ul>
+</div>
+<div class="section" id="cwfadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">CWFAdapter</a><a class="headerlink" href="#cwfadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.CWFAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">CWFAdapter</code><a class="reference internal" href="../_modules/eva/adapter/cwf.html#CWFAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.CWFAdapter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="checksumverificationadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">ChecksumVerificationAdapter</a><a class="headerlink" href="#checksumverificationadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.ChecksumVerificationAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">ChecksumVerificationAdapter</code><a class="reference internal" href="../_modules/eva/adapter/checksum.html#ChecksumVerificationAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.ChecksumVerificationAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+An adapter that verifies checksums on data sets according to auxiliary files.</p>
+<p>At the moment, only md5sum is supported, and is expected to be in the same
+directory as the data sets, with the suffix &#8221;.md5&#8221;.</p>
+<p>If the checksum is correct, the .md5 file is deleted, and the hash is added
+to the Productstatus database. If the checksum fails, the file is left
+intact, and the task fails and is NOT restarted.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="deleteadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">DeleteAdapter</a><a class="headerlink" href="#deleteadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.DeleteAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">DeleteAdapter</code><a class="reference internal" href="../_modules/eva/adapter/delete.html#DeleteAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.DeleteAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Remove expired files from file system.</p>
+<p>Find the latest expired data instances for given criteria, and remove the
+physical file from the file system.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="distributionadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">DistributionAdapter</a><a class="headerlink" href="#distributionadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.DistributionAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">DistributionAdapter</code><a class="reference internal" href="../_modules/eva/adapter/distribution.html#DistributionAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.DistributionAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+&#64;brief Copy data to another destination.</p>
+<p>This adapter distributes data files to other locations, and optionally
+posts their metadata to Productstatus.</p>
+<p>Note that at the moment, this adapter only supports copying files using the
+<cite>cp</cite> command, optionally on Lustre using the <cite>lfs</cite> utility to launch cp.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="exampleadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">ExampleAdapter</a><a class="headerlink" href="#exampleadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.ExampleAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">ExampleAdapter</code><a class="reference internal" href="../_modules/eva/adapter/example.html#ExampleAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.ExampleAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+An adapter that is good for demonstration purposes.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="fimexadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">FimexAdapter</a><a class="headerlink" href="#fimexadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.FimexAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">FimexAdapter</code><a class="reference internal" href="../_modules/eva/adapter/fimex.html#FimexAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.FimexAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+Generic FIMEX adapter that will accept virtually any parameter known to FIMEX.</p>
+<p>For flexibility, this adapter only takes three configuration options, that
+will allow users to set up any type of FIMEX job:</p>
+<blockquote>
+<div><ul class="simple">
+<li>An output file name pattern</li>
+<li>A generic command-line option string</li>
+</ul>
+</div></blockquote>
+<p>After generating the file, the adapter will post the information to
+Productstatus if the output_* and productstatus_* environments are
+specified.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="fimexfillfileadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">FimexFillFileAdapter</a><a class="headerlink" href="#fimexfillfileadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.FimexFillFileAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">FimexFillFileAdapter</code><a class="reference internal" href="../_modules/eva/adapter/fimex_fill_file.html#FimexFillFileAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.FimexFillFileAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+FIMEX adapter that will fill a template file with data from other files.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="fimexgrib2netcdfadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">FimexGRIB2NetCDFAdapter</a><a class="headerlink" href="#fimexgrib2netcdfadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.FimexGRIB2NetCDFAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">FimexGRIB2NetCDFAdapter</code><a class="reference internal" href="../_modules/eva/adapter/fimex_grib_to_netcdf.html#FimexGRIB2NetCDFAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.FimexGRIB2NetCDFAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+This adapter fills a NetCDF file with GRIB data using Fimex.
+The adapter requires an external library called <cite>eva-adapter-support</cite>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="gridppadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">GridPPAdapter</a><a class="headerlink" href="#gridppadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.GridPPAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">GridPPAdapter</code><a class="reference internal" href="../_modules/eva/adapter/gridpp.html#GridPPAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.GridPPAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+Generic GridPP adapter that will accept any parameter known to GridPP.</p>
+<p>The GridPP software is written by Thomas Nipen and is available at:
+<a class="reference external" href="https://github.com/metno/gridpp">https://github.com/metno/gridpp</a></p>
+<p>After generating the file, the adapter will post the information to
+Productstatus if the output_* and productstatus_* environments are
+specified.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="nowcastppadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">NowcastPPAdapter</a><a class="headerlink" href="#nowcastppadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.NowcastPPAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">NowcastPPAdapter</code><a class="reference internal" href="../_modules/eva/adapter/nowcastpp.html#NowcastPPAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.NowcastPPAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+The NowcastPPAdapter post-processes RADAR NowCast files in two steps:</p>
+<ol class="arabic simple">
+<li>An R script creates a txt file with information about missing radars</li>
+<li>GridPP adds neighbourhood smoothing and masks out areas with missing radars</li>
+</ol>
+<p>The GridPP software is written by Thomas Nipen and is available at:
+<a class="reference external" href="https://github.com/metno/gridpp">https://github.com/metno/gridpp</a></p>
+<p>R script write_missing_radars.R, written by <a class="reference external" href="mailto:ivaras&#37;&#52;&#48;met&#46;no">ivaras<span>&#64;</span>met<span>&#46;</span>no</a>, is available at
+<a class="reference external" href="https://gitlab.met.no/it-geo/eva-adapter-support/">https://gitlab.met.no/it-geo/eva-adapter-support/</a></p>
+<table border="1" class="docutils" id="id1">
+<caption><span class="caption-text">Configuration variables</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="20%" />
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="51%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Inclusion</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>gridpp_input_options</td>
+<td><a class="reference internal" href="../api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>&nbsp;</td>
+<td>optional</td>
+<td>GridPP command-line options for the input file.</td>
+</tr>
+<tr class="row-odd"><td>gridpp_output_options</td>
+<td><a class="reference internal" href="../api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>&nbsp;</td>
+<td>optional</td>
+<td>GridPP command-line options for the output file.</td>
+</tr>
+<tr class="row-even"><td>gridpp_generic_options</td>
+<td><a class="reference internal" href="../api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>&nbsp;</td>
+<td>optional</td>
+<td>GridPP command-line options.</td>
+</tr>
+<tr class="row-odd"><td>gridpp_mask_options</td>
+<td><a class="reference internal" href="../api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>&nbsp;</td>
+<td>optional</td>
+<td>GridPP command-line options for masking operations.</td>
+</tr>
+<tr class="row-even"><td>gridpp_modules</td>
+<td><a class="reference internal" href="../api/config.html#eva.config.ConfigurableObject.normalize_config_list_string" title="eva.config.ConfigurableObject.normalize_config_list_string"><code class="xref py py-meth docutils literal"><span class="pre">list_string</span></code></a></td>
+<td>&nbsp;</td>
+<td>optional</td>
+<td>Comma-separated list of GridEngine modules to load before running.</td>
+</tr>
+<tr class="row-odd"><td>gridpp_threads</td>
+<td><a class="reference internal" href="../api/config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>1</td>
+<td>optional</td>
+<td>How many threads to use during calculations.</td>
+</tr>
+<tr class="row-even"><td>gridpp_preprocess_script</td>
+<td><a class="reference internal" href="../api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>R script for generating file with missing radars.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="nulladapter">
+<h2><a class="toc-backref" href="#list-of-adapters">NullAdapter</a><a class="headerlink" href="#nulladapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.NullAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">NullAdapter</code><a class="reference internal" href="../_modules/eva/adapter/null.html#NullAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.NullAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+An adapter that matches nothing and does nothing.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="testexecutoradapter">
+<h2><a class="toc-backref" href="#list-of-adapters">TestExecutorAdapter</a><a class="headerlink" href="#testexecutoradapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.TestExecutorAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">TestExecutorAdapter</code><a class="reference internal" href="../_modules/eva/adapter/test_executor.html#TestExecutorAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.TestExecutorAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>An adapter that echoes the URL of the received DataInstance, and then sleeps for 10 seconds.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="threddsadapter">
+<h2><a class="toc-backref" href="#list-of-adapters">ThreddsAdapter</a><a class="headerlink" href="#threddsadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="eva.adapter.ThreddsAdapter">
+<em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">ThreddsAdapter</code><a class="reference internal" href="../_modules/eva/adapter/thredds.html#ThreddsAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.ThreddsAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>!
+An adapter that listens to events about files being produced on /lustre
+and then polls the Thredds server until a matching dataset is available
+there, then it posts an information about it to productstatus.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../tutorial.html">Tutorial</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../metrics.html">Metrics</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

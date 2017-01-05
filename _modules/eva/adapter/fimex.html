@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.adapter.fimex &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../../index.html" />
+    <link rel="up" title="eva" href="../../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.adapter.fimex</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.adapter.fimex</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.base.adapter</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.exceptions</span>
+<span class="kn">import</span> <span class="nn">eva.template</span>
+
+<span class="kn">import</span> <span class="nn">productstatus.api</span>
+
+
+<div class="viewcode-block" id="FimexAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.fimex.FimexAdapter">[docs]</a><span class="k">class</span> <span class="nc">FimexAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">    Generic FIMEX adapter that will accept virtually any parameter known to FIMEX.</span>
+
+<span class="sd">    For flexibility, this adapter only takes three configuration options, that</span>
+<span class="sd">    will allow users to set up any type of FIMEX job:</span>
+
+<span class="sd">      * An output file name pattern</span>
+<span class="sd">      * A generic command-line option string</span>
+
+<span class="sd">    After generating the file, the adapter will post the information to</span>
+<span class="sd">    Productstatus if the output_* and productstatus_* environments are</span>
+<span class="sd">    specified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;fimex_parameters&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;FIMEX command-line parameters.&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;fimex_parameters&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;input_partial&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_base_url&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_lifetime&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">PRODUCTSTATUS_REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;output_base_url&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_data_format&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">adapter_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fimex_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;fimex_parameters&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Create a generic FIMEX job.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">input_filename</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">url_to_filename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">reference_time</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">template_variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;datainstance&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="p">,</span>
+            <span class="s1">&#39;input_filename&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">input_filename</span><span class="p">),</span>
+            <span class="s1">&#39;reference_time&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">reference_time</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Render the Jinja2 templates and report any errors</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fimex_parameters</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="n">job</span><span class="o">.</span><span class="n">template_variables</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">output_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_filename</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="n">job</span><span class="o">.</span><span class="n">template_variables</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="c1"># Generate Fimex job</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;#!/bin/bash&#39;</span><span class="p">]</span>
+        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#$ -S /bin/bash&#39;</span><span class="p">]</span>
+        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;time fimex --input.file &#39;%(input.file)s&#39; --output.file &#39;%(output.file)s&#39; </span><span class="si">%(params)s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">{</span>
+            <span class="s1">&#39;input.file&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">input_filename</span><span class="p">,</span>
+            <span class="s1">&#39;output.file&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">output_filename</span><span class="p">,</span>
+            <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span>
+        <span class="p">}]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Retry on failures.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RetryException</span><span class="p">(</span>
+                <span class="s2">&quot;Fimex conversion of &#39;</span><span class="si">%s</span><span class="s2">&#39; to &#39;</span><span class="si">%s</span><span class="s2">&#39; failed.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">output_filename</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">        @brief Generate a set of Productstatus resources based on job output.</span>
+
+<span class="sd">        The adapter will try to re-use the existing ProductInstance if the</span>
+<span class="sd">        input and output products are the same. Otherwise, it will create a new</span>
+<span class="sd">        ProductInstance. Existing Data and DataInstance objects are re-used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Generate ProductInstance resource</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;product&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_product</span><span class="p">,</span>
+            <span class="s1">&#39;reference_time&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_product</span> <span class="o">==</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">product</span><span class="p">:</span>
+            <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">version</span>
+        <span class="n">product_instance</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;productinstance&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">product_instance</span><span class="p">]</span>
+
+        <span class="c1"># Generate Data resource</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;productinstance&#39;</span><span class="p">:</span> <span class="n">product_instance</span><span class="p">,</span>
+                <span class="s1">&#39;time_period_begin&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">time_period_begin</span><span class="p">,</span>
+                <span class="s1">&#39;time_period_end&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">time_period_end</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+        <span class="c1"># Generate DataInstance resource</span>
+        <span class="n">datainstance</span> <span class="o">=</span> <span class="n">productstatus</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">EvaluatedResource</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">datainstance</span><span class="o">.</span><span class="n">find_or_create_ephemeral</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">,</span>
+                <span class="s1">&#39;expires&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">expiry_from_lifetime</span><span class="p">(),</span>
+                <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_data_format</span><span class="p">,</span>
+                <span class="s1">&#39;servicebackend&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_service_backend</span><span class="p">,</span>
+                <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_base_url&#39;</span><span class="p">],</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_filename</span><span class="p">)),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s1">&#39;datainstance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">datainstance</span><span class="p">]</span></div>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>

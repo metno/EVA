@@ -369,9 +369,7 @@
 <span class="sd">        Replace all configuration objects of type :class:`ResolvableDependency`</span>
 <span class="sd">        with their true class reference.</span>
 
-<span class="sd">        :param dict config_classes: dictionary with configuration IDs (see</span>
-<span class="sd">               :attr:`config_id`) as keys pointing to</span>
-<span class="sd">               :class:`ResolvableDependency` objects.</span>
+<span class="sd">        :param dict config_classes: dictionary with configuration IDs (see :attr:`config_id`) as keys pointing to :class:`ResolvableDependency` objects.</span>
 <span class="sd">        :rtype: class</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -460,8 +458,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
 
 <div class="viewcode-block" id="ResolvableDependency.resolve"><a class="viewcode-back" href="../../api/config.html#eva.config.ResolvableDependency.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_classes</span><span class="p">):</span>

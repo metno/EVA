@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eva.adapter.example &#8212; EVA 2.0.0~git documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0.0~git',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="EVA 2.0.0~git documentation" href="../../../index.html" />
+    <link rel="up" title="eva" href="../../eva.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>EVA 2.0.0~git documentation</span></a></h1>
+        <h2 class="heading"><span>eva.adapter.example</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for eva.adapter.example</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">@brief Example adapter, good for starting out writing EVA jobs.</span>
+
+<span class="sd">This adapter serves as a reusable example of how to write your own EVA jobs.</span>
+
+<span class="sd">To run this adapter on GridEngine, you might want to configure these environment variables:</span>
+
+<span class="sd">    [executor.gridengine]</span>
+<span class="sd">    class = eva.executor.GridEngineExecutor</span>
+<span class="sd">    ssh_host = &lt;gridengine-login-node&gt;</span>
+<span class="sd">    ssh_key_file = /home/&lt;username&gt;/.ssh/id_rsa</span>
+<span class="sd">    ssh_user = &lt;username&gt;</span>
+
+<span class="sd">    [adapter.example]</span>
+<span class="sd">    class = eva.adapter.example.ExampleAdapter</span>
+<span class="sd">    executor = executor.gridengine</span>
+<span class="sd">    input_data_format = netcdf</span>
+<span class="sd">    input_product = ecmwf-atmospheric-model-bc-surface</span>
+<span class="sd">    input_service_backend = lustre-b</span>
+<span class="sd">    output_filename_pattern = {{reference_time|timedelta(hours=6)|iso8601_compact}}</span>
+
+<span class="sd">Then, run EVA:</span>
+
+<span class="sd">    python -m eva --process_data_instance &lt;data-instance-uuid&gt;</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Import required Python modules</span>
+<span class="kn">import</span> <span class="nn">eva</span>
+<span class="kn">import</span> <span class="nn">eva.job</span>
+<span class="kn">import</span> <span class="nn">eva.base.adapter</span>
+
+
+<div class="viewcode-block" id="ExampleAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.example.ExampleAdapter">[docs]</a><span class="k">class</span> <span class="nc">ExampleAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;!</span>
+<span class="sd">    An adapter that is good for demonstration purposes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># This list defines which input parameter your adapter requires to run.</span>
+    <span class="c1"># Failing to include any of these parameters in your configuration</span>
+    <span class="c1"># environment will prevent EVA from starting up.</span>
+    <span class="c1">#</span>
+    <span class="c1"># See `eva.base.adapter.BaseAdapter` for an exhaustive list of pre-defined</span>
+    <span class="c1"># configuration variables.</span>
+    <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+
+        <span class="c1"># Define the output filename of your data process. This variable will</span>
+        <span class="c1"># be processed by the EVA template engine later on in the script.</span>
+        <span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">,</span>
+
+        <span class="c1"># Define the input product. Products are defined in Productstatus by</span>
+        <span class="c1"># the IT-GEO team. You will most certainly want to select one or more</span>
+        <span class="c1"># products so that your script only processed files that have your</span>
+        <span class="c1"># required input data.</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
+
+        <span class="c1"># Define the service backend. Service backends are physical storage</span>
+        <span class="c1"># devices such as Lustre store A or Opdata. They are defined in</span>
+        <span class="c1"># Productstatus by the IT-GEO team.</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
+
+        <span class="c1"># Define the file format of our input data set. File formats are</span>
+        <span class="c1"># defined in Productstatus by the IT-GEO team.</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># This function is called every time a data instance (an actual data entry)</span>
+    <span class="c1"># is received by EVA, and matches all input configuration defined in</span>
+    <span class="c1"># REQUIRED_CONFIG.</span>
+    <span class="c1">#</span>
+    <span class="c1"># The function must either:</span>
+    <span class="c1">#</span>
+    <span class="c1">#   * Return normally.</span>
+    <span class="c1">#</span>
+    <span class="c1">#   * Raise `eva.exceptions.JobNotGenerated`, with a message indicating why</span>
+    <span class="c1">#     a job was not generated. The job will not be sent to the adapter</span>
+    <span class="c1">#     again for further processing.</span>
+    <span class="c1">#</span>
+    <span class="c1">#   * Raise `eva.exceptions.RetryException` with an error message. The</span>
+    <span class="c1">#     error message will appear in the log. In production, this log will be</span>
+    <span class="c1">#     recorded and is searchable. Processing will be delayed by a short</span>
+    <span class="c1">#     interval, then retried.</span>
+    <span class="c1">#</span>
+    <span class="c1">#   * Any other exception will result in a termination of EVA.</span>
+    <span class="c1">#</span>
+    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+
+        <span class="c1"># Create a string template based on the output_filename_pattern</span>
+        <span class="c1"># environment variable. This allows us to do string substitution and</span>
+        <span class="c1"># filtering later on.</span>
+        <span class="n">output_filename_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Run string substitution and filtering. The template language is</span>
+        <span class="c1"># Jinja2, and available filters can be found in the module</span>
+        <span class="c1"># `eva.template`.</span>
+        <span class="c1">#</span>
+        <span class="c1"># E.g.</span>
+        <span class="c1">#  {{reference_time|timedelta(hours=6)|iso8601_compact}}</span>
+        <span class="c1"># when reference_time is April 14th, 2016, 06:00:00 UTC, will yield</span>
+        <span class="c1">#  20160414T120000Z</span>
+        <span class="n">output_filename</span> <span class="o">=</span> <span class="n">output_filename_template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
+            <span class="n">reference_time</span><span class="o">=</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># The Job object contains a logger object, which you can use to print</span>
+        <span class="c1"># status or debugging information. DO NOT USE &quot;print&quot;, the output will</span>
+        <span class="c1"># not be recorded in the production environment.</span>
+        <span class="c1">#</span>
+        <span class="c1"># Please read the Python logging tutorial:</span>
+        <span class="c1"># https://docs.python.org/2/howto/logging.html#logging-basic-tutorial</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Job resource: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="p">)</span>
+
+        <span class="c1"># Here, you write your processing script. There are no environment</span>
+        <span class="c1"># variables; you must insert your variables using string interpolation.</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">#!/bin/bash</span>
+<span class="s2">#-S /bin/bash</span>
+<span class="s2">echo convert_my_data </span><span class="se">\</span>
+<span class="s2">    --input &#39;</span><span class="si">%(input)s</span><span class="s2">&#39; </span><span class="se">\</span>
+<span class="s2">    --output &#39;</span><span class="si">%(output)s</span><span class="s2">&#39; </span><span class="se">\</span>
+<span class="s2">    --date &#39;</span><span class="si">%(date)s</span><span class="s2">&#39; </span><span class="se">\</span>
+<span class="s2">    --backend &#39;</span><span class="si">%(backend)s</span><span class="s2">&#39;</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+        <span class="c1"># Interpolate variables into the processing script.</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">%</span> <span class="p">{</span>
+
+            <span class="c1"># The input filename always comes from Productstatus, and is always</span>
+            <span class="c1"># an URL. Use `url_to_filename` to strip away the protocol.</span>
+            <span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="n">eva</span><span class="o">.</span><span class="n">url_to_filename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">),</span>
+
+            <span class="c1"># The output filename has already been put into a variable, now we</span>
+            <span class="c1"># just supply it to the string interpolation hash.</span>
+            <span class="s1">&#39;output&#39;</span><span class="p">:</span> <span class="n">output_filename</span><span class="p">,</span>
+
+            <span class="c1"># Our script requires the date and reference hour of the product</span>
+            <span class="c1"># instance. This information is available from Productstatus. To</span>
+            <span class="c1"># access it, we traverse the objects until we find the required</span>
+            <span class="c1"># DateTime object, and then format it using strftime.</span>
+            <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H&#39;</span><span class="p">),</span>
+
+            <span class="c1"># For example purposes, we include more metadata information here.</span>
+            <span class="c1"># In this example, we include the name of our storage backend.</span>
+            <span class="s1">&#39;backend&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">servicebackend</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+
+        <span class="p">}</span>
+
+        <span class="c1"># You may assign variables to the Job object that can be accessed from finish_job().</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">output_filename</span> <span class="o">=</span> <span class="n">output_filename</span></div>
+
+        <span class="c1"># Our job is ready for execution. This command will run the job on an</span>
+        <span class="c1"># Executor object, defined in the environment variable executor. To</span>
+        <span class="c1"># run jobs on GridEngine, use executor=eva.executor.GridEngineExecutor.</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, MET Norway.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>
