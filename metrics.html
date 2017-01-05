@@ -54,10 +54,10 @@
 section for how to set up configuration for StatsD.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="19%" />
-<col width="7%" />
-<col width="7%" />
-<col width="68%" />
+<col width="18%" />
+<col width="6%" />
+<col width="10%" />
+<col width="66%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Metric</th>
@@ -136,6 +136,34 @@ section for how to set up configuration for StatsD.</p>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Events discarded because of a mismatch in message protocol version.</td>
+</tr>
+<tr class="row-even"><td>eva_grid_engine_run_time</td>
+<td>timing</td>
+<td>adapter,
+grid_engine_qname,
+grid_engine_hostname</td>
+<td>How long it took the executor to run a job from a specific adapter.</td>
+</tr>
+<tr class="row-odd"><td>eva_grid_engine_qsub_delay</td>
+<td>timing</td>
+<td>adapter,
+grid_engine_qname,
+grid_engine_hostname</td>
+<td>How long a submitted Grid Engine job had to wait to be run, from the moment qsub was called.</td>
+</tr>
+<tr class="row-even"><td>eva_grid_engine_ru_stime</td>
+<td>timing</td>
+<td>adapter,
+grid_engine_qname,
+grid_engine_hostname</td>
+<td>Amount of system CPU time consumed by a job of the specific adapter.</td>
+</tr>
+<tr class="row-odd"><td>eva_grid_engine_ru_utime</td>
+<td>timing</td>
+<td>adapter,
+grid_engine_qname,
+grid_engine_hostname</td>
+<td>Amount of userland CPU time consumed by a job of the specific adapter.</td>
 </tr>
 <tr class="row-even"><td>eva_job_failures</td>
 <td>counter</td>
