@@ -134,9 +134,9 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
             command += ["module load %s" % module]
         command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
         command += ["export filename=$(mktemp /tmp/radarXXXXX)"]
-        command += ["Rscript " + job.gridpp_params['preprocess.script'] + ' "' + job.gridpp_params['input.file'] + '" "$filename"']
+        command += ["Rscript %(preprocess.script)s %(input.file)s $filename" % job.gridpp_params]
         command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
-        command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s %(mask.options)s" % job.gridpp_params + " -p text file=$filename spatial=1"]
+        command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s %(mask.options)s -p text file=$filename spatial=1" % job.gridpp_params]
         command += ["rm $filename"]
         job.command = '\n'.join(command) + '\n'
 
