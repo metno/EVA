@@ -6,11 +6,26 @@ import eva.job
 
 
 class DeleteAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    @brief Remove expired files from file system.
+    """
+    This adapter periodically removes expired files permanently from the file
+    system, along with their hash counterparts.
 
-    Find the latest expired data instances for given criteria, and remove the
-    physical file from the file system.
+    When an event arrives at the adapter, the ``product``, ``dataformat`` and
+    ``servicebackend`` properties are extracted and cached. When the time
+    threshold defined in ``delete_interval_secs`` is reached, the event will
+    additionally trigger the creation of a deletion job. This job will
+    **permanently** remove all expired files on the specified
+    ``input_service_backend`` which belongs to **either** of the cached
+    ``product``, ``dataformat`` and ``servicebackend`` properties.
+
+    .. table::
+
+       ===========================  ==============  ==============  ==========  ===========
+       Variable                     Type            Default         Inclusion   Description
+       ===========================  ==============  ==============  ==========  ===========
+       delete_interval_secs         |int|           300             optional    How long to wait between generating delete jobs.
+       input_service_backend                                        required    See |input_service_backend|.
+       ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {

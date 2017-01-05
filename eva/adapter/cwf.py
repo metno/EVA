@@ -1,10 +1,3 @@
-"""!
-@brief ECDIS4CWF adapter.
-
-This adapter postprocesses ECMWF NetCDF files into output suitable for the EMEP
-and SNAP models, and posts the results to Productstatus.
-"""
-
 import os
 
 import eva
@@ -17,50 +10,67 @@ import productstatus.api
 
 
 class CWFAdapter(eva.base.adapter.BaseAdapter):
+    """
+    This adapter postprocesses ECMWF NetCDF files into output suitable for the
+    EMEP and SNAP models.
+
+    A special script called ``ecdis4cwf.sh`` is required for the conversion.
+    The adapter provides the script with the correct input, and parses the
+    script output when processing is finished.
+
+    .. table::
+
+       ===============================  ==============  ==================  ==========  ===========
+       Variable                         Type            Default             Inclusion   Description
+       ===============================  ==============  ==================  ==========  ===========
+       cwf_domain                       |string|        NRPA_EUROPE_0_1     optional    Geographical domain to process.
+       cwf_input_min_days               |int|           2                   optional    Number of forecast days required in source dataset.
+       cwf_lifetime                     |list_int|      72,24               optional    Comma-separated list of DataInstance lifetimes. If the number of files
+                                                                                        produced is less than the list size, the value of the last list instance is used for all subsequent files.
+       cwf_modules                      |list_string|                       optional    Comma-separated list of modules to load before running.
+       cwf_nml_data_format              |string|        nml                 optional    Which Productstatus data format to use for NML files.
+       cwf_output_days                  |int|           3                   optional    Number of forecast days to generate in the resulting dataset.
+       cwf_output_directory_pattern     |string|                            required    Destination output directory.
+       cwf_parallel                     |int|           1                   optional    Number of processes run in parallel.
+       cwf_script_path                  |string|                            required    Full path to the executable CWF script that should be run.
+       ===============================  ==============  ==================  ==========  ===========
+    """
+
     CONFIG = {
         'cwf_domain': {
             'type': 'string',
-            'help': 'Geographical domain to process.',
             'default': 'NRPA_EUROPE_0_1',
         },
         'cwf_input_min_days': {
             'type': 'int',
-            'help': 'Number of forecast days required in source dataset.',
             'default': '2',
         },
         'cwf_output_days': {
             'type': 'int',
-            'help': 'Number of forecast days to generate in the resulting dataset.',
             'default': '3',
         },
         'cwf_output_directory_pattern': {
             'type': 'string',
-            'help': 'Destination output directory',
             'default': '',
         },
         'cwf_parallel': {
             'type': 'int',
-            'help': 'Number of processes run in parallel.',
             'default': '1',
         },
         'cwf_script_path': {
             'type': 'string',
-            'help': 'Full path to the executable CWF script that should be run.',
             'default': '',
         },
         'cwf_lifetime': {
             'type': 'list_int',
-            'help': 'Comma-separated list of DataInstance lifetimes. If the number of files produced is less than the list size, the value of the last list instance is used for all subsequent files.',
             'default': '72,24',
         },
         'cwf_modules': {
             'type': 'list_string',
-            'help': 'Comma-separated list of modules to load before running.',
             'default': '',
         },
         'cwf_nml_data_format': {
             'type': 'string',
-            'help': 'Which Productstatus data format to use for NML files',
             'default': 'nml',
         },
     }
@@ -100,16 +110,18 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         self.nml_data_format = self.api.dataformat[self.env['cwf_nml_data_format']]
 
     def is_netcdf_data_output(self, data):
-        """!
-        @brief Return True if the data entry parsed from a command line by
-        CWFAdapter.parse_file_recognition_output is of type NetCDF, False otherwise.
+        """
+        Return True if the data entry parsed from a command line by
+        CWFAdapter.parse_file_recognition_output is of type NetCDF, False
+        otherwise.
         """
         return data['extension'] == '.nc'
 
     def is_nml_data_output(self, data):
-        """!
-        @brief Return True if the data entry parsed from a command line by
-        CWFAdapter.parse_file_recognition_output is of type NML, False otherwise.
+        """
+        Return True if the data entry parsed from a command line by
+        CWFAdapter.parse_file_recognition_output is of type NML, False
+        otherwise.
         """
         return data['extension'] == '.nml'
 
@@ -183,10 +195,10 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             )
 
     def parse_file_recognition_output(self, lines):
-        """!
-        @brief Parse standard output containing time dimensions from NetCDF
-        files into a structured format.
-        @returns A list of dictionaries with file and time dimension information.
+        """
+        Parse standard output containing time dimensions from NetCDF files into
+        a structured format. Returns a list of dictionaries with file and time
+        dimension information.
         """
         result = []
         for line in lines:

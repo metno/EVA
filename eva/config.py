@@ -323,9 +323,7 @@ class ConfigurableObject(object):
         Replace all configuration objects of type :class:`ResolvableDependency`
         with their true class reference.
 
-        :param dict config_classes: dictionary with configuration IDs (see
-               :attr:`config_id`) as keys pointing to
-               :class:`ResolvableDependency` objects.
+        :param dict config_classes: dictionary with configuration IDs (see :attr:`config_id`) as keys pointing to :class:`ResolvableDependency` objects.
         :rtype: class
         """
         for key in self.env.keys():
@@ -414,8 +412,6 @@ class ResolvableDependency(object):
     """
 
     def __init__(self, key):
-        """
-        """
         self.key = key
 
     def resolve(self, config_classes):

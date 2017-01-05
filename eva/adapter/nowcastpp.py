@@ -20,19 +20,23 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
     R script write_missing_radars.R, written by ivaras@met.no, is available at
     https://gitlab.met.no/it-geo/eva-adapter-support/
 
-    .. table:: Configuration variables
+    .. table::
 
-       ==========================  ==============  ==============  ==========  ===========
-       Variable                    Type            Default         Inclusion   Description
-       ==========================  ==============  ==============  ==========  ===========
-       gridpp_input_options        |string|                        optional    GridPP command-line options for the input file.
-       gridpp_output_options       |string|                        optional    GridPP command-line options for the output file.
-       gridpp_generic_options      |string|                        optional    GridPP command-line options.
-       gridpp_mask_options         |string|                        optional    GridPP command-line options for masking operations.
-       gridpp_modules              |list_string|                   optional    Comma-separated list of GridEngine modules to load before running.
-       gridpp_threads              |int|           1               optional    How many threads to use during calculations.
-       gridpp_preprocess_script    |string|                        required    R script for generating file with missing radars.
-       ==========================  ==============  ==============  ==========  ===========
+       ===========================  ==============  ==============  ==========  ===========
+       Variable                     Type            Default         Inclusion   Description
+       ===========================  ==============  ==============  ==========  ===========
+       gridpp_input_options         |string|        (empty)         optional    GridPP command-line options for the input file.
+       gridpp_output_options        |string|        (empty)         optional    GridPP command-line options for the output file.
+       gridpp_generic_options       |string|        (empty)         optional    GridPP command-line options.
+       gridpp_mask_options          |string|        (empty)         optional    GridPP command-line options for masking operations.
+       gridpp_modules               |list_string|   (empty)         optional    Comma-separated list of GridEngine modules to load before running.
+       gridpp_threads               |int|           1               optional    How many threads to use during calculations.
+       gridpp_preprocess_script     |string|        (empty)         required    R script for generating file with missing radars.
+       input_data_format                                            required    See |input_data_format|.
+       input_product                                                required    See |input_product|.
+       input_service_backend                                        required    See |input_service_backend|.
+       output_filename_pattern                                      required    See |output_filename_pattern|.
+       ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {

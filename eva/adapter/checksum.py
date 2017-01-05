@@ -5,15 +5,17 @@ import eva.exceptions
 
 
 class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    An adapter that verifies checksums on data sets according to auxiliary files.
+    """
+    The ChecksumVerificationAdapter verifies checksums on data sets, according
+    to auxiliary files that have the similar name. For instance, it will
+    calculate the checksum on the file ``foo`` if a ``foo.md5`` file exists in
+    the same directory.
 
-    At the moment, only md5sum is supported, and is expected to be in the same
-    directory as the data sets, with the suffix ".md5".
+    If the checksum is correct, it is added to the Productstatus resource under
+    the fields ``hash`` and ``hash_type``. If the checksum fails, the task
+    fails, and is NOT requeued.
 
-    If the checksum is correct, the .md5 file is deleted, and the hash is added
-    to the Productstatus database. If the checksum fails, the file is left
-    intact, and the task fails and is NOT restarted.
+    At the moment, only MD5 checksums are supported.
     """
 
     REQUIRED_CONFIG = [

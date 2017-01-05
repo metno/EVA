@@ -5,13 +5,13 @@ Adapter documentation
    :local:
    :backlinks: top
 
-CWFAdapter
-----------
-.. autoclass:: eva.adapter.CWFAdapter
-
 ChecksumVerificationAdapter
 ---------------------------
 .. autoclass:: eva.adapter.ChecksumVerificationAdapter
+
+CWFAdapter
+----------
+.. autoclass:: eva.adapter.CWFAdapter
 
 DeleteAdapter
 -------------

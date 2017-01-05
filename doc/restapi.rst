@@ -78,7 +78,7 @@ following command:
 
 ...will generate the following HTTP conversation:
 
-.. code-block:: http
+.. code-block:: text
 
    > POST /control/drain HTTP/1.1
    > Host: localhost:8080

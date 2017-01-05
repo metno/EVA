@@ -130,6 +130,22 @@ rst_epilog = """
 .. |list_string| replace:: :meth:`list_string <eva.config.ConfigurableObject.normalize_config_list_string>`
 .. |list_int| replace:: :meth:`list_int <eva.config.ConfigurableObject.normalize_config_list_int>`
 .. |config_class| replace:: :meth:`config_class <eva.config.ConfigurableObject.normalize_config_config_class>`
+
+.. |concurrency| replace:: :class:`concurrency <eva.base.adapter.BaseAdapter>`
+.. |executor| replace:: :class:`executor <eva.base.adapter.BaseAdapter>`
+.. |input_data_format| replace:: :class:`input_data_format <eva.base.adapter.BaseAdapter>`
+.. |input_partial| replace:: :class:`input_partial <eva.base.adapter.BaseAdapter>`
+.. |input_product| replace:: :class:`input_product <eva.base.adapter.BaseAdapter>`
+.. |input_reference_hours| replace:: :class:`input_reference_hours <eva.base.adapter.BaseAdapter>`
+.. |input_service_backend| replace:: :class:`input_service_backend <eva.base.adapter.BaseAdapter>`
+.. |input_with_hash| replace:: :class:`input_with_hash <eva.base.adapter.BaseAdapter>`
+.. |output_base_url| replace:: :class:`output_base_url <eva.base.adapter.BaseAdapter>`
+.. |output_data_format| replace:: :class:`output_data_format <eva.base.adapter.BaseAdapter>`
+.. |output_filename_pattern| replace:: :class:`output_filename_pattern <eva.base.adapter.BaseAdapter>`
+.. |output_lifetime| replace:: :class:`output_lifetime <eva.base.adapter.BaseAdapter>`
+.. |output_product| replace:: :class:`output_product <eva.base.adapter.BaseAdapter>`
+.. |output_service_backend| replace:: :class:`output_service_backend <eva.base.adapter.BaseAdapter>`
+.. |reference_time_threshold| replace:: :class:`reference_time_threshold <eva.base.adapter.BaseAdapter>`
 """
 
 
