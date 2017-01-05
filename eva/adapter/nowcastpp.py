@@ -9,56 +9,59 @@ import productstatus.api
 
 class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
     """!
-    The NowcastPPAdapter is postprocessing radar nowcast files in two steps:
+    The NowcastPPAdapter post-processes RADAR NowCast files in two steps:
 
-    1) An R script creates a txt file with information about missing radars
-    2) Gridpp adds neighbourhood smoothing and masks out areas with missing radars
+    1. An R script creates a txt file with information about missing radars
+    2. GridPP adds neighbourhood smoothing and masks out areas with missing radars
 
     The GridPP software is written by Thomas Nipen and is available at:
     https://github.com/metno/gridpp
 
-    R script write_missing_radars.R written by ivaras@met.no is available at
+    R script write_missing_radars.R, written by ivaras@met.no, is available at
     https://gitlab.met.no/it-geo/eva-adapter-support/
 
-    After generating the file, the adapter will post the information to
-    Productstatus if the output_* and productstatus_* environments are
-    specified.
+    .. table:: Configuration variables
+
+       ==========================  ==============  ==============  ==========  ===========
+       Variable                    Type            Default         Inclusion   Description
+       ==========================  ==============  ==============  ==========  ===========
+       gridpp_input_options        |string|                        optional    GridPP command-line options for the input file.
+       gridpp_output_options       |string|                        optional    GridPP command-line options for the output file.
+       gridpp_generic_options      |string|                        optional    GridPP command-line options.
+       gridpp_mask_options         |string|                        optional    GridPP command-line options for masking operations.
+       gridpp_modules              |list_string|                   optional    Comma-separated list of GridEngine modules to load before running.
+       gridpp_threads              |int|           1               optional    How many threads to use during calculations.
+       gridpp_preprocess_script    |string|                        required    R script for generating file with missing radars.
+       ==========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {
         'gridpp_input_options': {
             'type': 'string',
-            'help': 'GridPP command-line options for the input file.',
             'default': '',
         },
         'gridpp_output_options': {
             'type': 'string',
-            'help': 'GridPP command-line options for the output file.',
             'default': '',
         },
         'gridpp_generic_options': {
             'type': 'string',
-            'help': 'GridPP command-line options.',
             'default': '',
         },
         'gridpp_mask_options': {
             'type': 'string',
-            'help': 'GridPP command-line options for masking operations.',
             'default': '',
         },
         'gridpp_modules': {
             'type': 'list_string',
-            'help': 'Comma-separated list of modules to load before running.',
             'default': '',
         },
         'gridpp_threads': {
             'type': 'int',
-            'help': 'How many threads to use during calculations.',
             'default': '1',
         },
         'gridpp_preprocess_script': {
             'type': 'string',
-            'help': 'R script for generating file with missing radars',
             'default': '',
         },
     }

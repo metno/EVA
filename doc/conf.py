@@ -119,6 +119,19 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# A string of reStructuredText that will be included at the end of every source file that is read.
+rst_epilog = """
+.. |string| replace:: :meth:`string <eva.config.ConfigurableObject.normalize_config_string>`
+.. |int| replace:: :meth:`int <eva.config.ConfigurableObject.normalize_config_int>`
+.. |positive_int| replace:: :meth:`positive_int <eva.config.ConfigurableObject.normalize_config_positive_int>`
+.. |null_bool| replace:: :meth:`null_bool <eva.config.ConfigurableObject.normalize_config_null_bool>`
+.. |bool| replace:: :meth:`bool <eva.config.ConfigurableObject.normalize_config_bool>`
+.. |list| replace:: :meth:`list <eva.config.ConfigurableObject.normalize_config_list>`
+.. |list_string| replace:: :meth:`list_string <eva.config.ConfigurableObject.normalize_config_list_string>`
+.. |list_int| replace:: :meth:`list_int <eva.config.ConfigurableObject.normalize_config_list_int>`
+.. |config_class| replace:: :meth:`config_class <eva.config.ConfigurableObject.normalize_config_config_class>`
+"""
+
 
 # -- Options for HTML output ----------------------------------------------
 

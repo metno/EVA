@@ -69,16 +69,6 @@ class BaseAdapter(eva.config.ConfigurableObject, eva.globe.GlobalMixin):
        reference_time_threshold    |int|           0               optional    Never process resources whose reference time is older than N seconds.
                                                                                A value of zero specifies that the reference time is ignored.
        ==========================  ==============  ==============  ==========  ===========
-
-    .. |string| replace:: :meth:`string <eva.config.ConfigurableObject.normalize_config_string>`
-    .. |int| replace:: :meth:`int <eva.config.ConfigurableObject.normalize_config_int>`
-    .. |positive_int| replace:: :meth:`positive_int <eva.config.ConfigurableObject.normalize_config_positive_int>`
-    .. |null_bool| replace:: :meth:`null_bool <eva.config.ConfigurableObject.normalize_config_null_bool>`
-    .. |bool| replace:: :meth:`bool <eva.config.ConfigurableObject.normalize_config_bool>`
-    .. |list| replace:: :meth:`list <eva.config.ConfigurableObject.normalize_config_list>`
-    .. |list_string| replace:: :meth:`list_string <eva.config.ConfigurableObject.normalize_config_list_string>`
-    .. |list_int| replace:: :meth:`list_int <eva.config.ConfigurableObject.normalize_config_list_int>`
-    .. |config_class| replace:: :meth:`config_class <eva.config.ConfigurableObject.normalize_config_config_class>`
     """
 
     #! Common configuration variables all subclasses may use.
