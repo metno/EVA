@@ -19,9 +19,8 @@ gridpp_generic_options = --reftime {{reference_time|iso8601_compact}}
 gridpp_input_options = inopts
 gridpp_output_options = outopts
 gridpp_threads = 4
-gridpp_missing_radar_file = /tmp/missing_radars.txt
 gridpp_preprocess_script = /tmp/Rscript.R
-gridpp_mask_options = "-c mask keep=0 -p text file=/tmp/missing_radars.txt spatial=1"
+gridpp_mask_options = -c mask keep=0
 input_data_format = foo
 input_product = foo
 input_service_backend = foo
@@ -42,9 +41,9 @@ output_service_backend = foo
         with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
             job = self.create_job(resource)
         self.assertTrue('cp -v /foo/bar/baz /out/20160101T181500Z' in job.command)
-        self.assertTrue('Rscript /tmp/Rscript.R "/foo/bar/baz" "/tmp/missing_radars.txt"' in job.command)
+        self.assertTrue('Rscript /tmp/Rscript.R /foo/bar/baz $filename' in job.command)
         self.assertTrue('gridpp /foo/bar/baz inopts /out/20160101T181500Z outopts --reftime 20160101T181500Z' in job.command)
-        self.assertTrue('-c mask keep=0 -p text file=/tmp/missing_radars.txt spatial=1' in job.command)
+        self.assertTrue('-c mask keep=0 -p text file=$filename spatial=1' in job.command)
 
     def test_finish_job_and_generate_resources(self):
         """!

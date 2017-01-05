@@ -41,6 +41,11 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
             'help': 'GridPP command-line options.',
             'default': '',
         },
+        'gridpp_mask_options': {
+            'type': 'string',
+            'help': 'GridPP command-line options for masking operations.',
+            'default': '',
+        },
         'gridpp_modules': {
             'type': 'list_string',
             'help': 'Comma-separated list of modules to load before running.',
@@ -51,26 +56,14 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
             'help': 'How many threads to use during calculations.',
             'default': '1',
         },
-        'gridpp_missing_radar_file': {
-            'type': 'string',
-            'help': 'Name of file with active radars to be used as input to gridpp',
-            'default': '',
-        },
         'gridpp_preprocess_script': {
             'type': 'string',
             'help': 'R script for generating file with missing radars',
             'default': '',
         },
-        'gridpp_mask_options': {
-            'type': 'string',
-            'help': 'option for masking out points with gridpp',
-            'default': '',
-        },
     }
 
     REQUIRED_CONFIG = [
-        'gridpp_mask_options',
-        'gridpp_missing_radar_file',
         'gridpp_preprocess_script',
         'input_data_format',
         'input_product',
@@ -80,6 +73,7 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
 
     OPTIONAL_CONFIG = [
         'gridpp_generic_options',
+        'gridpp_mask_options',
         'gridpp_input_options',
         'gridpp_modules',
         'gridpp_output_options',
@@ -104,10 +98,9 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
         self.in_opts = self.template.from_string(self.env['gridpp_input_options'])
         self.out_opts = self.template.from_string(self.env['gridpp_output_options'])
         self.generic_opts = self.template.from_string(self.env['gridpp_generic_options'])
-        self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
-        self.missing_radarfile = self.template.from_string(self.env['gridpp_missing_radar_file'])
-        self.preprocess_script = self.template.from_string(self.env['gridpp_preprocess_script'])
         self.mask_opts = self.template.from_string(self.env['gridpp_mask_options'])
+        self.output_filename = self.template.from_string(self.env['output_filename_pattern'])
+        self.preprocess_script = self.template.from_string(self.env['gridpp_preprocess_script'])
 
     def create_job(self, job):
         """!
@@ -128,9 +121,8 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
                 'output.file': self.output_filename.render(**template_variables),
                 'output.options': self.out_opts.render(**template_variables),
                 'generic.options': self.generic_opts.render(**template_variables),
-                'missing.radarfile': self.missing_radarfile.render(**template_variables),
-                'preprocess.script': self.preprocess_script.render(**template_variables),
                 'mask.options': self.mask_opts.render(**template_variables),
+                'preprocess.script': self.preprocess_script.render(**template_variables),
             }
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
@@ -141,9 +133,11 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
         for module in self.env['gridpp_modules']:
             command += ["module load %s" % module]
         command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
-        command += ["Rscript " + job.gridpp_params['preprocess.script'] + ' "' + job.gridpp_params['input.file'] + '" "' + job.gridpp_params['missing.radarfile'] + '"']
+        command += ["export filename=$(mktemp /tmp/radarXXXXX)"]
+        command += ["Rscript %(preprocess.script)s %(input.file)s $filename" % job.gridpp_params]
         command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
-        command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s %(mask.options)s" % job.gridpp_params]
+        command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s %(mask.options)s -p text file=$filename spatial=1" % job.gridpp_params]
+        command += ["rm $filename"]
         job.command = '\n'.join(command) + '\n'
 
     def finish_job(self, job):
