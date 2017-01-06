@@ -1,78 +1,17 @@
-# EVA
+# Event Adapter
 
-This daemon listens for messages coming from Productstatus, creates jobs based on the messages, and then submits them to a processing engine such as a local thread or the Sun OpenGridEngine.
+EVA is the Event Adapter. It is an event-driven daemon, which processes data
+sets based on metadata updates from a Productstatus service.
 
-## Set up your build environment
+Extensive documentation is available in reStructuredText format in the `doc/`
+directory. You may view the HTML version online at http://it.met.no/EVA/, or
+you can build it yourself by running `make doc`.
 
-```
-sudo apt-get install python-pip python-virtualenv python-dev
-virtualenv deps
-source deps/bin/activate
-pip install -e .
-```
+## Authors
 
-## Configuration
-
-Configuration of EVA is done via environment variables. See below for a detailed description of configuration variables.
-
-### EVA_QUEUE_ORDER
-
-Specify in which order to process incoming events.
-
-#### FIFO
-```export EVA_QUEUE_ORDER=FIFO```
-FIFO is a first-in, first-out queue. The messages will be processed in chronological order. If messages appear out of order, they are sorted before processing. Note that if messages are severely delayed, they will be processed out of order anyway, because EVA does not know whether or not there are older messages on the queue. This is the default behavior.
-
-#### LIFO
-```export EVA_QUEUE_ORDER=LIFO```
-LIFO is a last-in, first-out queue. It functions exactly as FIFO, but with reverse chronological order.
-
-#### ADAPTIVE
-```export EVA_QUEUE_ORDER=ADAPTIVE```
-Messages will be processed in chronological order as with FIFO, but messages belonging to a ProductInstance will be checked for their reference time, and those with the most recent reference time will be processed first. This results in faster delivery of newer models in case of a service outage.
-
-### EVA_INPUT_WITH_HASH
-
-This variable controls whether an Adapter will process DataInstance resources containing a hash.
-                
-#### (null)
-All resources will be processed. This is the default behavior.
-
-#### YES
-Only resources with a hash will be processed.
-
-#### NO
-Only resources lacking a hash will be processed.
-
-## Writing adapters
-
-See the file [eva/adapter/example.py] for an example.
-
-## Running EVA
-
-```
-python -m eva --help
-```
-
-## Building a Docker container
-
-```
-# To compile:
-make eva
-
-# To upload to Docker registry:
-make upload-eva
-```
-
-## Running tests
-
-```
-source deps/bin/activate
-nosetests
-```
-
-## Building the documentation
-
-```
-make doc
-```
+* Kim Tore Jensen
+* Martin Grønlien Pejcoch
+* Alexander Bürger
+* Håvard Futsæter
+* Espen Myrland
+* Ivar Seierstad
