@@ -224,12 +224,42 @@ additionally trigger the creation of a deletion job. This job will
 <dl class="class">
 <dt id="eva.adapter.DistributionAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">DistributionAdapter</code><a class="reference internal" href="_modules/eva/adapter/distribution.html#DistributionAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.DistributionAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-&#64;brief Copy data to another destination.</p>
-<p>This adapter distributes data files to other locations, and optionally
-posts their metadata to Productstatus.</p>
-<p>Note that at the moment, this adapter only supports copying files using the
-<cite>cp</cite> command, optionally on Lustre using the <cite>lfs</cite> utility to launch cp.</p>
+<dd><p>The <code class="docutils literal"><span class="pre">DistributionAdapter</span></code> copies files to other locations.</p>
+<p>This adapter supports copying files using the <code class="docutils literal"><span class="pre">cp</span></code> command, and will use
+the <code class="docutils literal"><span class="pre">lfs</span></code> wrapper if it exists.</p>
+<p>If the destination file already exists in the Productstatus database, and
+is not marked as deleted, the copy will NOT be performed.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="15%" />
+<col width="15%" />
+<col width="11%" />
+<col width="30%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Inclusion</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>input_service_backend</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_service_backend</span></code></a>.</td>
+</tr>
+<tr class="row-odd"><td>output_base_url</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">output_base_url</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -238,8 +268,28 @@ posts their metadata to Productstatus.</p>
 <dl class="class">
 <dt id="eva.adapter.ExampleAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">ExampleAdapter</code><a class="reference internal" href="_modules/eva/adapter/example.html#ExampleAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.ExampleAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-An adapter that is good for demonstration purposes.</p>
+<dd><p>Example adapter, good for starting out writing EVA jobs.</p>
+<p>This adapter serves as a reusable example of how to write your own EVA jobs.</p>
+<p>To run this adapter on GridEngine, you might want to configure these environment variables:</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[executor.gridengine]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.executor.GridEngineExecutor</span>
+<span class="na">ssh_host</span> <span class="o">=</span> <span class="s">&lt;gridengine-login-node&gt;</span>
+<span class="na">ssh_key_file</span> <span class="o">=</span> <span class="s">/home/&lt;username&gt;/.ssh/id_rsa</span>
+<span class="na">ssh_user</span> <span class="o">=</span> <span class="s">&lt;username&gt;</span>
+
+<span class="k">[adapter.example]</span>
+<span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.example.ExampleAdapter</span>
+<span class="na">executor</span> <span class="o">=</span> <span class="s">executor.gridengine</span>
+<span class="na">input_data_format</span> <span class="o">=</span> <span class="s">netcdf</span>
+<span class="na">input_product</span> <span class="o">=</span> <span class="s">ecmwf-atmospheric-model-bc-surface</span>
+<span class="na">input_service_backend</span> <span class="o">=</span> <span class="s">lustre-b</span>
+<span class="na">output_filename_pattern</span> <span class="o">=</span> <span class="s">{{reference_time|timedelta(hours=6)|iso8601_compact}}</span>
+</pre></div>
+</div>
+<p>Then, run EVA:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python -m eva --process_data_instance &lt;data-instance-uuid&gt;
+</pre></div>
+</div>
 </dd></dl>
 
 </div>
@@ -248,19 +298,66 @@ An adapter that is good for demonstration purposes.</p>
 <dl class="class">
 <dt id="eva.adapter.FimexAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">FimexAdapter</code><a class="reference internal" href="_modules/eva/adapter/fimex.html#FimexAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.FimexAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-Generic FIMEX adapter that will accept virtually any parameter known to FIMEX.</p>
-<p>For flexibility, this adapter only takes three configuration options, that
+<dd><p>This adapter is a generic interface to FIMEX, that will accept virtually
+any parameter known to FIMEX.</p>
+<p>For flexibility, this adapter only takes two configuration options, that
 will allow users to set up any type of FIMEX job:</p>
 <blockquote>
 <div><ul class="simple">
-<li>An output file name pattern</li>
-<li>A generic command-line option string</li>
+<li>A generic command-line option string.</li>
+<li>An output file name pattern.</li>
+<li>(and, implicitly, the input filename).</li>
 </ul>
 </div></blockquote>
-<p>After generating the file, the adapter will post the information to
-Productstatus if the output_* and productstatus_* environments are
-specified.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="28%" />
+<col width="15%" />
+<col width="15%" />
+<col width="11%" />
+<col width="32%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Inclusion</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>fimex_parameters</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>required</td>
+<td>FIMEX command-line parameters.</td>
+</tr>
+<tr class="row-odd"><td>input_data_format</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_data_format</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td>input_product</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_product</span></code></a>.</td>
+</tr>
+<tr class="row-odd"><td>input_service_backend</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_service_backend</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td>output_filename_pattern</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">output_filename_pattern</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -269,8 +366,68 @@ specified.</p>
 <dl class="class">
 <dt id="eva.adapter.FimexFillFileAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">FimexFillFileAdapter</code><a class="reference internal" href="_modules/eva/adapter/fimex_fill_file.html#FimexFillFileAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.FimexFillFileAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-FIMEX adapter that will fill a template file with data from other files.</p>
+<dd><p>This adapter is a <code class="docutils literal"><span class="pre">ncfill</span></code>, and in turn, FIMEX frontend that will fill a
+NetCDF template file with GRIB or NetCDF data from other files. It is
+useful when it is necessary to quickly fill a file with data even though
+not all time steps are present yet.</p>
+<p>The <code class="docutils literal"><span class="pre">ncfill</span></code> utility, template files, time axes, GRIB/NetCDF conversion
+configuration, template and time axis generation tools, and other auxiliary
+files are available in the <a class="reference external" href="https://gitlab.met.no/it-geo/eva-adapter-support">eva-adapter-support</a> repository.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="10%" />
+<col width="10%" />
+<col width="7%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Inclusion</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>fimex_fill_file_ncfill_path</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>required</td>
+<td>Path to the <code class="docutils literal"><span class="pre">ncfill</span></code> binary that will perform the fill operation.</td>
+</tr>
+<tr class="row-odd"><td>fimex_fill_file_template_directory</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>required</td>
+<td>Path to template directory that is used for fill operation configuration.</td>
+</tr>
+<tr class="row-even"><td>input_data_format</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_data_format</span></code></a>.</td>
+</tr>
+<tr class="row-odd"><td>input_product</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_product</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td>input_service_backend</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_service_backend</span></code></a>.</td>
+</tr>
+<tr class="row-odd"><td>output_filename_pattern</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">output_filename_pattern</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -279,9 +436,7 @@ FIMEX adapter that will fill a template file with data from other files.</p>
 <dl class="class">
 <dt id="eva.adapter.FimexGRIB2NetCDFAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">FimexGRIB2NetCDFAdapter</code><a class="reference internal" href="_modules/eva/adapter/fimex_grib_to_netcdf.html#FimexGRIB2NetCDFAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.FimexGRIB2NetCDFAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-This adapter fills a NetCDF file with GRIB data using Fimex.
-The adapter requires an external library called <cite>eva-adapter-support</cite>.</p>
+<dd><p><strong>THIS ADAPTER IS DEPRECATED,</strong> see <a class="reference internal" href="#eva.adapter.FimexFillFileAdapter" title="eva.adapter.FimexFillFileAdapter"><code class="xref py py-class docutils literal"><span class="pre">eva.adapter.FimexFillFileAdapter</span></code></a>.</p>
 </dd></dl>
 
 </div>
@@ -290,13 +445,82 @@ The adapter requires an external library called <cite>eva-adapter-support</cite>
 <dl class="class">
 <dt id="eva.adapter.GridPPAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">GridPPAdapter</code><a class="reference internal" href="_modules/eva/adapter/gridpp.html#GridPPAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.GridPPAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-Generic GridPP adapter that will accept any parameter known to GridPP.</p>
+<dd><p>Generic GridPP adapter that will accept any parameter known to GridPP.</p>
 <p>The GridPP software is written by Thomas Nipen and is available at:
 <a class="reference external" href="https://github.com/metno/gridpp">https://github.com/metno/gridpp</a></p>
-<p>After generating the file, the adapter will post the information to
-Productstatus if the output_* and productstatus_* environments are
-specified.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Inclusion</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>gridpp_input_options</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>GridPP command-line options for the input file.</td>
+</tr>
+<tr class="row-odd"><td>gridpp_output_options</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>GridPP command-line options for the output file.</td>
+</tr>
+<tr class="row-even"><td>gridpp_generic_options</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>GridPP command-line options.</td>
+</tr>
+<tr class="row-odd"><td>gridpp_modules</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_list_string" title="eva.config.ConfigurableObject.normalize_config_list_string"><code class="xref py py-meth docutils literal"><span class="pre">list_string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>Comma-separated list of GridEngine modules to load before running.</td>
+</tr>
+<tr class="row-even"><td>gridpp_threads</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>1</td>
+<td>optional</td>
+<td>How many threads to use during calculations.</td>
+</tr>
+<tr class="row-odd"><td>input_data_format</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_data_format</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td>input_product</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_product</span></code></a>.</td>
+</tr>
+<tr class="row-odd"><td>input_service_backend</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_service_backend</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td>output_filename_pattern</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">output_filename_pattern</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -407,8 +631,8 @@ specified.</p>
 <dl class="class">
 <dt id="eva.adapter.NullAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">NullAdapter</code><a class="reference internal" href="_modules/eva/adapter/null.html#NullAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.NullAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-An adapter that matches nothing and does nothing.</p>
+<dd><p>This adapter will generate jobs that runs <code class="docutils literal"><span class="pre">/bin/true</span></code>. Only use this
+adapter for test purposes.</p>
 </dd></dl>
 
 </div>
@@ -417,7 +641,8 @@ An adapter that matches nothing and does nothing.</p>
 <dl class="class">
 <dt id="eva.adapter.TestExecutorAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">TestExecutorAdapter</code><a class="reference internal" href="_modules/eva/adapter/test_executor.html#TestExecutorAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.TestExecutorAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>An adapter that echoes the URL of the received DataInstance, and then sleeps for 10 seconds.</p>
+<dd><p>A test adapter that echoes the URL of the received DataInstance, and then
+sleeps for 10 seconds.</p>
 </dd></dl>
 
 </div>
@@ -426,10 +651,12 @@ An adapter that matches nothing and does nothing.</p>
 <dl class="class">
 <dt id="eva.adapter.ThreddsAdapter">
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">ThreddsAdapter</code><a class="reference internal" href="_modules/eva/adapter/thredds.html#ThreddsAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.ThreddsAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-An adapter that listens to events about files being produced on /lustre
-and then polls the Thredds server until a matching dataset is available
-there, then it posts an information about it to productstatus.</p>
+<dd><p>The <code class="docutils literal"><span class="pre">ThreddsAdapter</span></code> will check if a given data file is reachable through
+a THREDDS Data Server service, and post its metadata to Productstatus.</p>
+<p>The adapter will try at most <code class="docutils literal"><span class="pre">thredds_poll_retries</span></code> (+1) times to reach
+the file via its THREDDS url, and sleep <code class="docutils literal"><span class="pre">thredds_poll_interval</span></code> seconds
+between retries. If the file is not available after the last try, the
+adapter gives up and the job is NOT rescheduled.</p>
 </dd></dl>
 
 </div>

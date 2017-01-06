@@ -53,16 +53,28 @@
 <span class="kn">import</span> <span class="nn">productstatus.api</span>
 
 
-<div class="viewcode-block" id="GridPPAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.gridpp.GridPPAdapter">[docs]</a><span class="k">class</span> <span class="nc">GridPPAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;!</span>
+<div class="viewcode-block" id="GridPPAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.GridPPAdapter">[docs]</a><span class="k">class</span> <span class="nc">GridPPAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generic GridPP adapter that will accept any parameter known to GridPP.</span>
 
 <span class="sd">    The GridPP software is written by Thomas Nipen and is available at:</span>
 <span class="sd">    https://github.com/metno/gridpp</span>
 
-<span class="sd">    After generating the file, the adapter will post the information to</span>
-<span class="sd">    Productstatus if the output_* and productstatus_* environments are</span>
-<span class="sd">    specified.</span>
+<span class="sd">    .. table::</span>
+
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       Variable                     Type            Default         Inclusion   Description</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       gridpp_input_options         |string|        (empty)         optional    GridPP command-line options for the input file.</span>
+<span class="sd">       gridpp_output_options        |string|        (empty)         optional    GridPP command-line options for the output file.</span>
+<span class="sd">       gridpp_generic_options       |string|        (empty)         optional    GridPP command-line options.</span>
+<span class="sd">       gridpp_modules               |list_string|   (empty)         optional    Comma-separated list of GridEngine modules to load before running.</span>
+<span class="sd">       gridpp_threads               |int|           1               optional    How many threads to use during calculations.</span>
+<span class="sd">       input_data_format                                            required    See |input_data_format|.</span>
+<span class="sd">       input_product                                                required    See |input_product|.</span>
+<span class="sd">       input_service_backend                                        required    See |input_service_backend|.</span>
+<span class="sd">       output_filename_pattern                                      required    See |output_filename_pattern|.</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>

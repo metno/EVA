@@ -55,25 +55,34 @@
 <span class="kn">import</span> <span class="nn">productstatus.api</span>
 
 
-<div class="viewcode-block" id="FimexAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.fimex.FimexAdapter">[docs]</a><span class="k">class</span> <span class="nc">FimexAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;!</span>
-<span class="sd">    Generic FIMEX adapter that will accept virtually any parameter known to FIMEX.</span>
+<div class="viewcode-block" id="FimexAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.FimexAdapter">[docs]</a><span class="k">class</span> <span class="nc">FimexAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This adapter is a generic interface to FIMEX, that will accept virtually</span>
+<span class="sd">    any parameter known to FIMEX.</span>
 
-<span class="sd">    For flexibility, this adapter only takes three configuration options, that</span>
+<span class="sd">    For flexibility, this adapter only takes two configuration options, that</span>
 <span class="sd">    will allow users to set up any type of FIMEX job:</span>
 
-<span class="sd">      * An output file name pattern</span>
-<span class="sd">      * A generic command-line option string</span>
+<span class="sd">      * A generic command-line option string.</span>
+<span class="sd">      * An output file name pattern.</span>
+<span class="sd">      * (and, implicitly, the input filename).</span>
 
-<span class="sd">    After generating the file, the adapter will post the information to</span>
-<span class="sd">    Productstatus if the output_* and productstatus_* environments are</span>
-<span class="sd">    specified.</span>
+<span class="sd">    .. table::</span>
+
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       Variable                     Type            Default         Inclusion   Description</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       fimex_parameters             |string|        (empty)         required    FIMEX command-line parameters.</span>
+<span class="sd">       input_data_format                                            required    See |input_data_format|.</span>
+<span class="sd">       input_product                                                required    See |input_product|.</span>
+<span class="sd">       input_service_backend                                        required    See |input_service_backend|.</span>
+<span class="sd">       output_filename_pattern                                      required    See |output_filename_pattern|.</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;fimex_parameters&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;FIMEX command-line parameters.&#39;</span><span class="p">,</span>
             <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
         <span class="p">}</span>
     <span class="p">}</span>

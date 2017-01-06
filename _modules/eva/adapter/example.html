@@ -44,42 +44,41 @@
         
         
   <h1>Source code for eva.adapter.example</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;!</span>
-<span class="sd">@brief Example adapter, good for starting out writing EVA jobs.</span>
-
-<span class="sd">This adapter serves as a reusable example of how to write your own EVA jobs.</span>
-
-<span class="sd">To run this adapter on GridEngine, you might want to configure these environment variables:</span>
-
-<span class="sd">    [executor.gridengine]</span>
-<span class="sd">    class = eva.executor.GridEngineExecutor</span>
-<span class="sd">    ssh_host = &lt;gridengine-login-node&gt;</span>
-<span class="sd">    ssh_key_file = /home/&lt;username&gt;/.ssh/id_rsa</span>
-<span class="sd">    ssh_user = &lt;username&gt;</span>
-
-<span class="sd">    [adapter.example]</span>
-<span class="sd">    class = eva.adapter.example.ExampleAdapter</span>
-<span class="sd">    executor = executor.gridengine</span>
-<span class="sd">    input_data_format = netcdf</span>
-<span class="sd">    input_product = ecmwf-atmospheric-model-bc-surface</span>
-<span class="sd">    input_service_backend = lustre-b</span>
-<span class="sd">    output_filename_pattern = {{reference_time|timedelta(hours=6)|iso8601_compact}}</span>
-
-<span class="sd">Then, run EVA:</span>
-
-<span class="sd">    python -m eva --process_data_instance &lt;data-instance-uuid&gt;</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="c1"># Import required Python modules</span>
-<span class="kn">import</span> <span class="nn">eva</span>
+<span></span><span class="kn">import</span> <span class="nn">eva</span>
 <span class="kn">import</span> <span class="nn">eva.job</span>
 <span class="kn">import</span> <span class="nn">eva.base.adapter</span>
 
 
-<div class="viewcode-block" id="ExampleAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.example.ExampleAdapter">[docs]</a><span class="k">class</span> <span class="nc">ExampleAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;!</span>
-<span class="sd">    An adapter that is good for demonstration purposes.</span>
+<div class="viewcode-block" id="ExampleAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.ExampleAdapter">[docs]</a><span class="k">class</span> <span class="nc">ExampleAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Example adapter, good for starting out writing EVA jobs.</span>
+
+<span class="sd">    This adapter serves as a reusable example of how to write your own EVA jobs.</span>
+
+<span class="sd">    To run this adapter on GridEngine, you might want to configure these environment variables:</span>
+
+<span class="sd">    .. code-block:: ini</span>
+
+<span class="sd">       [executor.gridengine]</span>
+<span class="sd">       class = eva.executor.GridEngineExecutor</span>
+<span class="sd">       ssh_host = &lt;gridengine-login-node&gt;</span>
+<span class="sd">       ssh_key_file = /home/&lt;username&gt;/.ssh/id_rsa</span>
+<span class="sd">       ssh_user = &lt;username&gt;</span>
+
+<span class="sd">       [adapter.example]</span>
+<span class="sd">       class = eva.adapter.example.ExampleAdapter</span>
+<span class="sd">       executor = executor.gridengine</span>
+<span class="sd">       input_data_format = netcdf</span>
+<span class="sd">       input_product = ecmwf-atmospheric-model-bc-surface</span>
+<span class="sd">       input_service_backend = lustre-b</span>
+<span class="sd">       output_filename_pattern = {{reference_time|timedelta(hours=6)|iso8601_compact}}</span>
+
+<span class="sd">    Then, run EVA:</span>
+
+<span class="sd">    .. code-block:: bash</span>
+
+<span class="sd">       python -m eva --process_data_instance &lt;data-instance-uuid&gt;</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># This list defines which input parameter your adapter requires to run.</span>

@@ -52,15 +52,24 @@
 <span class="kn">import</span> <span class="nn">eva.exceptions</span>
 
 
-<div class="viewcode-block" id="DistributionAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.distribution.DistributionAdapter">[docs]</a><span class="k">class</span> <span class="nc">DistributionAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;!</span>
-<span class="sd">    @brief Copy data to another destination.</span>
+<div class="viewcode-block" id="DistributionAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.DistributionAdapter">[docs]</a><span class="k">class</span> <span class="nc">DistributionAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The ``DistributionAdapter`` copies files to other locations.</span>
 
-<span class="sd">    This adapter distributes data files to other locations, and optionally</span>
-<span class="sd">    posts their metadata to Productstatus.</span>
+<span class="sd">    This adapter supports copying files using the ``cp`` command, and will use</span>
+<span class="sd">    the ``lfs`` wrapper if it exists.</span>
 
-<span class="sd">    Note that at the moment, this adapter only supports copying files using the</span>
-<span class="sd">    `cp` command, optionally on Lustre using the `lfs` utility to launch cp.</span>
+<span class="sd">    If the destination file already exists in the Productstatus database, and</span>
+<span class="sd">    is not marked as deleted, the copy will NOT be performed.</span>
+
+<span class="sd">    .. table::</span>
+
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       Variable                     Type            Default         Inclusion   Description</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       input_service_backend                                        required    See |input_service_backend|.</span>
+<span class="sd">       output_base_url                                              required    See |output_base_url|.</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>

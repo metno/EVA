@@ -53,11 +53,11 @@
 <span class="kn">import</span> <span class="nn">productstatus.api</span>
 
 
-<div class="viewcode-block" id="FimexGRIB2NetCDFAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.fimex_grib_to_netcdf.FimexGRIB2NetCDFAdapter">[docs]</a><span class="k">class</span> <span class="nc">FimexGRIB2NetCDFAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;!</span>
-<span class="sd">    This adapter fills a NetCDF file with GRIB data using Fimex.</span>
-<span class="sd">    The adapter requires an external library called `eva-adapter-support`.</span>
+<div class="viewcode-block" id="FimexGRIB2NetCDFAdapter"><a class="viewcode-back" href="../../../adapters.html#eva.adapter.FimexGRIB2NetCDFAdapter">[docs]</a><span class="k">class</span> <span class="nc">FimexGRIB2NetCDFAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    **THIS ADAPTER IS DEPRECATED,** see :class:`eva.adapter.FimexFillFileAdapter`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;fg2nc_lib&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
