@@ -5,7 +5,8 @@ import eva.exceptions
 
 class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
     """
-    An adapter that echoes the URL of the received DataInstance, and then sleeps for 10 seconds.
+    A test adapter that echoes the URL of the received DataInstance, and then
+    sleeps for 10 seconds.
     """
 
     def create_job(self, job):

@@ -7,14 +7,23 @@ import eva.exceptions
 
 
 class DistributionAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    @brief Copy data to another destination.
+    """
+    The ``DistributionAdapter`` copies files to other locations.
 
-    This adapter distributes data files to other locations, and optionally
-    posts their metadata to Productstatus.
+    This adapter supports copying files using the ``cp`` command, and will use
+    the ``lfs`` wrapper if it exists.
 
-    Note that at the moment, this adapter only supports copying files using the
-    `cp` command, optionally on Lustre using the `lfs` utility to launch cp.
+    If the destination file already exists in the Productstatus database, and
+    is not marked as deleted, the copy will NOT be performed.
+
+    .. table::
+
+       ===========================  ==============  ==============  ==========  ===========
+       Variable                     Type            Default         Inclusion   Description
+       ===========================  ==============  ==============  ==========  ===========
+       input_service_backend                                        required    See |input_service_backend|.
+       output_base_url                                              required    See |output_base_url|.
+       ===========================  ==============  ==============  ==========  ===========
     """
 
     REQUIRED_CONFIG = [

@@ -8,19 +8,39 @@ import eva.template
 
 
 class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    FIMEX adapter that will fill a template file with data from other files.
+    """
+    This adapter is a ``ncfill``, and in turn, FIMEX frontend that will fill a
+    NetCDF template file with GRIB or NetCDF data from other files. It is
+    useful when it is necessary to quickly fill a file with data even though
+    not all time steps are present yet.
+
+    The ``ncfill`` utility, template files, time axes, GRIB/NetCDF conversion
+    configuration, template and time axis generation tools, and other auxiliary
+    files are available in the eva-adapter-support_ repository.
+
+    .. _eva-adapter-support: https://gitlab.met.no/it-geo/eva-adapter-support
+
+    .. table::
+
+       ===================================  ==============  ==============  ==========  ===========
+       Variable                             Type            Default         Inclusion   Description
+       ===================================  ==============  ==============  ==========  ===========
+       fimex_fill_file_ncfill_path          |string|        (empty)         required    Path to the ``ncfill`` binary that will perform the fill operation.
+       fimex_fill_file_template_directory   |string|        (empty)         required    Path to template directory that is used for fill operation configuration.
+       input_data_format                                                    required    See |input_data_format|.
+       input_product                                                        required    See |input_product|.
+       input_service_backend                                                required    See |input_service_backend|.
+       output_filename_pattern                                              required    See |output_filename_pattern|.
+       ===================================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {
         'fimex_fill_file_ncfill_path': {
             'type': 'string',
-            'help': 'Path to the "ncfill" binary that will perform the fill operation.',
             'default': '',
         },
         'fimex_fill_file_template_directory': {
             'type': 'string',
-            'help': 'Path to template directory that is used for fill operation configuration.',
             'default': '',
         }
     }

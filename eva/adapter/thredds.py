@@ -10,16 +10,32 @@ import productstatus
 
 
 class ThreddsAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    An adapter that listens to events about files being produced on /lustre
-    and then polls the Thredds server until a matching dataset is available
-    there, then it posts an information about it to productstatus.
+    """
+    The ``ThreddsAdapter`` will check if a given data file is reachable through
+    a THREDDS Data Server service, and post its metadata to Productstatus.
+
+    The adapter will try at most ``thredds_poll_retries`` (+1) times to reach
+    the file via its THREDDS url, and sleep ``thredds_poll_interval`` seconds
+    between retries. If the file is not available after the last try, the
+    adapter gives up and the job is NOT rescheduled.
+
+    .. table::
+
+       ===========================  ==============  ==============  ==========  ===========
+       Variable                     Type            Default         Inclusion   Description
+       ===========================  ==============  ==============  ==========  ===========
+       input_product                                                required    See |input_product|.
+       input_service_backend                                        required    See |input_service_backend|.
+       output_service_backend                                       required    See |output_service_backend|.
+       thredds_base_url             |string|        (empty)         required    Base THREDDS URL to prepend to the input resource base filename.
+       thredds_poll_interval        |int|           20              optional    How often the THREDDS server should be checked.
+       thredds_poll_retries         |int|           6               optional    How many times to retry locating the file at the THREDDS server.
     """
 
     CONFIG = {
         'thredds_poll_interval': {
             'type': 'int',
-            'help': 'How often should Thredds server be checked.',
+            'help': '',
             'default': '20',
         },
         'thredds_poll_retries': {
@@ -29,7 +45,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         },
         'thredds_base_url': {
             'type': 'string',
-            'help': 'Base URL to prepend to the filename from the input resource',
+            'help': '',
             'default': '',
         },
     }

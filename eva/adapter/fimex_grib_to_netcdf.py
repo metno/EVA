@@ -8,10 +8,10 @@ import productstatus.api
 
 
 class FimexGRIB2NetCDFAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    This adapter fills a NetCDF file with GRIB data using Fimex.
-    The adapter requires an external library called `eva-adapter-support`.
     """
+    **THIS ADAPTER IS DEPRECATED,** see :class:`eva.adapter.FimexFillFileAdapter`.
+    """
+
     CONFIG = {
         'fg2nc_lib': {
             'type': 'string',

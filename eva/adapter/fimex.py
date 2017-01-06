@@ -10,24 +10,33 @@ import productstatus.api
 
 
 class FimexAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    Generic FIMEX adapter that will accept virtually any parameter known to FIMEX.
+    """
+    This adapter is a generic interface to FIMEX, that will accept virtually
+    any parameter known to FIMEX.
 
-    For flexibility, this adapter only takes three configuration options, that
+    For flexibility, this adapter only takes two configuration options, that
     will allow users to set up any type of FIMEX job:
 
-      * An output file name pattern
-      * A generic command-line option string
+      * A generic command-line option string.
+      * An output file name pattern.
+      * (and, implicitly, the input filename).
 
-    After generating the file, the adapter will post the information to
-    Productstatus if the output_* and productstatus_* environments are
-    specified.
+    .. table::
+
+       ===========================  ==============  ==============  ==========  ===========
+       Variable                     Type            Default         Inclusion   Description
+       ===========================  ==============  ==============  ==========  ===========
+       fimex_parameters             |string|        (empty)         required    FIMEX command-line parameters.
+       input_data_format                                            required    See |input_data_format|.
+       input_product                                                required    See |input_product|.
+       input_service_backend                                        required    See |input_service_backend|.
+       output_filename_pattern                                      required    See |output_filename_pattern|.
+       ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {
         'fimex_parameters': {
             'type': 'string',
-            'help': 'FIMEX command-line parameters.',
             'default': '',
         }
     }

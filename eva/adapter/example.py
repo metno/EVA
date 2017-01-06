@@ -1,39 +1,38 @@
-"""!
-@brief Example adapter, good for starting out writing EVA jobs.
-
-This adapter serves as a reusable example of how to write your own EVA jobs.
-
-To run this adapter on GridEngine, you might want to configure these environment variables:
-
-    [executor.gridengine]
-    class = eva.executor.GridEngineExecutor
-    ssh_host = <gridengine-login-node>
-    ssh_key_file = /home/<username>/.ssh/id_rsa
-    ssh_user = <username>
-
-    [adapter.example]
-    class = eva.adapter.example.ExampleAdapter
-    executor = executor.gridengine
-    input_data_format = netcdf
-    input_product = ecmwf-atmospheric-model-bc-surface
-    input_service_backend = lustre-b
-    output_filename_pattern = {{reference_time|timedelta(hours=6)|iso8601_compact}}
-
-Then, run EVA:
-
-    python -m eva --process_data_instance <data-instance-uuid>
-
-"""
-
-# Import required Python modules
 import eva
 import eva.job
 import eva.base.adapter
 
 
 class ExampleAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    An adapter that is good for demonstration purposes.
+    """
+    Example adapter, good for starting out writing EVA jobs.
+
+    This adapter serves as a reusable example of how to write your own EVA jobs.
+
+    To run this adapter on GridEngine, you might want to configure these environment variables:
+
+    .. code-block:: ini
+
+       [executor.gridengine]
+       class = eva.executor.GridEngineExecutor
+       ssh_host = <gridengine-login-node>
+       ssh_key_file = /home/<username>/.ssh/id_rsa
+       ssh_user = <username>
+
+       [adapter.example]
+       class = eva.adapter.example.ExampleAdapter
+       executor = executor.gridengine
+       input_data_format = netcdf
+       input_product = ecmwf-atmospheric-model-bc-surface
+       input_service_backend = lustre-b
+       output_filename_pattern = {{reference_time|timedelta(hours=6)|iso8601_compact}}
+
+    Then, run EVA:
+
+    .. code-block:: bash
+
+       python -m eva --process_data_instance <data-instance-uuid>
+
     """
 
     # This list defines which input parameter your adapter requires to run.

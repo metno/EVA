@@ -8,15 +8,27 @@ import productstatus.api
 
 
 class GridPPAdapter(eva.base.adapter.BaseAdapter):
-    """!
+    """
     Generic GridPP adapter that will accept any parameter known to GridPP.
 
     The GridPP software is written by Thomas Nipen and is available at:
     https://github.com/metno/gridpp
 
-    After generating the file, the adapter will post the information to
-    Productstatus if the output_* and productstatus_* environments are
-    specified.
+    .. table::
+
+       ===========================  ==============  ==============  ==========  ===========
+       Variable                     Type            Default         Inclusion   Description
+       ===========================  ==============  ==============  ==========  ===========
+       gridpp_input_options         |string|        (empty)         optional    GridPP command-line options for the input file.
+       gridpp_output_options        |string|        (empty)         optional    GridPP command-line options for the output file.
+       gridpp_generic_options       |string|        (empty)         optional    GridPP command-line options.
+       gridpp_modules               |list_string|   (empty)         optional    Comma-separated list of GridEngine modules to load before running.
+       gridpp_threads               |int|           1               optional    How many threads to use during calculations.
+       input_data_format                                            required    See |input_data_format|.
+       input_product                                                required    See |input_product|.
+       input_service_backend                                        required    See |input_service_backend|.
+       output_filename_pattern                                      required    See |output_filename_pattern|.
+       ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {

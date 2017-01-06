@@ -3,8 +3,9 @@ import eva.base.adapter
 
 
 class NullAdapter(eva.base.adapter.BaseAdapter):
-    """!
-    An adapter that matches nothing and does nothing.
+    """
+    This adapter will generate jobs that runs ``/bin/true``. Only use this
+    adapter for test purposes.
     """
 
     def create_job(self, job):
