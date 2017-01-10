@@ -44,11 +44,53 @@ class Job(eva.globe.GlobalMixin):
         self.stderr = []  # multi-line standard error
         self.set_status(INITIALIZED)  # what state the job is in
         self.next_poll_time = eva.now_with_timezone()
+        self.next_retry_time = eva.now_with_timezone()
+        self.set_retry_parameters(-1, 1, 1)
         self._status_changed = False
         self._failures = 0
 
     def __repr__(self):
         return '<Job: %s>' % self.id
+
+    def set_retry_parameters(self, retries, interval, backoff_factor):
+        """
+        Set the max retries, retry interval, and retry backoff factor variables.
+
+        :param int retries: how many times to retry this job before satisfying :meth:`max_retries_reached`.
+        :param int interval: how many seconds to wait between each retry of the job, as reported by :meth:`retry_time_reached`.
+        :param int backoff_factor: each time a job fails, the retry interval is increased by this factor.
+        """
+        self.retry_max = retries
+        self.retry_interval = interval
+        self.retry_backoff_factor = backoff_factor
+
+    def incr_retry_interval(self):
+        """
+        Increase the retry interval by the pre-configured backoff factor.
+        """
+        self.retry_interval *= self.retry_backoff_factor
+        self.logger.info('Increasing retry interval with factor %.2f to %d seconds', self.retry_backoff_factor, self.retry_interval)
+
+    def set_next_retry_time(self, secs):
+        """
+        Set the next time the job will be attempted.
+
+        :param int secs: difference, in seconds, from the current timestamp.
+        """
+        self.next_retry_time = eva.now_with_timezone() + datetime.timedelta(seconds=secs)
+        self.logger.info('Next retry for this job: %s', eva.strftime_iso8601(self.next_retry_time))
+
+    def retry_time_reached(self):
+        """
+        Returns True if the job can be run, according to the retry time.
+        """
+        return eva.now_with_timezone() >= self.next_retry_time
+
+    def max_retries_reached(self):
+        """
+        Returns True if this job has been run the maximum allowed number of times.
+        """
+        return self.retry_max >= 0 and self.failures() > self.retry_max
 
     def set_status(self, status):
         """!
@@ -59,6 +101,8 @@ class Job(eva.globe.GlobalMixin):
         self.logger.info('Setting job status to %s', self.status)
         if status == FAILED:
             self.incr_failures()
+            self.set_next_retry_time(self.retry_interval)
+            self.incr_retry_interval()
         if self.adapter:
             self.statsd.incr('eva_job_status_change', tags={
                 'status': self.status,

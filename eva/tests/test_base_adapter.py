@@ -36,6 +36,9 @@ class TestBaseAdapter(eva.tests.BaseTestAdapter):
             'output_product',
             'output_service_backend',
             'reference_time_threshold',
+            'retry_backoff_factor',
+            'retry_interval_secs',
+            'retry_limit',
         ])
 
     def test_additional_configuration_keys(self):

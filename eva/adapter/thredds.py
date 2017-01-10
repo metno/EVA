@@ -30,6 +30,7 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
        thredds_base_url             |string|        (empty)         required    Base THREDDS URL to prepend to the input resource base filename.
        thredds_poll_interval        |int|           20              optional    How often the THREDDS server should be checked.
        thredds_poll_retries         |int|           6               optional    How many times to retry locating the file at the THREDDS server.
+       ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {

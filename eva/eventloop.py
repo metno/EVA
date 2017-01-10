@@ -133,6 +133,9 @@ class Eventloop(eva.globe.GlobalMixin):
                     # Restore process ID
                     job.pid = job_data['pid']
 
+                    # Failure count
+                    job._failures = job_data['failures']
+
                     item.add_job(job)
                     self.statsd.incr('eva_restored_jobs')
 
@@ -255,14 +258,21 @@ class Eventloop(eva.globe.GlobalMixin):
         # Try initializing this event queue item with data and jobs
         if item.empty():
             self.initialize_event_queue_item(item)
-            if item.empty():
-                self.event_queue.remove_item(item)
-                return
             self.event_queue.store_item(item)
 
         # Check if any jobs for this event has failed, and recreate them if necessary
         failed_jobs = item.failed_jobs()
         if len(failed_jobs) > 0:
+
+            # Are any of the jobs due for re-scheduling?
+            ready = False
+            for job in failed_jobs:
+                if job.retry_time_reached():
+                    ready = True
+                    break
+            if not ready:
+                return
+
             self.logger.warning("%s: %d failed jobs; reloading Productstatus metadata and reinitializing jobs.", item, len(failed_jobs))
             try:
                 self.instantiate_productstatus_data(item.event)
@@ -270,12 +280,24 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.event_queue.remove_item(item)
                 return
 
-        # Reinitialize failed jobs
+        # Reinitialize or delete failed jobs
         for job in failed_jobs:
-            self.reinitialize_job(item, job)
+            if job.max_retries_reached():
+                job.logger.error("Maximum retries reached. This job has had %d failures and is now being deleted from the event queue.", job.failures())
+                job.set_status(eva.job.DELETED)
+                self.notify_job_max_retry(job)
+                item.remove_job(job.id)
+            elif job.retry_time_reached():
+                self.reinitialize_job(item, job)
+        self.event_queue.store_item(item)
+
+        # Don't process empty items
+        if item.empty():
+            self.event_queue.remove_item(item)
+            return
 
         # Process all jobs generated from this event
-        changed = []
+        changed = False
         for job in item:
 
             try:
@@ -288,17 +310,17 @@ class Eventloop(eva.globe.GlobalMixin):
             except self.RECOVERABLE_EXCEPTIONS as e:
                 job.logger.error('Setting failed due to a recoverable error: %s', e)
                 job.set_status(eva.job.FAILED)
-                changed += [item]
+                changed = True
 
             if job.status_changed():
-                changed += [item]
+                changed = True
                 if job.failed() and job.failures() == 1:
                     self.notify_job_failure(job)
                 elif job.finished() and job.failures() > 0:
-                    self.notify_job_success(job)
+                    self.notify_job_recover(job)
 
         # Store renewed statuses of changed jobs
-        for item in set(changed):
+        if changed:
             self.event_queue.store_item(item)
 
         # Remove event if finished
@@ -475,6 +497,11 @@ class Eventloop(eva.globe.GlobalMixin):
         job.resource = item.event.resource
         job.adapter = adapter
         job.timer = self.statsd.timer('eva_execution_time', tags={'adapter': job.adapter.config_id})
+        job.set_retry_parameters(
+            adapter.env['retry_limit'],
+            adapter.env['retry_interval_secs'],
+            adapter.env['retry_backoff_factor'],
+        )
 
         try:
             adapter.create_job(job)
@@ -650,30 +677,43 @@ class Eventloop(eva.globe.GlobalMixin):
         """!
         @brief Send an email notifying about a failed job.
         """
-        template_params = {
-            'job_id': job.id,
-            'adapter': job.adapter.config_id,
-            'failures': job.failures(),
-            'status': job.status,
-        }
-        subject = eva.mail.text.JOB_FAIL_SUBJECT % template_params
-        text = eva.mail.text.JOB_FAIL_TEXT % template_params
-        self.mailer.send_email(subject, text)
+        return self.notify_job_email(
+            job,
+            eva.mail.text.JOB_FAIL_SUBJECT,
+            eva.mail.text.JOB_FAIL_TEXT,
+        )
 
-    def notify_job_success(self, job):
-        """!
-        @brief Set the number of failures for a specific event to zero, and
-        send out an e-mail in case it recovered from a non-zero error count.
+    def notify_job_recover(self, job):
         """
+        Send an e-mail notifying about a recovering job.
+        """
+        return self.notify_job_email(
+            job,
+            eva.mail.text.JOB_RECOVER_SUBJECT,
+            eva.mail.text.JOB_RECOVER_TEXT,
+        )
+
+    def notify_job_max_retry(self, job):
+        """
+        Send an e-mail notifying about a failing job that has been deleted due
+        to reaching its maximum retry count.
+        """
+        return self.notify_job_email(
+            job,
+            eva.mail.text.JOB_MAX_RETRY_SUBJECT,
+            eva.mail.text.JOB_MAX_RETRY_TEXT,
+        )
+
+    def notify_job_email(self, job, subject, text):
         template_params = {
             'job_id': job.id,
             'adapter': job.adapter.config_id,
             'failures': job.failures(),
             'status': job.status,
         }
-        subject = eva.mail.text.JOB_RECOVER_SUBJECT % template_params
-        text = eva.mail.text.JOB_RECOVER_TEXT % template_params
-        self.mailer.send_email(subject, text)
+        mail_subject = subject % template_params
+        mail_text = text % template_params
+        return self.mailer.send_email(mail_subject, mail_text)
 
     def assert_event_matches_object_version(self, event):
         """

@@ -115,6 +115,7 @@ class ConfigurableObject(object):
         * :meth:`normalize_config_string`
         * :meth:`normalize_config_int`
         * :meth:`normalize_config_positive_int`
+        * :meth:`normalize_config_float`
         * :meth:`normalize_config_null_bool`
         * :meth:`normalize_config_bool`
         * :meth:`normalize_config_list`
@@ -253,6 +254,17 @@ class ConfigurableObject(object):
         if value <= 0:
             raise eva.exceptions.InvalidConfigurationException('Invalid non-positive integer: %d' % value)
         return value
+
+    @staticmethod
+    def normalize_config_float(value):
+        """
+        Convert a value of any type into a float.
+
+        :rtype: float|None
+        """
+        if len(value) == 0:
+            return None
+        return float(value)
 
     @staticmethod
     def normalize_config_null_bool(value):

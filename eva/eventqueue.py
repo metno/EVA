@@ -118,6 +118,7 @@ class EventQueueItem(object):
                 'adapter': job.adapter.config_id,
                 'pid': job.pid,
                 'status': job.status,
+                'failures': job.failures(),
             }
         return serialized
 

@@ -35,6 +35,17 @@ Failure count: %(failures)d
 Job status:    %(status)s
 """
 
+# Message sent when a job is deleted due to reaching max retries
+JOB_MAX_RETRY_SUBJECT = 'Job deleted'
+JOB_MAX_RETRY_TEXT = """Your job has been deleted from the queue because it reached its maximum retry
+count. Planet Earth is blue, and there's nothing I can do.
+
+Job ID:        %(job_id)s
+Adapter:       %(adapter)s
+Failure count: %(failures)d
+Job status:    %(status)s
+"""
+
 # Message sent upon a critical error
 CRITICAL_ERROR_SUBJECT = "%(error_message)s"
 CRITICAL_ERROR_TEXT = """I'm terribly sorry, but EVA has encountered a critical error which caused the program to crash.

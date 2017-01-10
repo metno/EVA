@@ -124,6 +124,7 @@ rst_epilog = """
 .. |string| replace:: :meth:`string <eva.config.ConfigurableObject.normalize_config_string>`
 .. |int| replace:: :meth:`int <eva.config.ConfigurableObject.normalize_config_int>`
 .. |positive_int| replace:: :meth:`positive_int <eva.config.ConfigurableObject.normalize_config_positive_int>`
+.. |float| replace:: :meth:`float <eva.config.ConfigurableObject.normalize_config_float>`
 .. |null_bool| replace:: :meth:`null_bool <eva.config.ConfigurableObject.normalize_config_null_bool>`
 .. |bool| replace:: :meth:`bool <eva.config.ConfigurableObject.normalize_config_bool>`
 .. |list| replace:: :meth:`list <eva.config.ConfigurableObject.normalize_config_list>`
