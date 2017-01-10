@@ -84,101 +84,62 @@
 
 <span class="sd">    .. table:: Base configuration for all adapters</span>
 
-<span class="sd">       ==========================  ==============  ==============  ==========  ===========</span>
-<span class="sd">       Variable                    Type            Default         Inclusion   Description</span>
-<span class="sd">       ==========================  ==============  ==============  ==========  ===========</span>
-<span class="sd">       concurrency                 |int|           1               optional    How many tasks that may run concurrently.</span>
-<span class="sd">       executor                    |config_class|  (empty)         required    Which :class:`Executor &lt;eva.base.executor.BaseExecutor&gt;` to use.</span>
-<span class="sd">       input_data_format           |list_string|   (empty)         optional    Only process resources with the specified data format(s).</span>
-<span class="sd">       input_partial               |null_bool|     NO              optional    Only process resources that are either</span>
-<span class="sd">                                                                               marked as partial (`YES`) or</span>
-<span class="sd">                                                                               *not* marked as partial (`NO`).</span>
-<span class="sd">                                                                               A null value means that the partial flag is ignored.</span>
-<span class="sd">       input_product               |list_string|   (empty)         optional    Only process resources derived from the specified product(s).</span>
-<span class="sd">       input_reference_hours       |list_int|      (empty)         optional    Only process resources where the ProductInstance reference hour</span>
-<span class="sd">                                                                               matches any of the input values. An empty value will ignore</span>
-<span class="sd">                                                                               the reference hour.</span>
-<span class="sd">       input_service_backend       |list_string|   (empty)         optional    Only process resources with th e specified service backend(s).</span>
-<span class="sd">       input_with_hash             |null_bool|     NULL            optional    Only process resources that either</span>
-<span class="sd">                                                                               have a checksum hash stored (`YES`) or</span>
-<span class="sd">                                                                               does *not* have a checksum hash stored (`NO`).</span>
-<span class="sd">                                                                               A null value means that the hash is ignored.</span>
-<span class="sd">       output_base_url             |string|        (empty)         explicit    The base URL for any output files generated.</span>
-<span class="sd">                                                                               **THIS VARIABLE IS DEPRECATED.**</span>
-<span class="sd">       output_data_format          |string|        (empty)         explicit    The data format for any output files generated.</span>
-<span class="sd">       output_filename_pattern     |string|        (empty)         explicit    The filename pattern for any output files generated.</span>
-<span class="sd">       output_lifetime             |int|           (empty)         explicit    Lifetime, in hours, for any output files generated.</span>
-<span class="sd">                                                                               Defines how long the output files *must* live.</span>
-<span class="sd">                                                                               A null value specifies that the output files must live forever.</span>
-<span class="sd">       output_product              |string|        (empty)         explicit    The product name for any output files generated.</span>
-<span class="sd">       output_service_backend      |string|        (empty)         explicit    The service backend for any output files generated.</span>
-<span class="sd">       reference_time_threshold    |int|           0               optional    Never process resources whose reference time is older than N seconds.</span>
-<span class="sd">                                                                               A value of zero specifies that the reference time is ignored.</span>
-<span class="sd">       ==========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       Variable                     Type            Default         Inclusion   Description</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       concurrency                  |int|           1               optional    How many tasks that may run concurrently.</span>
+<span class="sd">       executor                     |config_class|  (empty)         required    Which :class:`Executor &lt;eva.base.executor.BaseExecutor&gt;` to use.</span>
+<span class="sd">       input_data_format            |list_string|   (empty)         optional    Only process resources with the specified data format(s).</span>
+<span class="sd">       input_partial                |null_bool|     NO              optional    Only process resources that are either</span>
+<span class="sd">                                                                                marked as partial (`YES`) or</span>
+<span class="sd">                                                                                *not* marked as partial (`NO`).</span>
+<span class="sd">                                                                                A null value means that the partial flag is ignored.</span>
+<span class="sd">       input_product                |list_string|   (empty)         optional    Only process resources derived from the specified product(s).</span>
+<span class="sd">       input_reference_hours        |list_int|      (empty)         optional    Only process resources where the ProductInstance reference hour</span>
+<span class="sd">                                                                                matches any of the input values. An empty value will ignore</span>
+<span class="sd">                                                                                the reference hour.</span>
+<span class="sd">       input_service_backend        |list_string|   (empty)         optional    Only process resources with th e specified service backend(s).</span>
+<span class="sd">       input_with_hash              |null_bool|     NULL            optional    Only process resources that either</span>
+<span class="sd">                                                                                have a checksum hash stored (`YES`) or</span>
+<span class="sd">                                                                                does *not* have a checksum hash stored (`NO`).</span>
+<span class="sd">                                                                                A null value means that the hash is ignored.</span>
+<span class="sd">       output_base_url              |string|        (empty)         explicit    The base URL for any output files generated.</span>
+<span class="sd">                                                                                **THIS VARIABLE IS DEPRECATED.**</span>
+<span class="sd">       output_data_format           |string|        (empty)         explicit    The data format for any output files generated.</span>
+<span class="sd">       output_filename_pattern      |string|        (empty)         explicit    The filename pattern for any output files generated.</span>
+<span class="sd">       output_lifetime              |int|           (empty)         explicit    Lifetime, in hours, for any output files generated.</span>
+<span class="sd">                                                                                Defines how long the output files *must* live.</span>
+<span class="sd">                                                                                A null value specifies that the output files must live forever.</span>
+<span class="sd">       output_product               |string|        (empty)         explicit    The product name for any output files generated.</span>
+<span class="sd">       output_service_backend       |string|        (empty)         explicit    The service backend for any output files generated.</span>
+<span class="sd">       reference_time_threshold     |int|           0               optional    Never process resources whose reference time is older than N seconds.</span>
+<span class="sd">                                                                                A value of zero specifies that the reference time is ignored.</span>
+<span class="sd">       retry_backoff_factor         |float|         1.1             optional    Every time a job fails, its retry interval is multiplied by this number.</span>
+<span class="sd">       retry_interval_secs          |int|           5               optional    How long to wait between re-scheduling failed jobs.</span>
+<span class="sd">       retry_limit                  |int|           -1              optional    How many times to try re-scheduling a job if it fails. A negative number means to retry forever.</span>
+<span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1">#! Common configuration variables all subclasses may use.</span>
     <span class="n">_COMMON_ADAPTER_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;concurrency&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;executor&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;config_class&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;input_data_format&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;input_partial&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;null_bool&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;NO&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;input_product&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;input_reference_hours&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_int&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;input_with_hash&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;null_bool&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;output_base_url&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;output_data_format&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;output_lifetime&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;output_product&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;reference_time_threshold&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
+        <span class="s1">&#39;concurrency&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;executor&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;config_class&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;input_data_format&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;input_partial&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;null_bool&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;NO&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;input_product&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;input_reference_hours&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_int&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;input_service_backend&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;input_with_hash&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;null_bool&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;output_base_url&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;output_data_format&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;output_filename_pattern&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;output_lifetime&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;output_product&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;output_service_backend&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;reference_time_threshold&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;retry_backoff_factor&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;1.1&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;retry_interval_secs&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="p">},</span>
+        <span class="s1">&#39;retry_limit&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;-1&#39;</span><span class="p">,</span> <span class="p">},</span>
     <span class="p">}</span>
 
     <span class="n">_OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
@@ -190,6 +151,9 @@
         <span class="s1">&#39;input_service_backend&#39;</span><span class="p">,</span>
         <span class="s1">&#39;input_with_hash&#39;</span><span class="p">,</span>
         <span class="s1">&#39;reference_time_threshold&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;retry_backoff_factor&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;retry_interval_secs&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;retry_limit&#39;</span><span class="p">,</span>
     <span class="p">]</span>
 
     <span class="n">_REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">[</span>

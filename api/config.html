@@ -100,6 +100,7 @@ needed. A list of provided configuration normalizers are provided below:</p>
 <li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_string()</span></code></a></li>
 <li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_int()</span></code></a></li>
 <li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_positive_int" title="eva.config.ConfigurableObject.normalize_config_positive_int"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_positive_int()</span></code></a></li>
+<li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_float" title="eva.config.ConfigurableObject.normalize_config_float"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_float()</span></code></a></li>
 <li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_null_bool" title="eva.config.ConfigurableObject.normalize_config_null_bool"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_null_bool()</span></code></a></li>
 <li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_bool" title="eva.config.ConfigurableObject.normalize_config_bool"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_bool()</span></code></a></li>
 <li><a class="reference internal" href="#eva.config.ConfigurableObject.normalize_config_list" title="eva.config.ConfigurableObject.normalize_config_list"><code class="xref py py-meth docutils literal"><span class="pre">normalize_config_list()</span></code></a></li>
@@ -272,6 +273,20 @@ split strings into lists, convert to types.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#eva.config.ResolvableDependency" title="eva.config.ResolvableDependency">ResolvableDependency</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="eva.config.ConfigurableObject.normalize_config_float">
+<em class="property">static </em><code class="descname">normalize_config_float</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/config.html#ConfigurableObject.normalize_config_float"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.config.ConfigurableObject.normalize_config_float" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of any type into a float.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float|None</td>
 </tr>
 </tbody>
 </table>

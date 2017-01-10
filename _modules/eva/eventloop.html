@@ -179,6 +179,9 @@
                     <span class="c1"># Restore process ID</span>
                     <span class="n">job</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">]</span>
 
+                    <span class="c1"># Failure count</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">_failures</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;failures&#39;</span><span class="p">]</span>
+
                     <span class="n">item</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_restored_jobs&#39;</span><span class="p">)</span>
 
@@ -301,14 +304,21 @@
         <span class="c1"># Try initializing this event queue item with data and jobs</span>
         <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">initialize_event_queue_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">remove_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-                <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">store_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
 
         <span class="c1"># Check if any jobs for this event has failed, and recreate them if necessary</span>
         <span class="n">failed_jobs</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">failed_jobs</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_jobs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="c1"># Are any of the jobs due for re-scheduling?</span>
+            <span class="n">ready</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">failed_jobs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">retry_time_reached</span><span class="p">():</span>
+                    <span class="n">ready</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ready</span><span class="p">:</span>
+                <span class="k">return</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> failed jobs; reloading Productstatus metadata and reinitializing jobs.&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_jobs</span><span class="p">))</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">instantiate_productstatus_data</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">)</span>
@@ -316,12 +326,24 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">remove_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
                 <span class="k">return</span>
 
-        <span class="c1"># Reinitialize failed jobs</span>
+        <span class="c1"># Reinitialize or delete failed jobs</span>
         <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">failed_jobs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">reinitialize_job</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">max_retries_reached</span><span class="p">():</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Maximum retries reached. This job has had </span><span class="si">%d</span><span class="s2"> failures and is now being deleted from the event queue.&quot;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">())</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">DELETED</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_max_retry</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">remove_job</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">job</span><span class="o">.</span><span class="n">retry_time_reached</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reinitialize_job</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">store_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+        <span class="c1"># Don&#39;t process empty items</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">remove_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">return</span>
 
         <span class="c1"># Process all jobs generated from this event</span>
-        <span class="n">changed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
 
             <span class="k">try</span><span class="p">:</span>
@@ -334,17 +356,17 @@
             <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">RECOVERABLE_EXCEPTIONS</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Setting failed due to a recoverable error: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
                 <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">FAILED</span><span class="p">)</span>
-                <span class="n">changed</span> <span class="o">+=</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
 
             <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status_changed</span><span class="p">():</span>
-                <span class="n">changed</span> <span class="o">+=</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">failed</span><span class="p">()</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_failure</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="n">job</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_success</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_recover</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
 
         <span class="c1"># Store renewed statuses of changed jobs</span>
-        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">changed</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">changed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">event_queue</span><span class="o">.</span><span class="n">store_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
 
         <span class="c1"># Remove event if finished</span>
@@ -521,6 +543,11 @@
         <span class="n">job</span><span class="o">.</span><span class="n">resource</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span>
         <span class="n">job</span><span class="o">.</span><span class="n">adapter</span> <span class="o">=</span> <span class="n">adapter</span>
         <span class="n">job</span><span class="o">.</span><span class="n">timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="s1">&#39;eva_execution_time&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">})</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">set_retry_parameters</span><span class="p">(</span>
+            <span class="n">adapter</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;retry_limit&#39;</span><span class="p">],</span>
+            <span class="n">adapter</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;retry_interval_secs&#39;</span><span class="p">],</span>
+            <span class="n">adapter</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;retry_backoff_factor&#39;</span><span class="p">],</span>
+        <span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">adapter</span><span class="o">.</span><span class="n">create_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
@@ -696,30 +723,43 @@
         <span class="sd">&quot;&quot;&quot;!</span>
 <span class="sd">        @brief Send an email notifying about a failed job.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">template_params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-            <span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">,</span>
-            <span class="s1">&#39;failures&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">(),</span>
-            <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="n">subject</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_FAIL_SUBJECT</span> <span class="o">%</span> <span class="n">template_params</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_FAIL_TEXT</span> <span class="o">%</span> <span class="n">template_params</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mailer</span><span class="o">.</span><span class="n">send_email</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_email</span><span class="p">(</span>
+            <span class="n">job</span><span class="p">,</span>
+            <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_FAIL_SUBJECT</span><span class="p">,</span>
+            <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_FAIL_TEXT</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
-<div class="viewcode-block" id="Eventloop.notify_job_success"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.notify_job_success">[docs]</a>    <span class="k">def</span> <span class="nf">notify_job_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;!</span>
-<span class="sd">        @brief Set the number of failures for a specific event to zero, and</span>
-<span class="sd">        send out an e-mail in case it recovered from a non-zero error count.</span>
+<div class="viewcode-block" id="Eventloop.notify_job_recover"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.notify_job_recover">[docs]</a>    <span class="k">def</span> <span class="nf">notify_job_recover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send an e-mail notifying about a recovering job.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_email</span><span class="p">(</span>
+            <span class="n">job</span><span class="p">,</span>
+            <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_RECOVER_SUBJECT</span><span class="p">,</span>
+            <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_RECOVER_TEXT</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eventloop.notify_job_max_retry"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.notify_job_max_retry">[docs]</a>    <span class="k">def</span> <span class="nf">notify_job_max_retry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send an e-mail notifying about a failing job that has been deleted due</span>
+<span class="sd">        to reaching its maximum retry count.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">notify_job_email</span><span class="p">(</span>
+            <span class="n">job</span><span class="p">,</span>
+            <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_MAX_RETRY_SUBJECT</span><span class="p">,</span>
+            <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_MAX_RETRY_TEXT</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">notify_job_email</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
         <span class="n">template_params</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
             <span class="s1">&#39;adapter&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">config_id</span><span class="p">,</span>
             <span class="s1">&#39;failures&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">failures</span><span class="p">(),</span>
             <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="n">subject</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_RECOVER_SUBJECT</span> <span class="o">%</span> <span class="n">template_params</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">eva</span><span class="o">.</span><span class="n">mail</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">JOB_RECOVER_TEXT</span> <span class="o">%</span> <span class="n">template_params</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mailer</span><span class="o">.</span><span class="n">send_email</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+        <span class="n">mail_subject</span> <span class="o">=</span> <span class="n">subject</span> <span class="o">%</span> <span class="n">template_params</span>
+        <span class="n">mail_text</span> <span class="o">=</span> <span class="n">text</span> <span class="o">%</span> <span class="n">template_params</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mailer</span><span class="o">.</span><span class="n">send_email</span><span class="p">(</span><span class="n">mail_subject</span><span class="p">,</span> <span class="n">mail_text</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Eventloop.assert_event_matches_object_version"><a class="viewcode-back" href="../../api/eventloop.html#eva.eventloop.Eventloop.assert_event_matches_object_version">[docs]</a>    <span class="k">def</span> <span class="nf">assert_event_matches_object_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

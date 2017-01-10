@@ -657,6 +657,61 @@ a THREDDS Data Server service, and post its metadata to Productstatus.</p>
 the file via its THREDDS url, and sleep <code class="docutils literal"><span class="pre">thredds_poll_interval</span></code> seconds
 between retries. If the file is not available after the last try, the
 adapter gives up and the job is NOT rescheduled.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Inclusion</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>input_product</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_product</span></code></a>.</td>
+</tr>
+<tr class="row-odd"><td>input_service_backend</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_service_backend</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td>output_service_backend</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>required</td>
+<td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">output_service_backend</span></code></a>.</td>
+</tr>
+<tr class="row-odd"><td>thredds_base_url</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>required</td>
+<td>Base THREDDS URL to prepend to the input resource base filename.</td>
+</tr>
+<tr class="row-even"><td>thredds_poll_interval</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>20</td>
+<td>optional</td>
+<td>How often the THREDDS server should be checked.</td>
+</tr>
+<tr class="row-odd"><td>thredds_poll_retries</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>6</td>
+<td>optional</td>
+<td>How many times to retry locating the file at the THREDDS server.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>

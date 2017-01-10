@@ -254,11 +254,16 @@ run through them all, resulting in a timeout at the Kafka queue.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="eva.eventloop.Eventloop.notify_job_success">
-<code class="descname">notify_job_success</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.notify_job_success"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.notify_job_success" title="Permalink to this definition">¶</a></dt>
-<dd><p>!
-&#64;brief Set the number of failures for a specific event to zero, and
-send out an e-mail in case it recovered from a non-zero error count.</p>
+<dt id="eva.eventloop.Eventloop.notify_job_max_retry">
+<code class="descname">notify_job_max_retry</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.notify_job_max_retry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.notify_job_max_retry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send an e-mail notifying about a failing job that has been deleted due
+to reaching its maximum retry count.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eva.eventloop.Eventloop.notify_job_recover">
+<code class="descname">notify_job_recover</code><span class="sig-paren">(</span><em>job</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/eva/eventloop.html#Eventloop.notify_job_recover"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.eventloop.Eventloop.notify_job_recover" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send an e-mail notifying about a recovering job.</p>
 </dd></dl>
 
 <dl class="method">

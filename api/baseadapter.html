@@ -72,11 +72,11 @@ determine whether or not the adapter should process the incoming resource.</p>
 <table border="1" class="docutils" id="id1">
 <caption><span class="caption-text">Base configuration for all adapters</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col width="20%" />
-<col width="11%" />
-<col width="11%" />
-<col width="8%" />
-<col width="52%" />
+<col width="17%" />
+<col width="9%" />
+<col width="9%" />
+<col width="6%" />
+<col width="60%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Variable</th>
@@ -188,6 +188,24 @@ A null value specifies that the output files must live forever.</td>
 <td>optional</td>
 <td>Never process resources whose reference time is older than N seconds.
 A value of zero specifies that the reference time is ignored.</td>
+</tr>
+<tr class="row-odd"><td>retry_backoff_factor</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_float" title="eva.config.ConfigurableObject.normalize_config_float"><code class="xref py py-meth docutils literal"><span class="pre">float</span></code></a></td>
+<td>1.1</td>
+<td>optional</td>
+<td>Every time a job fails, its retry interval is multiplied by this number.</td>
+</tr>
+<tr class="row-even"><td>retry_interval_secs</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>5</td>
+<td>optional</td>
+<td>How long to wait between re-scheduling failed jobs.</td>
+</tr>
+<tr class="row-odd"><td>retry_limit</td>
+<td><a class="reference internal" href="config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
+<td>-1</td>
+<td>optional</td>
+<td>How many times to try re-scheduling a job if it fails. A negative number means to retry forever.</td>
 </tr>
 </tbody>
 </table>
