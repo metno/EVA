@@ -39,7 +39,8 @@ input_with_hash = NO
         resource = mock.MagicMock()
         job = self.create_job(resource)
         job.set_status(eva.job.FAILED)
-        self.adapter.finish_job(job)
+        with self.assertRaises(eva.exceptions.RetryException):
+            self.adapter.finish_job(job)
 
     def test_generate_resources(self):
         """!

@@ -30,16 +30,17 @@ thredds_base_url = http://bar/baz
         self.assertEqual(job.thredds_url, 'http://bar/baz/foo.bar')
         self.assertEqual(job.thredds_html_url, 'http://bar/baz/foo.bar.html')
 
-    def test_finish_job_ignore(self):
-        """!
-        @brief Test that the job is created correctly.
+    def test_finish_job_exception(self):
+        """
+        Test that finishing the job raises an exception if it fails.
         """
         self.create_adapter()
         resource = mock.MagicMock()
         resource.url = 'file:///path/to/foo.bar'
         job = self.create_job(resource)
         job.set_status(eva.job.FAILED)
-        self.adapter.finish_job(job)
+        with self.assertRaises(eva.exceptions.RetryException):
+            self.adapter.finish_job(job)
 
     def test_generate_resources(self):
         """!
