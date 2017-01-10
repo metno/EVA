@@ -63,9 +63,8 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
 
     def finish_job(self, job):
         if not job.complete():
-            job.logger.error("md5sum checking of '%s' failed, skipping further processing!", job.resource.url)
             self.statsd.incr('eva_md5sum_fail')
-            return
+            raise eva.exceptions.RetryException("md5sum checking of '%s' failed, skipping further processing!" % job.resource.url)
         job.resource_hash_type = str('md5')
         job.resource_hash = ''.join(job.stdout).strip()
         if len(job.resource_hash) != 32:
