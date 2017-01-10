@@ -28,27 +28,11 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
        input_service_backend                                        required    See |input_service_backend|.
        output_service_backend                                       required    See |output_service_backend|.
        thredds_base_url             |string|        (empty)         required    Base THREDDS URL to prepend to the input resource base filename.
-       thredds_poll_interval        |int|           20              optional    How often the THREDDS server should be checked.
-       thredds_poll_retries         |int|           6               optional    How many times to retry locating the file at the THREDDS server.
        ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {
-        'thredds_poll_interval': {
-            'type': 'int',
-            'help': '',
-            'default': '20',
-        },
-        'thredds_poll_retries': {
-            'type': 'int',
-            'help': 'Number of times to check for the data on Thredds server.',
-            'default': '6',
-        },
-        'thredds_base_url': {
-            'type': 'string',
-            'help': '',
-            'default': '',
-        },
+        'thredds_base_url': {'type': 'string', 'default': '', },
     }
 
     REQUIRED_CONFIG = [
@@ -60,57 +44,27 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
 
     OPTIONAL_CONFIG = [
         'input_data_format',
-        'thredds_poll_interval',
-        'thredds_poll_retries',
     ]
 
-    def adapter_init(self):
-        """!
-        @brief Populate internal variables.
-        """
-        self.thredds_poll_interval = self.env['thredds_poll_interval']
-        self.thredds_poll_retries = self.env['thredds_poll_retries']
-        self.thredds_base_url = self.env['thredds_base_url']
-
     def create_job(self, job):
-        """!
-        @brief Check if the resource is reachable via the provided URL if not, sleep and try again
-        """
         # Assuming that when the .html link is accessible so will be the dataset via OPeNDAP
         basename = os.path.basename(job.resource.url)
-        job.thredds_url = os.path.join(self.thredds_base_url, basename)
+        job.thredds_url = os.path.join(self.env['thredds_base_url'], basename)
         job.thredds_html_url = job.thredds_url + ".html"
 
         job.command = """
 #!/bin/bash
 #$ -S /bin/bash
-for try in `seq 1 %(num_tries)d`; do
-    echo "[${try}/%(num_tries)d] Try to fetch %(url)s..."
-    wget --quiet --output-document=/dev/null %(url)s
-    if [ $? -eq 0 ]; then
-        exit 0
-    fi
-    if [ "$try" == "%(num_tries)d" ]; then
-        echo "Document is not available; giving up."
-        exit 1
-    fi
-    echo "Document is not available; sleeping %(sleep)d seconds..."
-    sleep %(sleep)d
-done
-exit 1
+set -e
+wget --quiet --output-document=/dev/null %(url)s
 """
         job.command = job.command % {
-            'num_tries': self.thredds_poll_retries + 1,  # correct usage of the word 'retry'
             'url': job.thredds_html_url,
-            'sleep': self.thredds_poll_interval,
         }
 
     def finish_job(self, job):
-        """!
-        @brief Ignore errors but log them.
-        """
         if not job.complete():
-            self.logger.error('THREDDS document could not be found; ignoring error condition.')
+            raise eva.exceptions.RetryException('THREDDS document could not be found: %s' % job.thredds_html_url)
 
     def generate_resources(self, job, resources):
         """!
