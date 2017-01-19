@@ -134,7 +134,12 @@ class Eventloop(eva.globe.GlobalMixin):
                     job.pid = job_data['pid']
 
                     # Failure count
-                    job._failures = job_data['failures']
+                    # FIXME: filthy hack because the 'failures' key doesn't get saved
+                    # FIXME: fix the problem instead of addressing the symptom
+                    try:
+                        job._failures = job_data['failures']
+                    except KeyError:
+                        job._failures = 0
 
                     item.add_job(job)
                     self.statsd.incr('eva_restored_jobs')
