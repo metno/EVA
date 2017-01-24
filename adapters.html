@@ -187,11 +187,11 @@ additionally trigger the creation of a deletion job. This job will
 <code class="docutils literal"><span class="pre">product</span></code>, <code class="docutils literal"><span class="pre">dataformat</span></code> and <code class="docutils literal"><span class="pre">servicebackend</span></code> properties.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="24%" />
-<col width="12%" />
-<col width="12%" />
-<col width="9%" />
-<col width="42%" />
+<col width="22%" />
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="48%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Variable</th>
@@ -202,13 +202,19 @@ additionally trigger the creation of a deletion job. This job will
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>delete_interval_secs</td>
+<tr class="row-even"><td>delete_batch_limit</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_positive_int" title="eva.config.ConfigurableObject.normalize_config_positive_int"><code class="xref py py-meth docutils literal"><span class="pre">positive_int</span></code></a></td>
+<td>500</td>
+<td>optional</td>
+<td>How many DataInstance objects to delete in one single batch.</td>
+</tr>
+<tr class="row-odd"><td>delete_interval_secs</td>
 <td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
 <td>300</td>
 <td>optional</td>
 <td>How long to wait between generating delete jobs.</td>
 </tr>
-<tr class="row-odd"><td>input_service_backend</td>
+<tr class="row-even"><td>input_service_backend</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>required</td>
@@ -697,18 +703,6 @@ adapter gives up and the job is NOT rescheduled.</p>
 <td>(empty)</td>
 <td>required</td>
 <td>Base THREDDS URL to prepend to the input resource base filename.</td>
-</tr>
-<tr class="row-even"><td>thredds_poll_interval</td>
-<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
-<td>20</td>
-<td>optional</td>
-<td>How often the THREDDS server should be checked.</td>
-</tr>
-<tr class="row-odd"><td>thredds_poll_retries</td>
-<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_int" title="eva.config.ConfigurableObject.normalize_config_int"><code class="xref py py-meth docutils literal"><span class="pre">int</span></code></a></td>
-<td>6</td>
-<td>optional</td>
-<td>How many times to retry locating the file at the THREDDS server.</td>
 </tr>
 </tbody>
 </table>

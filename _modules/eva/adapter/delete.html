@@ -69,12 +69,17 @@
 <span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
 <span class="sd">       Variable                     Type            Default         Inclusion   Description</span>
 <span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
+<span class="sd">       delete_batch_limit           |positive_int|  500             optional    How many DataInstance objects to delete in one single batch.</span>
 <span class="sd">       delete_interval_secs         |int|           300             optional    How long to wait between generating delete jobs.</span>
 <span class="sd">       input_service_backend                                        required    See |input_service_backend|.</span>
 <span class="sd">       ===========================  ==============  ==============  ==========  ===========</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;delete_batch_limit&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;positive_int&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;500&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
         <span class="s1">&#39;delete_interval_secs&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
             <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;300&#39;</span><span class="p">,</span>
@@ -86,6 +91,7 @@
     <span class="p">]</span>
 
     <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;delete_batch_limit&#39;</span><span class="p">,</span>
         <span class="s1">&#39;delete_interval_secs&#39;</span><span class="p">,</span>
         <span class="s1">&#39;input_partial&#39;</span><span class="p">,</span>
         <span class="s1">&#39;input_product&#39;</span><span class="p">,</span>
@@ -178,7 +184,7 @@
 
         <span class="c1"># One line in delete script per data instance</span>
         <span class="n">job</span><span class="o">.</span><span class="n">instance_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">datainstance</span> <span class="ow">in</span> <span class="n">datainstances</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">datainstance</span> <span class="ow">in</span> <span class="n">datainstances</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;delete_batch_limit&#39;</span><span class="p">]]:</span>
             <span class="n">job</span><span class="o">.</span><span class="n">instance_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">datainstance</span><span class="p">)</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">datainstance</span><span class="o">.</span><span class="n">url</span>
             <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;file://&#39;</span><span class="p">):</span>

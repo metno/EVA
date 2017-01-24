@@ -180,7 +180,12 @@
                     <span class="n">job</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">]</span>
 
                     <span class="c1"># Failure count</span>
-                    <span class="n">job</span><span class="o">.</span><span class="n">_failures</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;failures&#39;</span><span class="p">]</span>
+                    <span class="c1"># FIXME: filthy hack because the &#39;failures&#39; key doesn&#39;t get saved</span>
+                    <span class="c1"># FIXME: fix the problem instead of addressing the symptom</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">job</span><span class="o">.</span><span class="n">_failures</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s1">&#39;failures&#39;</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">job</span><span class="o">.</span><span class="n">_failures</span> <span class="o">=</span> <span class="mi">0</span>
 
                     <span class="n">item</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_restored_jobs&#39;</span><span class="p">)</span>
