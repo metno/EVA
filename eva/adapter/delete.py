@@ -138,7 +138,8 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
 
         # One line in delete script per data instance
         job.instance_list = []
-        for datainstance in datainstances[:self.env['delete_batch_limit']]:
+        processed = 0
+        for datainstance in datainstances:
             job.instance_list.append(datainstance)
             path = datainstance.url
             if path.startswith('file://'):
@@ -148,9 +149,16 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
             if datainstance.hash is not None and datainstance.hash_type == 'md5':
                 # magical md5sum file deletion
                 job.command += ["rm -vf '%s.md5' && \\" % path]
+            processed += 1
+            if processed >= self.env['delete_batch_limit']:
+                job.logger.warning("Reached delete_batch_limit of %d, will not process any more instances in this job.", self.env['delete_batch_limit'])
+                break
         job.command += ["exit 0"]
 
         job.command = '\n'.join(job.command) + '\n'
+
+        if processed >= self.env['delete_batch_limit']:
+            return
 
         self.clear_params()
         self.set_next_run()
