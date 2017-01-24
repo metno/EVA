@@ -19,8 +19,8 @@ pull-eva-base:
 
 eva: test lint pull-eva-base
 	docker build --no-cache --tag metno/eva:$(shell python setup.py --version) docker/eva
-	docker tag metno/eva:$(shell python setup.py --version) metno/eva:$(shell python setup.py --version | cut -d. -f1-2)
-	docker tag metno/eva:$(shell python setup.py --version) metno/eva:$(shell python setup.py --version | cut -d. -f1)
+	docker tag -f metno/eva:$(shell python setup.py --version) metno/eva:$(shell python setup.py --version | cut -d. -f1-2)
+	docker tag -f metno/eva:$(shell python setup.py --version) metno/eva:$(shell python setup.py --version | cut -d. -f1)
 
 eva-base:
 	docker build --no-cache --tag metno/eva-base docker/eva-base
