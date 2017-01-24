@@ -23,12 +23,17 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
        ===========================  ==============  ==============  ==========  ===========
        Variable                     Type            Default         Inclusion   Description
        ===========================  ==============  ==============  ==========  ===========
+       delete_batch_limit           |positive_int|  500             optional    How many DataInstance objects to delete in one single batch.
        delete_interval_secs         |int|           300             optional    How long to wait between generating delete jobs.
        input_service_backend                                        required    See |input_service_backend|.
        ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {
+        'delete_batch_limit': {
+            'type': 'positive_int',
+            'default': '500',
+        },
         'delete_interval_secs': {
             'type': 'int',
             'default': '300',
@@ -40,6 +45,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
+        'delete_batch_limit',
         'delete_interval_secs',
         'input_partial',
         'input_product',
@@ -132,7 +138,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
 
         # One line in delete script per data instance
         job.instance_list = []
-        for datainstance in datainstances:
+        for datainstance in datainstances[:self.env['delete_batch_limit']]:
             job.instance_list.append(datainstance)
             path = datainstance.url
             if path.startswith('file://'):
