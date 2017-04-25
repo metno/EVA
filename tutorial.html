@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tutorial &#8212; EVA 2.0.0~git documentation</title>
+    <title>Tutorial &#8212; EVA 2.0.0 documentation</title>
     
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.0.0~git',
+        VERSION:     '2.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,13 +25,13 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="EVA 2.0.0~git documentation" href="index.html" />
+    <link rel="top" title="EVA 2.0.0 documentation" href="index.html" />
     <link rel="next" title="Adapter documentation" href="adapters.html" />
     <link rel="prev" title="Configuration directives" href="variables.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>EVA 2.0.0~git documentation</span></a></h1>
+          <span>EVA 2.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>Tutorial</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -70,7 +70,7 @@ processed files, and stores the result in Productstatus.  Your adapter can live
 either inside or outside of the main EVA repository. For simplicity&#8217;s sake, in
 this tutorial we create an adapter that lives inside the main repository.</p>
 <p>Create a skeleton file in the <code class="docutils literal"><span class="pre">eva/adapters/</span></code> directory:</p>
-<div class="literal-block-wrapper container" id="id1">
+<div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva/adapters/checksum.py</span></code></span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eva.base.adapter</span>
 
@@ -100,7 +100,7 @@ three functions you need to override are documented here:</p>
 <h2>Loading the adapter<a class="headerlink" href="#loading-the-adapter" title="Permalink to this headline">¶</a></h2>
 <p>In order to make your adapter run, you&#8217;ll need to create a configuration
 section for your adapter instance:</p>
-<div class="literal-block-wrapper container" id="id2">
+<div class="literal-block-wrapper docutils container" id="id2">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva-config/checksumadapter.ini</span></code></span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
 <div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[adapter.test.checksum]</span>
 <span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.checksum.ChecksumAdapter</span>
@@ -133,7 +133,7 @@ code each time we want to change the hashing algorithm. EVA supports custom
 configuration variables, which can be configured in the INI files. We define
 our configuration variables in the <a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.CONFIG" title="eva.config.ConfigurableObject.CONFIG"><code class="xref py py-attr docutils literal"><span class="pre">eva.config.ConfigurableObject.CONFIG</span></code></a>
 dictionary, and mark its inclusion in the INI file as optional:</p>
-<div class="literal-block-wrapper container" id="id3">
+<div class="literal-block-wrapper docutils container" id="id3">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva/adapters/checksum.py</span></code></span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ChecksumAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
     <span class="n">CONFIG</span> <span class="o">=</span> <span class="p">{</span>
@@ -152,7 +152,7 @@ dictionary, and mark its inclusion in the INI file as optional:</p>
 </div>
 <p>Now, the variable is loaded from the INI file. If omitted, it will fall back on
 the default value of <code class="docutils literal"><span class="pre">md5</span></code>.</p>
-<div class="literal-block-wrapper container" id="id4">
+<div class="literal-block-wrapper docutils container" id="id4">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva-config/checksumadapter.ini</span></code></span><a class="headerlink" href="#id4" title="Permalink to this code">¶</a></div>
 <div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[adapter.test.checksum]</span>
 <span class="na">class</span> <span class="o">=</span> <span class="s">eva.adapter.checksum.ChecksumAdapter</span>
@@ -161,7 +161,7 @@ the default value of <code class="docutils literal"><span class="pre">md5</span>
 </div>
 </div>
 <p>You can access the variable from within your code, like this:</p>
-<div class="literal-block-wrapper container" id="id5">
+<div class="literal-block-wrapper docutils container" id="id5">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva/adapters/checksum.py</span></code></span><a class="headerlink" href="#id5" title="Permalink to this code">¶</a></div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ChecksumAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
@@ -177,7 +177,7 @@ will be executed on the computing infrastructure. The
 <code class="xref py py-meth docutils literal"><span class="pre">eva.base.adapter.create_job()</span></code> method is expected to set the
 <code class="xref py py-attr docutils literal"><span class="pre">eva.job.Job.command</span></code> variable to a string that will be put into a shell
 script and executed.</p>
-<div class="literal-block-wrapper container" id="id6">
+<div class="literal-block-wrapper docutils container" id="id6">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva/adapters/checksum.py</span></code></span><a class="headerlink" href="#id6" title="Permalink to this code">¶</a></div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eva</span>
 <span class="kn">import</span> <span class="nn">eva.exceptions</span>
@@ -215,7 +215,7 @@ on the wire, a <code class="xref py py-class docutils literal"><span class="pre"
 <cite>Resource</cite> metadata in the <code class="xref py py-attr docutils literal"><span class="pre">job.resource</span></code> attribute. We use this
 information to retrieve the path of the file that was updated, and create a
 shell script that will be executed on a compute node.</p>
-<div class="literal-block-wrapper container" id="id7">
+<div class="literal-block-wrapper docutils container" id="id7">
 <div class="code-block-caption"><span class="caption-text">Generated shell script</span><a class="headerlink" href="#id7" title="Permalink to this code">¶</a></div>
 <div class="highlight-sh"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
 sha256sum /path/to/source/file.nc <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span>
@@ -236,7 +236,7 @@ whether it failed or not.)</p>
 excruciating number of reasons, so this is probably something you want. To
 enable this functionality, you must raise a
 <a class="reference internal" href="api/exceptions.html#eva.exceptions.RetryException" title="eva.exceptions.RetryException"><code class="xref py py-exc docutils literal"><span class="pre">eva.exceptions.RetryException</span></code></a> in the <code class="xref py py-func docutils literal"><span class="pre">finish_job()</span></code> function.</p>
-<div class="literal-block-wrapper container" id="id8">
+<div class="literal-block-wrapper docutils container" id="id8">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva/adapters/checksum.py</span></code></span><a class="headerlink" href="#id8" title="Permalink to this code">¶</a></div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eva.exceptions</span>
 
@@ -256,7 +256,7 @@ enable this functionality, you must raise a
 exceptions, EVA will call the <code class="xref py py-func docutils literal"><span class="pre">eva.base.adapter.generate_resources()</span></code>
 function. This function may populate the <code class="xref py py-attr docutils literal"><span class="pre">resources</span></code> parameter with
 Productstatus resources that should be permanently persisted in the database.</p>
-<div class="literal-block-wrapper container" id="id9">
+<div class="literal-block-wrapper docutils container" id="id9">
 <div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eva/adapters/checksum.py</span></code></span><a class="headerlink" href="#id9" title="Permalink to this code">¶</a></div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ChecksumAdapter</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">adapter</span><span class="o">.</span><span class="n">BaseAdapter</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">generate_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span>
@@ -288,7 +288,7 @@ parameter to specify that this resource should be saved back to Productstatus.</
       </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016, MET Norway.
+        &#169; Copyright 2017, MET Norway.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
     </div>
   </body>
