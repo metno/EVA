@@ -4,6 +4,7 @@ import time
 import dateutil.parser
 
 import paramiko
+import paramiko.agent
 import paramiko.ssh_exception
 
 import eva
@@ -212,6 +213,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
                                 username=self.env['ssh_user'],
                                 key_filename=self.env['ssh_key_file'],
                                 timeout=SSH_TIMEOUT)
+        session = self.ssh_client.get_transport().open_session()
+        paramiko.agent.AgentRequestHandler(session)
+
         self.sftp_client = self.ssh_client.open_sftp()
         self.sftp_client.get_channel().settimeout(SSH_TIMEOUT)
 
