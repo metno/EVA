@@ -10,9 +10,9 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     """
     The ``DistributionAdapter`` copies files to other locations.
 
-    This adapter supports copying files using the ``cp`` and ``bbcp`` commands.
-    If the ``cp`` command is used, DistributionAdapter will try to use the
-    ``lfs`` wrapper if it exists on the system.
+    This adapter supports copying files using the ``cp``, ``scp`` and ``bbcp``
+    commands.  If the ``cp`` command is used, DistributionAdapter will try to
+    use the ``lfs`` wrapper if it exists on the system.
 
     If the destination file already exists in the Productstatus database, and
     is not marked as deleted, the copy will NOT be performed.
@@ -22,9 +22,9 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
        ===========================  ==============  ==============  ==========  ===========
        Variable                     Type            Default         Inclusion   Description
        ===========================  ==============  ==============  ==========  ===========
-       distribution_method          |string|        cp              optional    Which method to use when distributing files. Currently supported are `cp` and `bbcp`.
+       distribution_method          |string|        cp              optional    Which method to use when distributing files. Currently supported are `cp`, `scp` and `bbcp`.
        distribution_parameters      |string|        (empty)         optional    Command-line parameters to pass to the distribution executable.
-       distribution_destination     |string|        (empty)         optional    Optional `user@host:file` specification for copying when using `bbcp`.
+       distribution_destination     |string|        (empty)         optional    Optional `user@host` specification for copying when using `scp` or `bbcp`.
        input_service_backend                                        required    See |input_service_backend|.
        output_base_url                                              required    See |output_base_url|.
        ===========================  ==============  ==============  ==========  ===========
@@ -80,6 +80,8 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     def distribution_func(self, method):
         if method == 'cp':
             return self.job_script_cp
+        elif method == 'scp':
+            return self.job_script_scp
         elif method == 'bbcp':
             return self.job_script_bbcp
         else:
@@ -128,6 +130,11 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     def job_script_bbcp(self):
         return [
             "bbcp -v %(params)s %(source)s %(hostspec)s%(destination)s",
+        ]
+
+    def job_script_scp(self):
+        return [
+            "scp %(params)s %(source)s %(hostspec)s%(destination)s",
         ]
 
     def finish_job(self, job):
