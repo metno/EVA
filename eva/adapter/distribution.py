@@ -24,12 +24,17 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
        ===========================  ==============  ==============  ==========  ===========
        distribution_method          |string|        cp              optional    Which method to use when distributing files. Currently supported are `cp` and `bbcp`.
        distribution_parameters      |string|        (empty)         optional    Command-line parameters to pass to the distribution executable.
+       distribution_destination     |string|        (empty)         optional    Optional `user@host:file` specification for copying when using `bbcp`.
        input_service_backend                                        required    See |input_service_backend|.
        output_base_url                                              required    See |output_base_url|.
        ===========================  ==============  ==============  ==========  ===========
     """
 
     CONFIG = {
+        'distribution_destination': {
+            'type': 'string',
+            'default': '',
+        },
         'distribution_method': {
             'type': 'string',
             'default': 'cp',
@@ -46,6 +51,7 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
+        'distribution_destination',
         'distribution_method',
         'distribution_parameters',
         'input_data_format',
@@ -68,6 +74,8 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         self.func = self.distribution_func(self.env['distribution_method'])
         if self.func is None:
             raise eva.exceptions.InvalidConfigurationException('distribution_method must be set to one of the supported methods "cp" or "bbcp".')
+        if len(self.env['distribution_destination']) > 0:
+            self.env['distribution_destination'] += ':'
 
     def distribution_func(self, method):
         if method == 'cp':
@@ -105,6 +113,7 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         values = {
             'source': job.input_file,
             'destination': job.output_file,
+            'hostspec': self.env['distribution_destination'],
             'params': self.env['distribution_parameters'],
         }
 
@@ -118,7 +127,7 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
 
     def job_script_bbcp(self):
         return [
-            "bbcp -v %(params)s %(source)s %(destination)s",
+            "bbcp -v %(params)s %(source)s %(hostspec)s%(destination)s",
         ]
 
     def finish_job(self, job):

@@ -59,11 +59,12 @@ output_base_url = file:///foo
         """
         self.config['adapter']['distribution_method'] = 'bbcp'
         self.config['adapter']['distribution_parameters'] = '--foo'
+        self.config['adapter']['distribution_destination'] = 'user@host'
         self.create_adapter()
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
         job = self.create_job(resource)
-        command_line_fragment = "bbcp -v --foo /foo/bar/baz /foo/baz\n"
+        command_line_fragment = "bbcp -v --foo /foo/bar/baz user@host:/foo/baz\n"
         self.assertTrue(command_line_fragment in job.command)
 
     def test_create_job_bogus(self):
