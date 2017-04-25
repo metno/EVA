@@ -33,7 +33,7 @@ output_base_url = file:///foo
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
         job = self.create_job(resource)
-        command_line_fragment = "cp --verbose /foo/bar/baz /foo/baz\n"
+        command_line_fragment = "cp --verbose  /foo/bar/baz /foo/baz\n"
         self.assertTrue(command_line_fragment in job.command)
 
     def test_finish_job_and_generate_resources(self):
@@ -52,3 +52,24 @@ output_base_url = file:///foo
         self.assertEqual(len(resources['data']), 0)
         self.assertEqual(len(resources['datainstance']), 1)
         self.assertEqual(resources['datainstance'][0].url, 'file:///foo/baz')
+
+    def test_create_job_bbcp(self):
+        """!
+        @brief Test that job creation generates the correct command line for bbcp.
+        """
+        self.config['adapter']['distribution_method'] = 'bbcp'
+        self.config['adapter']['distribution_parameters'] = '--foo'
+        self.create_adapter()
+        resource = mock.MagicMock()
+        resource.url = 'file:///foo/bar/baz'
+        job = self.create_job(resource)
+        command_line_fragment = "bbcp -v --foo /foo/bar/baz /foo/baz\n"
+        self.assertTrue(command_line_fragment in job.command)
+
+    def test_create_job_bogus(self):
+        """!
+        @brief Test that the adapter cannot be instantiated with a bogus distribution method.
+        """
+        self.config['adapter']['distribution_method'] = 'foo'
+        with self.assertRaises(eva.exceptions.InvalidConfigurationException):
+            self.create_adapter()

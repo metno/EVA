@@ -10,8 +10,9 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     """
     The ``DistributionAdapter`` copies files to other locations.
 
-    This adapter supports copying files using the ``cp`` command, and will use
-    the ``lfs`` wrapper if it exists.
+    This adapter supports copying files using the ``cp`` and ``bbcp`` commands.
+    If the ``cp`` command is used, DistributionAdapter will try to use the
+    ``lfs`` wrapper if it exists on the system.
 
     If the destination file already exists in the Productstatus database, and
     is not marked as deleted, the copy will NOT be performed.
@@ -21,10 +22,23 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
        ===========================  ==============  ==============  ==========  ===========
        Variable                     Type            Default         Inclusion   Description
        ===========================  ==============  ==============  ==========  ===========
+       distribution_method          |string|        cp              optional    Which method to use when distributing files. Currently supported are `cp` and `bbcp`.
+       distribution_parameters      |string|        (empty)         optional    Command-line parameters to pass to the distribution executable.
        input_service_backend                                        required    See |input_service_backend|.
        output_base_url                                              required    See |output_base_url|.
        ===========================  ==============  ==============  ==========  ===========
     """
+
+    CONFIG = {
+        'distribution_method': {
+            'type': 'string',
+            'default': 'cp',
+        },
+        'distribution_parameters': {
+            'type': 'string',
+            'default': '',
+        },
+    }
 
     REQUIRED_CONFIG = [
         'input_service_backend',
@@ -32,6 +46,8 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     ]
 
     OPTIONAL_CONFIG = [
+        'distribution_method',
+        'distribution_parameters',
         'input_data_format',
         'input_partial',
         'input_product',
@@ -49,6 +65,17 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         """
         if self.env['output_service_backend'] in self.env['input_service_backend']:
             raise eva.exceptions.InvalidConfigurationException('output_service_backend cannot be present in the list of input_service_backend, as that will result in an endless loop.')
+        self.func = self.distribution_func(self.env['distribution_method'])
+        if self.func is None:
+            raise eva.exceptions.InvalidConfigurationException('distribution_method must be set to one of the supported methods "cp" or "bbcp".')
+
+    def distribution_func(self, method):
+        if method == 'cp':
+            return self.job_script_cp
+        elif method == 'bbcp':
+            return self.job_script_bbcp
+        else:
+            return None
 
     def create_job(self, job):
         """!
@@ -73,15 +100,26 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
         lines = [
             "#!/bin/bash",
             "#$ -S /bin/bash",  # for GridEngine compatibility
-            "`which lfs` cp --verbose %(source)s %(destination)s"
         ]
+        lines += self.func()
         values = {
             'source': job.input_file,
             'destination': job.output_file,
+            'params': self.env['distribution_parameters'],
         }
 
         job.command = "\n".join(lines) + "\n"
         job.command = job.command % values
+
+    def job_script_cp(self):
+        return [
+            "`which lfs` cp --verbose %(params)s %(source)s %(destination)s",
+        ]
+
+    def job_script_bbcp(self):
+        return [
+            "bbcp -v %(params)s %(source)s %(destination)s",
+        ]
 
     def finish_job(self, job):
         if not job.complete():
