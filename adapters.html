@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Adapter documentation &#8212; EVA 2.1.0 documentation</title>
+    <title>Adapter documentation &#8212; EVA 2.1.1 documentation</title>
     
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.1.0',
+        VERSION:     '2.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,13 +25,13 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="EVA 2.1.0 documentation" href="index.html" />
+    <link rel="top" title="EVA 2.1.1 documentation" href="index.html" />
     <link rel="next" title="Metrics" href="metrics.html" />
     <link rel="prev" title="Tutorial" href="tutorial.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>EVA 2.1.0 documentation</span></a></h1>
+          <span>EVA 2.1.1 documentation</span></a></h1>
         <h2 class="heading"><span>Adapter documentation</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -265,13 +265,19 @@ is not marked as deleted, the copy will NOT be performed.</p>
 <td>optional</td>
 <td>Command-line parameters to pass to the distribution executable.</td>
 </tr>
-<tr class="row-even"><td>input_service_backend</td>
+<tr class="row-even"><td>distribution_destination</td>
+<td><a class="reference internal" href="api/config.html#eva.config.ConfigurableObject.normalize_config_string" title="eva.config.ConfigurableObject.normalize_config_string"><code class="xref py py-meth docutils literal"><span class="pre">string</span></code></a></td>
+<td>(empty)</td>
+<td>optional</td>
+<td>Optional <cite>user&#64;host:file</cite> specification for copying when using <cite>bbcp</cite>.</td>
+</tr>
+<tr class="row-odd"><td>input_service_backend</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>required</td>
 <td>See <a class="reference internal" href="api/baseadapter.html#eva.base.adapter.BaseAdapter" title="eva.base.adapter.BaseAdapter"><code class="xref py py-class docutils literal"><span class="pre">input_service_backend</span></code></a>.</td>
 </tr>
-<tr class="row-odd"><td>output_base_url</td>
+<tr class="row-even"><td>output_base_url</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>required</td>
