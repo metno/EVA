@@ -11,11 +11,8 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
     The ``DistributionAdapter`` copies files to other locations.
 
     This adapter supports copying files using the ``cp``, ``scp`` and ``bbcp``
-    commands.  If the ``cp`` command is used, DistributionAdapter will try to
-    use the ``lfs`` wrapper if it exists on the system.
-
-    If the destination file already exists in the Productstatus database, and
-    is not marked as deleted, the copy will NOT be performed.
+    commands. If the destination file already exists in the Productstatus
+    database, and is not marked as deleted, the copy will NOT be performed.
 
     .. table::
 
@@ -124,7 +121,7 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
 
     def job_script_cp(self):
         return [
-            "`which lfs` cp --verbose %(params)s %(source)s %(destination)s",
+            "cp --verbose %(params)s %(source)s %(destination)s",
         ]
 
     def job_script_bbcp(self):
