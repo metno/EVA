@@ -57,11 +57,8 @@
 <span class="sd">    The ``DistributionAdapter`` copies files to other locations.</span>
 
 <span class="sd">    This adapter supports copying files using the ``cp``, ``scp`` and ``bbcp``</span>
-<span class="sd">    commands.  If the ``cp`` command is used, DistributionAdapter will try to</span>
-<span class="sd">    use the ``lfs`` wrapper if it exists on the system.</span>
-
-<span class="sd">    If the destination file already exists in the Productstatus database, and</span>
-<span class="sd">    is not marked as deleted, the copy will NOT be performed.</span>
+<span class="sd">    commands. If the destination file already exists in the Productstatus</span>
+<span class="sd">    database, and is not marked as deleted, the copy will NOT be performed.</span>
 
 <span class="sd">    .. table::</span>
 
@@ -170,7 +167,7 @@
 
     <span class="k">def</span> <span class="nf">job_script_cp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="s2">&quot;`which lfs` cp --verbose </span><span class="si">%(params)s</span><span class="s2"> </span><span class="si">%(source)s</span><span class="s2"> </span><span class="si">%(destination)s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cp --verbose </span><span class="si">%(params)s</span><span class="s2"> </span><span class="si">%(source)s</span><span class="s2"> </span><span class="si">%(destination)s</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">job_script_bbcp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

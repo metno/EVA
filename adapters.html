@@ -232,10 +232,8 @@ additionally trigger the creation of a deletion job. This job will
 <em class="property">class </em><code class="descclassname">eva.adapter.</code><code class="descname">DistributionAdapter</code><a class="reference internal" href="_modules/eva/adapter/distribution.html#DistributionAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#eva.adapter.DistributionAdapter" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <code class="docutils literal"><span class="pre">DistributionAdapter</span></code> copies files to other locations.</p>
 <p>This adapter supports copying files using the <code class="docutils literal"><span class="pre">cp</span></code>, <code class="docutils literal"><span class="pre">scp</span></code> and <code class="docutils literal"><span class="pre">bbcp</span></code>
-commands.  If the <code class="docutils literal"><span class="pre">cp</span></code> command is used, DistributionAdapter will try to
-use the <code class="docutils literal"><span class="pre">lfs</span></code> wrapper if it exists on the system.</p>
-<p>If the destination file already exists in the Productstatus database, and
-is not marked as deleted, the copy will NOT be performed.</p>
+commands. If the destination file already exists in the Productstatus
+database, and is not marked as deleted, the copy will NOT be performed.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="17%" />
