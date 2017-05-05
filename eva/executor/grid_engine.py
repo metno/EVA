@@ -116,34 +116,43 @@ class JobNotFinishedException(eva.exceptions.EvaException):
 
 
 class GridEngineExecutor(eva.base.executor.BaseExecutor):
-    """!
-    Execute programs on Sun OpenGridEngine via an SSH connection to a submit host.
     """
+    ``GridEngineExecutor`` executes programs on Sun OpenGridEngine via an SSH
+    connection to a submit host.
+
+    .. table::
+
+       ===========================  ==============  ======================  ==========  ===========
+       Variable                     Type            Default                 Inclusion   Description
+       ===========================  ==============  ======================  ==========  ===========
+       qacct_command                |string|        qacct -j {{job_id}}     optional    How to call the qacct program to get finished job information.
+       queue                        |string|        (empty)                 optional    Which Grid Engine queue to run jobs in.
+       ssh_host                     |string|        (empty)                 required    List of hostname of the Grid Engine submit host.
+       ssh_user                     |string|        (empty)                 required    Username on the Grid Engine submit host.
+       ssh_key_file                 |string|        (empty)                 required    Path to a SSH private key used for connecting to the Grid Engine submit host.
+       ===========================  ==============  ======================  ==========  ===========
+    """
+
 
     CONFIG = {
         'qacct_command': {
             'type': 'string',
-            'help': 'How to call the qacct program to get finished job information',
             'default': 'qacct -j {{job_id}}',
         },
         'queue': {
             'type': 'string',
-            'help': 'Which Grid Engine queue to run jobs in',
             'default': '',
         },
         'ssh_host': {
             'type': 'string',
-            'help': 'Hostname of the Grid Engine submit host',
             'default': '',
         },
         'ssh_user': {
             'type': 'string',
-            'help': 'Username on the Grid Engine submit host',
             'default': '',
         },
         'ssh_key_file': {
             'type': 'string',
-            'help': 'Path to a SSH private key used for connecting to the Grid Engine submit host',
             'default': '',
         },
     }
