@@ -111,6 +111,13 @@ def parse_qacct_metrics(stdout_lines):
     }
 
 
+def shift_list(lst):
+    """
+    Move the first element of a list to the last, and shift the remainder to the left.
+    """
+    return lst[1:] + lst[:1]
+
+
 class JobNotFinishedException(eva.exceptions.EvaException):
     pass
 
@@ -127,12 +134,11 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
        ===========================  ==============  ======================  ==========  ===========
        qacct_command                |string|        qacct -j {{job_id}}     optional    How to call the qacct program to get finished job information.
        queue                        |string|        (empty)                 optional    Which Grid Engine queue to run jobs in.
-       ssh_host                     |string|        (empty)                 required    List of hostname of the Grid Engine submit host.
+       ssh_hosts                    |list_string|   (empty)                 required    List of Grid Engine submit hostnames.
        ssh_user                     |string|        (empty)                 required    Username on the Grid Engine submit host.
        ssh_key_file                 |string|        (empty)                 required    Path to a SSH private key used for connecting to the Grid Engine submit host.
        ===========================  ==============  ======================  ==========  ===========
     """
-
 
     CONFIG = {
         'qacct_command': {
@@ -143,8 +149,8 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             'type': 'string',
             'default': '',
         },
-        'ssh_host': {
-            'type': 'string',
+        'ssh_hosts': {
+            'type': 'list_string',
             'default': '',
         },
         'ssh_user': {
@@ -163,7 +169,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     ]
 
     REQUIRED_CONFIG = [
-        'ssh_host',
+        'ssh_hosts',
         'ssh_user',
         'ssh_key_file',
     ]
@@ -174,6 +180,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         """
         # create command-line template for qacct.
         self.qacct_command_template = self.template.from_string(self.env['qacct_command'])
+        self.ssh_hosts = self.env['ssh_hosts'][:]
 
     def validate_configuration(self, *args, **kwargs):
         """!
@@ -215,10 +222,13 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         """!
         @brief Open an SSH connection to the submit host, and open an SFTP channel.
         """
-        job.logger.info('Creating SSH connection to %s@%s', self.env['ssh_user'], self.env['ssh_host'])
+        ssh_host = self.ssh_hosts[0]
+        self.ssh_hosts = shift_list(self.ssh_hosts)
+
+        job.logger.info('Creating SSH connection to %s@%s', self.env['ssh_user'], ssh_host)
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
-        self.ssh_client.connect(self.env['ssh_host'],
+        self.ssh_client.connect(ssh_host,
                                 username=self.env['ssh_user'],
                                 key_filename=self.env['ssh_key_file'],
                                 timeout=SSH_TIMEOUT)

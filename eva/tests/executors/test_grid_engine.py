@@ -15,7 +15,7 @@ class TestGridEngineExecutor(eva.tests.BaseTestExecutor):
 """
 [executor]
 ssh_key_file = /dev/null
-ssh_host = localhost
+ssh_hosts = localhost
 ssh_user = nobody
 """  # NOQA
 
@@ -24,6 +24,19 @@ ssh_user = nobody
         group_id = u'/yæh/gr34t/~job~/'
         id = eva.executor.grid_engine.create_job_unique_id(group_id, BLANK_UUID)
         self.assertEqual(id, compare)
+
+    def test_shift_list(self):
+        """!
+        @brief Test that lists shifted correctly.
+        """
+        lst = ['a', 'bc', 'def']
+        lst = eva.executor.grid_engine.shift_list(lst)
+        self.assertListEqual(lst, ['bc', 'def', 'a'])
+        lst = eva.executor.grid_engine.shift_list(lst)
+        self.assertListEqual(lst, ['def', 'a', 'bc'])
+        lst = ['abcd']
+        lst = eva.executor.grid_engine.shift_list(lst)
+        self.assertListEqual(lst, ['abcd'])
 
     def test_qacct_command_default(self):
         """!
