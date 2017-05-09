@@ -94,6 +94,9 @@ class ProductstatusBaseEvent(Event):
         if message.type == 'resource':
             class_ = ProductstatusResourceEvent
             data = message.uri
+        elif message.type == 'expired':
+            class_ = ProductstatusExpiredEvent
+            data = {}
         elif message.type == 'heartbeat':
             class_ = ProductstatusHeartbeatEvent
             data = {}
@@ -108,7 +111,14 @@ class ProductstatusBaseEvent(Event):
         )
 
 
-class ProductstatusResourceEvent(ProductstatusBaseEvent):
+class ProductstatusBaseResourceEvent(ProductstatusBaseEvent):
+    """!
+    @brief Productstatus events of type 'resource'.
+    """
+    pass
+
+
+class ProductstatusResourceEvent(ProductstatusBaseResourceEvent):
     """!
     @brief Productstatus events of type 'resource'.
     """
@@ -121,7 +131,14 @@ class ProductstatusResourceEvent(ProductstatusBaseEvent):
         return 1
 
 
-class ProductstatusLocalEvent(ProductstatusBaseEvent):
+class ProductstatusExpiredEvent(ProductstatusBaseEvent):
+    """!
+    @brief Productstatus events of type 'expired'.
+    """
+    pass
+
+
+class ProductstatusLocalEvent(ProductstatusBaseResourceEvent):
     """!
     @brief Productstatus events, generated locally and not on the Kafka message queue.
     """
@@ -132,7 +149,7 @@ class ProductstatusLocalEvent(ProductstatusBaseEvent):
         return str(self._id)
 
 
-class ProductstatusHeartbeatEvent(ProductstatusBaseEvent):
+class ProductstatusHeartbeatEvent(ProductstatusBaseResourceEvent):
     """!
     @brief Productstatus heartbeat event, only signifying that the server is alive.
     """

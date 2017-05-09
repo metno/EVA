@@ -178,6 +178,13 @@ class Eventloop(eva.globe.GlobalMixin):
                 self.set_health_check_timestamp(eva.now_with_timezone())
                 continue
 
+            # Discard 'expired' events
+            if isinstance(event, eva.event.ProductstatusExpiredEvent):
+                self.logger.debug('%s: expired event received', event)
+                listener.acknowledge()
+                self.statsd.incr('eva_event_expired')
+                continue
+
             # Print to log
             self.logger.info('%s: event received', event)
 
@@ -467,7 +474,7 @@ class Eventloop(eva.globe.GlobalMixin):
         :param eva.eventqueue.EventQueueItem item: an event queue item.
         """
         # Instantiate Productstatus object from event resource URI
-        if isinstance(item.event, eva.event.ProductstatusBaseEvent):
+        if isinstance(item.event, eva.event.ProductstatusBaseResourceEvent):
             try:
                 self.instantiate_productstatus_data(item.event)
             except eva.exceptions.ResourceTooOldException:
@@ -633,7 +640,7 @@ class Eventloop(eva.globe.GlobalMixin):
         :raises eva.exceptions.ResourceTooOldException: when the Productstatus resource differs from the version referred to in the Event data.
         :rtype: None
         """
-        if not isinstance(event, eva.event.ProductstatusBaseEvent):
+        if not isinstance(event, eva.event.ProductstatusBaseResourceEvent):
             return
 
         self.logger.info('%s: loading resource data', event)

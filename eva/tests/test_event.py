@@ -28,6 +28,15 @@ heartbeat_serialized_event = productstatus.event.Message({
 })
 
 
+expired_serialized_event = productstatus.event.Message({
+    'id': '10000000-0000-0000-0000-000000000001',
+    'type': 'expired',
+    'message_timestamp': '2016-01-05T12:00:00Z',
+    'message_id': '20000000-0000-0000-0000-000000000002',
+    'version': [1, 6, 0],
+})
+
+
 unrecognized_serialized_event = productstatus.event.Message({
     'id': '10000000-0000-0000-0000-000000000001',
     'type': 'this type will never be used for anything in production unless an infinite number of monkeys starts hacking',
@@ -54,6 +63,13 @@ class TestEvent(unittest.TestCase):
         self.assertEqual(event.id(), '20000000-0000-0000-0000-000000000002')
         self.assertEqual(event.timestamp(), eva.coerce_to_utc(datetime.datetime(2016, 1, 5, 12, 0, 0)))
         self.assertEqual(event.protocol_version(), [1, 5, 0])
+
+    def test_productstatus_event_factory_expired(self):
+        event = eva.event.ProductstatusBaseEvent.factory(expired_serialized_event)
+        self.assertIsInstance(event, eva.event.ProductstatusExpiredEvent)
+        self.assertEqual(event.id(), '20000000-0000-0000-0000-000000000002')
+        self.assertEqual(event.timestamp(), eva.coerce_to_utc(datetime.datetime(2016, 1, 5, 12, 0, 0)))
+        self.assertEqual(event.protocol_version(), [1, 6, 0])
 
     def test_productstatus_event_factory_unrecognized(self):
         event = eva.event.ProductstatusBaseEvent.factory(unrecognized_serialized_event)
