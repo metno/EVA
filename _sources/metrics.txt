@@ -17,6 +17,7 @@ section for how to set up configuration for StatsD.
    eva_deleted_datainstances                counter                                 DataInstance resources marked as *deleted* by :class:`~eva.adapter.delete.DeleteAdapter`.
    eva_event_accepted                       counter                                 Events that resulted in one or more jobs being generated.
    eva_event_duplicate                      counter                                 Events received that was already present in the event queue at the time of arrival.
+   eva_event_expired                        counter                                 Productstatus *expired* events, delivering a list of DataInstance resources that needs deletion.
    eva_event_heartbeat                      counter                                 Heartbeat events received.
    eva_event_productstatus                  counter                                 Productstatus events received.
    eva_event_received                       counter                                 Events received, regardless of type.

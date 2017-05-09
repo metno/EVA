@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eva.eventloop &#8212; EVA 3.0.0 documentation</title>
+    <title>eva.eventloop &#8212; EVA 3.0.1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.0.0',
+        VERSION:     '3.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,12 +25,12 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="top" title="EVA 3.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="EVA 3.0.1 documentation" href="../../index.html" />
     <link rel="up" title="eva" href="../eva.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>EVA 3.0.0 documentation</span></a></h1>
+          <span>EVA 3.0.1 documentation</span></a></h1>
         <h2 class="heading"><span>eva.eventloop</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -222,6 +222,13 @@
                 <span class="n">listener</span><span class="o">.</span><span class="n">acknowledge</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_heartbeat&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_health_check_timestamp</span><span class="p">(</span><span class="n">eva</span><span class="o">.</span><span class="n">now_with_timezone</span><span class="p">())</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Discard &#39;expired&#39; events</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusExpiredEvent</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: expired event received&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+                <span class="n">listener</span><span class="o">.</span><span class="n">acknowledge</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statsd</span><span class="o">.</span><span class="n">incr</span><span class="p">(</span><span class="s1">&#39;eva_event_expired&#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
 
             <span class="c1"># Print to log</span>
@@ -513,7 +520,7 @@
 <span class="sd">        :param eva.eventqueue.EventQueueItem item: an event queue item.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Instantiate Productstatus object from event resource URI</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusBaseEvent</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusBaseResourceEvent</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">instantiate_productstatus_data</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">event</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResourceTooOldException</span><span class="p">:</span>
@@ -679,7 +686,7 @@
 <span class="sd">        :raises eva.exceptions.ResourceTooOldException: when the Productstatus resource differs from the version referred to in the Event data.</span>
 <span class="sd">        :rtype: None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusBaseEvent</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">eva</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">ProductstatusBaseResourceEvent</span><span class="p">):</span>
             <span class="k">return</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: loading resource data&#39;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>

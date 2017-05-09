@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Metrics &#8212; EVA 3.0.0 documentation</title>
+    <title>Metrics &#8212; EVA 3.0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.0.0',
+        VERSION:     '3.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,13 +25,13 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="EVA 3.0.0 documentation" href="index.html" />
+    <link rel="top" title="EVA 3.0.1 documentation" href="index.html" />
     <link rel="next" title="HTTP REST API" href="restapi.html" />
     <link rel="prev" title="Adapter documentation" href="adapters.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>EVA 3.0.0 documentation</span></a></h1>
+          <span>EVA 3.0.1 documentation</span></a></h1>
         <h2 class="heading"><span>Metrics</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -107,131 +107,136 @@ section for how to set up configuration for StatsD.</p>
 <td>&nbsp;</td>
 <td>Events received that was already present in the event queue at the time of arrival.</td>
 </tr>
-<tr class="row-even"><td>eva_event_heartbeat</td>
+<tr class="row-even"><td>eva_event_expired</td>
+<td>counter</td>
+<td>&nbsp;</td>
+<td>Productstatus <em>expired</em> events, delivering a list of DataInstance resources that needs deletion.</td>
+</tr>
+<tr class="row-odd"><td>eva_event_heartbeat</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Heartbeat events received.</td>
 </tr>
-<tr class="row-odd"><td>eva_event_productstatus</td>
+<tr class="row-even"><td>eva_event_productstatus</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Productstatus events received.</td>
 </tr>
-<tr class="row-even"><td>eva_event_received</td>
+<tr class="row-odd"><td>eva_event_received</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Events received, regardless of type.</td>
 </tr>
-<tr class="row-odd"><td>eva_event_rejected</td>
+<tr class="row-even"><td>eva_event_rejected</td>
 <td>counter</td>
 <td>adapter</td>
 <td>Events that did not result in any job generation.</td>
 </tr>
-<tr class="row-even"><td>eva_event_too_old</td>
+<tr class="row-odd"><td>eva_event_too_old</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Events that were older than the <em>message timestamp threshold</em>.</td>
 </tr>
-<tr class="row-odd"><td>eva_event_version_unsupported</td>
+<tr class="row-even"><td>eva_event_version_unsupported</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Events discarded because of a mismatch in message protocol version.</td>
 </tr>
-<tr class="row-even"><td>eva_grid_engine_run_time</td>
+<tr class="row-odd"><td>eva_grid_engine_run_time</td>
 <td>timing</td>
 <td>adapter,
 grid_engine_qname,
 grid_engine_hostname</td>
 <td>How long it took the executor to run a job from a specific adapter.</td>
 </tr>
-<tr class="row-odd"><td>eva_grid_engine_qsub_delay</td>
+<tr class="row-even"><td>eva_grid_engine_qsub_delay</td>
 <td>timing</td>
 <td>adapter,
 grid_engine_qname,
 grid_engine_hostname</td>
 <td>How long a submitted Grid Engine job had to wait to be run, from the moment qsub was called.</td>
 </tr>
-<tr class="row-even"><td>eva_grid_engine_ru_stime</td>
+<tr class="row-odd"><td>eva_grid_engine_ru_stime</td>
 <td>timing</td>
 <td>adapter,
 grid_engine_qname,
 grid_engine_hostname</td>
 <td>Amount of system CPU time consumed by a job of the specific adapter.</td>
 </tr>
-<tr class="row-odd"><td>eva_grid_engine_ru_utime</td>
+<tr class="row-even"><td>eva_grid_engine_ru_utime</td>
 <td>timing</td>
 <td>adapter,
 grid_engine_qname,
 grid_engine_hostname</td>
 <td>Amount of userland CPU time consumed by a job of the specific adapter.</td>
 </tr>
-<tr class="row-even"><td>eva_job_failures</td>
+<tr class="row-odd"><td>eva_job_failures</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Jobs that had some kind of processing failure.</td>
 </tr>
-<tr class="row-odd"><td>eva_job_status_change</td>
+<tr class="row-even"><td>eva_job_status_change</td>
 <td>counter</td>
 <td>status,
 adapter</td>
 <td>Status changes for a job belonging to a specific <code class="docutils literal"><span class="pre">adapter</span></code>, to the status reported in <code class="docutils literal"><span class="pre">status</span></code>.</td>
 </tr>
-<tr class="row-even"><td>eva_kafka_commit_failed</td>
+<tr class="row-odd"><td>eva_kafka_commit_failed</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Kafka message queue position commit errors.</td>
 </tr>
-<tr class="row-odd"><td>eva_kafka_no_brokers_available</td>
+<tr class="row-even"><td>eva_kafka_no_brokers_available</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Connection loss against all Kafka message queue brokers.</td>
 </tr>
-<tr class="row-even"><td>eva_md5sum_fail</td>
+<tr class="row-odd"><td>eva_md5sum_fail</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Files on filesystem that had a mis-match with their md5sum counterpart. Reported by <code class="xref py py-class docutils literal"><span class="pre">ChecksumVerificationAdapter</span></code>.</td>
 </tr>
-<tr class="row-odd"><td>eva_recoverable_exceptions</td>
+<tr class="row-even"><td>eva_recoverable_exceptions</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Times job processing was aborted internally in some way because of a network or other transient error.</td>
 </tr>
-<tr class="row-even"><td>eva_requeue_rejected</td>
+<tr class="row-odd"><td>eva_requeue_rejected</td>
 <td>counter</td>
 <td>adapter</td>
 <td>Jobs that was attempted re-queued, but rejected for re-processing by the owning adapter.</td>
 </tr>
-<tr class="row-odd"><td>eva_requeued_jobs</td>
+<tr class="row-even"><td>eva_requeued_jobs</td>
 <td>counter</td>
 <td>adapter</td>
 <td>Jobs that was re-queued after a previous failure.</td>
 </tr>
-<tr class="row-even"><td>eva_resource_object_version_too_old</td>
+<tr class="row-odd"><td>eva_resource_object_version_too_old</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Events that was rejected because the Productstatus resource was updated again before EVA could process the original resource.</td>
 </tr>
-<tr class="row-odd"><td>eva_restored_events</td>
+<tr class="row-even"><td>eva_restored_events</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Events restored from the ZooKeeper cache upon starting EVA from a crashed state.</td>
 </tr>
-<tr class="row-even"><td>eva_restored_jobs</td>
+<tr class="row-odd"><td>eva_restored_jobs</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Jobs restored from the ZooKeeper cache upon starting EVA from a crashed state.</td>
 </tr>
-<tr class="row-odd"><td>eva_shutdown</td>
+<tr class="row-even"><td>eva_shutdown</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>EVA program shutdowns.</td>
 </tr>
-<tr class="row-even"><td>eva_start</td>
+<tr class="row-odd"><td>eva_start</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>EVA program startups.</td>
 </tr>
-<tr class="row-odd"><td>eva_zookeeper_connection_loss</td>
+<tr class="row-even"><td>eva_zookeeper_connection_loss</td>
 <td>counter</td>
 <td>&nbsp;</td>
 <td>Times the ZooKeeper connection was irrecoverably lost.</td>
