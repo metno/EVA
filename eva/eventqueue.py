@@ -224,10 +224,14 @@ class EventQueue(eva.globe.GlobalMixin):
         @returns collections.OrderedDict
         """
         items = collections.OrderedDict()
+
+        # Get a list of event UUIDs that should be restored from their respective ZooKeeper paths.
         event_keys = self.zk_get_serialized(self.zk_base_path)
         if not event_keys:
             return items
+
         for event_key in event_keys:
+            # Load jobs for a single event
             event_path = os.path.join(self.zk_base_path, event_key)
             message_path = os.path.join(event_path, 'message')
             jobs_path = os.path.join(event_path, 'jobs')
@@ -236,18 +240,19 @@ class EventQueue(eva.globe.GlobalMixin):
                 items[event_key] = {}
                 items[event_key]['message'] = self.zk_get_serialized(message_path)
                 items[event_key]['jobs'] = collections.OrderedDict()
+                if not job_keys:
+                    continue
+                for job_key in job_keys:
+                    job_path = os.path.join(jobs_path, job_key)
+                    items[event_key]['jobs'][job_key] = {}
+                    for field_key in ['status', 'adapter', 'pid']:
+                        field_path = os.path.join(job_path, field_key)
+                        items[event_key]['jobs'][job_key][field_key] = self.zk_get_serialized(field_path)
             except kazoo.exceptions.NoNodeError:
+                self.statsd.incr('eva_restored_corrupt')
                 self.logger.error("Restoring event '%s' from ZooKeeper raised exception because data is corrupt. Discarding!")
                 del items[event_key]
                 continue
-            if not job_keys:
-                continue
-            for job_key in job_keys:
-                job_path = os.path.join(jobs_path, job_key)
-                items[event_key]['jobs'][job_key] = {}
-                for field_key in ['status', 'adapter', 'pid']:
-                    field_path = os.path.join(job_path, field_key)
-                    items[event_key]['jobs'][job_key][field_key] = self.zk_get_serialized(field_path)
         return items
 
     def init(self):
