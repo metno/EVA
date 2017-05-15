@@ -46,6 +46,7 @@ section for how to set up configuration for StatsD.
    eva_requeue_rejected                     counter         adapter                 Jobs that was attempted re-queued, but rejected for re-processing by the owning adapter.
    eva_requeued_jobs                        counter         adapter                 Jobs that was re-queued after a previous failure.
    eva_resource_object_version_too_old      counter                                 Events that was rejected because the Productstatus resource was updated again before EVA could process the original resource.
+   eva_restored_corrupt                     counter                                 Events that was attempted restored from ZooKeeper cache, but were corrupt.
    eva_restored_events                      counter                                 Events restored from the ZooKeeper cache upon starting EVA from a crashed state.
    eva_restored_jobs                        counter                                 Jobs restored from the ZooKeeper cache upon starting EVA from a crashed state.
    eva_shutdown                             counter                                 EVA program shutdowns.
