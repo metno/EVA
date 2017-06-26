@@ -5,6 +5,8 @@ import eva.base.adapter
 import eva.job
 import eva.exceptions
 
+import productstatus.api
+
 
 XML_TEMPLATE = """
 <netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2">
@@ -158,24 +160,24 @@ class NcMLAggregationAdapter(eva.base.adapter.BaseAdapter):
         This adapter will post a new DataInstance using the same ProductInstance as the input resource.
         """
         # Generate Data resource with empty time period.
-        data = self.api.EvaluatedResource(
+        data = productstatus.api.EvaluatedResource(
             self.api.data.find_or_create_ephemeral, {
                 'productinstance': job.resource.data.productinstance,
                 'time_period_begin': None,
                 'time_period_end': None,
             }
         )
+        resources['data'] = [data]
 
         # Generate DataInstance resource pointing to NcML file.
-        datainstance = self.api.EvaluatedResource(
+        datainstance = productstatus.api.EvaluatedResource(
             self.api.datainstance.find_or_create_ephemeral, {
                 'data': data,
                 'expires': self.expiry_from_lifetime(),
-                'format': self.api.format[self.env['output_data_format']],
+                'format': self.api.dataformat[self.env['output_data_format']],
                 'servicebackend': job.resource.servicebackend,
                 'url': 'file://' + job.output_filename,
             }
         )
 
-        resources['data'] = [data]
         resources['datainstance'] = [datainstance]
