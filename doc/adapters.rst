@@ -41,6 +41,10 @@ GridPPAdapter
 -------------
 .. autoclass:: eva.adapter.GridPPAdapter
 
+NcMLAggregationAdapter
+----------------------
+.. autoclass:: eva.adapter.NcMLAggregationAdapter
+
 NowcastPPAdapter
 ----------------
 .. autoclass:: eva.adapter.NowcastPPAdapter
