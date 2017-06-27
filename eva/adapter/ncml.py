@@ -11,7 +11,7 @@ import productstatus.api
 XML_TEMPLATE = """
 <netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2">
     <attribute name="title" type="string" value="%(title)s" />
-    <aggregation type="union">
+    <aggregation dimName="time" type="joinExisting">
         %(children)s
     </aggregation>
 </netcdf>
@@ -46,7 +46,7 @@ class NcMLAggregationAdapter(eva.base.adapter.BaseAdapter):
 
        <netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2">
          <attribute name="title" type="string" value="Product @ reference time" />
-         <aggregation type="union">
+         <aggregation dimName="time" type="joinExisting">
            <netcdf location="file1.nc" />
            <netcdf location="file2.nc" />
          </aggregation>
