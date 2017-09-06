@@ -58,6 +58,8 @@ ssh_user = nobody
         header = [
             '#!/bin/bash',
             '#$ -S /bin/zsh',
+            '#$ -pe mpi 1',
+            '#$ -l h_vmem=512M',
             'module load foo/1.0.0',
             'module load bar/2.3.4',
         ]
@@ -73,6 +75,8 @@ ssh_user = nobody
         command = \
 """#!/bin/bash
 #$ -S /bin/bash
+#$ -pe mpi 1
+#$ -l h_vmem=512M
 #$ qsub control statement
 module load foo/1.0.0
 module load bar/2.3.4

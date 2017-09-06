@@ -147,6 +147,8 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
        ===========================  ==============  ======================  ==========  ===========
        Variable                     Type            Default                 Inclusion   Description
        ===========================  ==============  ======================  ==========  ===========
+       cpu_slots                    |int|           1                       optional    How many CPU slots to allocate to the job.
+       memory                       |string|        512M                    optional    The maximum amount of memory the job consumes.
        modules                      |list_string|   (empty)                 optional    Comma-separated list of GridEngine modules to load before running the job.
        qacct_command                |string|        qacct -j {{job_id}}     optional    How to call the qacct program to get finished job information.
        queue                        |string|        (empty)                 optional    Which Grid Engine queue to run jobs in.
@@ -158,6 +160,14 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """
 
     CONFIG = {
+        'cpu_slots': {
+            'type': 'int',
+            'default': '1',
+        },
+        'memory': {
+            'type': 'string',
+            'default': '512M',
+        },
         'modules': {
             'type': 'list_string',
             'default': '',
@@ -189,6 +199,8 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     }
 
     OPTIONAL_CONFIG = [
+        'cpu_slots',
+        'memory',
         'modules',
         'qacct_command',
         'queue',
@@ -237,6 +249,8 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         header = [
             "#!/bin/bash",
             "#$ -S %s" % self.env['shell'],
+            "#$ -pe mpi %d" % self.env['cpu_slots'],
+            "#$ -l h_vmem=%s" % self.env['memory'],
         ]
         for module in self.env['modules']:
             header += ['module load %s' % module]
