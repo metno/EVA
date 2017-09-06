@@ -22,7 +22,6 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
        gridpp_input_options         |string|        (empty)         optional    GridPP command-line options for the input file.
        gridpp_output_options        |string|        (empty)         optional    GridPP command-line options for the output file.
        gridpp_generic_options       |string|        (empty)         optional    GridPP command-line options.
-       gridpp_modules               |list_string|   (empty)         optional    Comma-separated list of GridEngine modules to load before running.
        gridpp_threads               |int|           1               optional    How many threads to use during calculations.
        input_data_format                                            required    See |input_data_format|.
        input_product                                                required    See |input_product|.
@@ -47,11 +46,6 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
             'help': 'GridPP command-line options.',
             'default': '',
         },
-        'gridpp_modules': {
-            'type': 'list_string',
-            'help': 'Comma-separated list of modules to load before running.',
-            'default': '',
-        },
         'gridpp_threads': {
             'type': 'int',
             'help': 'How many threads to use during calculations.',
@@ -69,7 +63,6 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
     OPTIONAL_CONFIG = [
         'gridpp_generic_options',
         'gridpp_input_options',
-        'gridpp_modules',
         'gridpp_output_options',
         'gridpp_threads',
         'input_partial',
@@ -119,8 +112,6 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
 
         job.command = []
         job.command += ["set -e"]
-        for module in self.env['gridpp_modules']:
-            job.command += ["module load %s" % module]
         job.command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
         job.command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
         job.command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % job.gridpp_params]

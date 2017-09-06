@@ -29,7 +29,6 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
        gridpp_output_options        |string|        (empty)         optional    GridPP command-line options for the output file.
        gridpp_generic_options       |string|        (empty)         optional    GridPP command-line options.
        gridpp_mask_options          |string|        (empty)         optional    GridPP command-line options for masking operations.
-       gridpp_modules               |list_string|   (empty)         optional    Comma-separated list of GridEngine modules to load before running.
        gridpp_threads               |int|           1               optional    How many threads to use during calculations.
        gridpp_preprocess_script     |string|        (empty)         required    R script for generating file with missing radars.
        input_data_format                                            required    See |input_data_format|.
@@ -56,10 +55,6 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
             'type': 'string',
             'default': '',
         },
-        'gridpp_modules': {
-            'type': 'list_string',
-            'default': '',
-        },
         'gridpp_threads': {
             'type': 'int',
             'default': '1',
@@ -82,7 +77,6 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
         'gridpp_generic_options',
         'gridpp_mask_options',
         'gridpp_input_options',
-        'gridpp_modules',
         'gridpp_output_options',
         'gridpp_threads',
         'input_partial',
@@ -136,8 +130,6 @@ class NowcastPPAdapter(eva.base.adapter.BaseAdapter):
 
         job.command = []
         job.command += ["set -e"]
-        for module in self.env['gridpp_modules']:
-            job.command += ["module load %s" % module]
         job.command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
         job.command += ["export filename=$(mktemp /tmp/radarXXXXX)"]
         job.command += ["Rscript %(preprocess.script)s %(input.file)s $filename" % job.gridpp_params]

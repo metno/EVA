@@ -18,7 +18,6 @@ class TestCWFAdapter(eva.tests.BaseTestAdapter):
 [adapter]
 cwf_domain = NRPA_EUROPE_0_1
 cwf_input_min_days = 4
-cwf_modules = ecdis4cwf/1.1.0
 cwf_output_days = 3
 cwf_output_directory_pattern = /tmp/{{reference_time|iso8601_compact}}
 cwf_script_path = ecdis4cwf.sh
