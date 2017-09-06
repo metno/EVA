@@ -132,8 +132,10 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
        ===========================  ==============  ======================  ==========  ===========
        Variable                     Type            Default                 Inclusion   Description
        ===========================  ==============  ======================  ==========  ===========
+       modules                      |list_string|   (empty)                 optional    Comma-separated list of GridEngine modules to load before running the job.
        qacct_command                |string|        qacct -j {{job_id}}     optional    How to call the qacct program to get finished job information.
        queue                        |string|        (empty)                 optional    Which Grid Engine queue to run jobs in.
+       shell                        |string|        /bin/bash               optional    Which shell to use for the submitted GridEngine job (parameter $ -S).
        ssh_hosts                    |list_string|   (empty)                 required    List of Grid Engine submit hostnames.
        ssh_user                     |string|        (empty)                 required    Username on the Grid Engine submit host.
        ssh_key_file                 |string|        (empty)                 required    Path to a SSH private key used for connecting to the Grid Engine submit host.
@@ -141,6 +143,10 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     """
 
     CONFIG = {
+        'modules': {
+            'type': 'list_string',
+            'default': '',
+        },
         'qacct_command': {
             'type': 'string',
             'default': 'qacct -j {{job_id}}',
@@ -148,6 +154,10 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         'queue': {
             'type': 'string',
             'default': '',
+        },
+        'shell': {
+            'type': 'string',
+            'default': '/bin/bash',
         },
         'ssh_hosts': {
             'type': 'list_string',
@@ -164,8 +174,10 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
     }
 
     OPTIONAL_CONFIG = [
+        'modules',
         'qacct_command',
         'queue',
+        'shell',
     ]
 
     REQUIRED_CONFIG = [
@@ -202,6 +214,25 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         @brief Generate a unique job name that can be used as a filename.
         """
         return '.'.join(list(args))
+
+    def job_header(self):
+        """
+        Create a job header.
+        """
+        header = [
+            "#!/bin/bash",
+            "#$ -S %s" % self.env['shell'],
+        ]
+        for module in self.env['modules']:
+            header += ['module load %s' % module]
+        return header
+
+    def compile_command(self, command):
+        """
+        Append a job header to an array of shell commands, and flatten it to a string.
+        """
+        combined = self.job_header() + command
+        return '\n'.join(combined) + '\n'
 
     def ensure_ssh_connection(self, job):
         """!
@@ -316,7 +347,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         # Create a submit script
         try:
             with self.sftp_client.open(job.submit_script_path, 'w') as submit_script:
-                script_content = job.command
+                script_content = self.compile_command(job.command)
                 submit_script.write(script_content)
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)

@@ -47,6 +47,41 @@ ssh_user = nobody
         rendered = self.executor.create_qacct_command(12345)
         self.assertEqual(rendered, 'qacct -j 12345')
 
+    def test_job_header(self):
+        """
+        Test that a job header contains the correct shell and modules.
+        """
+        self.config['executor']['modules'] = 'foo/1.0.0, bar/2.3.4'
+        self.config['executor']['shell'] = '/bin/zsh'
+        self.create_executor()
+        rendered = self.executor.job_header()
+        header = [
+            '#!/bin/bash',
+            '#$ -S /bin/zsh',
+            'module load foo/1.0.0',
+            'module load bar/2.3.4',
+        ]
+        self.assertListEqual(rendered, header)
+
+    def test_compile_command(self):
+        """
+        Test that the proper shell script is generated.
+        """
+        self.config['executor']['modules'] = 'foo/1.0.0, bar/2.3.4'
+        self.create_executor()
+        job_command = ['line 1', 'line 2', 'line 3']
+        command = \
+"""#!/bin/bash
+#$ -S /bin/bash
+module load foo/1.0.0
+module load bar/2.3.4
+line 1
+line 2
+line 3
+"""  # NOQA
+        rendered = self.executor.compile_command(job_command)
+        self.assertEqual(rendered, command)
+
     def test_parse_qacct_metrics(self):
         raw = """
         ==============================================================
