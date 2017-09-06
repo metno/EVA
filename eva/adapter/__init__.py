@@ -12,7 +12,6 @@ from eva.adapter.distribution import DistributionAdapter  # NOQA
 from eva.adapter.example import ExampleAdapter  # NOQA
 from eva.adapter.fimex import FimexAdapter  # NOQA
 from eva.adapter.fimex_fill_file import FimexFillFileAdapter  # NOQA
-from eva.adapter.fimex_grib_to_netcdf import FimexGRIB2NetCDFAdapter  # NOQA
 from eva.adapter.gridpp import GridPPAdapter  # NOQA
 from eva.adapter.ncml import NcMLAggregationAdapter  # NOQA
 from eva.adapter.nowcastpp import NowcastPPAdapter  # NOQA
