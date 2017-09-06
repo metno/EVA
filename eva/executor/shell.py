@@ -21,7 +21,7 @@ class ShellExecutor(eva.base.executor.BaseExecutor):
         job.logger.info("Executing job via script '%s'", job.script)
 
         # Print the job script to the log
-        eva.executor.log_job_script(job)
+        eva.executor.log_job_script(job, job.command)
 
         # Run the script
         job.proc = subprocess.Popen(

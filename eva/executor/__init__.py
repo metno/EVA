@@ -20,12 +20,12 @@ def get_std_lines(std):
         return [x.decode('utf-8') for x in std.splitlines()] if std is not None else []
 
 
-def log_job_script(job):
+def log_job_script(job, script):
     """!
     Print log script to syslog
     """
     job.logger.info('--- Job script ---')
-    [job.logger.info(line.strip()) for line in job.command]
+    [job.logger.info(line.strip()) for line in script]
     job.logger.info('--- End of job script ---')
 
 

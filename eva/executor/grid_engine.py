@@ -362,15 +362,15 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             raise eva.exceptions.RetryException(e)
 
         # Create a submit script
+        script = self.compile_command(job.command)
         try:
             with self.sftp_client.open(job.submit_script_path, 'w') as submit_script:
-                script_content = self.compile_command(job.command)
-                submit_script.write(script_content)
+                submit_script.write(script)
         except SSH_RETRY_EXCEPTIONS as e:
             raise eva.exceptions.RetryException(e)
 
         # Print the job script to the log
-        eva.executor.log_job_script(job)
+        eva.executor.log_job_script(job, script)
 
         # Submit the job using qsub
         command = ['qsub',
