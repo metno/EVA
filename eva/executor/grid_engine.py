@@ -384,7 +384,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
             raise eva.exceptions.RetryException(e)
 
         # Print the job script to the log
-        eva.executor.log_job_script(job, script)
+        eva.executor.log_job_script(job, script.splitlines())
 
         # Submit the job using qsub
         command = ['qsub',
