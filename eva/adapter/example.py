@@ -111,20 +111,8 @@ class ExampleAdapter(eva.base.adapter.BaseAdapter):
         # https://docs.python.org/2/howto/logging.html#logging-basic-tutorial
         job.logger.info('Job resource: %s', job.resource)
 
-        # Here, you write your processing script. There are no environment
-        # variables; you must insert your variables using string interpolation.
-        job.command = """
-#!/bin/bash
-#-S /bin/bash
-echo convert_my_data \
-    --input '%(input)s' \
-    --output '%(output)s' \
-    --date '%(date)s' \
-    --backend '%(backend)s'
-"""
-
-        # Interpolate variables into the processing script.
-        job.command = job.command % {
+        # Interpolation variables for the job script.
+        params = {
 
             # The input filename always comes from Productstatus, and is always
             # an URL. Use `url_to_filename` to strip away the protocol.
@@ -145,6 +133,16 @@ echo convert_my_data \
             'backend': job.resource.servicebackend.name,
 
         }
+
+        # Here, you write your processing script. There are no environment
+        # variables; you must insert your variables using string interpolation.
+        job.command = [
+            "echo convert_my_data \\",
+            "    --input '%(input)s' \\" % params,
+            "    --output '%(output)s' \\" % params,
+            "    --date '%(date)s' \\" % params,
+            "    --backend '%(backend)s'" % params,
+        ]
 
         # You may assign variables to the Job object that can be accessed from finish_job().
         job.output_filename = output_filename

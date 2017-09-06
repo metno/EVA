@@ -147,39 +147,35 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             domain=self.env['cwf_domain'],
         )
 
-        cmd = []
-        cmd += ['#/bin/bash']
-        cmd += ['#$ -S /bin/bash']
+        job.command = []
         if self.env['cwf_parallel'] > 1:
-            cmd += ['#$ -pe mpi-fn %d' % self.env['cwf_parallel']]
+            job.command += ['#$ -pe mpi-fn %d' % self.env['cwf_parallel']]
         for module in self.env['cwf_modules']:
-            cmd += ['module load %s' % module]
+            job.command += ['module load %s' % module]
         if self.env['cwf_parallel'] > 1:
-            cmd += ['export ECDIS_PARALLEL=1']
+            job.command += ['export ECDIS_PARALLEL=1']
         else:
-            cmd += ['export ECDIS_PARALLEL=0']
-        cmd += ['export DATE=%s' % reference_time.strftime('%Y%m%d')]
-        cmd += ['export DOMAIN=%s' % self.env['cwf_domain']]
-        cmd += ['export ECDIS=%s' % eva.url_to_filename(job.resource.url)]
-        cmd += ['export ECDIS_TMPDIR=%s' % os.path.join(job.output_directory, 'work')]
-        cmd += ['export NDAYS_MAX=%d' % self.env['cwf_output_days']]
-        cmd += ['export NREC_DAY_MIN=%d' % self.env['cwf_input_min_days']]
-        cmd += ['export OUTDIR=%s' % job.output_directory]
-        cmd += ['export UTC=%s' % reference_time.strftime('%H')]
-        cmd += ['%s >&2' % self.env['cwf_script_path']]
+            job.command += ['export ECDIS_PARALLEL=0']
+        job.command += ['export DATE=%s' % reference_time.strftime('%Y%m%d')]
+        job.command += ['export DOMAIN=%s' % self.env['cwf_domain']]
+        job.command += ['export ECDIS=%s' % eva.url_to_filename(job.resource.url)]
+        job.command += ['export ECDIS_TMPDIR=%s' % os.path.join(job.output_directory, 'work')]
+        job.command += ['export NDAYS_MAX=%d' % self.env['cwf_output_days']]
+        job.command += ['export NREC_DAY_MIN=%d' % self.env['cwf_input_min_days']]
+        job.command += ['export OUTDIR=%s' % job.output_directory]
+        job.command += ['export UTC=%s' % reference_time.strftime('%H')]
+        job.command += ['%s >&2' % self.env['cwf_script_path']]
 
         # Run output recognition
         datestamp_glob = reference_time.strftime('*%Y%m%d_*.*')
-        cmd += ['for file in %s; do' % os.path.join(job.output_directory, datestamp_glob)]
-        cmd += ['    if [[ $file =~ \.nc$ ]]; then']
-        cmd += ['        echo -n "$file "']
-        cmd += ["        ncdump -l 1000 -t -v time $file | grep -E '^ ?time\s*='"]
-        cmd += ['    elif [[ $file =~ \.nml$ ]]; then']
-        cmd += ['        echo "$file"']
-        cmd += ['    fi']
-        cmd += ['done']
-
-        job.command = "\n".join(cmd) + "\n"
+        job.command += ['for file in %s; do' % os.path.join(job.output_directory, datestamp_glob)]
+        job.command += ['    if [[ $file =~ \.nc$ ]]; then']
+        job.command += ['        echo -n "$file "']
+        job.command += ["        ncdump -l 1000 -t -v time $file | grep -E '^ ?time\s*='"]
+        job.command += ['    elif [[ $file =~ \.nml$ ]]; then']
+        job.command += ['        echo "$file"']
+        job.command += ['    fi']
+        job.command += ['done']
 
     def finish_job(self, job):
         if not job.complete():

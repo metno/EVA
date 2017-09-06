@@ -89,14 +89,11 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             raise eva.exceptions.InvalidConfigurationException(e)
 
         # Generate Fimex job
-        command = ['#!/bin/bash']
-        command += ['#$ -S /bin/bash']
-        command += ["time fimex --input.file '%(input.file)s' --output.file '%(output.file)s' %(params)s" % {
+        job.command = ["time fimex --input.file '%(input.file)s' --output.file '%(output.file)s' %(params)s" % {
             'input.file': job.input_filename,
             'output.file': job.output_filename,
             'params': params,
         }]
-        job.command = '\n'.join(command) + '\n'
 
     def finish_job(self, job):
         """!

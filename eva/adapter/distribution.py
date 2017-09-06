@@ -104,34 +104,27 @@ class DistributionAdapter(eva.base.adapter.BaseAdapter):
             if qs.count() != 0:
                 raise eva.exceptions.JobNotGenerated("Destination URL '%s' already exists in Productstatus; this file has already been distributed." % job.output_url)
 
-        lines = [
-            "#!/bin/bash",
-            "#$ -S /bin/bash",  # for GridEngine compatibility
-        ]
-        lines += self.func()
-        values = {
+        params = {
             'source': job.input_file,
             'destination': job.output_file,
             'hostspec': self.env['distribution_destination'],
             'params': self.env['distribution_parameters'],
         }
+        job.command = self.func(params)
 
-        job.command = "\n".join(lines) + "\n"
-        job.command = job.command % values
-
-    def job_script_cp(self):
+    def job_script_cp(self, params):
         return [
-            "cp --verbose %(params)s %(source)s %(destination)s",
+            "cp --verbose %(params)s %(source)s %(destination)s" % params,
         ]
 
-    def job_script_bbcp(self):
+    def job_script_bbcp(self, params):
         return [
-            "bbcp -v %(params)s %(source)s %(hostspec)s%(destination)s",
+            "bbcp -v %(params)s %(source)s %(hostspec)s%(destination)s" % params,
         ]
 
-    def job_script_scp(self):
+    def job_script_scp(self, params):
         return [
-            "scp %(params)s %(source)s %(hostspec)s%(destination)s",
+            "scp %(params)s %(source)s %(hostspec)s%(destination)s" % params,
         ]
 
     def finish_job(self, job):

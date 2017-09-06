@@ -52,15 +52,10 @@ class ThreddsAdapter(eva.base.adapter.BaseAdapter):
         job.thredds_url = os.path.join(self.env['thredds_base_url'], basename)
         job.thredds_html_url = job.thredds_url + ".html"
 
-        job.command = """
-#!/bin/bash
-#$ -S /bin/bash
-set -e
-wget --quiet --output-document=/dev/null %(url)s
-"""
-        job.command = job.command % {
-            'url': job.thredds_html_url,
-        }
+        job.command = [
+            "set -e",
+            "wget --quiet --output-document=/dev/null '%s'" % job.thredds_html_url,
+        ]
 
     def finish_job(self, job):
         if not job.complete():

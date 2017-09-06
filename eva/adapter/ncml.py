@@ -135,15 +135,11 @@ class NcMLAggregationAdapter(eva.base.adapter.BaseAdapter):
         xml = make_xml(title, paths)
 
         # Generate shell script
-        lines = [
-            "#!/bin/bash",
-            "#$ -S /bin/bash",  # for GridEngine compatibility
+        job.command = [
             "cat > %s <<EVA_NCML_EOF" % job.output_filename,
             xml,
             "EVA_NCML_EOF",
         ]
-
-        job.command = "\n".join(lines) + "\n"
 
     def finish_job(self, job):
         """

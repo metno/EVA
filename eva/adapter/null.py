@@ -9,7 +9,7 @@ class NullAdapter(eva.base.adapter.BaseAdapter):
     """
 
     def create_job(self, job):
-        job.command = "#!/bin/sh\n/bin/true\n"
+        job.command = ["/bin/true"]
 
     def finish_job(self, job):
         job.logger.info('NullAdapter has successfully sent the resource to /dev/null')

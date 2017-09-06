@@ -117,15 +117,13 @@ class GridPPAdapter(eva.base.adapter.BaseAdapter):
         except Exception as e:
             raise eva.exceptions.InvalidConfigurationException(e)
 
-        command = ["#!/bin/bash"]
-        command += ["#$ -S /bin/bash"]
-        command += ["set -e"]
+        job.command = []
+        job.command += ["set -e"]
         for module in self.env['gridpp_modules']:
-            command += ["module load %s" % module]
-        command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
-        command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
-        command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % job.gridpp_params]
-        job.command = '\n'.join(command) + '\n'
+            job.command += ["module load %s" % module]
+        job.command += ["cp -v %(input.file)s %(output.file)s" % job.gridpp_params]
+        job.command += ["export OMP_NUM_THREADS=%d" % self.env['gridpp_threads']]
+        job.command += ["gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s" % job.gridpp_params]
 
     def finish_job(self, job):
         """!

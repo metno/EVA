@@ -46,20 +46,16 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
         job.md5_filename = job.dataset_filename + '.md5'
         job.logger.info("Starting verification of file '%s' against md5sum file '%s'.", job.dataset_filename, job.md5_filename)
 
-        lines = [
-            '#!/bin/bash',
-            '#$ -S /bin/bash',  # for GridEngine compatibility
-            'set -e',
-            'cat %(md5_filename)s',  # for hash detection in generate_resources()
-            'printf "%%s  %(dataset_filename)s\\n" $(cat %(md5_filename)s) | md5sum --check --status --strict -',
-        ]
         values = {
             'dataset_filename': job.dataset_filename,
             'md5_filename': job.md5_filename,
         }
 
-        job.command = "\n".join(lines) + "\n"
-        job.command = job.command % values
+        job.command = [
+            'set -e',
+            'cat %(md5_filename)s' % values,  # for hash detection in generate_resources()
+            'printf "%%s  %(dataset_filename)s\\n" $(cat %(md5_filename)s) | md5sum --check --status --strict -' % values,
+        ]
 
     def finish_job(self, job):
         if not job.complete():

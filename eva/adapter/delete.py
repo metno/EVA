@@ -134,7 +134,7 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
 
         job.logger.info("Found %d expired data instances.", count)
 
-        job.command = ["#!/bin/bash"]
+        job.command = []
 
         # One line in delete script per data instance
         job.instance_list = []
@@ -154,8 +154,6 @@ class DeleteAdapter(eva.base.adapter.BaseAdapter):
                 job.logger.warning("Reached delete_batch_limit of %d, will not process any more instances in this job.", self.env['delete_batch_limit'])
                 break
         job.command += ["exit 0"]
-
-        job.command = '\n'.join(job.command) + '\n'
 
         if processed >= self.env['delete_batch_limit']:
             return

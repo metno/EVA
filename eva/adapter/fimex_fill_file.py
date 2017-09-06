@@ -97,12 +97,7 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
             raise eva.exceptions.InvalidConfigurationException(e)
 
         # Generate Fimex job
-        command = ['#!/bin/bash']
-        command += ['#$ -S /bin/bash']
-        command += ["time %(ncfill)s --input '%(input)s' --output '%(output)s' --input_format '%(input_format)s' --reference_time '%(reference_time)s' --template_directory '%(template_directory)s'"]
-
-        job.command = '\n'.join(command) + '\n'
-        job.command = job.command % {
+        params = {
             'input': job.input_filename,
             'input_format': job.resource.format.slug,
             'ncfill': self.ncfill_path,
@@ -110,6 +105,7 @@ class FimexFillFileAdapter(eva.base.adapter.BaseAdapter):
             'reference_time': eva.strftime_iso8601(job.resource.data.productinstance.reference_time),
             'template_directory': job.template_directory,
         }
+        job.command = ["time %(ncfill)s --input '%(input)s' --output '%(output)s' --input_format '%(input_format)s' --reference_time '%(reference_time)s' --template_directory '%(template_directory)s'" % params]
 
     def finish_job(self, job):
         """!

@@ -33,7 +33,7 @@ output_base_url = file:///foo
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
         job = self.create_job(resource)
-        command_line_fragment = "cp --verbose  /foo/bar/baz /foo/baz\n"
+        command_line_fragment = "cp --verbose  /foo/bar/baz /foo/baz"
         self.assertTrue(command_line_fragment in job.command)
 
     def test_finish_job_and_generate_resources(self):
@@ -64,7 +64,7 @@ output_base_url = file:///foo
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
         job = self.create_job(resource)
-        command_line_fragment = "scp --foo /foo/bar/baz user@host:/foo/baz\n"
+        command_line_fragment = "scp --foo /foo/bar/baz user@host:/foo/baz"
         self.assertTrue(command_line_fragment in job.command)
 
     def test_create_job_bbcp(self):
@@ -78,7 +78,7 @@ output_base_url = file:///foo
         resource = mock.MagicMock()
         resource.url = 'file:///foo/bar/baz'
         job = self.create_job(resource)
-        command_line_fragment = "bbcp -v --foo /foo/bar/baz user@host:/foo/baz\n"
+        command_line_fragment = "bbcp -v --foo /foo/bar/baz user@host:/foo/baz"
         self.assertTrue(command_line_fragment in job.command)
 
     def test_create_job_bogus(self):

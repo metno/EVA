@@ -13,14 +13,10 @@ class TestExecutorAdapter(eva.base.adapter.BaseAdapter):
         """!
         @brief Create a Job that echoes the URI of the received resource.
         """
-        job.command = """
-#!/bin/bash
-#$ -S /bin/bash
-echo %(url)s
-sleep 10
-        """ % {
-            'url': job.resource.url,
-        }
+        job.command = [
+            "echo %s" % job.resource.url,
+            "sleep 10",
+        ]
 
     def finish_job(self, job):
         if not job.complete():

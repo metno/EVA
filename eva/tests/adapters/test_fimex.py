@@ -36,7 +36,7 @@ output_service_backend = foo
         resource.data.productinstance.reference_time = eva.coerce_to_utc(datetime.datetime(2016, 1, 1, 18, 15, 0))
         with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
             job = self.create_job(resource)
-        command_line_fragment = "fimex --input.file '/foo/bar/baz' --output.file '/foo/bar.nc' 20160101T181500Z file:///foo/bar/baz baz\n"
+        command_line_fragment = "time fimex --input.file '/foo/bar/baz' --output.file '/foo/bar.nc' 20160101T181500Z file:///foo/bar/baz baz"
         self.assertTrue(command_line_fragment in job.command)
 
     def test_finish_job_and_generate_resources(self):

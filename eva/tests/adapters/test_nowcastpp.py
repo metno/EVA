@@ -42,8 +42,7 @@ output_service_backend = foo
             job = self.create_job(resource)
         self.assertTrue('cp -v /foo/bar/baz /out/20160101T181500Z' in job.command)
         self.assertTrue('Rscript /tmp/Rscript.R /foo/bar/baz $filename' in job.command)
-        self.assertTrue('gridpp /foo/bar/baz inopts /out/20160101T181500Z outopts --reftime 20160101T181500Z' in job.command)
-        self.assertTrue('-c mask keep=0 -p text file=$filename spatial=1' in job.command)
+        self.assertTrue('gridpp /foo/bar/baz inopts /out/20160101T181500Z outopts --reftime 20160101T181500Z -c mask keep=0 -p text file=$filename spatial=1' in job.command)
 
     def test_finish_job_and_generate_resources(self):
         """!
