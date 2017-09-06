@@ -27,7 +27,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
        cwf_input_min_days               |int|           2                   optional    Number of forecast days required in source dataset.
        cwf_lifetime                     |list_int|      72,24               optional    Comma-separated list of DataInstance lifetimes. If the number of files
                                                                                         produced is less than the list size, the value of the last list instance is used for all subsequent files.
-       cwf_modules                      |list_string|                       optional    Comma-separated list of modules to load before running.
        cwf_nml_data_format              |string|        nml                 optional    Which Productstatus data format to use for NML files.
        cwf_output_days                  |int|           3                   optional    Number of forecast days to generate in the resulting dataset.
        cwf_output_directory_pattern     |string|                            required    Destination output directory.
@@ -65,10 +64,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
             'type': 'list_int',
             'default': '72,24',
         },
-        'cwf_modules': {
-            'type': 'list_string',
-            'default': '',
-        },
         'cwf_nml_data_format': {
             'type': 'string',
             'default': 'nml',
@@ -87,7 +82,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         'cwf_domain',
         'cwf_input_min_days',
         'cwf_lifetime',
-        'cwf_modules',
         'cwf_nml_data_format',
         'cwf_output_days',
         'cwf_parallel',
@@ -150,8 +144,6 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         job.command = []
         if self.env['cwf_parallel'] > 1:
             job.command += ['#$ -pe mpi-fn %d' % self.env['cwf_parallel']]
-        for module in self.env['cwf_modules']:
-            job.command += ['module load %s' % module]
         if self.env['cwf_parallel'] > 1:
             job.command += ['export ECDIS_PARALLEL=1']
         else:
