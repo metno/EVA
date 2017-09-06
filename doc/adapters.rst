@@ -33,10 +33,6 @@ FimexFillFileAdapter
 --------------------
 .. autoclass:: eva.adapter.FimexFillFileAdapter
 
-FimexGRIB2NetCDFAdapter
------------------------
-.. autoclass:: eva.adapter.FimexGRIB2NetCDFAdapter
-
 GridPPAdapter
 -------------
 .. autoclass:: eva.adapter.GridPPAdapter
