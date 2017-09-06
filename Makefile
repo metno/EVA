@@ -30,7 +30,9 @@ eva-base:
 	docker build --no-cache --tag metno/eva-base docker/eva-base
 
 upload-eva:
-	docker push metno/eva
+	docker push metno/eva:$(shell python setup.py --version)
+	docker push metno/eva:$(shell python setup.py --version | cut -d. -f1-2)
+	docker push metno/eva:$(shell python setup.py --version | cut -d. -f1)
 
 upload-eva-base:
 	docker push metno/eva-base
