@@ -69,10 +69,11 @@ ssh_user = nobody
         """
         self.config['executor']['modules'] = 'foo/1.0.0, bar/2.3.4'
         self.create_executor()
-        job_command = ['line 1', 'line 2', 'line 3']
+        job_command = ['#$ qsub control statement', 'line 1', 'line 2', 'line 3']
         command = \
 """#!/bin/bash
 #$ -S /bin/bash
+#$ qsub control statement
 module load foo/1.0.0
 module load bar/2.3.4
 line 1

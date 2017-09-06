@@ -55,6 +55,21 @@ def get_job_id_from_qstat_output(output):
     raise eva.exceptions.GridEngineParseException('Could not parse job_number from qstat output.')
 
 
+def split_header_and_job(full_job):
+    """
+    Split a job script into its header and command components.
+    Requires an input list, and returns two lists.
+    """
+    headers = []
+    script = []
+    for line in full_job:
+        if line.startswith('#!') or line.startswith('#$'):
+            headers += [line]
+        else:
+            script += [line]
+    return headers, script
+
+
 def get_exit_code_from_qacct_output(output):
     """!
     @brief Parse the job exit code from qacct output using a regular expression.
@@ -231,7 +246,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         """
         Append a job header to an array of shell commands, and flatten it to a string.
         """
-        combined = self.job_header() + command
+        generated = self.job_header() + command
+        headers, script = split_header_and_job(generated)
+        combined = headers + script
         return '\n'.join(combined) + '\n'
 
     def ensure_ssh_connection(self, job):
