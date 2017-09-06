@@ -194,6 +194,11 @@ class Main(eva.config.ConfigurableObject):
             type=str,
             help='Use the specified configuration file for logging configuration.',
         )
+        parser.add_argument(
+            '--config-test',
+            action='store_true',
+            help='Test the configuration consistency and exit.',
+        )
         self.args = parser.parse_args()
 
     @staticmethod
@@ -598,4 +603,5 @@ class Main(eva.config.ConfigurableObject):
 if __name__ == "__main__":
     m = Main()
     m.setup()
-    m.start()
+    if not self.args.config_test:
+        m.start()
