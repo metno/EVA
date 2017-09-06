@@ -603,5 +603,5 @@ class Main(eva.config.ConfigurableObject):
 if __name__ == "__main__":
     m = Main()
     m.setup()
-    if not self.args.config_test:
+    if not m.args.config_test:
         m.start()
