@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eva.adapter.example &#8212; EVA 3.1.1 documentation</title>
+    <title>eva.adapter.example &#8212; EVA 4.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.1.1',
+        VERSION:     '4.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,12 +25,12 @@
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="EVA 3.1.1 documentation" href="../../../index.html" />
+    <link rel="top" title="EVA 4.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="eva" href="../../eva.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
-          <span>EVA 3.1.1 documentation</span></a></h1>
+          <span>EVA 4.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>eva.adapter.example</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -157,20 +157,8 @@
         <span class="c1"># https://docs.python.org/2/howto/logging.html#logging-basic-tutorial</span>
         <span class="n">job</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Job resource: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="p">)</span>
 
-        <span class="c1"># Here, you write your processing script. There are no environment</span>
-        <span class="c1"># variables; you must insert your variables using string interpolation.</span>
-        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">#!/bin/bash</span>
-<span class="s2">#-S /bin/bash</span>
-<span class="s2">echo convert_my_data </span><span class="se">\</span>
-<span class="s2">    --input &#39;</span><span class="si">%(input)s</span><span class="s2">&#39; </span><span class="se">\</span>
-<span class="s2">    --output &#39;</span><span class="si">%(output)s</span><span class="s2">&#39; </span><span class="se">\</span>
-<span class="s2">    --date &#39;</span><span class="si">%(date)s</span><span class="s2">&#39; </span><span class="se">\</span>
-<span class="s2">    --backend &#39;</span><span class="si">%(backend)s</span><span class="s2">&#39;</span>
-<span class="s2">&quot;&quot;&quot;</span>
-
-        <span class="c1"># Interpolate variables into the processing script.</span>
-        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">%</span> <span class="p">{</span>
+        <span class="c1"># Interpolation variables for the job script.</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
 
             <span class="c1"># The input filename always comes from Productstatus, and is always</span>
             <span class="c1"># an URL. Use `url_to_filename` to strip away the protocol.</span>
@@ -191,6 +179,16 @@
             <span class="s1">&#39;backend&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">servicebackend</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
 
         <span class="p">}</span>
+
+        <span class="c1"># Here, you write your processing script. There are no environment</span>
+        <span class="c1"># variables; you must insert your variables using string interpolation.</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;echo convert_my_data </span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;    --input &#39;</span><span class="si">%(input)s</span><span class="s2">&#39; </span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">params</span><span class="p">,</span>
+            <span class="s2">&quot;    --output &#39;</span><span class="si">%(output)s</span><span class="s2">&#39; </span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">params</span><span class="p">,</span>
+            <span class="s2">&quot;    --date &#39;</span><span class="si">%(date)s</span><span class="s2">&#39; </span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">params</span><span class="p">,</span>
+            <span class="s2">&quot;    --backend &#39;</span><span class="si">%(backend)s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">params</span><span class="p">,</span>
+        <span class="p">]</span>
 
         <span class="c1"># You may assign variables to the Job object that can be accessed from finish_job().</span>
         <span class="n">job</span><span class="o">.</span><span class="n">output_filename</span> <span class="o">=</span> <span class="n">output_filename</span></div>

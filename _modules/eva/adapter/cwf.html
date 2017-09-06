@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eva.adapter.cwf &#8212; EVA 3.1.1 documentation</title>
+    <title>eva.adapter.cwf &#8212; EVA 4.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.1.1',
+        VERSION:     '4.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,12 +25,12 @@
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="EVA 3.1.1 documentation" href="../../../index.html" />
+    <link rel="top" title="EVA 4.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="eva" href="../../eva.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
-          <span>EVA 3.1.1 documentation</span></a></h1>
+          <span>EVA 4.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>eva.adapter.cwf</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -73,7 +73,6 @@
 <span class="sd">       cwf_input_min_days               |int|           2                   optional    Number of forecast days required in source dataset.</span>
 <span class="sd">       cwf_lifetime                     |list_int|      72,24               optional    Comma-separated list of DataInstance lifetimes. If the number of files</span>
 <span class="sd">                                                                                        produced is less than the list size, the value of the last list instance is used for all subsequent files.</span>
-<span class="sd">       cwf_modules                      |list_string|                       optional    Comma-separated list of modules to load before running.</span>
 <span class="sd">       cwf_nml_data_format              |string|        nml                 optional    Which Productstatus data format to use for NML files.</span>
 <span class="sd">       cwf_output_days                  |int|           3                   optional    Number of forecast days to generate in the resulting dataset.</span>
 <span class="sd">       cwf_output_directory_pattern     |string|                            required    Destination output directory.</span>
@@ -111,10 +110,6 @@
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_int&#39;</span><span class="p">,</span>
             <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;72,24&#39;</span><span class="p">,</span>
         <span class="p">},</span>
-        <span class="s1">&#39;cwf_modules&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
         <span class="s1">&#39;cwf_nml_data_format&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
             <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;nml&#39;</span><span class="p">,</span>
@@ -133,7 +128,6 @@
         <span class="s1">&#39;cwf_domain&#39;</span><span class="p">,</span>
         <span class="s1">&#39;cwf_input_min_days&#39;</span><span class="p">,</span>
         <span class="s1">&#39;cwf_lifetime&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;cwf_modules&#39;</span><span class="p">,</span>
         <span class="s1">&#39;cwf_nml_data_format&#39;</span><span class="p">,</span>
         <span class="s1">&#39;cwf_output_days&#39;</span><span class="p">,</span>
         <span class="s1">&#39;cwf_parallel&#39;</span><span class="p">,</span>
@@ -193,39 +187,33 @@
             <span class="n">domain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_domain&#39;</span><span class="p">],</span>
         <span class="p">)</span>
 
-        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#/bin/bash&#39;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#$ -S /bin/bash&#39;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#$ -pe mpi-fn </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]]</span>
-        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_modules&#39;</span><span class="p">]:</span>
-            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;module load </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">module</span><span class="p">]</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#$ -pe mpi-fn </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_parallel&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_PARALLEL=1&#39;</span><span class="p">]</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_PARALLEL=1&#39;</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_PARALLEL=0&#39;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export DATE=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export DOMAIN=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_domain&#39;</span><span class="p">]]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">eva</span><span class="o">.</span><span class="n">url_to_filename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_TMPDIR=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">,</span> <span class="s1">&#39;work&#39;</span><span class="p">)]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export NDAYS_MAX=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_output_days&#39;</span><span class="p">]]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export NREC_DAY_MIN=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_input_min_days&#39;</span><span class="p">]]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export OUTDIR=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export UTC=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H&#39;</span><span class="p">)]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> &gt;&amp;2&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_script_path&#39;</span><span class="p">]]</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_PARALLEL=0&#39;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export DATE=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export DOMAIN=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_domain&#39;</span><span class="p">]]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">eva</span><span class="o">.</span><span class="n">url_to_filename</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export ECDIS_TMPDIR=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">,</span> <span class="s1">&#39;work&#39;</span><span class="p">)]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export NDAYS_MAX=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_output_days&#39;</span><span class="p">]]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export NREC_DAY_MIN=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_input_min_days&#39;</span><span class="p">]]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export OUTDIR=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;export UTC=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H&#39;</span><span class="p">)]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> &gt;&amp;2&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;cwf_script_path&#39;</span><span class="p">]]</span>
 
         <span class="c1"># Run output recognition</span>
         <span class="n">datestamp_glob</span> <span class="o">=</span> <span class="n">reference_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;*%Y%m</span><span class="si">%d</span><span class="s1">_*.*&#39;</span><span class="p">)</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;for file in </span><span class="si">%s</span><span class="s1">; do&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">,</span> <span class="n">datestamp_glob</span><span class="p">)]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    if [[ $file =~ \.nc$ ]]; then&#39;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;        echo -n &quot;$file &quot;&#39;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;        ncdump -l 1000 -t -v time $file | grep -E &#39;^ ?time\s*=&#39;&quot;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    elif [[ $file =~ \.nml$ ]]; then&#39;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;        echo &quot;$file&quot;&#39;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    fi&#39;</span><span class="p">]</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;done&#39;</span><span class="p">]</span>
-
-        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;for file in </span><span class="si">%s</span><span class="s1">; do&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_directory</span><span class="p">,</span> <span class="n">datestamp_glob</span><span class="p">)]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    if [[ $file =~ \.nc$ ]]; then&#39;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;        echo -n &quot;$file &quot;&#39;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;        ncdump -l 1000 -t -v time $file | grep -E &#39;^ ?time\s*=&#39;&quot;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    elif [[ $file =~ \.nml$ ]]; then&#39;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;        echo &quot;$file&quot;&#39;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;    fi&#39;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;done&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>

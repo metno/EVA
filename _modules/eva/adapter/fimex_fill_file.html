@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eva.adapter.fimex_fill_file &#8212; EVA 3.1.1 documentation</title>
+    <title>eva.adapter.fimex_fill_file &#8212; EVA 4.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.1.1',
+        VERSION:     '4.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,12 +25,12 @@
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="EVA 3.1.1 documentation" href="../../../index.html" />
+    <link rel="top" title="EVA 4.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="eva" href="../../eva.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
-          <span>EVA 3.1.1 documentation</span></a></h1>
+          <span>EVA 4.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>eva.adapter.fimex_fill_file</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -143,12 +143,7 @@
             <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="c1"># Generate Fimex job</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;#!/bin/bash&#39;</span><span class="p">]</span>
-        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;#$ -S /bin/bash&#39;</span><span class="p">]</span>
-        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;time </span><span class="si">%(ncfill)s</span><span class="s2"> --input &#39;</span><span class="si">%(input)s</span><span class="s2">&#39; --output &#39;</span><span class="si">%(output)s</span><span class="s2">&#39; --input_format &#39;</span><span class="si">%(input_format)s</span><span class="s2">&#39; --reference_time &#39;</span><span class="si">%(reference_time)s</span><span class="s2">&#39; --template_directory &#39;</span><span class="si">%(template_directory)s</span><span class="s2">&#39;&quot;</span><span class="p">]</span>
-
-        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">%</span> <span class="p">{</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">input_filename</span><span class="p">,</span>
             <span class="s1">&#39;input_format&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
             <span class="s1">&#39;ncfill&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncfill_path</span><span class="p">,</span>
@@ -156,6 +151,7 @@
             <span class="s1">&#39;reference_time&#39;</span><span class="p">:</span> <span class="n">eva</span><span class="o">.</span><span class="n">strftime_iso8601</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">productinstance</span><span class="o">.</span><span class="n">reference_time</span><span class="p">),</span>
             <span class="s1">&#39;template_directory&#39;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">template_directory</span><span class="p">,</span>
         <span class="p">}</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;time </span><span class="si">%(ncfill)s</span><span class="s2"> --input &#39;</span><span class="si">%(input)s</span><span class="s2">&#39; --output &#39;</span><span class="si">%(output)s</span><span class="s2">&#39; --input_format &#39;</span><span class="si">%(input_format)s</span><span class="s2">&#39; --reference_time &#39;</span><span class="si">%(reference_time)s</span><span class="s2">&#39; --template_directory &#39;</span><span class="si">%(template_directory)s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">params</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;!</span>

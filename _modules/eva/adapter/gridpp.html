@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eva.adapter.gridpp &#8212; EVA 3.1.1 documentation</title>
+    <title>eva.adapter.gridpp &#8212; EVA 4.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.1.1',
+        VERSION:     '4.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,12 +25,12 @@
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="EVA 3.1.1 documentation" href="../../../index.html" />
+    <link rel="top" title="EVA 4.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="eva" href="../../eva.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
-          <span>EVA 3.1.1 documentation</span></a></h1>
+          <span>EVA 4.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>eva.adapter.gridpp</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -68,7 +68,6 @@
 <span class="sd">       gridpp_input_options         |string|        (empty)         optional    GridPP command-line options for the input file.</span>
 <span class="sd">       gridpp_output_options        |string|        (empty)         optional    GridPP command-line options for the output file.</span>
 <span class="sd">       gridpp_generic_options       |string|        (empty)         optional    GridPP command-line options.</span>
-<span class="sd">       gridpp_modules               |list_string|   (empty)         optional    Comma-separated list of GridEngine modules to load before running.</span>
 <span class="sd">       gridpp_threads               |int|           1               optional    How many threads to use during calculations.</span>
 <span class="sd">       input_data_format                                            required    See |input_data_format|.</span>
 <span class="sd">       input_product                                                required    See |input_product|.</span>
@@ -93,11 +92,6 @@
             <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;GridPP command-line options.&#39;</span><span class="p">,</span>
             <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
         <span class="p">},</span>
-        <span class="s1">&#39;gridpp_modules&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;list_string&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;Comma-separated list of modules to load before running.&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-        <span class="p">},</span>
         <span class="s1">&#39;gridpp_threads&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
             <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;How many threads to use during calculations.&#39;</span><span class="p">,</span>
@@ -115,7 +109,6 @@
     <span class="n">OPTIONAL_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">&#39;gridpp_generic_options&#39;</span><span class="p">,</span>
         <span class="s1">&#39;gridpp_input_options&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;gridpp_modules&#39;</span><span class="p">,</span>
         <span class="s1">&#39;gridpp_output_options&#39;</span><span class="p">,</span>
         <span class="s1">&#39;gridpp_threads&#39;</span><span class="p">,</span>
         <span class="s1">&#39;input_partial&#39;</span><span class="p">,</span>
@@ -163,15 +156,11 @@
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">eva</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidConfigurationException</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
-        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;#!/bin/bash&quot;</span><span class="p">]</span>
-        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;#$ -S /bin/bash&quot;</span><span class="p">]</span>
-        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;set -e&quot;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;gridpp_modules&#39;</span><span class="p">]:</span>
-            <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;module load </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">module</span><span class="p">]</span>
-        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;cp -v %(input.file)s %(output.file)s&quot;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">gridpp_params</span><span class="p">]</span>
-        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;export OMP_NUM_THREADS=</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;gridpp_threads&#39;</span><span class="p">]]</span>
-        <span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s&quot;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">gridpp_params</span><span class="p">]</span>
-        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;set -e&quot;</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;cp -v %(input.file)s %(output.file)s&quot;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">gridpp_params</span><span class="p">]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;export OMP_NUM_THREADS=</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;gridpp_threads&#39;</span><span class="p">]]</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;gridpp %(input.file)s %(input.options)s %(output.file)s %(output.options)s %(generic.options)s&quot;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">gridpp_params</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;!</span>

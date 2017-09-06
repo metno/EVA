@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eva.adapter.ncml &#8212; EVA 3.1.1 documentation</title>
+    <title>eva.adapter.ncml &#8212; EVA 4.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.1.1',
+        VERSION:     '4.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,12 +25,12 @@
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="EVA 3.1.1 documentation" href="../../../index.html" />
+    <link rel="top" title="EVA 4.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="eva" href="../../eva.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
-          <span>EVA 3.1.1 documentation</span></a></h1>
+          <span>EVA 4.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>eva.adapter.ncml</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -57,7 +57,7 @@
 <span class="n">XML_TEMPLATE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">&lt;netcdf xmlns=&quot;http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2&quot;&gt;</span>
 <span class="s2">    &lt;attribute name=&quot;title&quot; type=&quot;string&quot; value=&quot;</span><span class="si">%(title)s</span><span class="s2">&quot; /&gt;</span>
-<span class="s2">    &lt;aggregation type=&quot;union&quot;&gt;</span>
+<span class="s2">    &lt;aggregation dimName=&quot;time&quot; type=&quot;joinExisting&quot;&gt;</span>
 <span class="s2">        </span><span class="si">%(children)s</span><span class="s2"></span>
 <span class="s2">    &lt;/aggregation&gt;</span>
 <span class="s2">&lt;/netcdf&gt;</span>
@@ -92,7 +92,7 @@
 
 <span class="sd">       &lt;netcdf xmlns=&quot;http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2&quot;&gt;</span>
 <span class="sd">         &lt;attribute name=&quot;title&quot; type=&quot;string&quot; value=&quot;Product @ reference time&quot; /&gt;</span>
-<span class="sd">         &lt;aggregation type=&quot;union&quot;&gt;</span>
+<span class="sd">         &lt;aggregation dimName=&quot;time&quot; type=&quot;joinExisting&quot;&gt;</span>
 <span class="sd">           &lt;netcdf location=&quot;file1.nc&quot; /&gt;</span>
 <span class="sd">           &lt;netcdf location=&quot;file2.nc&quot; /&gt;</span>
 <span class="sd">         &lt;/aggregation&gt;</span>
@@ -181,15 +181,11 @@
         <span class="n">xml</span> <span class="o">=</span> <span class="n">make_xml</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
 
         <span class="c1"># Generate shell script</span>
-        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="s2">&quot;#!/bin/bash&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;#$ -S /bin/bash&quot;</span><span class="p">,</span>  <span class="c1"># for GridEngine compatibility</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s2">&quot;cat &gt; </span><span class="si">%s</span><span class="s2"> &lt;&lt;EVA_NCML_EOF&quot;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">output_filename</span><span class="p">,</span>
             <span class="n">xml</span><span class="p">,</span>
             <span class="s2">&quot;EVA_NCML_EOF&quot;</span><span class="p">,</span>
         <span class="p">]</span>
-
-        <span class="n">job</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
 
     <span class="k">def</span> <span class="nf">finish_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
