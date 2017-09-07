@@ -51,7 +51,6 @@ ssh_user = nobody
         """
         Test that a job header contains the correct shell and modules.
         """
-        self.config['executor']['cpu_slots'] = '3'
         self.config['executor']['modules'] = 'foo/1.0.0, bar/2.3.4'
         self.config['executor']['shell'] = '/bin/zsh'
         self.create_executor()
@@ -59,8 +58,8 @@ ssh_user = nobody
         header = [
             '#!/bin/bash',
             '#$ -S /bin/zsh',
+            '#$ -pe mpi 1',
             '#$ -l h_vmem=512M',
-            '#$ -pe mpi 3',
             'module load foo/1.0.0',
             'module load bar/2.3.4',
         ]
@@ -76,6 +75,7 @@ ssh_user = nobody
         command = \
 """#!/bin/bash
 #$ -S /bin/bash
+#$ -pe mpi 1
 #$ -l h_vmem=512M
 #$ qsub control statement
 module load foo/1.0.0
