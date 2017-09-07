@@ -4,6 +4,21 @@ import eva.job
 import eva.exceptions
 
 
+def job_output_md5sum(stdout):
+    """
+    Find the MD5 sum from the job output.
+    """
+    for line in stdout:
+        if not line.startswith('eva.adapter.checksum.md5 '):
+            continue
+        tokens = line.strip().split()
+        md5 = tokens[1]
+        if len(md5) != 32:
+            break
+        return md5
+    return None
+
+
 class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
     """
     The ChecksumVerificationAdapter verifies checksums on data sets, according
@@ -53,6 +68,7 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
 
         job.command = [
             'set -e',
+            'echo -n "eva.adapter.checksum.md5 "',
             'cat %(md5_filename)s' % values,  # for hash detection in generate_resources()
             'printf "%%s  %(dataset_filename)s\\n" $(cat %(md5_filename)s) | md5sum --check --status --strict -' % values,
         ]
@@ -62,9 +78,9 @@ class ChecksumVerificationAdapter(eva.base.adapter.BaseAdapter):
             self.statsd.incr('eva_md5sum_fail')
             raise eva.exceptions.RetryException("md5sum checking of '%s' failed, skipping further processing!" % job.resource.url)
         job.resource_hash_type = str('md5')
-        job.resource_hash = ''.join(job.stdout).strip()
-        if len(job.resource_hash) != 32:
-            raise eva.exceptions.RetryException('md5sum hash (%s) length does not equal 32, this must be a bug in the job output?' % job.resource_hash)
+        job.resource_hash = job_output_md5sum(job.stdout)
+        if job.resource_hash is None:
+            raise eva.exceptions.RetryException('md5sum hash %s length does not equal 32, this must be a bug in the job output?' % job.resource_hash)
         job.logger.info('DataInstance %s has md5sum hash %s.', job.resource, job.resource_hash)
 
     def generate_resources(self, job, resources):

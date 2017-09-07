@@ -2,6 +2,7 @@ from unittest import mock
 
 import eva.tests
 import eva.adapter
+import eva.adapter.checksum
 import eva.exceptions
 import eva.job
 
@@ -51,7 +52,7 @@ input_with_hash = NO
         job = self.create_job(resource)
         job.set_status(eva.job.COMPLETE)
         md5sum = '401b30e3b8b5d629635a5c613cdb7919'
-        job.stdout = [md5sum]
+        job.stdout = ["eva.adapter.checksum.md5 " + md5sum]
         self.adapter.finish_job(job)
         resources = self.generate_resources(job)
         self.assertEqual(resources['datainstance'][0].hash_type, str('md5'))
@@ -59,3 +60,20 @@ input_with_hash = NO
         self.assertEqual(len(resources['productinstance']), 0)
         self.assertEqual(len(resources['data']), 0)
         self.assertEqual(len(resources['datainstance']), 1)
+
+    def test_find_md5sum(self):
+        check = '401b30e3b8b5d629635a5c613cdb7919'
+        stdout = [
+            "foo bar",
+            "eva.adapter.checksum.md5 " + check,
+            "baz",
+        ]
+        md5 = eva.adapter.checksum.job_output_md5sum(stdout)
+        self.assertEqual(md5, check)
+
+    def test_find_md5sum_errfmt(self):
+        stdout = [
+            "eva.adapter.checksum.md5 test",
+        ]
+        md5 = eva.adapter.checksum.job_output_md5sum(stdout)
+        self.assertIsNone(md5)
