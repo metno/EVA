@@ -160,6 +160,7 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
 
         # Run output recognition
         datestamp_glob = reference_time.strftime('*%Y%m%d_*.*')
+        job.command += ['echo "===eva.adapter.cwf==="']
         job.command += ['for file in %s; do' % os.path.join(job.output_directory, datestamp_glob)]
         job.command += ['    if [[ $file =~ \.nc$ ]]; then']
         job.command += ['        echo -n "$file "']
@@ -188,11 +189,16 @@ class CWFAdapter(eva.base.adapter.BaseAdapter):
         a structured format. Returns a list of dictionaries with file and time
         dimension information.
         """
+        threshold = False
         result = []
         for line in lines:
             # Each output line looks like this:
             # /tmp/meteo20160606_00.nc  time = "2016-06-06 12", "2016-06-06 15", "2016-06-06 18", "2016-06-06 21", "2016-06-07" ;
             if len(line) < 5:
+                continue
+            if not threshold:
+                if line == '===eva.adapter.cwf===':
+                    threshold = True
                 continue
             data = {}
             tokens = line.split()

@@ -35,10 +35,14 @@ input_service_backend = nil
             return super().test_init()
 
     def test_parse_file_recognition_output(self):
-        stdout = ['/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;',
-                  '/tmp/meteo20160606_01.nc  time = "2016-06-08" ;',
-                  '/tmp/meteo20160606_00.nml',
-                  ]
+        stdout = [
+            '-catch_rsh /var/spool/gridengine/execd/c6220ii-jv58002-bl-compute/active_jobs/8767996.1/pe_hostfile',
+            'c6220ii-jv58002-bl-compute',
+            '===eva.adapter.cwf===',
+            '/tmp/meteo20160606_00.nc  time = "2016-06-06 12" ;',
+            '/tmp/meteo20160606_01.nc  time = "2016-06-08" ;',
+            '/tmp/meteo20160606_00.nml',
+        ]
         with httmock.HTTMock(*eva.tests.schemas.SCHEMAS):
             self.create_adapter()
         output = self.adapter.parse_file_recognition_output(stdout)
@@ -68,6 +72,7 @@ input_service_backend = nil
         resource = mock.MagicMock()
         job = self.create_job(resource)
         job.stdout = [
+            '===eva.adapter.cwf===',
             '/tmp/meteo20160606_00.nc  time = "2016-06-06 12", "2016-06-06 15", "2016-06-06 18", "2016-06-06 21", "2016-06-07" ;',
             '/tmp/meteo20160606_00.nml',
         ]
