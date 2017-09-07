@@ -147,7 +147,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
        ===========================  ==============  ======================  ==========  ===========
        Variable                     Type            Default                 Inclusion   Description
        ===========================  ==============  ======================  ==========  ===========
-       cpu_slots                    |int|           1                       optional    How many CPU slots to allocate to the job.
+       cpu_slots                    |positive_int|  1                       optional    How many CPU slots to allocate to the job.
        memory                       |string|        512M                    optional    The maximum amount of memory the job consumes.
        modules                      |list_string|   (empty)                 optional    Comma-separated list of GridEngine modules to load before running the job.
        qacct_command                |string|        qacct -j {{job_id}}     optional    How to call the qacct program to get finished job information.
@@ -161,7 +161,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
 
     CONFIG = {
         'cpu_slots': {
-            'type': 'int',
+            'type': 'positive_int',
             'default': '1',
         },
         'memory': {
@@ -249,9 +249,10 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         header = [
             "#!/bin/bash",
             "#$ -S %s" % self.env['shell'],
-            "#$ -pe mpi %d" % self.env['cpu_slots'],
             "#$ -l h_vmem=%s" % self.env['memory'],
         ]
+        if self.env['cpu_slots'] > 1:
+            header += ["#$ -pe mpi %d" % self.env['cpu_slots']]
         for module in self.env['modules']:
             header += ['module load %s' % module]
         return header
