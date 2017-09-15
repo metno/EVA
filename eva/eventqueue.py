@@ -415,7 +415,8 @@ class EventQueue(eva.globe.GlobalMixin):
         metric_base is not None.
         """
         count, size = eva.zk.store_serialized_data(self.zookeeper, path, data)
-        self.logger.debug('Stored %d items of total %d bytes at ZooKeeper path %s', count, size, path)
+        # This line will cause massive debugging output and is not recommended for regular operation.
+        #self.logger.debug('Stored %d items of total %d bytes at ZooKeeper path %s', count, size, path)
         if not metric_base:
             return
         self.statsd.gauge('eva_zk_' + metric_base + '_count', count)
