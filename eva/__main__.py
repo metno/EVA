@@ -1,13 +1,14 @@
-import os
-import uuid
-import signal
-import sys
-import logging
-import logging.config
 import argparse
+import configparser
 import kazoo.client
 import kazoo.exceptions
-import configparser
+import logging
+import logging.config
+import os
+import signal
+import sys
+import time
+import uuid
 
 import productstatus.exceptions
 
@@ -199,6 +200,12 @@ class Main(eva.config.ConfigurableObject):
             action='store_true',
             help='Test the configuration consistency and exit.',
         )
+        parser.add_argument(
+            '--zookeeper-backoff',
+            type=int,
+            default=60,
+            help='How many seconds to wait between each attempt to acquire the ZooKeeper single instance lock.',
+        )
         self.args = parser.parse_args()
 
     @staticmethod
@@ -359,7 +366,20 @@ class Main(eva.config.ConfigurableObject):
             self.logger.info('Creating a Zookeeper ephemeral node with path %s', lock_path)
             self.zookeeper.create(lock_path, None, ephemeral=True)
         except kazoo.exceptions.NodeExistsError:
-            raise eva.exceptions.AlreadyRunningException('Another instance of EVA is already running against this ZooKeeper endpoint; aborting!')
+            raise eva.exceptions.AlreadyRunningException('Another instance of EVA is already running against this ZooKeeper endpoint!')
+
+    def setup_instance_lock_forever(self):
+        """
+        Try setting up the single instance lock until the mountains crumble or the app is shutdown.
+        """
+        while True:
+            try:
+                self.setup_instance_lock()
+                return
+            except eva.exceptions.AlreadyRunningException as e:
+                self.logger.error(str(e))
+                self.logger.info("Cannot acquire single instance lock, sleeping %d seconds...", self.args.zookeeper_backoff)
+                time.sleep(self.args.zookeeper_backoff)
 
     def instantiate_config_classes(self):
         """!
@@ -528,7 +548,7 @@ class Main(eva.config.ConfigurableObject):
             self.print_adapters()
 
             # Abort if EVA is already running
-            self.setup_instance_lock()
+            self.setup_instance_lock_forever()
 
             # Start the HTTP REST API server
             self.setup_rest_server()
