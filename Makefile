@@ -8,7 +8,7 @@ test:
 	nosetests
 
 lint:
-	flake8 eva/ --ignore=E501,E265
+	flake8 eva/ --ignore=E501,E265,E722
 
 tag:
 	git tag --sign --message "Version $(shell python setup.py --version)" $(shell python setup.py --version)
