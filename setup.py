@@ -12,7 +12,7 @@
 # extensions to the MAJOR.MINOR.PATCH format.
 #
 
-VERSION = [4, 3, 0]
+VERSION = [4, 4, 0]
 
 config = {
     'description': 'The Event Adapter',
@@ -21,6 +21,7 @@ config = {
     'download_url': 'https://github.com/metno/eva',
     'version': '.'.join([str(x) for x in VERSION]),
     'install_requires': [
+        'six==1.9',
         'nose==1.3.7',
         'python-dateutil==2.5.0',
         'productstatus-client==6.4.0',
