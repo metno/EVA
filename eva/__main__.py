@@ -547,11 +547,11 @@ class Main(eva.config.ConfigurableObject):
             self.init_config_classes()
             self.print_adapters()
 
-            # Abort if EVA is already running
-            self.setup_instance_lock_forever()
-
             # Start the HTTP REST API server
             self.setup_rest_server()
+
+            # Abort if EVA is already running
+            self.setup_instance_lock_forever()
 
             # Start listener classes
             self.setup_listeners()
