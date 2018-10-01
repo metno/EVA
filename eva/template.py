@@ -15,8 +15,10 @@ def filter_iso8601(value):
 def filter_iso8601_compact(value):
     return value.astimezone(dateutil.tz.tzutc()).strftime('%Y%m%dT%H%M%SZ')
 
+
 def filter_met_compact(value):
     return value.astimezone(dateutil.tz.tzutc()).strftime('%Y%m%dT%HZ')
+
 
 def filter_timedelta(value, **kwargs):
     return value + datetime.timedelta(**kwargs)
