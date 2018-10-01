@@ -15,6 +15,8 @@ def filter_iso8601(value):
 def filter_iso8601_compact(value):
     return value.astimezone(dateutil.tz.tzutc()).strftime('%Y%m%dT%H%M%SZ')
 
+def filter_met_compact(value):
+    return value.astimezone(dateutil.tz.tzutc()).strftime('%Y%m%dT%H%MZ')
 
 def filter_timedelta(value, **kwargs):
     return value + datetime.timedelta(**kwargs)
@@ -34,5 +36,6 @@ class Environment(jinja2.Environment):
         super(Environment, self).__init__(*args, **kwargs)
         self.filters['iso8601'] = filter_iso8601
         self.filters['iso8601_compact'] = filter_iso8601_compact
+        self.filters['met_compact'] = filter_met_compact
         self.filters['timedelta'] = filter_timedelta
         self.filters['strftime'] = filter_strftime
