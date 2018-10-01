@@ -1,5 +1,7 @@
 import os
 
+from datetime import timedelta
+
 import eva
 import eva.base.adapter
 import eva.job
@@ -7,7 +9,6 @@ import eva.exceptions
 import eva.template
 
 import productstatus.api
-
 
 class FimexAdapter(eva.base.adapter.BaseAdapter):
     """
