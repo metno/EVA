@@ -10,6 +10,7 @@ import eva.template
 
 import productstatus.api
 
+
 class FimexAdapter(eva.base.adapter.BaseAdapter):
     """
     This adapter is a generic interface to FIMEX, that will accept virtually
