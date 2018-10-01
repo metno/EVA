@@ -1,7 +1,5 @@
 import os
 
-from datetime import timedelta
-
 import eva
 import eva.base.adapter
 import eva.job
@@ -77,7 +75,6 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
         """
         job.input_filename = eva.url_to_filename(job.resource.url)
         job.reference_time = job.resource.data.productinstance.reference_time
-        met_timeformat = "%Y%m%dT%HZ"
         job.template_variables = {
             'datainstance': job.resource,
             'input_filename': os.path.basename(job.input_filename),
