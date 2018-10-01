@@ -79,6 +79,7 @@ class FimexAdapter(eva.base.adapter.BaseAdapter):
             'datainstance': job.resource,
             'input_filename': os.path.basename(job.input_filename),
             'reference_time': job.reference_time,
+            'valid_at_time': job.reference_time + timedelta(hours=1),
         }
 
         # Render the Jinja2 templates and report any errors
