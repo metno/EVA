@@ -12,7 +12,7 @@
 # extensions to the MAJOR.MINOR.PATCH format.
 #
 
-VERSION = [4, 5, 5]
+VERSION = [4, 5, 6]
 
 config = {
     'description': 'The Event Adapter',
@@ -23,7 +23,7 @@ config = {
     'install_requires': [
         'nose==1.3.7',
         'python-dateutil==2.5.0',
-        'productstatus-client==6.5.2',
+        'productstatus-client==6.4.0',
         'paramiko==1.16.0',
         'httmock==1.2.4',
         'jinja2==2.8',
