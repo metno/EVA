@@ -9,8 +9,6 @@ import eva.base.listener
 
 import productstatus.exceptions
 
-import kafka
-
 
 class ProductstatusListener(eva.base.listener.BaseListener):
     """!
@@ -44,21 +42,7 @@ class ProductstatusListener(eva.base.listener.BaseListener):
         @brief Return the next message on the Kafka topic sent by Productstatus.
         """
         try:
-            if len(self.event_listener.json_consumer.assignment()):
-                topic = 'productstatus'
-                partition0 = kafka.TopicPartition(topic, 0)
-                partitions = self.event_listener.json_consumer.assignment()
-                if partition0 not in partitions:
-                    self.logger.warning('Partition 0 expected for topic %s but not found.' % topic)
-
-                queue_position = self.event_listener.json_consumer.end_offsets([partition0])[partition0] - self.event_listener.json_consumer.position(partition0)
-
-                self.logger.info('Queue position is %d messages before the end of the queue.' % queue_position)
-            else:
-                self.logger.info('No assignment of Kafka partitions.')
-
             event = self.event_listener.get_next_event()
-
             if not event:
                 raise eva.exceptions.EventTimeoutException('No Productstatus messages available for consumption.')
             self.logger.debug('Productstatus message received: %s', event)
