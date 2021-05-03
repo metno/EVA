@@ -249,7 +249,7 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         header = [
             "#!/bin/bash",
             "#$ -S %s" % self.env['shell'],
-            "#$ -pe mpi %d" % self.env['cpu_slots'],
+            "#$ -pe shmem-1 %d" % self.env['cpu_slots'],
             "#$ -l h_vmem=%s" % self.env['memory'],
         ]
         for module in self.env['modules']:
