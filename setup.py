@@ -26,7 +26,7 @@ config = {
         'productstatus-client==6.4.0',
         'paramiko==1.16.0',
         'httmock==1.2.4',
-        'jinja2==2.8',
+        'jinja2==2.11.3',
         'kazoo==2.2.1',
         'Sphinx==1.4.8',
         'falcon==1.1.0',
