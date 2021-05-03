@@ -11,6 +11,9 @@ RUN apt-get update \
         libzmq3-dev \
         python3-dev \
         python3-pip \
+        python3-flake8 \
+        python3-setuptools \
+        python3-pyasn1 \
         software-properties-common \
         wget \
     && add-apt-repository --yes ppa:heiko-klein/fimex \

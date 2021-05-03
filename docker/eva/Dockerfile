@@ -2,7 +2,6 @@
 
 FROM metno/eva-base
 RUN git clone --depth 1 https://github.com/metno/eva.git /opt/eva
-RUN pip3 install --upgrade pip setuptools flake8
 RUN pip3 install -e /opt/eva/
 RUN cd /opt/eva && make lint && make test
 USER eventadapter
