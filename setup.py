@@ -24,7 +24,7 @@ config = {
         'nose==1.3.7',
         'python-dateutil==2.5.0',
         'productstatus-client==6.4.0',
-        'paramiko==1.16.0',
+        'paramiko==2.0.9',
         'httmock==1.2.4',
         'jinja2==2.8',
         'kazoo==2.2.1',
