@@ -432,6 +432,9 @@ class GridEngineExecutor(eva.base.executor.BaseExecutor):
         job.logger.debug('Running: %s', check_command)
         exit_code, stdout, stderr = self.execute_ssh_command(check_command)
         if exit_code != EXIT_OK:
+            job.logger.debug('Exit code %d' % exit_code)
+            job.logger.debug(stdout)
+            job.logger.debug(stderr)
             raise JobNotFinishedException('Job %d is not present in qacct output.' % job.pid)
         return (exit_code, stdout, stderr)
 
