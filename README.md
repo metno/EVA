@@ -1,3 +1,5 @@
+# Deprecated - this project is no longer maintained.
+
 # Event Adapter
 
 EVA is the Event Adapter. It is an event-driven daemon, which processes data
